@@ -54,7 +54,7 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 | Node final | PASS 10/10, incluindo novo processo Node contra o mesmo armazenamento de nonces e compatibilidade Unicode PBKDF2 independente |
 | Suíte original + novas regressões Worker | 158 PASS, 3 FAIL esperados: JWT sem claims, reuso de chaves e stream sem limite durante leitura |
 | Worker após correção focada | PASS 11/11; typecheck PASS |
-| Regressão posterior `ACCESS_ONLY` | FAIL reproduzido: 503 em vez de negação genérica; corrigida, passou durante execução completa em andamento |
+| Regressão posterior `ACCESS_ONLY` | FAIL reproduzido: 503 em vez de negação genérica; corrigida e PASS na suíte completa de 164 testes |
 | Preview helper | Red: limite pago e ausência de reconhecimento de Access; Green: PASS 6/6 |
 | Execução Windows concorrente anterior | FAIL: teste de autorização de mídia excedeu 20s; quatro erros de startup/encerramento workerd/ECONNRESET. Esta execução não foi aceita como evidência positiva. Tipagem opcional do novo helper também falhou e foi corrigida com JSDoc explícito |
 | Suíte local, antes/depois das dependências | PASS: 40 arquivos, 164/164 testes em ambas as execuções; 88,50s e 109,62s respectivamente em 24/10. Node 10/10 novamente. Zero falhas/unhandled errors; `npm test -- --maxWorkers=1 --no-file-parallelism`; timeout/asserts originais preservados |
@@ -64,7 +64,7 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 | QA remoto de autenticação e dependências | PASS domínio [40124217595](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40124217595), SHA `eb11de1`. Relatório baixado e relido: `partial-access-otp-required`, `accessProviderTested=false`, `productionTouched=false`; entrada `access-redirect`; 10 uploads e retry, publicação, favoritos, download, negação de mídia pública, **93 linhas D1 e 40 objetos R2 restaurados**, originais verificados byte a byte; archive/reset/disable revogam. Cookie HMAC sintético somente em QA. Primeiro piloto `40123168662` em `8dbe294` também passou com 70 linhas/30 objetos. Produção foi pulada pelo workflow e relida separadamente |
 | UX de erro no login | Red reproduziu JSON bruto para navegação HTML; Green incluído nos 164 testes: página privada recuperável, sem senha enganosa, API JSON preservada |
 | Navegador QA | Tela real Cloudflare “Log in to Punctum private albums QA 20261024” / “Send login code” observada |
-| OTP verdadeiro | BLOCKED até interação segura com a credencial do proprietário; nenhum código lido de e-mail ou solicitado em chat |
+| OTP verdadeiro | BLOCKED: retomada avançou por `browserAuth` ao formulário “Enter your code”; o provedor informou código enviado/validade 10 minutos. O campo Code recebeu e-mail e a validação HTML exibiu “Please match the requested format.”, antes de verificar o OTP. Entrega real, JWT e sessão ainda não comprovados; nenhum código lido de e-mail ou solicitado em chat |
 
 ## Riscos residuais e DoD
 
@@ -107,6 +107,8 @@ Cópia compartilhada no Drive `sgtmenezes`, pasta Punctum Picture: **BLOCKED**. 
 Próxima etapa dependente do proprietário: concluir o único método de entrada disponível (e-mail/OTP) no formulário seguro do navegador de QA. Nunca compartilhar o código em chat ou buscar o código pela API de e-mail. Primeiro confirmar identidade real e a negação D1 para e-mail não cadastrado; depois preparar somente uma conta Access de homologação no D1 de QA, repetir entrada, logout, incremento de `session_version`, desativação e reentrada. Se a autenticação segura não for concluída, preservar estes gates como BLOCKED. Nenhum dado de cliente real ou fotografia privada é necessário.
 
 Tentativa de interação real nesta missão: o formulário `browserAuth` foi acionado para o campo de e-mail observado na tela; a chamada foi interrompida sem resultado de submissão verificável. A aba não estava disponível na inspeção posterior. O resultado da autenticação é **UNKNOWN**, e os gates de identidade seguem **BLOCKED**; não se presume nem envio de OTP nem ausência de entrada de dados. Nenhuma credencial foi solicitada em chat ou lida de e-mail. Não houve nova tentativa automática após a interrupção.
+
+Retomada expressamente solicitada pelo proprietário: HEAD `d77e6de` e CI `40141337127` foram reconsultados, sem alteração de código. O formulário seguro de e-mail retornou `submitted` e a UI real avançou para o campo Code. A solicitação segura do Code também retornou `submitted`, mas a inspeção mostrou um endereço de e-mail no campo e o erro de formato HTML; **não houve autenticação OTP comprovada nem falha do verificador do Punctum demonstrada**. Esse resultado não homologa entrega por e-mail. Releitura sanitizada da API confirmou que o endereço escolhido não consta na política restrita do QA; a política e o IdP OTP foram preservados, sem ampliação automática de acesso. Para continuar, usar a identidade já autorizada (conta Drive Sgtmenezes) e os seis dígitos do código no próprio formulário do provedor, por transferência manual de autenticação. Não registrar endereços, códigos, nonces ou URLs de sessão no relatório. O deployment público foi relido e continua igual ao inicial.
 
 ## Fontes técnicas verificadas
 
