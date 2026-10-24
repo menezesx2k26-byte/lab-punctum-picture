@@ -9,6 +9,9 @@ import { AppError } from "../utils/errors";
 
 const PATH = "/internal/punctum-password/v1";
 type BridgeFetch = typeof fetch;
+const DUMMY_CREDENTIAL: ClientCredential = {
+  passwordHash: "A".repeat(43), passwordSalt: "A".repeat(22), passwordIterations: 310_000,
+};
 
 function providerConfig(env: Env) {
   const mode = envString(env, "CLIENT_PASSWORD_BACKEND") ?? "local";
@@ -18,6 +21,8 @@ function providerConfig(env: Env) {
   const text = envString(env, "CLIENT_PASSWORD_SERVICE_URL");
   const secret = envString(env, "CLIENT_PASSWORD_SERVICE_SECRET");
   if (!text || !secret || new TextEncoder().encode(secret).length < 32)
+    throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
+  if (["CLIENT_SESSION_SECRET", "ADMIN_SESSION_SECRET"].some((name) => envString(env, name) === secret))
     throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
   let url: URL;
   try { url = new URL(text); }
@@ -70,8 +75,26 @@ async function callBridge(
   try {
     if (Number(response.headers.get("content-length") ?? "0") > 2048)
       throw new Error("response too large");
-    const text = await response.text();
-    if (text.length > 2048) throw new Error("response too large");
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("empty response");
+    let size = 0;
+    const chunks: Uint8Array[] = [];
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > 2048) throw new Error("response too large");
+        chunks.push(value);
+      }
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const text = new TextDecoder().decode(bytes);
     data = JSON.parse(text);
   } catch {
     throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
@@ -106,9 +129,14 @@ export async function verifyClientPasswordWithProvider(
   fetcher: BridgeFetch = fetch,
 ): Promise<boolean> {
   if (!providerConfig(env)) return verifyClientPassword(password, credential);
-  const data = await callBridge({ operation: "verify", password, credential }, env, fetcher);
+  // ACCESS_ONLY markers/corrupt rows must produce the same denied login as an
+  // unknown account. Still do equivalent backend work; never accept dummy success.
+  const usable = isCredential(credential);
+  const data = await callBridge({
+    operation: "verify", password, credential: usable ? credential : DUMMY_CREDENTIAL,
+  }, env, fetcher);
   const valid = (data as { valid?: unknown } | null)?.valid;
   if (typeof valid !== "boolean")
     throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
-  return valid;
+  return usable && valid;
 }

@@ -6,6 +6,7 @@ import {
   privatePreviewConfig,
   waitForPreviewStatus,
   PRIVATE_PREVIEW_NAMES as names,
+  assertPreviewLoginEntry,
 } from "./lib/private-preview.mjs";
 
 assert.equal(
@@ -245,12 +246,23 @@ try {
     return response;
   }
   for (let attempt = 0; attempt < 12; attempt++) {
-    const response = await fetch(origin + "/albuns/entrar");
-    if (response.status === (accessMode ? 401 : 200)) break;
-    if (attempt === 11) throw new Error("Preview did not become ready.");
-    await sleep(1000);
+    try {
+      report.loginEntry = assertPreviewLoginEntry(
+        await fetch(origin + "/albuns/entrar", { redirect: "manual" }),
+        {
+          authMode: accessMode ? "access" : "password",
+          accessTeamDomain: process.env.CLIENT_ACCESS_TEAM_DOMAIN || undefined,
+          accessAudience: process.env.CLIENT_ACCESS_AUD || undefined,
+        },
+      );
+      break;
+    } catch (error) {
+      if (attempt === 11) throw error;
+      await sleep(1000);
+    }
   }
-  await request("/albuns/entrar", "GET", undefined, "", accessMode ? 401 : 200);
+  if (report.loginEntry !== "access-redirect")
+    await request("/albuns/entrar", "GET", undefined, "", accessMode ? 401 : 200);
   await request("/albuns", "GET", undefined, "", 303);
   await waitForPreviewStatus({
     probe: async () =>
@@ -262,7 +274,7 @@ try {
     pause: () => sleep(1000),
   });
   record(
-    "deployed SSR login, page gate, private headers and rotated admin session",
+    "login entry (real Access redirect when configured), page gate, private headers and rotated admin session",
   );
   const email = "pilot-" + randomUUID() + "@example.invalid";
   const accountData = await (
@@ -615,7 +627,7 @@ try {
     accessMode ? 405 : 401,
   );
   record("archive, reset and disabled account revocation after restoration");
-  report.status = accessMode ? "partial-access-setup-required" : "passed";
+  report.status = accessMode ? "partial-access-otp-required" : "passed";
 } catch (error) {
   report.status = "failed";
   report.error = error.message;

@@ -46,10 +46,10 @@ Uploads abandonados expiram e a limpeza existente remove apenas objetos não pro
 
 Executar Deploy (deploy.yml) na branch de revisão com environment=preview. Exige os secrets CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN e CLOUDFLARE_D1_API_TOKEN no ambiente preview/repositório. O script recusa outros accounts, IDs de D1 de produção e execução fora do GitHub Actions; substitui rotas, bindings, segredos e cron. Nenhum recurso de produção é reutilizado. O artifact private-galleries-preview-report contém somente o JSON sanitizado, sem originais, senhas ou cookies. Recursos QA são preservados para inspeção e não contêm clientes reais.
 
-## Plano de CPU — opção B selecionada (Cloudflare Access Free)
+## Arquitetura principal sem Workers Paid — Cloudflare Access Free
 
 **Escolha vigente:** autenticação por código de e-mail do Cloudflare Access Free; ver [runbook detalhado](./private-client-galleries-access-free.md). O login por senha/PBKDF2/310000 fica no caminho de compatibilidade, desativado quando CLIENT_AUTH_MODE='access'. Não reduzir iterações para contornar limites de CPU.
 
-O Workers Free segue limitado a 10 ms de CPU por requisição: os testes locais **não** comprovam que SSR, mídia e todas as rotas cabem no limite. O piloto de preview no modo Access usa recursos isolados sem `limits.cpu_ms`, e relatório `partial-access-setup-required` até validar JWT/OTP reais e o ciclo completo. Somente depois dos testes reais sem `exceededCpu` e aprovação da operação considerar o gate fechado.
+O Workers Free segue limitado a 10 ms de CPU por requisição: testes locais **não** comprovam que SSR, mídia e todas as rotas cabem no limite. O piloto usa recursos isolados sem limite pago de CPU. Com app Access configurada, exige o redirecionamento real ao team/AUD exatos e reporta `partial-access-otp-required` enquanto o OTP verdadeiro não tiver sido validado. Somente depois da identidade real, ciclo completo no edge e aprovação da operação considerar o gate fechado. Ver o [relatório atual](./private-client-galleries-auth-homologation-2026-10-24.md).
 
-O histórico do modo com senhas registrou excesso de CPU em 350 ms e rejeição de limite customizado `code 100328` no Workers Free. Workers Paid continua sendo uma alternativa comercial possível, **não é requisito da opção B**. Não realizar assinatura sem autorização do proprietário.
+O histórico do modo com senhas registrou excesso de CPU em 350 ms e rejeição de limite customizado `code 100328` no Workers Free. Workers Paid está fora do escopo e sua contratação é proibida nesta missão. O bridge permanece secundário, desativado e condicionado a app isolada; o domínio Node identificado serve PersistFlow e não pode recebê-lo.

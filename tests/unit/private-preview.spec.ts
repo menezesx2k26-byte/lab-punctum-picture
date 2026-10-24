@@ -3,6 +3,7 @@ import {
   privatePreviewConfig,
   waitForPreviewStatus,
   PRIVATE_PREVIEW_NAMES,
+  assertPreviewLoginEntry,
 } from "../../scripts/lib/private-preview.mjs";
 describe("isolated gallery preview", () => {
   it("replaces all production bindings, routes, secrets and schedules", () => {
@@ -25,7 +26,7 @@ describe("isolated gallery preview", () => {
         origin: "https://preview.example.workers.dev",
       },
     );
-    expect(config.limits.cpu_ms).toBe(2000);
+    expect(config.limits).toBeUndefined();
     expect(config.name).toBe(PRIVATE_PREVIEW_NAMES.worker);
     expect(config.routes).toEqual([]);
     expect(config.triggers.crons).toEqual([]);
@@ -102,6 +103,19 @@ describe("isolated gallery preview", () => {
 });
 
 describe("preview propagation gate", () => {
+  it("accepts only the real configured Access login redirect without claiming OTP success", () => {
+    const config = { authMode: "access", accessTeamDomain: "qa.cloudflareaccess.com", accessAudience: "qa-audience" };
+    const response = (location: string) => new Response(null, { status: 302, headers: { Location: location } });
+    expect(assertPreviewLoginEntry(response("https://qa.cloudflareaccess.com/cdn-cgi/access/login/qa.workers.dev?kid=qa-audience"), config)).toBe("access-redirect");
+    for (const location of [
+      "https://attacker.example/cdn-cgi/access/login/qa.workers.dev?kid=qa-audience",
+      "https://qa.cloudflareaccess.com/cdn-cgi/access/login/qa.workers.dev?kid=wrong-audience",
+      "http://qa.cloudflareaccess.com/cdn-cgi/access/login/qa.workers.dev?kid=qa-audience",
+    ]) expect(() => assertPreviewLoginEntry(response(location), config)).toThrow();
+    expect(() => assertPreviewLoginEntry(new Response(null, { status: 401 }), config)).toThrow();
+    expect(assertPreviewLoginEntry(new Response(null, { status: 401 }), { authMode: "access" })).toBe("access-unconfigured");
+    expect(assertPreviewLoginEntry(new Response("Login"), { authMode: "password" })).toBe("password");
+  });
   it("waits for a newly rotated session before allowing the pilot to continue", async () => {
     const statuses = [403, 403, 200];
     let probes = 0,

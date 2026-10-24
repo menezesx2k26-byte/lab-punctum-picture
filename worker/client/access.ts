@@ -51,8 +51,14 @@ export async function verifyClientAccessIdentity(
       issuer,
       audience,
       algorithms: ["RS256"],
+      requiredClaims: ["exp", "iat", "sub", "email", "type"],
     });
     if (
+      payload.type !== "app" ||
+      typeof payload.sub !== "string" || !payload.sub || payload.sub.length > 256 ||
+      !Number.isInteger(payload.iat) ||
+      payload.iat! > Math.floor(Date.now() / 1000) + 30 ||
+      payload.exp! <= payload.iat! ||
       typeof payload.email !== "string" ||
       payload.email.length > 180 ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)

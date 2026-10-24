@@ -45,4 +45,40 @@ describe("Hostinger crypto provider", () => {
     expect(c.passwordIterations).toBe(310000);
     expect(await verifyClientPasswordWithProvider("password", c, env)).toBe(true);
   });
+
+  it("rejects reusing application session secrets for the bridge", async () => {
+    for (const name of ["CLIENT_SESSION_SECRET", "ADMIN_SESSION_SECRET"]) {
+      const unsafe = setup({ [name]: secret });
+      const ok: typeof fetch = async () => new Response(JSON.stringify({ valid: true }));
+      await expect(verifyClientPasswordWithProvider("password", credential, unsafe, ok)).rejects.toMatchObject({ status: 503 });
+    }
+  });
+
+  it("cancels an oversized chunked backend response before draining it", async () => {
+    let reads = 0;
+    let cancelled = false;
+    const oversized: typeof fetch = async () => new Response(new ReadableStream({
+      pull(controller) {
+        reads++;
+        if (reads <= 10) controller.enqueue(new Uint8Array(1024).fill(32));
+        else controller.close();
+      },
+      cancel() { cancelled = true; },
+    }));
+    await expect(verifyClientPasswordWithProvider("password", credential, setup(), oversized)).rejects.toMatchObject({ status: 503 });
+    expect(cancelled).toBe(true);
+    expect(reads).toBeLessThan(10);
+  });
+
+  it("denies Access-only or corrupt legacy credentials without distinguishing account existence", async () => {
+    const backend: typeof fetch = async (_url, init) => {
+      const input = JSON.parse(String(init?.body)) as { credential: { passwordHash: string } };
+      return input.credential.passwordHash === "ACCESS_ONLY"
+        ? new Response("{}", { status: 400 })
+        : new Response(JSON.stringify({ valid: true }));
+    };
+    await expect(verifyClientPasswordWithProvider("password", {
+      passwordHash: "ACCESS_ONLY", passwordSalt: "ACCESS_ONLY", passwordIterations: 310000,
+    }, setup(), backend)).resolves.toBe(false);
+  });
 });

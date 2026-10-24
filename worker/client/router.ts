@@ -13,7 +13,7 @@ import { requireDb } from "../utils/env";
 import { apiError } from "../utils/response";
 import { envString } from "../utils/env";
 import { AppError } from "../utils/errors";
-import { privateResponse } from "./response";
+import { privateResponse, privateEntryError } from "./response";
 
 export function isPrivateGalleriesEnabled(env: Env): boolean {
   return envString(env, "PRIVATE_GALLERIES_ENABLED") === "true";
@@ -89,6 +89,11 @@ export async function handlePrivateGalleryRoutes(
       throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
     return null;
   } catch (error) {
-    return privateResponse(apiError(error));
+    const response = apiError(error);
+    if (isPrivateGalleriesEnabled(env) && envString(env, "CLIENT_AUTH_MODE") === "access" &&
+      url.pathname === "/albuns/entrar" && request.method === "GET" &&
+      request.headers.get("Accept")?.includes("text/html"))
+      return privateEntryError(response.status);
+    return privateResponse(response);
   }
 }

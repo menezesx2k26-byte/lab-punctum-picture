@@ -30,8 +30,9 @@ describe("private client Access Free alternative", () => {
     jwk.alg = "RS256";
     const keys = createLocalJWKSet({ keys: [jwk] });
     const sign = async (props: { issuer?: string; audience?: string; email?: string }) =>
-      new SignJWT({ email: props.email ?? "TEST@EXAMPLE.COM" })
+      new SignJWT({ email: props.email ?? "TEST@EXAMPLE.COM", type: "app" })
         .setProtectedHeader({ alg: "RS256", kid: "test-key" })
+        .setSubject("test-client-identity")
         .setIssuer(props.issuer ?? config.issuer)
         .setAudience(props.audience ?? config.audience)
         .setIssuedAt()
@@ -64,6 +65,29 @@ describe("private client Access Free alternative", () => {
         CLIENT_ACCESS_TEAM_DOMAIN: "attacker.example",
       } as Env),
     ).toThrowError("Configuração de acesso indisponível.");
+  });
+
+  it("requires exp, iat, subject and an application identity on every Access JWT", async () => {
+    const config = accessConfiguration(accessEnv());
+    const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const jwk = { ...await exportJWK(publicKey), kid: "claims-key", alg: "RS256" };
+    const keys = createLocalJWKSet({ keys: [jwk] });
+    const now = Math.floor(Date.now() / 1000);
+    const valid = { email: "qa@example.com", type: "app", sub: "qa-subject", iat: now, exp: now + 300 };
+    const sign = (claims: Record<string, unknown>) => new SignJWT(claims)
+      .setProtectedHeader({ alg: "RS256", kid: "claims-key" })
+      .setIssuer(config.issuer).setAudience(config.audience).sign(privateKey);
+    await expect(verifyClientAccessIdentity(await sign(valid), accessEnv(), keys)).resolves.toBe("qa@example.com");
+    for (const field of ["exp", "iat", "sub", "type"]) {
+      const incomplete: Record<string, unknown> = { ...valid };
+      delete incomplete[field];
+      await expect(verifyClientAccessIdentity(await sign(incomplete), accessEnv(), keys)).rejects.toMatchObject({ status: 401 });
+    }
+    for (const claims of [
+      { ...valid, type: "service" }, { ...valid, sub: "" },
+      { ...valid, iat: now + 120 }, { ...valid, exp: now - 1 },
+      { ...valid, nbf: now + 120 },
+    ]) await expect(verifyClientAccessIdentity(await sign(claims), accessEnv(), keys)).rejects.toMatchObject({ status: 401 });
   });
 
   it("never derives a password when creating an Access-only customer", async () => {
@@ -118,5 +142,24 @@ describe("private client Access Free alternative", () => {
       logoutUrl: "/cdn-cgi/access/logout",
     });
     expect(out?.headers.get("Set-Cookie")).toContain("Max-Age=0");
+  });
+
+  it("shows a private recoverable browser error without a misleading password form", async () => {
+    const entry = new URL("http://localhost:8787/albuns/entrar");
+    const response = await handlePrivateGalleryRoutes(new Request(entry, {
+      headers: { Accept: "text/html" },
+    }), entry, accessEnv());
+    expect(response?.status).toBe(401);
+    expect(response?.headers.get("Content-Type")).toContain("text/html");
+    expect(response?.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response?.headers.get("X-Robots-Tag")).toContain("noindex");
+    const html = await response!.text();
+    expect(html).toContain("Punctum Picture");
+    expect(html).toContain('href="/albuns/entrar"');
+    expect(html).not.toContain('type="password"');
+    const apiResponse = await handlePrivateGalleryRoutes(new Request(entry, {
+      headers: { Accept: "application/json" },
+    }), entry, accessEnv());
+    expect(apiResponse?.headers.get("Content-Type")).toContain("application/json");
   });
 });

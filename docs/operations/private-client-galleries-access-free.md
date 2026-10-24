@@ -1,10 +1,12 @@
 # Punctum Picture — alternativa sem Workers Paid (Cloudflare Access Free)
 
-**Estado em 2026-10-22:** IMPLEMENTAÇÃO EM PR / NÃO ATIVADA EM PRODUÇÃO.  
+**Estado em 2026-10-24:** IMPLEMENTAÇÃO EM PR / NÃO ATIVADA EM PRODUÇÃO. App Access e OTP de QA criados; autenticação OTP real ainda precisa de prova.
 **Gate:** requer aplicativo real Cloudflare Access, teste de login por e-mail no edge e piloto completo.  
 **Não altera:** lente, carrossel, autorretrato, portfólio público e publicação existente.
 
 ## Decisão técnica
+
+Atualização de 24/10: a API confirmou Teams Free Base, preço base zero, cota compartilhada de 50 usuários e ausência de Workers Paid. Foi criado um app `self_hosted` exclusivo para `punctum-picture-albums-qa.menezesx2k26.workers.dev/albuns/entrar`, com OTP, sessão de 1 hora e política restrita ao proprietário para homologação. As variáveis team/AUD foram configuradas somente no GitHub Environment `preview`. O navegador mostrou a tela real Cloudflare “Send login code”. Isso comprova roteamento e UI do provedor, **não entrega/validação do OTP nem emissão de sessão Punctum**. Nenhuma rota de produção foi alterada.
 
 Usar Cloudflare Access como provedor de identidade com One-time PIN (OTP) por e-mail, somente para **entrar** nos álbuns privados. A aplicação mantém a autorização por cliente/galeria no D1 e seus próprios cookies HTTP-only HMAC de 12 horas. A validação de senha PBKDF2/310000 continua no código de compatibilidade, mas não é executada quando `CLIENT_AUTH_MODE=access`. A troca de modo altera a audience assinada do cookie, invalidando sessões do modo anterior.
 
@@ -18,7 +20,7 @@ Segundo a página pública de preços da Cloudflare, o Zero Trust/Access Free é
 
 1. Criar **aplicativo Access Self-hosted para o caminho exato `/albuns/entrar`**, na origem autorizada do Punctum. Não proteger `punctumpicture.com/*` (o portfólio público deve permanecer público). Configurar login One-time PIN por e-mail e política de acesso adequada ao estúdio. A app exige sessão Access antes de repassar esse caminho ao Worker.
 2. Configurar `CLIENT_AUTH_MODE=access`, `CLIENT_ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com` e `CLIENT_ACCESS_AUD=<audience da app de álbuns>` nos bindings **apenas** do Worker escolhido. O AUD da app de clientes deve ser independente do Access administrativo. Validar que nenhuma variável contém domínio/segredo de produção no QA. O binding team domain está restrito por código a `*.cloudflareaccess.com`, HTTPS.
-3. Requisitar `/albuns/entrar`: Cloudflare Access envia `Cf-Access-Jwt-Assertion`, o Worker confirma criptograficamente assinatura RS256, emissor, audience, expiração e e-mail, em seguida localiza o cliente **ativo** no D1 e emite `punctum_client_session` próprio. Sem JWT válido, sem conta cadastrada, desativada ou com `must_change_password=1`, o login falha. Nunca confiar apenas em `Cf-Access-Authenticated-User-Email`.
+3. Requisitar `/albuns/entrar`: Cloudflare Access envia `Cf-Access-Jwt-Assertion`; o Worker valida RS256, emissor, audience e claims obrigatórios `exp`, `iat`, `sub`, `email`, `type=app`. Rejeita emissão futura e expiração anterior à emissão. Em seguida exige cliente **ativo** no D1 e emite `punctum_client_session`. Sem JWT válido, conta cadastrada/habilitada e `must_change_password=0`, o login falha. Nunca confiar apenas em `Cf-Access-Authenticated-User-Email`.
 4. Demais caminhos privados `/albuns`, `/api/client/*` e mídia continuam exigindo cookie assinado e autorização atual por D1. Downloads continuam condicionados ao estado do álbum e à permissão. A conta do cliente não vira administrador.
 5. Logout limpa o cookie da aplicação e direciona para `/cdn-cgi/access/logout` no domínio; o endpoint Cloudflare revoga a sessão de identidade. Revogação imediata dos **cookies da aplicação** depende de desativar cliente ou incrementar `session_version` (ação administrativa). O logout do Access afeta também outras apps Access do usuário.
 6. Cadastro admin em modo Access deixa de executar PBKDF2 ou exibir senha temporária. Os campos de senha existentes na migration 0009 recebem marcadores `ACCESS_ONLY` não utilizáveis; `password_iterations=310000` preserva o CHECK sem efetuar derivação. A ação administrativa antes denominada `reset-password` passa a **revogar sessões e reenquadrar conta** em Access, sem devolver senha. Clientes legados com `must_change_password=1` precisam desse reenquadramento **antes** de acessar via OTP.
@@ -35,7 +37,7 @@ Segundo a página pública de preços da Cloudflare, o Zero Trust/Access Free é
 
 ## Limitação do piloto automatizado no preview
 
-O workflow `Deploy` com `environment=preview` utiliza somente D1 e R2 isolados, não aplica `limits.cpu_ms` quando o modo é Access e exige `PRIVATE_GALLERY_PREVIEW_AUTH_MODE=access`. Por padrão, a configuração dos testes inclui team domain/AUD **marcadores**, sem app Access real. Para testar OTP de verdade, definir juntas as GitHub Environment vars `CLIENT_ACCESS_TEAM_DOMAIN` (hostname sem protocolo, `<team>.cloudflareaccess.com`) e `CLIENT_ACCESS_AUD` (AUD da app **somente QA**). Se uma delas faltar, o preview recusa a configuração; essas variáveis não modificam a app no dashboard.
+O workflow `Deploy` com `environment=preview` usa somente D1/R2 isolados e não aplica `limits.cpu_ms` de plano pago em nenhum modo. O caminho principal exige `PRIVATE_GALLERY_PREVIEW_AUTH_MODE=access`. Sem configuração explícita ainda há marcadores, que não homologam identidade. Com as duas vars de QA presentes, o piloto exige o redirecionamento HTTPS 302 ao team/AUD exatos do app real. O relatório continua parcial até OTP verdadeiro; essas variáveis não modificam a app no dashboard.
 
 Para conseguir verificar as rotas internas (álbum, uploads, favoritos, download, revogação, restauração), o script gera uma **sessão HMAC exclusivamente de QA** com um segredo aleatório do Worker preview, sem forjar um JWT do Cloudflare Access. Esse cookie nunca é exportado em artefatos. O relatório declara `accessProviderTested:false` e `status:partial-access-setup-required`, mesmo quando as rotas de QA passam.
 

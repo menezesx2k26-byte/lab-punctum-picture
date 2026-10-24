@@ -50,7 +50,6 @@ export function privatePreviewConfig(
     name: PRIVATE_PREVIEW_NAMES.worker,
     account_id: "257bca437616da74ece1ce4bbaf0bd89",
     workers_dev: true,
-    ...(authMode === "password" ? { limits: { cpu_ms: 2000 } } : {}),
     preview_urls: false,
     routes: [],
     triggers: { crons: [] },
@@ -91,8 +90,35 @@ export function privatePreviewConfig(
     ],
     images: { binding: "IMAGES" },
   };
-  if (authMode === "access") delete config.limits;
+  // QA never requests a paid Workers CPU allowance, including legacy-password QA.
+  delete config.limits;
   return config;
+}
+
+/**
+ * @param {Response} response
+ * @param {{ authMode: string, accessTeamDomain?: string, accessAudience?: string }} config
+ */
+export function assertPreviewLoginEntry(response, config) {
+  const { authMode, accessTeamDomain, accessAudience } = config;
+  if (authMode !== "access") {
+    if (response.status !== 200) throw new Error("Password login entry unavailable.");
+    return "password";
+  }
+  if (!accessTeamDomain && !accessAudience) {
+    if (response.status !== 401) throw new Error("Unconfigured Access entry must fail closed.");
+    return "access-unconfigured";
+  }
+  if (!accessTeamDomain || !accessAudience || response.status !== 302)
+    throw new Error("Configured Access login redirect unavailable.");
+  const location = new URL(response.headers.get("Location") ?? "");
+  if (location.protocol !== "https:" || location.hostname !== accessTeamDomain ||
+    location.username || location.password ||
+    !location.pathname.startsWith("/cdn-cgi/access/login/") ||
+    location.searchParams.get("kid") !== accessAudience)
+    throw new Error("Unexpected Access login destination.");
+  // Reaching this page is evidence of provider routing, never successful OTP.
+  return "access-redirect";
 }
 
 export async function waitForPreviewStatus({

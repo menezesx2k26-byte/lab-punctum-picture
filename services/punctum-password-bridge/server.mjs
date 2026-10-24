@@ -5,6 +5,7 @@ import {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
+import { createReplayStore } from "./replay-store.mjs";
 
 const PATH = "/internal/punctum-password/v1";
 const ITERATIONS = 310_000;
@@ -23,18 +24,22 @@ const json = (response, status, payload) => {
 };
 const validSecret = (value) => typeof value === "string" && Buffer.byteLength(value) >= 32;
 
-export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
+export function createPasswordBridgeServer({ secret, replayDirectory, now = Date.now, maxRequestsPerMinute = 120 } = {}) {
   if (!validSecret(secret)) throw new Error("PUNCTUM_PASSWORD_BRIDGE_SECRET requires 32+ bytes.");
-  const usedNonces = new Map();
+  const claimNonce = createReplayStore(replayDirectory, now);
+  if (!Number.isInteger(maxRequestsPerMinute) || maxRequestsPerMinute < 1 || maxRequestsPerMinute > 120)
+    throw new Error("Invalid bridge request limit.");
   let working = 0;
+  let windowStarted = now();
+  let requests = 0;
 
-  function authorized(timestamp, nonce, signature, body) {
+  async function authorized(timestamp, nonce, signature, body) {
     if (
       typeof timestamp !== "string" ||
       !/^\d{13}$/.test(timestamp) ||
       Math.abs(now() - Number(timestamp)) > 30_000 ||
       typeof nonce !== "string" ||
-      !/^[0-9a-f-]{36}$/.test(nonce) ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(nonce) ||
       typeof signature !== "string" ||
       !/^[a-zA-Z0-9_-]{43}$/.test(signature)
     ) return false;
@@ -44,12 +49,7 @@ export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
       .digest();
     if (received.length !== expected.length || !timingSafeEqual(received, expected))
       return false;
-    // Replays are rejected for the lifetime of the process. Deploy with one Node
-    // instance or use a shared replay store before multi-instance production.
-    for (const [n, age] of usedNonces) if (age < now() - 60_000) usedNonces.delete(n);
-    if (usedNonces.has(nonce) || usedNonces.size > 10_000) return false;
-    usedNonces.set(nonce, now());
-    return true;
+    return claimNonce(nonce);
   }
   function derive(password, salt) {
     return new Promise((resolve, reject) => {
@@ -59,7 +59,7 @@ export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
       });
     });
   }
-  return http.createServer(async (request, response) => {
+  const server = http.createServer(async (request, response) => {
     if (request.method === "GET" && request.url === "/healthz") {
       return json(response, 200, { ok: true, component: "punctum-password-bridge" });
     }
@@ -70,6 +70,10 @@ export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
     if (Number(request.headers["content-length"]) > MAX_BODY)
       return json(response, 413, { error: "PAYLOAD_TOO_LARGE" });
 
+    // Reserve BEFORE the first await. Slow/chunked requests count toward capacity.
+    working++;
+    request.setTimeout(5000, () => request.destroy());
+    try {
     const pieces = [];
     let bodySize = 0;
     for await (const chunk of request) {
@@ -79,12 +83,16 @@ export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
       pieces.push(chunk);
     }
     const body = Buffer.concat(pieces).toString("utf8");
-    if (!authorized(
+    if (!await authorized(
       request.headers["x-punctum-timestamp"],
       request.headers["x-punctum-nonce"],
       request.headers["x-punctum-signature"],
       body,
     )) return json(response, 401, { error: "UNAUTHORIZED" });
+
+    if (now() - windowStarted >= 60_000) { windowStarted = now(); requests = 0; }
+    if (++requests > maxRequestsPerMinute)
+      return json(response, 429, { error: "RATE_LIMITED" });
 
     let input;
     try { input = JSON.parse(body); }
@@ -98,12 +106,12 @@ export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
     if (input.operation === "verify" && (
       !input.credential ||
       input.credential.passwordIterations !== ITERATIONS ||
+      typeof input.credential.passwordHash !== "string" ||
+      typeof input.credential.passwordSalt !== "string" ||
       !/^[A-Za-z0-9_-]{43}$/.test(input.credential.passwordHash || "") ||
       !/^[A-Za-z0-9_-]{22}$/.test(input.credential.passwordSalt || "")
     )) return json(response, 400, { error: "INVALID_REQUEST" });
 
-    working++;
-    try {
       if (input.operation === "hash") {
         const salt = randomBytes(16);
         const hash = await derive(input.password, salt);
@@ -124,10 +132,16 @@ export function createPasswordBridgeServer({ secret, now = Date.now } = {}) {
       const valid = hash.length === expected.length && timingSafeEqual(hash, expected);
       return json(response, 200, { valid });
     } catch {
-      return json(response, 503, { error: "CRYPTO_UNAVAILABLE" });
+      if (!response.destroyed && !response.headersSent)
+        return json(response, 503, { error: "SERVICE_UNAVAILABLE" });
     } finally {
       working--;
     }
   });
+  server.headersTimeout = 10_000;
+  server.requestTimeout = 15_000;
+  server.keepAliveTimeout = 5000;
+  server.maxHeadersCount = 32;
+  return server;
 }
 export const BRIDGE_PATH = PATH;
