@@ -106,6 +106,8 @@ Cópia compartilhada no Drive `sgtmenezes`, pasta Punctum Picture: **BLOCKED**. 
 
 Próxima etapa dependente do proprietário: concluir o único método de entrada disponível (e-mail/OTP) no formulário seguro do navegador de QA. Nunca compartilhar o código em chat ou buscar o código pela API de e-mail. Primeiro confirmar identidade real e a negação D1 para e-mail não cadastrado; depois preparar somente uma conta Access de homologação no D1 de QA, repetir entrada, logout, incremento de `session_version`, desativação e reentrada. Se a autenticação segura não for concluída, preservar estes gates como BLOCKED. Nenhum dado de cliente real ou fotografia privada é necessário.
 
+Tentativa de interação real nesta missão: o formulário `browserAuth` foi acionado para o campo de e-mail observado na tela; a chamada foi interrompida sem resultado de submissão verificável. A aba não estava disponível na inspeção posterior. O resultado da autenticação é **UNKNOWN**, e os gates de identidade seguem **BLOCKED**; não se presume nem envio de OTP nem ausência de entrada de dados. Nenhuma credencial foi solicitada em chat ou lida de e-mail. Não houve nova tentativa automática após a interrupção.
+
 ## Fontes técnicas verificadas
 
 - https://developers.cloudflare.com/workers/configuration/cloudflare-access/
