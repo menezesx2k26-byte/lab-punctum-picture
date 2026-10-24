@@ -22,7 +22,7 @@
 - [ ] Complete real OTP and negative/provider checks through secure owner authentication; do not read email codes or substitute synthetic identity.
 - [x] Review code diff, push with branch-head check, verify code CI and remote pilot; record versioned report/cost/rollback/DoD.
 - [x] Resolve newly verified lockfile advisories with compatible updates, repeat audit/full verification/CI/isolated QA; never use forced downgrades or unrelated framework migrations.
-- [ ] Finish documentary commit CI, PR metadata readback and shared continuity checkpoint; real OTP remains independently blocked.
+- [x] Save documentary evidence and execute continuity gate; Drive upload BLOCKED quota exceeded, PersistFlow BLOCKED connector internal error. Preserve repo checkpoint; verify final PR checks before ending. Real OTP remains independently blocked.
 
 ## Review focus
 
@@ -42,3 +42,4 @@
 - Ruling: extend the security pass to dependencies after fresh npm audit confirmed 20 affected package entries (1 critical,12 high,7 moderate). Apply supported patch/minor versions and compatible transitive updates; do not infer exploitation of the deployed app from package advisories. No public deploy.
 - Dependency fixes verified: npm audit zero; typecheck/lint/build, 164 Worker + 10 Node tests and drizzle-kit check PASS. Commit eb11de1 pushed/read back; CI 40124208865 and preview 40124217595 PASS; preview remains partial-access-otp-required (93 rows/40 objects).
 - Final production readback matches original deployment/version at 100%; public API SHA256 unchanged. No public code/assets/migrations changed during this mission.
+- Documentation checkpoint 5fb9897 contains code/CI/QA provenance. Shared Drive upload failed with storageQuotaExceeded; no cleanup or account switching. PersistFlow is not declared active. PR13 remains draft/open/unmerged.

@@ -102,6 +102,8 @@ Não houve contratação, upgrade ou nova dependência de runtime. Operações/a
 
 Estado específico e evidências ficam neste repositório/PR. Tentativas de criação e inspeção do run `punctum-auth-homologation-20261024` no conector PersistFlow retornaram erro interno; **persistência/takeover não estão declarados ativos**. O checkpoint compartilhado deve registrar esse bloqueio sem alterar o PersistFlow existente.
 
+Cópia compartilhada no Drive `sgtmenezes`, pasta Punctum Picture: **BLOCKED**. O upload do relatório verificado retornou HTTP 403 `storageQuotaExceeded` (cota excedida). Nenhum arquivo foi apagado, permissão alterada ou outra conta usada para contornar o bloqueio. A PR e este relatório permanecem como checkpoint durável verificável; liberar espaço/cota exige ação do proprietário.
+
 Próxima etapa dependente do proprietário: concluir o único método de entrada disponível (e-mail/OTP) no formulário seguro do navegador de QA. Nunca compartilhar o código em chat ou buscar o código pela API de e-mail. Primeiro confirmar identidade real e a negação D1 para e-mail não cadastrado; depois preparar somente uma conta Access de homologação no D1 de QA, repetir entrada, logout, incremento de `session_version`, desativação e reentrada. Se a autenticação segura não for concluída, preservar estes gates como BLOCKED. Nenhum dado de cliente real ou fotografia privada é necessário.
 
 ## Fontes técnicas verificadas
