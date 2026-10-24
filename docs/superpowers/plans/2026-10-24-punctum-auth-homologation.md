@@ -20,8 +20,9 @@
 - [x] Run local baseline/final typecheck, lint, unit/integration tests, Node service tests and build.
 - [x] Configure only dedicated QA Access app; observe real provider UI and run synthetic domain/D1/R2 pilot. Record distinction from real identity.
 - [ ] Complete real OTP and negative/provider checks through secure owner authentication; do not read email codes or substitute synthetic identity.
-- [ ] Review final diff, push with branch-head check, verify CI, update PR body and versioned report/cost/rollback/DoD.
-- [ ] Resolve newly verified lockfile advisories with compatible updates, repeat audit/full verification/CI/isolated QA; never use forced downgrades or unrelated framework migrations.
+- [x] Review code diff, push with branch-head check, verify code CI and remote pilot; record versioned report/cost/rollback/DoD.
+- [x] Resolve newly verified lockfile advisories with compatible updates, repeat audit/full verification/CI/isolated QA; never use forced downgrades or unrelated framework migrations.
+- [ ] Finish documentary commit CI, PR metadata readback and shared continuity checkpoint; real OTP remains independently blocked.
 
 ## Review focus
 
@@ -39,4 +40,5 @@
 - PersistFlow checkpoint service returned internal error on run creation; do not claim continuity active.
 - 8dbe294 pushed and read back on PR13; local final 164 + 10 tests/typecheck/lint/build PASS. CI 40123116360 PASS; isolated preview 40123168662 PASS for domain (70 D1 rows/30 R2 objects), partial-access-otp-required.
 - Ruling: extend the security pass to dependencies after fresh npm audit confirmed 20 affected package entries (1 critical,12 high,7 moderate). Apply supported patch/minor versions and compatible transitive updates; do not infer exploitation of the deployed app from package advisories. No public deploy.
-- Dependency fixes locally verified: npm audit zero; typecheck/lint/build, 164 Worker + 10 Node tests and drizzle-kit check PASS. New CI/QA required for updated lockfile.
+- Dependency fixes verified: npm audit zero; typecheck/lint/build, 164 Worker + 10 Node tests and drizzle-kit check PASS. Commit eb11de1 pushed/read back; CI 40124208865 and preview 40124217595 PASS; preview remains partial-access-otp-required (93 rows/40 objects).
+- Final production readback matches original deployment/version at 100%; public API SHA256 unchanged. No public code/assets/migrations changed during this mission.

@@ -2,7 +2,7 @@
 
 Data: 24/10/2026, America/Sao_Paulo. PR #13, branch `agent/private-client-albums-20261022`.
 Baseline auditada: `5b5e1934c62bcb7f0876afb406990522fcbfd3a9`; base da PR `af55e1526b731be099e804335eb143d2b5cfa95e`.
-**Estado deste checkpoint: CORREÇÕES E PRIMEIRO PILOTO REMOTO APROVADOS; DEPENDÊNCIAS CORRIGIDAS AGUARDAM NOVA CI/QA; NO-GO para produção.** Não confundir CI, cookies sintéticos ou tela de OTP com identidade homologada.
+**Estado: CÓDIGO, DEPENDÊNCIAS, CI E PILOTO DE DOMÍNIO APROVADOS; IDENTIDADE REAL BLOCKED; NO-GO para produção.** Não confundir CI, cookies sintéticos ou tela de OTP com identidade homologada. [Evidência sanitizada versionada](evidence/2026-10-24-private-auth-qa.json).
 
 ## Arquitetura escolhida
 
@@ -23,7 +23,7 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 ## Infraestrutura identificada por evidência atual
 
 - Cloudflare: conta do Punctum confirmada; assinatura `teams_free`/Teams Free Base com 50 usuários e preço base 0; R2 Paid existente é distinto de Workers Paid. A listagem de assinaturas não mostrou Workers Paid. Nenhum plano foi alterado.
-- Worker público: `punctum-picture-migration`; deployment observado `366e1e15-ee14-46fd-aa39-4b86c5c1fd8c`, versão `84b4e28d-9c26-4024-81bc-ccf5a98a7dca`, publicado em `2026-10-22T15:55:07.361378Z`. Ainda será comparado ao fechamento.
+- Worker público: `punctum-picture-migration`; deployment `366e1e15-ee14-46fd-aa39-4b86c5c1fd8c`, versão `84b4e28d-9c26-4024-81bc-ccf5a98a7dca` a 100%, publicado em `2026-10-22T15:55:07.361378Z`: **iguais na auditoria inicial e na releitura após o QA final**. GET `/api/public/site` retornou 200 e SHA256 `509a13aa848a1b0120a61ee09eb733433122d8429b1c296281ee5156cc82867c` em ambas as leituras. Fontes de lente, carrossel, autorretrato, portfólio público e migrations não mudaram durante esta missão; comparação com a main mostra somente módulos privados/admin na interface. Não equivale a QA visual em dispositivos físicos.
 - QA existente: `punctum-picture-albums-qa`; dois D1 e três R2 com nomes exclusivos `punctum-picture-albums-qa*`. Bindings observados inicialmente usavam D1 de restauração e R2 `*-restored`, modo Access, flag true e team/AUD marcadores. Não se leu conteúdo de fotografias privadas.
 - Access antes: organização existente, zero aplicativos, somente IdP Cloudflare; não havia OTP. Nesta missão foram adicionados IdP OTP `2f3f09a1-2715-4021-a359-810a3c596566`, app de QA `9ba6f47a-a0d2-4588-9d21-6b14d54dad6a` e política `9fc898c0-21a0-40e3-9117-4f36604e9f06`, restrita à conta do proprietário e OTP. Apenas o caminho `/albuns/entrar` no hostname de QA; nenhum domínio público do Punctum na app.
 - Hostinger: conexão correta lista `darkslategrey-raccoon-448222.hostingersite.com` como `nodejs`, habilitado, pedido ativo `hostinger_premium_v3`, assinatura Premium Web Hosting até 15/03/2030. **Não é VPS.** Metadados não comprovam cota de banco 20 GB nem capacidade livre.
@@ -41,7 +41,7 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 - `scripts/lib/private-preview.mjs`, `scripts/private-galleries-preview.mjs`: removem limite de CPU pago e distinguem 401 sem app de 302 para team/AUD reais. O piloto de domínio continua declarando sessão sintética e resultado parcial.
 - `.env.example` e documentos operacionais: flags e segredos explícitos; bridge off; configuração/rollback e impedimentos atualizados.
 - Regressões: testes de JWT, bridge, provider e configuração do piloto. Nenhuma migration alterada; migration 0009 mantém PBKDF2 >=310000 e domínio relacional isolado.
-- Commit de autenticação: `8dbe2944f01f16b93586b8e8adb071d0f7db6b5a`, enviado e relido no HEAD da PR. As atualizações de dependências são um segundo conjunto, com validação própria abaixo.
+- Commits de código: `8dbe2944f01f16b93586b8e8adb071d0f7db6b5a` (hardening/UX/QA) e `eb11de10106b1e06c04f66c7ec3e1b8c4b985608` (dependências e evidências), enviados e relidos no HEAD da PR. O fechamento documental posterior não altera o código executado no piloto.
 - `package.json`, `package-lock.json`, `.github/workflows/deploy.yml`: Next 16.4.3, Zod 4.6.7, Vite 8.3.5, Vitest 4.1.12, Wrangler 4.152.0 e componentes Cloudflare compatíveis. Overrides fixam image-size 2.0.4, sharp 0.35.5, undici 7.30.1 e Zod corrigido; somente o consumidor legado `@esbuild-kit/core-utils` recebe esbuild 0.25.12. Não foi usado `npm audit fix --force`. Não houve migração de framework nem alteração de migrations.
 
 ## Evidência de testes neste checkpoint
@@ -60,8 +60,8 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 | Suíte local, antes/depois das dependências | PASS: 40 arquivos, 164/164 testes em ambas as execuções; 88,50s e 109,62s respectivamente em 24/10. Node 10/10 novamente. Zero falhas/unhandled errors; `npm test -- --maxWorkers=1 --no-file-parallelism`; timeout/asserts originais preservados |
 | Typecheck/lint/build após dependências | PASS: `npm run typecheck`, `npm run lint`, `npm run build`; Node 24.19.0. Também PASS `drizzle-kit check` e `git diff --check`. Warnings de sourcemap, futura configuração nativa Vite e classificação de rotas vinext não impedem build; fixture pública inválida ainda gera o aviso de raster já existente |
 | Auditoria de dependências | FAIL inicial confirmado no lockfile: 20 entradas (1 critical, 12 high, 7 moderate). PASS após atualizações: `npm audit --json`, zero entradas em todas as severidades. Isso não prova ausência de vulnerabilidades desconhecidas nem exploração prévia. Pool Workers 0.23 emite aviso de renomeação/depreciação; migração para outro pacote fica fora desta correção |
-| CI de autenticação | PASS [40123116360](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40123116360), SHA `8dbe294`; nova execução necessária após dependências |
-| QA remoto de autenticação | PASS domínio [40123168662](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40123168662), SHA `8dbe294`. Relatório `partial-access-otp-required`, `accessProviderTested=false`, `productionTouched=false`; entrada `access-redirect`; 10 uploads e retry, publicação, favoritos, download, negação de mídia pública, 70 linhas D1 e 30 objetos R2 restaurados e verificados; archive/reset/disable revogam. Cookie HMAC sintético somente em QA. Nova execução necessária após dependências |
+| CI de autenticação e dependências | PASS [40123116360](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40123116360), SHA `8dbe294`, e [40124208865](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40124208865), SHA `eb11de1`; instalação limpa e checks Linux aprovados |
+| QA remoto de autenticação e dependências | PASS domínio [40124217595](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40124217595), SHA `eb11de1`. Relatório baixado e relido: `partial-access-otp-required`, `accessProviderTested=false`, `productionTouched=false`; entrada `access-redirect`; 10 uploads e retry, publicação, favoritos, download, negação de mídia pública, **93 linhas D1 e 40 objetos R2 restaurados**, originais verificados byte a byte; archive/reset/disable revogam. Cookie HMAC sintético somente em QA. Primeiro piloto `40123168662` em `8dbe294` também passou com 70 linhas/30 objetos. Produção foi pulada pelo workflow e relida separadamente |
 | UX de erro no login | Red reproduziu JSON bruto para navegação HTML; Green incluído nos 164 testes: página privada recuperável, sem senha enganosa, API JSON preservada |
 | Navegador QA | Tela real Cloudflare “Log in to Punctum private albums QA 20261024” / “Send login code” observada |
 | OTP verdadeiro | BLOCKED até interação segura com a credencial do proprietário; nenhum código lido de e-mail ou solicitado em chat |
@@ -71,14 +71,15 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 | Item | Gate atual |
 | --- | --- |
 | Arquitetura principal sem Workers Paid | PASS decisão e assinatura verificadas |
-| D1/R2, PBKDF2 e separação PersistFlow preservados | PASS no código/escopo; runtime final ainda precisa de comparação |
+| D1/R2, PBKDF2 e separação PersistFlow preservados | PASS código e piloto isolado; produção relida sem mudança |
 | Correções com regressões | PASS local: suíte completa 164 + 10 Node |
 | Typecheck/lint/build/suíte local | PASS |
-| CI do HEAD final | BLOCKED até execução verificada |
+| CI do código atualizado | PASS 40124208865 para `eb11de1`; fechamento documental deve ter sua CI relida antes de encerrar |
+| Dependências conhecidas no lockfile | PASS auditoria atual zero após correções; alertas da main não são evidência desta branch |
 | App/política e UI real Access em QA | PASS configuração e tela; não equivale a autenticação |
 | Entrega OTP, JWT real, sessão Punctum, logout/login novamente | BLOCKED credencial segura do proprietário |
 | Cliente desconhecido/desativado/revogado com provedor real | BLOCKED login real; domínio tem testes locais e piloto separado |
-| Upload, download, favoritos, isolamento e restauração no edge após correções | PASS piloto 40123168662 com sessão sintética; repetir após dependências. Identidade real continua BLOCKED |
+| Upload, download, favoritos, isolamento e restauração no edge após correções/dependências | PASS piloto 40124217595 com sessão sintética. Identidade real continua BLOCKED |
 | Bridge remoto/HTTPS, filesystem multi-instância, latência e outage reais | BLOCKED app isolado não identificada; secundário desativado |
 | Android/iPhone físicos e aprovação LGPD/retenção | BLOCKED ação/decisão do proprietário |
 | Produção, merge e ativação | BLOCKED autorização explícita; NO-GO enquanto os gates acima permanecerem |
@@ -100,6 +101,8 @@ Não houve contratação, upgrade ou nova dependência de runtime. Operações/a
 ## Continuidade
 
 Estado específico e evidências ficam neste repositório/PR. Tentativas de criação e inspeção do run `punctum-auth-homologation-20261024` no conector PersistFlow retornaram erro interno; **persistência/takeover não estão declarados ativos**. O checkpoint compartilhado deve registrar esse bloqueio sem alterar o PersistFlow existente.
+
+Próxima etapa dependente do proprietário: concluir o único método de entrada disponível (e-mail/OTP) no formulário seguro do navegador de QA. Nunca compartilhar o código em chat ou buscar o código pela API de e-mail. Primeiro confirmar identidade real e a negação D1 para e-mail não cadastrado; depois preparar somente uma conta Access de homologação no D1 de QA, repetir entrada, logout, incremento de `session_version`, desativação e reentrada. Se a autenticação segura não for concluída, preservar estes gates como BLOCKED. Nenhum dado de cliente real ou fotografia privada é necessário.
 
 ## Fontes técnicas verificadas
 
