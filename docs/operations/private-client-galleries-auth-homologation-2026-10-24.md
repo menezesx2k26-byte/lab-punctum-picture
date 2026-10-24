@@ -2,7 +2,7 @@
 
 Data: 24/10/2026, America/Sao_Paulo. PR #13, branch `agent/private-client-albums-20261022`.
 Baseline auditada: `5b5e1934c62bcb7f0876afb406990522fcbfd3a9`; base da PR `af55e1526b731be099e804335eb143d2b5cfa95e`.
-**Estado deste checkpoint: VERIFICAÇÃO LOCAL APROVADA; CI/QA REMOTO EM VALIDAÇÃO; NO-GO para produção.** Não confundir CI, cookies sintéticos ou tela de OTP com identidade homologada.
+**Estado deste checkpoint: CORREÇÕES E PRIMEIRO PILOTO REMOTO APROVADOS; DEPENDÊNCIAS CORRIGIDAS AGUARDAM NOVA CI/QA; NO-GO para produção.** Não confundir CI, cookies sintéticos ou tela de OTP com identidade homologada.
 
 ## Arquitetura escolhida
 
@@ -41,7 +41,8 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 - `scripts/lib/private-preview.mjs`, `scripts/private-galleries-preview.mjs`: removem limite de CPU pago e distinguem 401 sem app de 302 para team/AUD reais. O piloto de domínio continua declarando sessão sintética e resultado parcial.
 - `.env.example` e documentos operacionais: flags e segredos explícitos; bridge off; configuração/rollback e impedimentos atualizados.
 - Regressões: testes de JWT, bridge, provider e configuração do piloto. Nenhuma migration alterada; migration 0009 mantém PBKDF2 >=310000 e domínio relacional isolado.
-- Commits desta missão: serão registrados após os gates de validação e revisão; não há alegação de push neste checkpoint.
+- Commit de autenticação: `8dbe2944f01f16b93586b8e8adb071d0f7db6b5a`, enviado e relido no HEAD da PR. As atualizações de dependências são um segundo conjunto, com validação própria abaixo.
+- `package.json`, `package-lock.json`, `.github/workflows/deploy.yml`: Next 16.4.3, Zod 4.6.7, Vite 8.3.5, Vitest 4.1.12, Wrangler 4.152.0 e componentes Cloudflare compatíveis. Overrides fixam image-size 2.0.4, sharp 0.35.5, undici 7.30.1 e Zod corrigido; somente o consumidor legado `@esbuild-kit/core-utils` recebe esbuild 0.25.12. Não foi usado `npm audit fix --force`. Não houve migração de framework nem alteração de migrations.
 
 ## Evidência de testes neste checkpoint
 
@@ -56,9 +57,11 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 | Regressão posterior `ACCESS_ONLY` | FAIL reproduzido: 503 em vez de negação genérica; corrigida, passou durante execução completa em andamento |
 | Preview helper | Red: limite pago e ausência de reconhecimento de Access; Green: PASS 6/6 |
 | Execução Windows concorrente anterior | FAIL: teste de autorização de mídia excedeu 20s; quatro erros de startup/encerramento workerd/ECONNRESET. Esta execução não foi aceita como evidência positiva. Tipagem opcional do novo helper também falhou e foi corrigida com JSDoc explícito |
-| Suíte local final | PASS: 40 arquivos, 164/164 testes, zero falhas e zero unhandled errors; `npm test -- --maxWorkers=1 --no-file-parallelism`, 88,50s em 24/10 às 15:53; timeout/asserts originais preservados |
-| Typecheck/lint/build finais locais | PASS: `npm run typecheck`, `npm run lint`, `npm run build`; Node 24.19.0. Warnings de plugin timing/classificação de rotas vinext não impedem build; fixture pública inválida ainda gera o aviso de raster já existente |
-| CI do novo commit | BLOCKED até execução verificada após push; a CI histórica não será reutilizada como prova |
+| Suíte local, antes/depois das dependências | PASS: 40 arquivos, 164/164 testes em ambas as execuções; 88,50s e 109,62s respectivamente em 24/10. Node 10/10 novamente. Zero falhas/unhandled errors; `npm test -- --maxWorkers=1 --no-file-parallelism`; timeout/asserts originais preservados |
+| Typecheck/lint/build após dependências | PASS: `npm run typecheck`, `npm run lint`, `npm run build`; Node 24.19.0. Também PASS `drizzle-kit check` e `git diff --check`. Warnings de sourcemap, futura configuração nativa Vite e classificação de rotas vinext não impedem build; fixture pública inválida ainda gera o aviso de raster já existente |
+| Auditoria de dependências | FAIL inicial confirmado no lockfile: 20 entradas (1 critical, 12 high, 7 moderate). PASS após atualizações: `npm audit --json`, zero entradas em todas as severidades. Isso não prova ausência de vulnerabilidades desconhecidas nem exploração prévia. Pool Workers 0.23 emite aviso de renomeação/depreciação; migração para outro pacote fica fora desta correção |
+| CI de autenticação | PASS [40123116360](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40123116360), SHA `8dbe294`; nova execução necessária após dependências |
+| QA remoto de autenticação | PASS domínio [40123168662](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40123168662), SHA `8dbe294`. Relatório `partial-access-otp-required`, `accessProviderTested=false`, `productionTouched=false`; entrada `access-redirect`; 10 uploads e retry, publicação, favoritos, download, negação de mídia pública, 70 linhas D1 e 30 objetos R2 restaurados e verificados; archive/reset/disable revogam. Cookie HMAC sintético somente em QA. Nova execução necessária após dependências |
 | UX de erro no login | Red reproduziu JSON bruto para navegação HTML; Green incluído nos 164 testes: página privada recuperável, sem senha enganosa, API JSON preservada |
 | Navegador QA | Tela real Cloudflare “Log in to Punctum private albums QA 20261024” / “Send login code” observada |
 | OTP verdadeiro | BLOCKED até interação segura com a credencial do proprietário; nenhum código lido de e-mail ou solicitado em chat |
@@ -75,7 +78,7 @@ Access remove o gargalo de CPU demonstrado com menos componentes próprios. Não
 | App/política e UI real Access em QA | PASS configuração e tela; não equivale a autenticação |
 | Entrega OTP, JWT real, sessão Punctum, logout/login novamente | BLOCKED credencial segura do proprietário |
 | Cliente desconhecido/desativado/revogado com provedor real | BLOCKED login real; domínio tem testes locais e piloto separado |
-| Upload, download, favoritos, isolamento e restauração no edge após correções | BLOCKED até piloto QA; sessão sintética deve ser identificada como tal |
+| Upload, download, favoritos, isolamento e restauração no edge após correções | PASS piloto 40123168662 com sessão sintética; repetir após dependências. Identidade real continua BLOCKED |
 | Bridge remoto/HTTPS, filesystem multi-instância, latência e outage reais | BLOCKED app isolado não identificada; secundário desativado |
 | Android/iPhone físicos e aprovação LGPD/retenção | BLOCKED ação/decisão do proprietário |
 | Produção, merge e ativação | BLOCKED autorização explícita; NO-GO enquanto os gates acima permanecerem |
@@ -105,5 +108,9 @@ Estado específico e evidências ficam neste repositório/PR. Tentativas de cria
 - https://developers.cloudflare.com/workers/platform/limits/
 - https://github.com/hostinger/api-php-sdk/blob/main/docs/Api/HostingNodeJSApi.md
 - https://www.hostinger.com/support/hostinger-node-js-limits-for-web-and-cloud-plans/
+- https://github.com/advisories/GHSA-vcvr-r3jv-pc5j
+- https://github.com/advisories/GHSA-2464-fhr4-w9xw
+- https://github.com/advisories/GHSA-mrhx-c7xc-m3w5
+- https://github.com/advisories/GHSA-5p2g-fcmc-qvqq
 
 As páginas Hostinger atuais descrevem Node em Business/Cloud; a API da conta lista um alvo Node em Premium. Essa diferença exige confirmação no hPanel/suporte, sem presumir direito a criar outro app nem realizar upgrade.
