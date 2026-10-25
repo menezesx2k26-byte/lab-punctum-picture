@@ -143,7 +143,11 @@ export function FeaturedStories({
                       unoptimized
                       sizes="(max-width: 700px) 90vw, 36vw"
                     />
-                  ) : null}
+                  ) : (
+                    <div className="collage-empty-artwork" aria-hidden="true">
+                      <span>Punctum Picture</span>
+                    </div>
+                  )}
                 </div>
                 <div className="collage-caption">
                   <h4>{album.title}</h4>
