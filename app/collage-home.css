@@ -428,3 +428,36 @@
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer > span { color:var(--collage-ink)!important; }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-region-pill { color:var(--collage-purple); background:#ede3f0; font-size:.875rem; }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .contact-region-badge { color:var(--collage-paper); font-size:.875rem; }
+
+
+/* Section backgrounds edited in Studio must never defeat the paper ink contrast. */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="statement"].visual-thesis[data-section-surface="light"],
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="about"].manifesto[data-section-surface="light"],
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="statement"].visual-thesis[data-section-surface="default"],
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="about"].manifesto[data-section-surface="default"] {
+  background:var(--collage-paper);
+  color:var(--collage-ink);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="statement"].visual-thesis[data-section-surface="accent"],
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="about"].manifesto[data-section-surface="accent"] {
+  background:var(--collage-yellow);
+  color:var(--collage-ink);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="statement"].visual-thesis[data-section-surface="dark"],
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="about"].manifesto[data-section-surface="dark"] {
+  background:var(--collage-ink);
+  color:var(--collage-paper);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis[data-section-surface="dark"] :is(.thesis-body-column,.thesis-centered-body),
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto[data-section-surface="dark"] :is(blockquote,.manifesto-pullquote,.manifesto-editorial-bio,.manifesto-body,.manifesto-editorial-bio p),
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis[data-section-surface="photo"] :is(.thesis-body-column,.thesis-centered-body),
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto[data-section-surface="photo"] :is(blockquote,.manifesto-pullquote,.manifesto-editorial-bio,.manifesto-body,.manifesto-editorial-bio p) {
+  color:var(--collage-paper);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] [data-home-section-type="about"].manifesto[data-section-surface="photo"] {
+  color:var(--collage-paper);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto[data-section-surface="dark"] :is(.eyebrow,.text-link),
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto[data-section-surface="photo"] :is(.eyebrow,.text-link) {
+  color:var(--collage-yellow);
+}
