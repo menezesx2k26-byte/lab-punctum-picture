@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAtUtc": "2026-10-25T04:31:48Z",
+  "recordedAtUtc": "2026-10-25T04:36:29Z",
   "repository": "menezesx2k26-byte/lab-punctum-picture",
   "workspace": "/workspace/lab-punctum-picture",
   "qualityMethod": "Software verification inspired by AS9100D and initial inspection inspired by AS9102C; not certification or an official FAI",
@@ -14,7 +14,7 @@
       "branch": "agent/private-client-albums-20261022",
       "startingSha": "dd8831fe16a5a14b8ab47e22bb4e05d84183e216",
       "codeCorrectionSha": "87329b1ead652dc2569a8ca881abed7e745ffe0c",
-      "stateAtRecord": "open draft; code correction committed locally as 87329b1ead652dc2569a8ca881abed7e745ffe0c; branch push and final CI pending"
+      "stateAtRecord": "open draft; code correction 87329b1ead652dc2569a8ca881abed7e745ffe0c and first evidence commit 6bd4410823015c508e304321208df0af899b9693 are pushed; requirement-matrix risk-column refinement is pending commit/push"
     },
     "pr14": {
       "branch": "design/punctum-collage-mobile-20261024",
@@ -151,6 +151,17 @@
       "timeUtc": "2026-10-25 UTC",
       "result": "Production 0; full audit 13 development-toolchain advisories (8 high, 5 moderate); no forced major upgrades",
       "artifact": "PR #14 QA report and pull request body"
+    },
+    {
+      "id": "EV-012",
+      "claim": "PR #13 CI passes on the current code and first integrated-documentation commit",
+      "file": ".github/workflows/ci.yml; worker/utils/rate-limit.ts; tests/integration/rate-limit.spec.ts",
+      "commit": "6bd4410823015c508e304321208df0af899b9693",
+      "command": "GitHub Actions CI workflow",
+      "environment": "GitHub-hosted CI",
+      "timeUtc": "2026-10-25T04:35:25Z",
+      "result": "PASS: run 40162327230, job verify completed successfully; a later docs-only matrix refinement still needs CI at its own HEAD",
+      "artifact": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40162327230"
     }
   ],
   "gates": {

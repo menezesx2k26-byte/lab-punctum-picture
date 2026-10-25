@@ -2,7 +2,7 @@
 
 | CAPA | Related NC | Correction | Prevention / effectiveness check | Gate |
 | --- | --- | --- | --- | --- |
-| CAPA-001 | NC-001 | Replaced check-then-update with conditional atomic D1 UPSERT/RETURNING; expired windows reset atomically; saturated buckets are not updated after max | Concurrency barrier test requires 2 admissions, 429 thereafter, stable count at max; expiry reset test; full suite and final PR #13 CI | Targeted tests, independent re-review and full local suite (41 files / 166 tests, typecheck/lint/build) PASS; PR #13 CI pending |
+| CAPA-001 | NC-001 | Replaced check-then-update with conditional atomic D1 UPSERT/RETURNING; expired windows reset atomically; saturated buckets are not updated after max | Concurrency barrier test requires 2 admissions, 429 thereafter, stable count at max; expiry reset test; full suite and final PR #13 CI | Targeted tests, independent re-review and full local suite (41 files / 166 tests, typecheck/lint/build) PASS; PR #13 CI run 40162327230 passed on SHA 6bd4410; re-run after docs-only matrix amendment |
 | CAPA-002 | PR #14 NC-001 | Changed collage story title from h4 to h3 and aligned scoped CSS | SSR regression test plus current browser reading order required | Code/CI PASS; browser still BLOCKED |
 | CAPA-003 | PR #14 NC-002 | Wrapped collage nav and set 48 px minimum link dimensions | CSS contract test; actual viewport/zoom/touch measurement still required | CSS contract PASS; browser still BLOCKED |
 | CAPA-004 | PR #14 NC-003 | Added isolated Node/Vitest config and included TSX SSR test in CI | CI run `40161708958` success at `bddeec3a74a341f9002d9e9bb3b3253fdb67c878` | CI PASS; manual QA still BLOCKED |
