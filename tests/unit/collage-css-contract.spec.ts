@@ -1,8 +1,6 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+/// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
-
-const css = readFileSync(join(process.cwd(), "app/collage-home.css"), "utf8");
+import css from "../../app/collage-home.css?raw";
 
 describe("mobile collage layout regressions", () => {
   it("overrides the legacy hidden About link at narrow phone widths", () => {
