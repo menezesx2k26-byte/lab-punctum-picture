@@ -78,6 +78,14 @@ function buildPreset(recipe: PresetRecipe): SitePreset {
 
 const recipes: readonly PresetRecipe[] = [
   {
+    id: "colagem-autoral", label: "Colagem autoral", description: "Recortes, papel e tipografia expressiva em roxo, amarelo e branco.",
+    palette: "nocturne-plum", headingFamily: "syne", bodyFamily: "figtree",
+    headingScale: "display", headingWeight: "medium", headingTracking: "tight",
+    radius: "square", density: "balanced", shadow: "graphic", motion: "subtle",
+    image: "natural", background: "organic-glow",
+    variants: { statement: "manifesto", "featured-work": "collage", about: "editorial", contact: "minimal" },
+  },
+  {
     id: "editorial-silencioso", label: "Editorial", description: "Elegante, espaçoso e artístico.",
     palette: "editorial-ivory", headingFamily: "newsreader", bodyFamily: "manrope",
     headingScale: "display", headingWeight: "regular", headingTracking: "normal",
@@ -92,14 +100,6 @@ const recipes: readonly PresetRecipe[] = [
     radius: "soft", density: "spacious", shadow: "soft", motion: "subtle",
     image: "soft", background: "organic-glow",
     variants: { hero: "split", statement: "centered", "featured-work": "gallery", about: "centered" },
-  },
-  {
-    id: "colagem-autoral", label: "Colagem autoral", description: "Recortes, papel e tipografia expressiva em roxo, amarelo e branco.",
-    palette: "nocturne-plum", headingFamily: "syne", bodyFamily: "figtree",
-    headingScale: "display", headingWeight: "medium", headingTracking: "tight",
-    radius: "square", density: "balanced", shadow: "graphic", motion: "subtle",
-    image: "natural", background: "organic-glow",
-    variants: { statement: "manifesto", "featured-work": "collage", about: "editorial", contact: "minimal" },
   },
   {
     id: "intenso-noturno", label: "Intenso", description: "Escuro, cinematográfico e expressivo.",
