@@ -123,3 +123,13 @@ Retomada expressamente solicitada pelo proprietário: HEAD `d77e6de` e CI `40141
 - https://github.com/advisories/GHSA-5p2g-fcmc-qvqq
 
 As páginas Hostinger atuais descrevem Node em Business/Cloud; a API da conta lista um alvo Node em Premium. Essa diferença exige confirmação no hPanel/suporte, sem presumir direito a criar outro app nem realizar upgrade.
+
+## Revalidação de segurança — 2026-10-25
+
+Na branch atual da PR #13, HEAD de código `87329b1ead652dc2569a8ca881abed7e745ffe0c`, a auditoria independente apontou uma corrida no `assertRateLimit`: várias requisições para um bucket novo podiam passar após ler simultaneamente a contagem antiga. O teste RED em D1/Miniflare aceitou 8 chamadas com limite 2.
+
+A correção substituiu SELECT/UPDATE separados por UPSERT D1 atômico com `RETURNING`. Na revisão independente seguinte, foi identificada e evitada escrita de linha em tentativas já limitadas: o conflito agora só atualiza se o bucket expirou ou se `request_count < max`; quando saturado, não retorna linha e a API responde 429 sem incrementar o contador. O teste verifica 2 admissões, 429 nas demais chamadas e contador estável em 2 mesmo após outra tentativa; o caso de expiração retorna para 1. Revisor independente revalidou a ordem dos 8 binds, transições e teste, sem P1 restante no diff.
+
+Verificação local no mesmo código, 2026-10-25 04:31 UTC: `npm run typecheck`, `npm run lint`, `npm test` (41 arquivos / 166 testes), `npm run build`, `git diff --check`, teste direcionado de rate limit (2/2) e `npm audit --json` (0 vulnerabilidades) passaram. Build manteve avisos não fatais de sourcemap e classificação de rotas dinâmicas. A CI do novo SHA depende do push da branch; nenhum Worker ou banco remoto foi alterado.
+
+A revalidação de OTP real, JWT, sessão com Access, fluxo D1/R2 em edge atual, browser/mobile, billing e autoridade PersistFlow continua bloqueada pelos motivos registrados nesta homologação e em [`docs/visual-qa/punctum-integrated/`](../visual-qa/punctum-integrated/). Esse patch corrige apenas admissão concorrente de rate limit; não fecha autenticação real nem libera produção.

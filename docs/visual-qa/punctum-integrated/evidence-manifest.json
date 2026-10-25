@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-25T04:31:48Z",
+  "repository": "menezesx2k26-byte/lab-punctum-picture",
+  "workspace": "/workspace/lab-punctum-picture",
+  "qualityMethod": "Software verification inspired by AS9100D and initial inspection inspired by AS9102C; not certification or an official FAI",
+  "costBoundary": "R$0 incremental; no browser minutes, paid upgrades, billing mutations, production writes or remote deploys",
+  "configuration": {
+    "base": {
+      "branch": "main",
+      "sha": "af55e1526b731be099e804335eb143d2b5cfa95e"
+    },
+    "pr13": {
+      "branch": "agent/private-client-albums-20261022",
+      "startingSha": "dd8831fe16a5a14b8ab47e22bb4e05d84183e216",
+      "codeCorrectionSha": "87329b1ead652dc2569a8ca881abed7e745ffe0c",
+      "stateAtRecord": "open draft; code correction committed locally as 87329b1ead652dc2569a8ca881abed7e745ffe0c; branch push and final CI pending"
+    },
+    "pr14": {
+      "branch": "design/punctum-collage-mobile-20261024",
+      "sha": "bddeec3a74a341f9002d9e9bb3b3253fdb67c878",
+      "stateAtRecord": "open draft; pushed"
+    },
+    "runtime": {
+      "os": "Linux workspace",
+      "node": "v24.19.0",
+      "npm": "11.9.0",
+      "vitest": "4.1.12",
+      "wrangler": "4.152.0",
+      "workerTestPool": "@cloudflare/vitest-pool-workers 0.23.0"
+    }
+  },
+  "evidence": [
+    {
+      "id": "EV-001",
+      "claim": "PR #13 rate limiter had a reproducible first-use concurrency race",
+      "file": "tests/integration/rate-limit.spec.ts",
+      "commit": "PR #13 pre-fix workspace based on dd8831fe16a5a14b8ab47e22bb4e05d84183e216",
+      "command": "npx vitest run tests/integration/rate-limit.spec.ts",
+      "environment": "Linux local Cloudflare Workers Vitest pool / Miniflare D1",
+      "timeUtc": "2026-10-25T04:25:36Z",
+      "result": "RED: 1 failed, 1 passed; all 8 calls resolved with max=2",
+      "artifact": "Vitest output captured in this execution; no customer or remote data"
+    },
+    {
+      "id": "EV-002",
+      "claim": "Final conditional atomic D1 UPSERT enforces limit, stabilizes saturated count, and resets expired windows",
+      "file": "worker/utils/rate-limit.ts; tests/integration/rate-limit.spec.ts",
+      "commit": "87329b1ead652dc2569a8ca881abed7e745ffe0c",
+      "command": "npx vitest run tests/integration/rate-limit.spec.ts",
+      "environment": "Linux local Cloudflare Workers Vitest pool / Miniflare D1",
+      "timeUtc": "2026-10-25T04:29:09Z",
+      "result": "PASS: 1 file, 2 tests; 2 of 8 calls admitted, the remaining calls and ninth call rejected with 429, request_count remains 2, expiry resets to 1",
+      "artifact": "tests/integration/rate-limit.spec.ts"
+    },
+    {
+      "id": "EV-003",
+      "claim": "Independent security reviewer accepted final rate-limit SQL/binds and test",
+      "file": "worker/utils/rate-limit.ts; tests/integration/rate-limit.spec.ts",
+      "commit": "87329b1ead652dc2569a8ca881abed7e745ffe0c",
+      "command": "Read-only independent diff review and targeted test review",
+      "environment": "Independent sub-agent review; no remote or destructive operations",
+      "timeUtc": "2026-10-25 (response received during this execution; connector does not expose reviewer event timestamp)",
+      "result": "PASS: eight bind positions verified; no row update once active bucket is at max; no remaining P1 finding in reviewed diff",
+      "artifact": "Reviewer report in current task conversation"
+    },
+    {
+      "id": "EV-004",
+      "claim": "PR #13 final local code checks pass",
+      "file": "package.json; tests/integration/rate-limit.spec.ts; worker/utils/rate-limit.ts",
+      "commit": "87329b1ead652dc2569a8ca881abed7e745ffe0c",
+      "command": "npm run typecheck && npm run lint && npm test && npm run build && git diff --check",
+      "environment": "Linux local workspace; Node 24.19.0; Miniflare D1; no remote resources",
+      "timeUtc": "2026-10-25T04:30:28Z/04:31:48Z",
+      "result": "PASS: typecheck, lint, 41 test files / 166 tests, build and diff check; build emitted nonfatal sourcemap, native Vite config and dynamic route classification warnings",
+      "artifact": "Vitest/build command output captured in this execution"
+    },
+    {
+      "id": "EV-005",
+      "claim": "PR #13 lockfile has no known npm advisories at audit time",
+      "file": "package-lock.json",
+      "commit": "87329b1ead652dc2569a8ca881abed7e745ffe0c",
+      "command": "npm audit --json",
+      "environment": "Linux local workspace; public npm advisory database",
+      "timeUtc": "2026-10-25T04:27:27Z",
+      "result": "PASS: 0 total (0 critical/high/moderate/low); point-in-time database result only",
+      "artifact": "Parsed audit metadata; no package or environment secrets"
+    },
+    {
+      "id": "EV-006",
+      "claim": "PR #14 CI passed its final pushed commit",
+      "file": "docs/visual-qa/punctum-mobile-collage-2026-10-25.md; .github/workflows/ci.yml",
+      "commit": "bddeec3a74a341f9002d9e9bb3b3253fdb67c878",
+      "command": "GitHub Actions CI workflow",
+      "environment": "GitHub-hosted CI",
+      "timeUtc": "2026-10-25 UTC",
+      "result": "PASS: run 40161708958, conclusion success",
+      "artifact": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40161708958"
+    },
+    {
+      "id": "EV-007",
+      "claim": "Historical isolated QA tested D1/R2 domain behavior but not real Access identity",
+      "file": "docs/operations/evidence/2026-10-24-private-auth-qa.json",
+      "commit": "eb11de10106b1e06c04f66c7ec3e1b8c4b985608",
+      "command": "Historical GitHub Actions isolated private-gallery preview workflow",
+      "environment": "Cloudflare QA-only Worker, D1 and private R2; synthetic QA cookie only",
+      "timeUtc": "2026-10-24 UTC",
+      "result": "PASS domain checks; 93 D1 rows and 40 R2 objects restored/verified; BLOCKED real OTP with accessProviderTested=false; productionTouched=false",
+      "artifact": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40124217595"
+    },
+    {
+      "id": "EV-008",
+      "claim": "Current Cloudflare resource inventory was read without writes, but plan/quota could not be verified",
+      "file": "docs/visual-qa/punctum-integrated/resource-authority-matrix.md; docs/visual-qa/punctum-integrated/cloudflare-runtime-cost.md",
+      "commit": "2026-10-25 source workspace; no remote code mutation",
+      "command": "Authorized Cloudflare connector read operations; GET account subscriptions",
+      "environment": "Cloudflare account read-only; production not modified",
+      "timeUtc": "2026-10-25 UTC; connector did not expose individual request timestamps",
+      "result": "Worker/D1/R2/Access resources observed; subscription GET returned 403 for missing Billing Read; current limits UNKNOWN",
+      "artifact": "Sanitized resource names/IDs and access result in the referenced matrix"
+    },
+    {
+      "id": "EV-009",
+      "claim": "No current PersistFlow/Martha sandbox owner or active run was verified",
+      "file": "docs/visual-qa/punctum-integrated/persistflow-martha-inventory.md",
+      "commit": "2026-10-25 source workspace; no PersistFlow write",
+      "command": "Read repository docs/search; inspect available connector capabilities; Hostinger exact-domain lookups",
+      "environment": "GitHub and Hostinger read-only connections; PersistFlow connector was not invoked with an invented ID",
+      "timeUtc": "2026-10-25 UTC; connector did not expose individual request timestamps",
+      "result": "Current controller, owner, run/workspace and Martha mapping UNKNOWN; no sandbox created",
+      "artifact": "Sanitized inventory matrix"
+    },
+    {
+      "id": "EV-010",
+      "claim": "Managed browser visual QA was not run under the zero-cost cap",
+      "file": "docs/visual-qa/punctum-integrated/responsive-browser-qa.md; docs/visual-qa/punctum-integrated/accessibility-report.md",
+      "commit": "PR #14 SHA bddeec3a74a341f9002d9e9bb3b3253fdb67c878",
+      "command": "Tool capability inspection; no Browser Use invocation",
+      "environment": "Managed browser requires prepaid minutes; no free local browser evidence available",
+      "timeUtc": "2026-10-25 UTC",
+      "result": "BLOCKED to preserve R$0 incremental cost; no screenshot or viewport measurement claimed",
+      "artifact": "Tool capability and cost boundary recorded in responsive-browser-qa.md"
+    },
+    {
+      "id": "EV-011",
+      "claim": "PR #14 production dependency audit clean, while development audit retains advisories",
+      "file": "docs/visual-qa/punctum-mobile-collage-2026-10-25.md",
+      "commit": "bddeec3a74a341f9002d9e9bb3b3253fdb67c878",
+      "command": "npm audit --omit=dev --json; npm audit --json",
+      "environment": "PR #14 clean install; local npm registry audit",
+      "timeUtc": "2026-10-25 UTC",
+      "result": "Production 0; full audit 13 development-toolchain advisories (8 high, 5 moderate); no forced major upgrades",
+      "artifact": "PR #14 QA report and pull request body"
+    }
+  ],
+  "gates": {
+    "DoD-A": "BLOCKED_BROWSER_ACCESSIBILITY_PERFORMANCE",
+    "DoD-B": "BLOCKED_REAL_OTP",
+    "DoD-C": "BLOCKED_BILLING_SCOPE_AND_CURRENT_REMOTE_QA",
+    "DoD-D": "BLOCKED_INFRA_NOT_VERIFIED",
+    "DoD-E": "BLOCKED_CURRENT_INTEGRATED_E2E_AND_ROLLBACK",
+    "DoD-F": "BLOCKED_BY_EXPLICIT_NO_RELEASE_SCOPE"
+  },
+  "releaseDecision": "NO-GO; keep both PRs draft/open, production untouched, private-gallery flag disabled and Password Bridge off"
+}
