@@ -15,7 +15,7 @@ This evidence set covers two separate open draft PRs against `main`: #13 private
 | DoD-E — integration | **BLOCKED** | Branch compatibility reviewed statically; no combined preview/E2E/browser run, and the private-album rate-limit race is corrected locally pending current CI and independent review. |
 | DoD-F — release | **BLOCKED by scope** | This mission explicitly prohibits merge, production activation/deploy, and commercial changes. |
 
-Overall: **NO-GO for merge, release, or production activation.** Do not promote historical screenshots, synthetic cookies, previous CI, or an isolated pilot to current proof. PR #13 rate-limit correction is code commit `87329b1ead652dc2569a8ca881abed7e745ffe0c`; its full local suite, independent re-review and GitHub CI run `40162327230` on `6bd4410` passed. The requirement-matrix risk-column refinement is a docs-only follow-up and needs CI on its own latest SHA.
+Overall: **NO-GO for merge, release, or production activation.** Do not promote historical screenshots, synthetic cookies, previous CI, or an isolated pilot to current proof. PR #13 rate-limit correction is code commit `87329b1ead652dc2569a8ca881abed7e745ffe0c`; its full local suite, independent re-review and GitHub CI runs `40162327230` (`6bd4410`) and `40162525188` (`20984fd`) passed. The current resource-matrix/production-readback doc amendment is docs-only and needs CI on its own latest SHA.
 
 ## Evidence map
 
