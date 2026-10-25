@@ -1,0 +1,422 @@
+/* Punctum Collage Autoral — original CSS artwork, mobile-first, home only.
+ * Never style the LensHero internals, 3D SpatialCarousel or private galleries.
+ * No externally sourced imagery, fonts, animation library or background URLs.
+ */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] {
+  --collage-purple: #422079;
+  --collage-yellow: #ffe43b;
+  --collage-paper: #f7f4ef;
+  --collage-ink: #18131e;
+  --collage-ink-soft: #46394d;
+  --collage-edge: clamp(1rem, 4vw, 3.5rem);
+  background: var(--collage-purple);
+  color: var(--collage-paper);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] :is(a, button) {
+  touch-action: manipulation;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] :is(a, button, input, textarea, select):focus-visible {
+  outline: 3px solid var(--collage-yellow);
+  outline-offset: 4px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-header {
+  padding: max(.65rem, env(safe-area-inset-top)) var(--collage-edge) .5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .8rem;
+  max-width: 100%;
+  min-height: 120px;
+  isolation: isolate;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .wordmark {
+  width: 58px;
+  height: 55px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .header-author { display: none; }
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav {
+  order: 2;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  gap: .1rem;
+  justify-content: space-between;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav a {
+  padding: .5rem .15rem;
+  min-height: 48px;
+  font-size: clamp(.72rem, 3.3vw, .92rem);
+  font-weight: 650;
+  color: var(--collage-paper);
+  text-decoration: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav .nav-cta {
+  color: var(--collage-ink);
+  background: var(--collage-yellow);
+  padding: .5rem .55rem;
+  border: 0;
+  transform: rotate(-2deg);
+  box-shadow: 3px 3px 0 var(--collage-ink);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .lens-title {
+  top: clamp(146px, 21svh, 182px);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .lens-title h1 {
+  font-family: var(--font-heading);
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .lens-skip,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .lens-navigation a { min-height: 48px; }
+
+/* Newspaper spread: paper surface, decorative cut edges, huge typography. */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.3rem;
+  position: relative;
+  max-width: none;
+  padding: 5rem var(--collage-edge);
+  background: var(--collage-paper);
+  color: var(--collage-ink);
+  isolation: isolate;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis::before {
+  content: "";
+  position: absolute;
+  inset: -11px 0 auto;
+  height: 16px;
+  background: var(--collage-paper);
+  clip-path: polygon(0 50%, 6% 9%, 12% 65%, 18% 25%, 27% 70%, 34% 22%, 42% 80%, 50% 16%, 60% 70%, 69% 20%, 77% 90%, 84% 25%, 94% 70%, 100% 30%, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis::after {
+  content: "✳";
+  position: absolute;
+  right: max(1rem, 8vw);
+  bottom: .7rem;
+  color: var(--collage-purple);
+  font-size: clamp(4rem, 16vw, 8rem);
+  line-height: 1;
+  transform: rotate(19deg);
+  pointer-events: none;
+  opacity: .92;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis .eyebrow {
+  display: inline-block;
+  width: fit-content;
+  padding: .25rem .5rem;
+  background: var(--collage-yellow);
+  color: var(--collage-ink);
+  font-weight: 750;
+  transform: rotate(-1.5deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis h2 {
+  font-size: clamp(3rem, 12.5vw, 8rem);
+  max-width: 15ch;
+  line-height: .98;
+  font-weight: 700;
+  letter-spacing: -.06em;
+  overflow-wrap: anywhere;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis :is(.thesis-body-column, .thesis-centered-body) {
+  max-width: 38rem;
+  font-size: max(1rem, var(--font-size-body));
+  line-height: 1.65;
+  color: var(--collage-ink-soft);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .thesis-colophon-tag {
+  color: var(--collage-ink-soft);
+}
+
+/* Collage surface, but the 3D carousel itself is deliberately untouched. */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .carousel-heading {
+  padding-inline: var(--collage-edge);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .carousel-heading :is(h2, p) {
+  overflow-wrap: anywhere;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section {
+  background: var(--collage-purple);
+  color: var(--collage-paper);
+  padding: 4rem var(--collage-edge) 5rem;
+  overflow: clip;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-inner {
+  width: 100%;
+  max-width: 1400px;
+  min-width: 0;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 13vw, 8.5rem);
+  line-height: .88;
+  letter-spacing: -.065em;
+  font-weight: 750;
+  max-width: 12ch;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading h2 em {
+  display: inline;
+  color: var(--collage-yellow);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading p {
+  font-size: 1rem;
+  color: var(--collage-paper);
+  line-height: 1.5;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading .text-link {
+  font-weight: 650;
+  color: var(--collage-yellow);
+  min-height: 48px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-view-bar {
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  align-items: center;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-view-bar button {
+  min-height: 48px;
+  min-width: 48px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-collage-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.5rem;
+  padding: 1.5rem .45rem 1rem;
+  min-width: 0;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate {
+  display: block;
+  min-width: 0;
+  background: var(--collage-paper);
+  color: var(--collage-ink);
+  padding: .55rem .55rem 1.1rem;
+  box-shadow: 6px 9px 0 rgb(18 7 29 / .5);
+  text-decoration: none;
+  transform: none;
+  transition: transform .2s ease;
+  position: relative;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:nth-child(even) {
+  transform: rotate(1deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:nth-child(odd) {
+  transform: rotate(-.7deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:hover,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:focus-visible {
+  transform: translateY(-3px) rotate(0deg) !important;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-photo-frame {
+  background: var(--collage-ink);
+  position: relative;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-photo-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  filter: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-tape-mark {
+  width: 76px;
+  height: 22px;
+  background: var(--collage-yellow);
+  border: 1px solid rgb(24 19 30 / .3);
+  border-radius: 0;
+  backdrop-filter: none;
+  top: -17px;
+  transform: translateX(-50%) rotate(-6deg);
+  z-index: 2;
+  pointer-events: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-caption {
+  padding: .9rem .3rem 0;
+  margin: 0;
+  color: var(--collage-ink);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-caption h4 {
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 7vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-caption p {
+  font-size: 1rem;
+  color: var(--collage-ink-soft);
+  line-height: 1.4;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-empty-artwork {
+  min-height: 170px;
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(-45deg, var(--collage-purple), var(--collage-purple) 16px, #593891 16px, #593891 32px);
+  color: var(--collage-yellow);
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+/* The author's portrait remains true-color, with a taped-paper surround. */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto {
+  background: var(--collage-paper);
+  color: var(--collage-ink);
+  padding: 4.5rem var(--collage-edge);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto :is(.manifesto-grid, .manifesto-editorial-grid) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto :is(blockquote, .manifesto-pullquote) {
+  color: var(--collage-ink);
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 11vw, 6.5rem);
+  line-height: 1;
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto :is(.manifesto-editorial-bio, .manifesto-body, .manifesto-editorial-bio p) {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--collage-ink-soft);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto :is(.manifesto-image, .manifesto-editorial-image) {
+  position: relative;
+  max-width: min(100%, 670px);
+  background: var(--collage-yellow);
+  padding: .65rem;
+  transform: rotate(-1.5deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto :is(.manifesto-image, .manifesto-editorial-image)::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  width: 80px;
+  height: 20px;
+  top: -7px;
+  left: 45%;
+  transform: rotate(4deg);
+  background: rgb(247 244 239 / .83);
+  border: 1px solid rgb(24 19 30 / .12);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto img {
+  filter: none;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto .text-link {
+  color: var(--collage-purple);
+  min-height: 48px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto .eyebrow {
+  color: var(--collage-purple);
+  font-weight: 750;
+}
+
+/* Quiet conversion screen: visual identity stays strong, form stays usable. */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .contact-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  background: var(--collage-purple);
+  color: var(--collage-paper);
+  padding: 4.5rem var(--collage-edge);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .contact-section :is(input, select, textarea) {
+  min-height: 48px;
+  font-size: 1rem;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .contact-section :is(button[type="submit"], .button) {
+  min-height: 48px;
+  background: var(--collage-yellow);
+  color: var(--collage-ink);
+  font-weight: 700;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer {
+  background: var(--collage-paper);
+  color: var(--collage-ink);
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer a {
+  min-height: 48px;
+}
+@media (min-width: 768px) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-header {
+    flex-wrap: nowrap;
+    padding-block: 1rem;
+    min-height: 88px;
+    gap: 1rem;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav {
+    order: initial;
+    margin-left: auto;
+    width: auto;
+    gap: clamp(1rem, 2.2vw, 2rem);
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav a {
+    font-size: .94rem;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .lens-title {
+    top: 130px;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis {
+    grid-template-columns: minmax(0, 1.1fr) minmax(240px, .8fr);
+    gap: 8vw;
+    align-items: end;
+    padding-block: clamp(6rem, 10vw, 11rem);
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading {
+    grid-template-columns: 1.5fr .7fr;
+    align-items: end;
+    gap: 4rem;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-collage-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3rem 2rem;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:nth-child(even) {
+    margin-top: 2rem;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto :is(.manifesto-grid, .manifesto-editorial-grid) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 5vw;
+    align-items: center;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .contact-section {
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1fr);
+  }
+}
+@media (min-width: 1120px) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-header .header-author {
+    display: inline;
+    font-size: .875rem;
+    color: var(--collage-paper);
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-collage-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate {
+    transform: none !important;
+    transition: none !important;
+  }
+}
