@@ -67,6 +67,69 @@ O teste inicialmente executado no pool Vitest/Workers tentou ler CSS por `node:f
 - **RED verificável:** [run 40152485327](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40152485327) com duas falhas CSS (link Sobre e recorte). A falha do teste anterior por arquivo ausente foi registrada em run 40152377728 e não é evidência de defeito visual.
 - **GREEN local:** `node scripts/collage-css.test.mjs` no worktree sincronizado com `a71b33f`: 3 testes, 3 PASS, 0 FAIL, exit 0.
 - **GREEN CI:** [run 40152897912](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40152897912) em `a71b33fbdd2eb11af3d1b29c8daf2cb1b6e3dadf`: `npm ci`, typecheck, lint, `npm test`, `node --test scripts/collage-css.test.mjs` e build **todos SUCCESS**. O resultado não substitui navegador real nem QA humano.
-- **Revisão independente:** foi realizada por segundo agente em modo leitura. Três achados importantes corrigidos, mas não foi executada segunda revisão completa após correções; cobertura por regressão e CI documentada.
+- **Revisão independente:** a leitura inicial identificou os defeitos descritos abaixo. Após as correções, o mesmo revisor fez nova inspeção somente leitura do diff; não encontrou novo defeito confirmado. A medição em navegador continua pendente.
 
 **NO-GO continua:** validação visual da Maria, navegação em 320–430 px, browser screenshots, zoom 200%, acesso por teclado/leitor de tela, performance e prévia/restore no Studio devem ser verificados antes de merge e deploy. A PR deve permanecer draft.
+
+## Reexecução local e CAPA P2 — 2026-10-25 UTC
+
+**Baseline real:** branch `design/punctum-collage-mobile-20261024`, SHA `10e672a0ddd7b3b7ce4263a05baa9a49a0661970`; Node `v24.19.0`, npm `11.9.0`, lockfile do SHA. `npm ci --no-audit --no-fund`, `npm run typecheck`, `npm run lint`, `npm test` (27 arquivos / 113 testes), `node --test scripts/collage-css.test.mjs` (3/3) e `npm run build` passaram. O build foi executado antes das correções abaixo; a CI final deve repetir o conjunto no novo HEAD.
+
+### NC-001 — Nível de heading saltado (P2, corrigida)
+
+- **Requisito:** A11Y-001/A11Y-003; heading de seção `h2` deve preceder títulos de cartão `h3`.
+- **Esperado/obtido:** leitor de headings deve percorrer `h2 → h3`; a renderização anterior produzia `h2 → h4` em cada cartão de colagem.
+- **Causa-raiz:** `FeaturedStories` reutilizou o nível `h4` de uma composição antiga sob uma seção cujo título é `h2`.
+- **Correção/prevenção:** cartão passou a `h3`; seletores de estilo correspondentes foram atualizados. `collage-frontend.spec.tsx` exige o markup `<h3>`. O teste observou RED no HTML SSR com `<h4>` e GREEN após a correção; o workflow executa esse arquivo em configuração Vitest Node isolada do pool Workers.
+- **Evidência:** `npx vitest run --config vitest.collage.config.ts` — 4/4 PASS; revisão independente em SHA base reportou o salto.
+- **Risco residual:** árvore de acessibilidade e leitor de tela ainda precisam de verificação em navegador real.
+
+### NC-002 — Alvos de navegação estreitos em zoom/reflow (P2, correção de código aplicada)
+
+- **Requisito:** MOB-003/MOB-005 e A11Y-002; menu refluído sem overflow e alvo de toque interno ≥48×48 CSS px quando viável.
+- **Esperado/obtido:** navegação pode quebrar em mais de uma linha e cada link tem dimensões mínimas declaradas de 48 px; antes, links mantinham largura intrínseca e o menu não podia quebrar.
+- **Causa-raiz:** regra mobile definia altura mínima, mas não wrap nem largura mínima para os itens flex.
+- **Correção/prevenção:** `flex-wrap: wrap`, links flexíveis centralizados e `min-width:48px`; teste de contrato Node verifica wrap, largura e altura. Teste observado RED antes do patch e GREEN depois.
+- **Evidência:** `node --test scripts/collage-css.test.mjs` — 4/4 PASS.
+- **Risco residual:** dimensões reais, zoom 200%, 320 px e overflow de texto seguem BLOCKED por ausência de Chrome DevTools MCP/controle de navegador conectado nesta sessão; o binário Chromium local, sozinho, não foi usado como substituto do fluxo de browser autorizado.
+
+### NC-003 — Teste SSR de colagem ausente da CI (P2, corrigida)
+
+- **Requisito:** OPS-001/OPS-003; testes listados devem ser executados no HEAD avaliado.
+- **Esperado/obtido:** `tests/unit/collage-frontend.spec.tsx` deve executar; a configuração original incluía somente `tests/**/*.spec.ts`, e `npx vitest run tests/unit/collage-frontend.spec.tsx` retornou “No test files found”. Adicionar o arquivo diretamente ao pool Workers também falhou ao carregar `next/image` (`TypeError ... image-component.js`).
+- **Causa-raiz:** extensão `.tsx` estava fora do include e o componente depende de SSR Next que não é compatível com o pool Miniflare configurado.
+- **Correção/prevenção:** adicionada `vitest.collage.config.ts` com ambiente Node e passo explícito de CI `npx vitest run --config vitest.collage.config.ts`; os 4 testes SSR passam sem enfraquecer assertions.
+- **Risco residual:** aguardando CI remota no SHA final.
+
+### Limites de evidência desta reexecução
+
+- **PASS no SHA base:** baseline automatizada listada acima. O build deve ser repetido após os patches.
+- **Ainda BLOCKED:** screenshots de navegador; matriz 320, 360, 375, 390, 430, 768, 1024 e 1440 px; zoom 200%; inspeção de Studio/preview/discard/save; Android/iOS físicos; TalkBack/VoiceOver; contrastes observados em browser; LCP/CLS/INP de laboratório e p75 real.
+- **Risco P2 aberto para decisão editorial:** o preset define `--collage-*` fixos; não há prova visual de que o controle global “Cores” deva sobrescrevê-los durante a seleção do preset. A paleta aprovada permanece correta no CSS, mas a expectativa operacional do Studio precisa de QA.
+- **Custo observado:** nenhum serviço remoto foi alterado nesta auditoria da #14; CI local e build não publicaram a aplicação.
+
+## Validação final de código e runtime local — 2026-10-25 04:05 UTC
+
+**Identidade:** branch `design/punctum-collage-mobile-20261024`; correções de código em `ac41ea340cec7d199c50b51d7d1572487196d234`. Os comandos abaixo foram executados com o mesmo conteúdo rastreado, antes de gravar esse commit. Ambiente: Linux x64, Node `v24.19.0`, npm `11.9.0`, Vitest `4.1.11`, Vite `8.1.5`, Vinext `0.0.50`, Wrangler `4.131.1`; `package-lock.json` presente.
+
+- `npm run typecheck` — PASS.
+- `npm run lint` — PASS.
+- `npm test` — PASS, 27 arquivos / 113 testes.
+- `npx vitest run --config vitest.collage.config.ts` — PASS, 1 arquivo / 4 testes SSR.
+- `node --test scripts/collage-css.test.mjs` — PASS, 4/4.
+- `npm run build` — PASS. Vinext classificou algumas rotas como dinâmicas/indeterminadas; build completo.
+- `git diff --check` — PASS.
+- **Revisão após patch:** leitura independente somente leitura não encontrou outro defeito no diff. A CI no SHA final ainda precisa confirmar o novo job SSR.
+
+### Diagnóstico do preview Vinext
+
+- **Reprodução:** `npm run preview` encerra com exit 1 ao iniciar `vinext start`. Erro completo: `Error [ERR_UNSUPPORTED_ESM_URL_SCHEME] ... Received protocol 'cloudflare:'`, em `node:internal/modules/esm/load`.
+- **Causa-raiz:** [`package.json`](../../package.json#L11) chama `vinext start`, cujo CLI `0.0.50` importa diretamente `vinext/server/prod-server.js` via loader ESM padrão de Node. O bundle Cloudflare usa o módulo virtual `cloudflare:` provido pelo plugin; o loader Node direto não resolve esse esquema. Em contraste, [`vite.config.ts`](../../vite.config.ts#L41) carrega `@cloudflare/vite-plugin` e bindings locais durante `serve`. O build não detecta a falha porque ocorre em outra fase/runtime.
+- **Alternativa verificada, sem custo remoto:** `npm run dev` inicia Vite 8.1.5 com `@cloudflare/vite-plugin` e bindings locais. Na primeira tentativa, D1 local estava vazio e `/` e `/portfolio` retornaram 500 (`no such table: site_settings`). `npm run db:migrate:local` informou `Resource location: local`, aplicou as oito migrations somente no estado `.wrangler/state/v3/d1` local; nenhum `--remote` foi usado. Depois, `GET /` e `GET /portfolio` retornaram 200 HTML (103,997 e 81,784 bytes). O servidor foi encerrado e não ficou escutando na porta 3000.
+- **Limite:** isso comprova execução local pelo runtime Cloudflare/Vite após inicialização de D1 local. Não corrige `npm run preview`, não é deploy/preview remoto e não substitui screenshot/medida de browser.
+
+### Por que a captura visual não foi executada
+
+A pesquisa de ferramentas encontrou Browser Use gerenciado, porém o contrato da ferramenta descreve o browser como pago com tempo pré-pago; tempo não usado é reembolsado ao parar, sujeito a cobrança mínima de um minuto. A sessão não tem autorização de custo incremental e o plano fixa R$ 0. Portanto não criei sessão gerenciada, não usei Cloudflare Browser Rendering e não tratei Chromium local via shell como substituto do navegador conectado. Viewports, screenshots, medidas de overflow/touch, zoom 200%, Studio, acessibilidade manual e performance permanecem BLOCKED.
+
+**Estado externo desta inspeção:** nenhum recurso Cloudflare/Hostinger foi gravado, nenhuma aplicação foi publicada, e nenhuma alteração de produção foi feita. O job de CI no SHA final e a autenticação Access com OTP real ainda são evidências pendentes de outros gates.

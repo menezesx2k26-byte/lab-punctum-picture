@@ -23,7 +23,7 @@ Files: `shared/config`, `app/components`, `docs/visual-qa`.
 - [x] Check PR #13 and main HEAD; distinguish design branch from auth changes.
 - [x] Create isolated Git worktree at `C:\Users\Pichau\repos\punctum-collage-mobile-20261024` from main.
 - [x] Create independent design branch and draft PR #14.
-- [ ] Save fresh baseline local `npm ci && npm run typecheck && npm run lint && npm test && npm run build` (local runtime isolation prevents complete evidence; rely on fresh branch CI and document separately).
+- [x] Save fresh baseline local `npm ci && npm run typecheck && npm run lint && npm test && npm run build` on SHA `10e672a0ddd7b3b7ce4263a05baa9a49a0661970`; see the dated QA report. The fresh clone is available under `/workspace/lab-punctum-picture`.
 
 ### Task 1 — Safe preset / selected media
 Files: `shared/config/preset-ids.ts`, `shared/config/preset-registry.ts`; `tests/unit/collage-preset.spec.ts`.
@@ -43,7 +43,7 @@ Files: `app/collage-home.css`, `app/components/HomeExperience.tsx`; `tests/unit/
 Files: `app/components/FeaturedStories.tsx`, `tests/unit/collage-frontend.spec.tsx`.
 - [x] Keep real D1 album links and original covers; add no-cover fallback.
 - [x] Cover 0, 1 and multiple albums, link and no fictitious CTA.
-- [ ] Verify tests and UI manually.
+- [x] Automated render tests, including the no-cover fallback, pass locally; UI inspection remains blocked on browser tooling.
 
 ### Task 4 — Mobile navigation and editorial hierarchy
 Files: `app/collage-home.css`; `app/components/SiteChrome.tsx` unchanged.
@@ -64,12 +64,19 @@ Files: `app/admin/admin.css`, `shared/config/preset-registry.ts`.
 - [ ] Verify full save/preview/discard/publish history in isolated preview, without touching production.
 
 ### Task 7 — Final QA and handoff
-- [ ] Fresh CI typecheck, lint, unit/integration suite, build fully GREEN.
+- [ ] Fresh CI typecheck, lint, unit/integration suite, build fully GREEN on the final pushed SHA; local equivalents pass after the fixes.
 - [ ] Browser screenshot QA at supported viewports.
 - [ ] Device QA Android/iPhone real, LGPD independent validation.
-- [ ] Write QA report and DoD PASS/FAIL/BLOCKED.
-- [ ] Independent review, no merge or deployment.
+- [x] Update the QA report with explicit PASS/BLOCKED evidence; final DoD remains blocked on visual and Studio inspection.
+- [x] Independent read-only review of the corrections; no new code findings. No merge or deployment.
 
 ## Execution method and claims
 
 Implemented via local isolation setup, GitHub connector edits on the independent remote design branch and GitHub Actions. Native local terminal later returned a security scope block on the new path; do not claim local build/screenshot tests where no evidence exists. CI RED was verified via job logs. Treat any later successful CI as build/test evidence, **not** a production or physical device sign-off.
+
+## Current execution record — 2026-10-25
+
+- The prior note about the native terminal's path restriction describes an earlier executor. This run used a fresh clone at `/workspace/lab-punctum-picture`; local tests and build executed there and are recorded in `docs/visual-qa/punctum-mobile-collage-2026-10-25.md`.
+- Source/test/CI corrections are committed as `ac41ea340cec7d199c50b51d7d1572487196d234`. The test suite and build ran against the same tracked tree immediately before that commit. GitHub CI on the final pushed documentation SHA remains pending.
+- Browser screenshots, measured responsive dimensions, zoom, and Studio save/discard/reversal remain BLOCKED because the only connected managed browser is paid and requires prepaid time; the task's incremental-cost limit is R$ 0.
+- `npm run preview` was reproduced as an upstream/runtime incompatibility. `npm run dev` is the verified cost-free local Cloudflare Vite/Workers alternative after applying migrations to the local D1 only. It is an HTTP runtime smoke, not browser or production-preview evidence.
