@@ -23,7 +23,7 @@ describe("collage featured photography", () => {
     expect(html).toContain('href="/ensaios/ensaio-teste"');
     expect(html).toContain("/media/photo-1/gallery");
     expect(html).toContain("Capa do ensaio Ensaio de Maria");
-    expect(html).toContain("Ensaio de Maria");
+    expect(html).toContain("<h3>Ensaio de Maria</h3>");
     expect(html).not.toContain("Projeto ficticio");
   });
   it("offers a legible editorial fallback for albums without a cover", () => {

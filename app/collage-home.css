@@ -40,15 +40,22 @@
   min-width: 0;
   margin: 0;
   gap: .1rem;
+  flex-wrap: wrap;
   justify-content: space-between;
 }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav a {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
   padding: .5rem .15rem;
   min-height: 48px;
   font-size: clamp(.72rem, 3.3vw, .92rem);
   font-weight: 650;
   color: var(--collage-paper);
   text-decoration: none;
+  text-align: center;
 }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav a[href="/#sobre"] { display: flex; }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav .nav-cta {
@@ -247,7 +254,7 @@
   margin: 0;
   color: var(--collage-ink);
 }
-.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-caption h4 {
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-caption h3 {
   font-family: var(--font-heading);
   font-size: clamp(1.75rem, 7vw, 2.8rem);
   font-weight: 700;

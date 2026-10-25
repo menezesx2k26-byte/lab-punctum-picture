@@ -21,4 +21,13 @@ describe("Collage mobile CSS contract", () => {
     assert.match(css, /\.visual-thesis\[data-section-surface="light"\]/);
     assert.match(css, /\.manifesto\[data-section-surface="light"\]/);
   });
+  it("wraps mobile navigation while keeping every link at least 48px square", () => {
+    const nav = css.match(/\.site-shell\.immersive-home\[data-theme-preset="colagem-autoral"\] \.site-nav\s*\{([^}]+)\}/s);
+    const links = css.match(/\.site-shell\.immersive-home\[data-theme-preset="colagem-autoral"\] \.site-nav a\s*\{([^}]+)\}/s);
+    assert.ok(nav, "missing collage navigation rule");
+    assert.ok(links, "missing collage navigation link rule");
+    assert.match(nav[1], /flex-wrap:\s*wrap\s*;/);
+    assert.match(links[1], /min-width:\s*48px\s*;/);
+    assert.match(links[1], /min-height:\s*48px\s*;/);
+  });
 });

@@ -150,7 +150,7 @@ export function FeaturedStories({
                   )}
                 </div>
                 <div className="collage-caption">
-                  <h4>{album.title}</h4>
+                  <h3>{album.title}</h3>
                   <p>{album.categories.map((c) => c.name).join(" · ")}</p>
                 </div>
               </Link>
