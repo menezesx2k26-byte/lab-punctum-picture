@@ -50,6 +50,7 @@
   color: var(--collage-paper);
   text-decoration: none;
 }
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav a[href="/#sobre"] { display: flex; }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-nav .nav-cta {
   color: var(--collage-ink);
   background: var(--collage-yellow);
@@ -226,8 +227,7 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  object-fit: contain;
   filter: none;
 }
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-tape-mark {
