@@ -420,3 +420,11 @@
     transition: none !important;
   }
 }
+
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer { margin-inline:0; padding-inline:var(--collage-edge); border-top:0; }
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer .footer-wordmark,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer p,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer nav a,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .site-footer > span { color:var(--collage-ink)!important; }
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-region-pill { color:var(--collage-purple); background:#ede3f0; font-size:.875rem; }
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .contact-region-badge { color:var(--collage-paper); font-size:.875rem; }
