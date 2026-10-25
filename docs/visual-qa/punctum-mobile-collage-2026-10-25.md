@@ -57,3 +57,16 @@ Nenhum Workers Paid, Hostinger novo, serviço pago, deploy ou armazenamento pers
 ## Decisão de liberação
 
 **NO-GO para merge e produção até aprovação visual da Maria, browser QA e requisitos de autorização.** A revisão independente deve registrar quaisquer achados antes da entrega final.
+
+## Adendo — revisão independente e regressões corrigidas
+
+A revisão read-only encontrou três defeitos verificáveis: (1) link Sobre oculto pelo CSS mobile legado, (2) corte forçado 4:5 nas fotos dos ensaios, (3) texto de tinta escura em superfície dark configurável pelo Studio. A correção foi implementada em `app/collage-home.css`, mantendo os componentes da lente e do carrossel intactos.
+
+O teste inicialmente executado no pool Vitest/Workers tentou ler CSS por `node:fs` e depois por import `?raw`, ambos incompatíveis naquele runtime — o conteúdo chegava ausente/vazio. Esse teste foi substituído por `scripts/collage-css.test.mjs` usando `node:test`, `node:fs` e importação relativa explícita. `.github/workflows/ci.yml` o executa obrigatoriamente após `npm test`, antes do build. Não houve exclusão ou enfraquecimento de asserções: valida link Sobre, `object-fit: contain` sem `aspect-ratio: 4/5`, e seletores de superfícies dark/light.
+
+- **RED verificável:** [run 40152485327](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40152485327) com duas falhas CSS (link Sobre e recorte). A falha do teste anterior por arquivo ausente foi registrada em run 40152377728 e não é evidência de defeito visual.
+- **GREEN local:** `node scripts/collage-css.test.mjs` no worktree sincronizado com `a71b33f`: 3 testes, 3 PASS, 0 FAIL, exit 0.
+- **GREEN CI:** [run 40152897912](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40152897912) em `a71b33fbdd2eb11af3d1b29c8daf2cb1b6e3dadf`: `npm ci`, typecheck, lint, `npm test`, `node --test scripts/collage-css.test.mjs` e build **todos SUCCESS**. O resultado não substitui navegador real nem QA humano.
+- **Revisão independente:** foi realizada por segundo agente em modo leitura. Três achados importantes corrigidos, mas não foi executada segunda revisão completa após correções; cobertura por regressão e CI documentada.
+
+**NO-GO continua:** validação visual da Maria, navegação em 320–430 px, browser screenshots, zoom 200%, acesso por teclado/leitor de tela, performance e prévia/restore no Studio devem ser verificados antes de merge e deploy. A PR deve permanecer draft.
