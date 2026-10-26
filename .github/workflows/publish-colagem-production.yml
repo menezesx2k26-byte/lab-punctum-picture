@@ -1,0 +1,32 @@
+name: Publish Punctum visual colagem in Studio
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-studio-visual-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+      SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm ci
+      - name: Validate versioned visual-only transition
+        run: node --test scripts/publish-colagem-production.test.mjs
+      - name: Protect pending Studio drafts before release
+        run: node scripts/publish-colagem-production.mjs --check
+      - name: Apply and verify published visual preset
+        run: node scripts/publish-colagem-production.mjs --apply

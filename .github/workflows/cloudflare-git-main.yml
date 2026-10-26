@@ -76,6 +76,20 @@ jobs:
         id: tests
         run: npm test
 
+      - name: Snapshot current public production content
+        id: baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://punctumpicture.com'
+          curl -fsS --retry 3 --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
+            "$BASE/api/public/stats?baseline=${GITHUB_SHA}" -o /tmp/pre-deploy-stats.json
+          curl -fsS --retry 3 --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' \
+            "$BASE/api/public/site?baseline=${GITHUB_SHA}" -o /tmp/pre-deploy-site.json
+          jq -e '.stats.photoCount > 0 and .stats.albumCount > 0 and .stats.categoryCount > 0' /tmp/pre-deploy-stats.json >/dev/null
+          jq -e '.siteConfig.identity.sourcePresetId != null and .siteConfig.pages.home.sections != null' /tmp/pre-deploy-site.json >/dev/null
+          echo "Baseline snapshot validated; never reset D1 data to stale hardcoded totals."
+
       - name: Install trusted Wrangler
         id: wrangler
         run: npm install --global --no-audit --no-fund wrangler@4.125.0
@@ -166,25 +180,21 @@ jobs:
         run: |
           set -euo pipefail
           BASE='https://punctumpicture.com'
-          EXPECTED_CONFIG='(
-            .siteConfig.editorial.home.hero.title == "Fotografias de" and
-            .siteConfig.editorial.home.statement.title == "Comecei na fotografia na igreja, e desde então nunca mais parei." and
-            .siteConfig.editorial.home.carousel.title == "Fotografias para ver de perto." and
-            .siteConfig.theme.typography.headingFamily == "instrument-serif" and
-            (.siteConfig.pages.home.sections | any(
-              .type == "hero" and .variant == "cinematic" and .heroMedia == null
-            )) and
-            (.siteConfig.pages.home.sections | any(
-              .type == "photo-reel" and .variant == "horizontal"
-            ))
-          )'
+          # Do not overwrite Studio's published text/preset/media during a code deploy.
+          # Activating a new visual preset is a separate audited Studio publish.
+          EXPECTED_CONFIG='
+            .siteConfig.editorial == $baseline[0].siteConfig.editorial and
+            .siteConfig.identity == $baseline[0].siteConfig.identity and
+            .siteConfig.theme == $baseline[0].siteConfig.theme and
+            .siteConfig.pages == $baseline[0].siteConfig.pages
+          '
 
           PUBLISHED_OK=false
           for attempt in 1 2 3 4 5; do
             if curl -fsS -H 'Cache-Control: no-cache' \
               "$BASE/api/public/site?deploy=${GITHUB_SHA}&attempt=${attempt}" \
               -o /tmp/published-site.json && \
-              jq -e "$EXPECTED_CONFIG" /tmp/published-site.json >/dev/null; then
+              jq -e --slurpfile baseline /tmp/pre-deploy-site.json "$EXPECTED_CONFIG" /tmp/published-site.json >/dev/null; then
               PUBLISHED_OK=true
               break
             fi
@@ -198,11 +208,11 @@ jobs:
         run: |
           set -euo pipefail
           BASE='https://punctumpicture.com'
-          EXPECTED_STATS='.stats.photoCount == 192 and .stats.albumCount == 16 and .stats.categoryCount == 7'
+          EXPECTED_STATS='.stats == $baseline[0].stats'
 
           ROOT_OK=false
           for attempt in 1 2 3 4 5; do
-            if curl -fsS "$BASE/api/public/stats" >/tmp/stats.json && jq -e "$EXPECTED_STATS" /tmp/stats.json >/dev/null; then
+            if curl -fsS "$BASE/api/public/stats" >/tmp/stats.json && jq -e --slurpfile baseline /tmp/pre-deploy-stats.json "$EXPECTED_STATS" /tmp/stats.json >/dev/null; then
               ROOT_OK=true
               break
             fi
@@ -226,7 +236,7 @@ jobs:
 
           WWW_STATUS='unavailable'
           if curl -fsSL --connect-timeout 8 --max-time 15 'https://www.punctumpicture.com/api/public/stats' >/tmp/www-stats.json; then
-            if jq -e "$EXPECTED_STATS" /tmp/www-stats.json >/dev/null; then
+            if jq -e --slurpfile baseline /tmp/pre-deploy-stats.json "$EXPECTED_STATS" /tmp/www-stats.json >/dev/null; then
               WWW_STATUS='healthy'
             else
               WWW_STATUS='unexpected-stats'
@@ -255,7 +265,8 @@ jobs:
             echo '- Worker: `punctum-picture-migration`'
             echo '- Production apex: healthy'
             echo '- Production hero: valid WebP binary'
-            echo '- Published lens, carousel, direct copy and typography: verified'
+            echo '- Published Studio state preserved against pre-deploy live baseline'
+            echo '- Public photo/album/category totals preserved (dynamic baseline)'
             echo "- WWW smoke: \`${WWW_SMOKE_STATUS:-unknown}\` (non-blocking)"
             echo '- D1 migrations: applied before Worker deploy'
             echo '- D1: `punctum-picture`'
@@ -287,8 +298,9 @@ jobs:
               "typecheck": "${{ steps.typecheck.outcome }}",
               "lint": "${{ steps.lint.outcome }}",
               "heroBinary": "${{ steps.hero_binary.outcome }}",
-              "build": "${{ steps.build.outcome }}",
+            "build": "${{ steps.build.outcome }}",
               "tests": "${{ steps.tests.outcome }}",
+            "productionBaseline": "${{ steps.baseline.outcome }}",
               "wrangler": "${{ steps.wrangler.outcome }}",
               "d1": "${{ steps.d1.outcome }}",
               "d1Migrations": "${{ steps.d1_migrations.outcome }}",
