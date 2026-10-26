@@ -39,6 +39,7 @@ export function HomeStatementSection({
       {...homeSectionAttributes(section)}
     >
       <div className="thesis-ambient-glow" aria-hidden="true" />
+      <span className="collage-thesis-index" aria-hidden="true">CADERNO VISUAL // 01</span>
       <div>
         <p className="eyebrow">{copy.eyebrow}</p>
         <h2 id="thesis-title">
@@ -47,6 +48,7 @@ export function HomeStatementSection({
       </div>
       <div className="thesis-body-column">
         <p>{copy.body}</p>
+        <span className="collage-thesis-mark" aria-hidden="true">P / P.</span>
         <div className="thesis-colophon-tag">
           <span>Maria Helena · Fotógrafa</span>
           <span>Região Sul do Brasil</span>

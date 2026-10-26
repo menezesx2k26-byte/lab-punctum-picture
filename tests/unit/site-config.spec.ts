@@ -249,6 +249,7 @@ describe("registries de identidade", () => {
     }
     expect(Object.keys(SITE_PRESET_REGISTRY)).toEqual([
       "punctum-default",
+      "colagem-autoral",
       "editorial-silencioso",
       "delicado-luminoso",
       "intenso-noturno",

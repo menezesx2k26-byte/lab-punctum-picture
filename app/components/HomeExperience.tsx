@@ -1,4 +1,5 @@
 import "../immersive.css";
+import "../collage-home.css";
 import { MotionControl, StudioMotionProvider } from "./visual/motion-preference";
 import type { SiteConfig } from "../../shared/config";
 import type {

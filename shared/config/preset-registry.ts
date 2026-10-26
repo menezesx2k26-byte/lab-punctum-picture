@@ -2,6 +2,7 @@ import { z } from "zod";
 import { PUNCTUM_DEFAULT_SITE_CONFIG } from "./defaults";
 import { SITE_PRESET_IDS, type SitePresetId } from "./preset-ids";
 import { siteConfigSchema, type SiteConfig } from "./schema";
+import { protectImmersiveConfig } from "./immersive-policy";
 import type { PaletteId } from "./palette-registry";
 
 export const sitePresetSchema = z.object({
@@ -77,6 +78,14 @@ function buildPreset(recipe: PresetRecipe): SitePreset {
 
 const recipes: readonly PresetRecipe[] = [
   {
+    id: "colagem-autoral", label: "Colagem autoral", description: "Recortes, papel e tipografia expressiva em roxo, amarelo e branco.",
+    palette: "nocturne-plum", headingFamily: "syne", bodyFamily: "figtree",
+    headingScale: "display", headingWeight: "medium", headingTracking: "tight",
+    radius: "square", density: "balanced", shadow: "graphic", motion: "subtle",
+    image: "natural", background: "organic-glow",
+    variants: { statement: "manifesto", "featured-work": "collage", about: "editorial", contact: "minimal" },
+  },
+  {
     id: "editorial-silencioso", label: "Editorial", description: "Elegante, espaçoso e artístico.",
     palette: "editorial-ivory", headingFamily: "newsreader", bodyFamily: "manrope",
     headingScale: "display", headingWeight: "regular", headingTracking: "normal",
@@ -138,7 +147,7 @@ export function getSitePreset(id: unknown): SitePreset {
 export function applySitePreset(current: SiteConfig, id: SitePresetId): SiteConfig {
   const preset = SITE_PRESET_REGISTRY[id].config;
   const presetSections = new Map(preset.pages.home.sections.map((section) => [section.type, section]));
-  return siteConfigSchema.parse({
+  return protectImmersiveConfig(siteConfigSchema.parse({
     ...current,
     identity: structuredClone(preset.identity),
     theme: structuredClone(preset.theme),
@@ -148,13 +157,11 @@ export function applySitePreset(current: SiteConfig, id: SitePresetId): SiteConf
         sections: current.pages.home.sections.map((section) => {
           const presetSection = presetSections.get(section.type);
           if (!presetSection) return section;
-          return {
-            ...structuredClone(presetSection),
-            id: section.id,
-            enabled: section.enabled,
-          };
+          // Design variants change; Studio content/media and section-specific
+          // selections must survive preset switching and rollback.
+          return { ...section, variant: presetSection.variant };
         }),
       },
     },
-  });
+  }));
 }
