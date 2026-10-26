@@ -33,17 +33,10 @@ const state = (config) => ({
   history: [{ id: "published-version", isCurrent: true }],
 });
 
-test("auth gate refuses publishing if Maria has unpublished work", () => {
+test("release gate allows preserving Maria's unpublished work without publishing it", () => {
   const current = sample();
   assert.doesNotThrow(() => assertSafeReleaseState(state(current), { siteConfig: current }));
-  assert.throws(
-    () => assertSafeReleaseState({ ...state(current), hasUnpublishedChanges: true }, { siteConfig: current }),
-    /unpublished_draft/,
-  );
-  assert.throws(
-    () => assertSafeReleaseState(state(current), { siteConfig: { ...current, editorial: {} } }),
-    /draft_does_not_match/,
-  );
+  assert.doesNotThrow(() => assertSafeReleaseState({ ...state(current), hasUnpublishedChanges: true }, { siteConfig: current }));
   assert.throws(
     () => assertSafeReleaseState({ ...state(current), history: [] }, { siteConfig: current }),
     /rollback_checkpoint/,

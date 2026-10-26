@@ -8,6 +8,7 @@ import {
   discardDraftSiteConfig,
   listPublishedSiteConfigVersions,
   publishDraftSiteConfig,
+  publishVisualPresetPreservingDraft,
   readDraftSiteConfigState,
   restorePublishedSiteConfig,
   saveDraftSiteConfig,
@@ -81,6 +82,12 @@ const studioRevisionSchema = z
 
 const studioRestoreSchema = studioRevisionSchema.extend({
   versionId: z.string().trim().min(1).max(128),
+}).strict();
+
+const visualReleaseSchema = z.object({
+  presetId: z.literal("colagem-autoral"),
+  expectedPublishedVersionId: z.string().trim().min(1).max(128),
+  expectedDraftRevision: z.number().int().min(1),
 }).strict();
 
 function albumJson(row: AdminAlbumRow) {
@@ -1000,6 +1007,23 @@ async function publishStudio(
   }
 }
 
+async function publishVisualOnly(
+  request: Request,
+  db: D1Database,
+  identity: AdminIdentity,
+): Promise<Response> {
+  const input = await parseJson(request, visualReleaseSchema);
+  try {
+    const result = await publishVisualPresetPreservingDraft(
+      db, input.presetId, input.expectedPublishedVersionId,
+      input.expectedDraftRevision, identity.email,
+    );
+    return json({ ...result, presetId: input.presetId, draftPreserved: true }, { admin: true });
+  } catch (error) {
+    return studioMutationError(error, db);
+  }
+}
+
 async function discardStudio(
   request: Request,
   db: D1Database,
@@ -1229,6 +1253,9 @@ export async function handleAdminApi(
   }
   if (url.pathname === "/admin/api/studio/publish" && request.method === "POST") {
     return publishStudio(request, db, identity);
+  }
+  if (url.pathname === "/admin/api/studio/publish-visual" && request.method === "POST") {
+    return publishVisualOnly(request, db, identity);
   }
   if (url.pathname === "/admin/api/studio/discard" && request.method === "POST") {
     return discardStudio(request, db, identity);

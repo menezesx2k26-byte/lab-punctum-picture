@@ -906,6 +906,61 @@ describe("Worker Punctum Picture", () => {
     expect(legacyStillIntact).toEqual({ schemaVersion: 2, configJson: legacyJson });
   });
 
+  it("publica apenas Colagem Autoral e preserva integralmente o rascunho pendente", async () => {
+    const beforePublic = await exports.default.fetch("http://localhost:8787/api/public/site");
+    const publicConfig = ((await beforePublic.json()) as { siteConfig: typeof PUNCTUM_DEFAULT_SITE_CONFIG }).siteConfig;
+    const before = await exports.default.fetch("http://localhost:8787/admin/api/studio");
+    const studio = (await before.json()) as {
+      siteConfig: typeof PUNCTUM_DEFAULT_SITE_CONFIG;
+      revision: number;
+      history: Array<{ id: string; isCurrent: boolean }>;
+    };
+    const previousVersion = studio.history.find(x => x.isCurrent)?.id;
+    expect(previousVersion).toBeTruthy();
+
+    const pending = structuredClone(studio.siteConfig);
+    pending.editorial.home.hero.title = "Rascunho privado não deve ser publicado";
+    const save = await exports.default.fetch(jsonRequest("/admin/api/studio", "PATCH", {
+      siteConfig: pending, revision: studio.revision,
+    }));
+    expect(save.status).toBe(200);
+    const saved = (await save.json()) as { revision: number; siteConfig: typeof pending };
+
+    const publish = await exports.default.fetch(jsonRequest("/admin/api/studio/publish-visual", "POST", {
+      presetId: "colagem-autoral",
+      expectedPublishedVersionId: previousVersion,
+      expectedDraftRevision: saved.revision,
+    }));
+    expect(publish.status).toBe(200);
+    const published = await exports.default.fetch("http://localhost:8787/api/public/site");
+    const publishedConfig = ((await published.json()) as { siteConfig: typeof publicConfig }).siteConfig;
+    expect(publishedConfig.identity.sourcePresetId).toBe("colagem-autoral");
+    expect(publishedConfig.editorial).toEqual(publicConfig.editorial);
+    expect(publishedConfig.pages.home.sections.map(x => x.id))
+      .toEqual(publicConfig.pages.home.sections.map(x => x.id));
+    expect(publishedConfig.editorial.home.hero.title).not.toBe(pending.editorial.home.hero.title);
+
+    const after = await exports.default.fetch("http://localhost:8787/admin/api/studio");
+    const draftAfter = (await after.json()) as {
+      revision: number;
+      siteConfig: typeof pending;
+      hasUnpublishedChanges: boolean;
+      history: Array<{ id: string; isCurrent: boolean }>;
+    };
+    expect(draftAfter.siteConfig).toEqual(pending);
+    expect(draftAfter.revision).toBe(saved.revision);
+    expect(draftAfter.hasUnpublishedChanges).toBe(true);
+    expect(draftAfter.history.find(x => x.isCurrent)?.id).not.toBe(previousVersion);
+    expect(draftAfter.history.some(x => x.id === previousVersion)).toBe(true);
+
+    const stale = await exports.default.fetch(jsonRequest("/admin/api/studio/publish-visual", "POST", {
+      presetId: "colagem-autoral",
+      expectedPublishedVersionId: previousVersion,
+      expectedDraftRevision: saved.revision,
+    }));
+    expect(stale.status).toBe(409);
+  });
+
   it("rejeita Access inválido, preset inválido e imagem ausente", async () => {
     const access = await exports.default.fetch(
       new Request("https://punctumpicture.com/admin/api/me", {
