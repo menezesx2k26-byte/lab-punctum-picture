@@ -30,4 +30,11 @@ describe("Collage mobile CSS contract", () => {
     assert.match(links[1], /min-width:\s*48px\s*;/);
     assert.match(links[1], /min-height:\s*48px\s*;/);
   });
+  it("stacks footer links at narrow 320px viewports instead of clipping them", () => {
+    assert.match(
+      css,
+      /@media\s*\(max-width:\s*380px\)\s*\{[\s\S]*?\.site-footer nav\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*;/,
+      "narrow collage footer must have a single flexible column",
+    );
+  });
 });
