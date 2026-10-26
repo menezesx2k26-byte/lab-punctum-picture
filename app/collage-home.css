@@ -814,8 +814,8 @@
   .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate { max-width: 94%; }
 }
 @media (max-width: 767px) {
-  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-portrait-detail {
-    left: 0;
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-image .collage-portrait-detail {
+    left: 1.25rem;
     bottom: -8%;
     width: 36%;
   }

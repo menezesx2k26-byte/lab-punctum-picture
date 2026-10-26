@@ -54,6 +54,10 @@ describe("Collage mobile CSS contract", () => {
     assert.ok(label);
     assert.match(label[1], /top:\s*1\.25rem/);
     assert.match(label[1], /bottom:\s*auto/);
-    assert.match(css, /@media \(max-width: 767px\)\s*\{[\s\S]*?\.collage-portrait-detail\s*\{[^}]*left:\s*0/s);
+    assert.match(
+      css,
+      /@media \(max-width: 767px\)\s*\{[\s\S]*?\.manifesto-editorial-image \.collage-portrait-detail\s*\{[^}]*left:\s*1\.25rem/s,
+      "decorative portrait inset must clear rotation clipping at 360–430px",
+    );
   });
 });
