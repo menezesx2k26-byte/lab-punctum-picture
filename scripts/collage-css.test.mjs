@@ -37,4 +37,23 @@ describe("Collage mobile CSS contract", () => {
       "narrow collage footer must have a single flexible column",
     );
   });
+  it("composes asymmetric contact-sheet cards while preserving uncropped originals", () => {
+    assert.match(css, /\.stories-collage-layout\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
+    assert.match(css, /\.collage-story-plate:nth-of-type\(2n\)/);
+    assert.match(css, /\.collage-editorial-masthead\s*\{/);
+    assert.match(css, /\.collage-paper-annotation\s*\{/);
+    assert.match(css, /\.collage-photo-frame img\s*\{[^}]*object-fit:\s*contain/s);
+  });
+  it("adds print textures as noninteractive overlays instead of filtering originals", () => {
+    assert.match(css, /\.stories-section::before\s*\{[^}]*pointer-events:\s*none/s);
+    assert.match(css, /\.manifesto-editorial-image \.collage-portrait-detail/);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  });
+  it("places editorial labels over photographs rather than covering album captions", () => {
+    const label = css.match(/\.collage-paper-annotation\s*\{([^}]+)\}/);
+    assert.ok(label);
+    assert.match(label[1], /top:\s*1\.25rem/);
+    assert.match(label[1], /bottom:\s*auto/);
+    assert.match(css, /@media \(max-width: 767px\)\s*\{[\s\S]*?\.collage-portrait-detail\s*\{[^}]*left:\s*0/s);
+  });
 });

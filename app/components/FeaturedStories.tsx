@@ -123,6 +123,11 @@ export function FeaturedStories({
       {/* MODO 3: PRANCHAS DE COLAGEM TÁTIL */}
       {mode === "collage" && (
         <div className="stories-collage-layout">
+          <div className="collage-editorial-masthead" aria-hidden="true">
+            <span>PUNCTUM / SELEÇÃO</span>
+            <strong>ESTUDOS<br />DO OLHAR.</strong>
+            <small>{String(albums.length).padStart(2, "0")} ENSAIOS / ACERVO VIVO</small>
+          </div>
           {albums.map((album, index) => {
             const source = albumArtworkSource(album);
             return (
@@ -132,6 +137,9 @@ export function FeaturedStories({
                 className={`collage-story-plate collage-plate-${index + 1}`}
                 data-cursor="open"
               >
+                <span className="collage-plate-number" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")} / {String(albums.length).padStart(2, "0")}
+                </span>
                 <div className="collage-photo-frame">
                   <span className="collage-tape-mark" aria-hidden="true" />
                   {source ? (
@@ -153,6 +161,7 @@ export function FeaturedStories({
                   <h3>{album.title}</h3>
                   <p>{album.categories.map((c) => c.name).join(" · ")}</p>
                 </div>
+                <span className="collage-paper-annotation" aria-hidden="true">arquivo<br />autoral ✳</span>
               </Link>
             );
           })}

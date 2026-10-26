@@ -44,4 +44,17 @@ describe("collage featured photography", () => {
     expect(html).toContain("Grade");
     expect(html).toContain("Composição");
   });
+  it("lays out the real albums as an editorial contact sheet with issue markers", () => {
+    const html = renderToStaticMarkup(createElement(FeaturedStories, {
+      albums: [album(), album({ id: "album-2", slug: "segundo-ensaio", title: "Segundo ensaio" })],
+      variant: "collage",
+    }));
+    expect(html).toContain('class="collage-editorial-masthead"');
+    expect(html).toContain("PUNCTUM / SELEÇÃO");
+    expect(html).toContain("02 ENSAIOS");
+    expect(html).toContain('class="collage-plate-number"');
+    expect(html).toContain("01 / 02");
+    expect(html).toContain("02 / 02");
+    expect(html).toContain('class="collage-paper-annotation"');
+  });
 });

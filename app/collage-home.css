@@ -478,3 +478,351 @@
 .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto[data-section-surface="photo"] :is(.eyebrow,.text-link) {
   color:var(--collage-yellow);
 }
+
+/* Punctum, edição zine: typography and real photography share the same sheet.
+ * The reference posters inform the language, never become copied site assets.
+ * Layer textures on paper surfaces only; all original album photos remain intact. */
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] {
+  --collage-signal: #bd2531;
+  --collage-grain: radial-gradient(circle at 21% 31%, rgb(24 19 30 / .18) .45px, transparent .85px);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis {
+  padding-top: clamp(6rem, 10vw, 11rem);
+  padding-bottom: clamp(5rem, 8vw, 9rem);
+  gap: clamp(2rem, 5vw, 6rem);
+  border-bottom: 12px solid var(--collage-ink);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis .thesis-ambient-glow {
+  display: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis-manifesto > div:not(.thesis-ambient-glow) {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-thesis-index {
+  position: absolute;
+  top: clamp(1.4rem, 4vw, 3rem);
+  right: var(--collage-edge);
+  color: var(--collage-ink);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: .72rem;
+  letter-spacing: .12em;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis h2 {
+  font-size: clamp(3.4rem, 11.5vw, 10.5rem);
+  line-height: .9;
+  letter-spacing: -.082em;
+  font-weight: 850;
+  max-width: 13ch;
+  text-wrap: balance;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis .thesis-body-column {
+  position: relative;
+  align-self: end;
+  padding: 1.4rem 1rem 1.2rem;
+  border-top: 7px solid var(--collage-ink);
+  border-bottom: 1px solid currentColor;
+  background-image: var(--collage-grain);
+  background-size: 5px 5px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis .thesis-body-column > p {
+  font-size: clamp(1.2rem, 2.3vw, 1.7rem);
+  line-height: 1.25;
+  font-weight: 700;
+  color: inherit;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-thesis-mark {
+  display: block;
+  font: 900 clamp(3.7rem, 8vw, 7rem)/1 var(--font-heading);
+  letter-spacing: -.1em;
+  color: var(--collage-signal);
+  transform: rotate(-4deg);
+  margin: .5rem 0;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section {
+  position: relative;
+  isolation: isolate;
+  background: #381b67;
+  padding-top: clamp(3rem, 6vw, 6rem);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: .2;
+  background-image: var(--collage-grain), repeating-linear-gradient(0deg, transparent 0 6px, rgb(255 255 255 / .15) 7px, transparent 8px);
+  background-size: 5px 5px, 100% 100%;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading {
+  position: relative;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgb(247 244 239 / .65);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading::after {
+  content: "✳";
+  position: absolute;
+  right: .25rem;
+  top: .5rem;
+  font: 900 clamp(2rem, 9vw, 6rem)/1 var(--font-heading);
+  color: var(--collage-yellow);
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading h2 {
+  font-size: clamp(4.15rem, 12vw, 10rem);
+  line-height: .84;
+  letter-spacing: -.09em;
+  text-transform: uppercase;
+  font-weight: 850;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-section .section-heading h2 em {
+  display: inline-block;
+  padding: .04em .12em .12em 0;
+  font-style: normal;
+  color: var(--collage-yellow);
+  transform: rotate(-2deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-collage-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.3rem, 3vw, 3rem);
+  padding: .75rem .3rem 2rem;
+  align-items: start;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead {
+  position: relative;
+  min-width: 0;
+  padding: clamp(1.1rem, 3vw, 2rem);
+  background: var(--collage-signal);
+  color: var(--collage-paper);
+  border: 8px solid var(--collage-paper);
+  box-shadow: 7px 8px 0 var(--collage-ink);
+  overflow: hidden;
+  display: grid;
+  gap: .6rem;
+  isolation: isolate;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead::after {
+  content: "✳";
+  position: absolute;
+  top: -3rem;
+  right: -.3rem;
+  z-index: -1;
+  color: var(--collage-ink);
+  font-size: clamp(9rem, 30vw, 22rem);
+  line-height: 1;
+  transform: rotate(-13deg);
+  opacity: .42;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead span,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead small {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: clamp(.65rem, 2.5vw, .83rem);
+  letter-spacing: .08em;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead strong {
+  font-family: var(--font-heading);
+  font-size: clamp(3.7rem, 12.2vw, 11rem);
+  font-weight: 900;
+  line-height: .79;
+  letter-spacing: -.09em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  max-width: 10ch;
+  margin-block: .4rem 1rem;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate {
+  border: 0;
+  padding: .4rem .4rem 1rem;
+  box-shadow: 5px 7px 0 rgb(17 8 27 / .65);
+  overflow: visible;
+  isolation: isolate;
+  min-width: 0;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: .08;
+  background-image: var(--collage-grain);
+  background-size: 4px 4px;
+  pointer-events: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-number {
+  position: absolute;
+  z-index: 4;
+  top: -.6rem;
+  left: -.45rem;
+  padding: .35rem .5rem;
+  background: var(--collage-ink);
+  color: var(--collage-paper);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: .75rem;
+  letter-spacing: .07em;
+  transform: rotate(-5deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-paper-annotation {
+  position: absolute;
+  z-index: 3;
+  right: -.45rem;
+  top: 1.25rem;
+  bottom: auto;
+  padding: .35rem .45rem;
+  background: var(--collage-yellow);
+  color: var(--collage-ink);
+  font: 700 .68rem/1.05 ui-monospace, SFMono-Regular, Consolas, monospace;
+  text-transform: uppercase;
+  transform: rotate(5deg);
+  box-shadow: 2px 2px 0 var(--collage-ink);
+  pointer-events: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-tape-mark {
+  width: 55px;
+  height: 16px;
+  background: rgb(247 244 239 / .9);
+  border: 1px solid rgb(24 19 30 / .25);
+  top: -11px;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-caption h3 {
+  font-size: clamp(1.4rem, 5vw, 2.9rem);
+  line-height: 1.02;
+  text-wrap: balance;
+  font-weight: 850;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:nth-of-type(2n) {
+  transform: rotate(2deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:nth-of-type(2n + 1) {
+  transform: rotate(-1.3deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:focus-visible,
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:hover {
+  transform: translateY(-3px) rotate(0deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-grid {
+  position: relative;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-lead {
+  position: relative;
+  z-index: 2;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-lead .manifesto-pullquote {
+  font-size: clamp(3.7rem, 9.5vw, 8rem);
+  line-height: .85;
+  font-weight: 850;
+  letter-spacing: -.09em;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-image {
+  overflow: visible;
+  border: 6px solid var(--collage-ink);
+  box-shadow: 12px 14px 0 var(--collage-signal);
+  isolation: isolate;
+  margin: .75rem 0 clamp(3rem, 5vw, 5rem) .75rem;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-image > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-image .collage-portrait-edition {
+  position: absolute;
+  display: block;
+  top: -.9rem;
+  left: -.9rem;
+  z-index: 4;
+  padding: .35rem .65rem;
+  color: var(--collage-paper);
+  background: var(--collage-ink);
+  font: 700 clamp(.62rem, 1.5vw, .85rem)/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .09em;
+  transform: rotate(-4deg);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-image .collage-portrait-detail {
+  position: absolute;
+  display: block;
+  width: 42%;
+  height: 39%;
+  left: -10%;
+  bottom: -11%;
+  z-index: 3;
+  padding: .35rem;
+  background: var(--collage-paper);
+  border: 4px solid var(--collage-ink);
+  transform: rotate(-6deg);
+  box-shadow: 5px 5px 0 var(--collage-signal);
+  overflow: hidden;
+  pointer-events: none;
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto .collage-portrait-detail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 24%;
+  filter: grayscale(1) contrast(1.2);
+}
+.site-shell.immersive-home[data-theme-preset="colagem-autoral"] .manifesto-editorial-image .collage-portrait-index {
+  position: absolute;
+  display: block;
+  z-index: 4;
+  right: -.8rem;
+  bottom: -2.4rem;
+  padding: .55rem .6rem;
+  color: var(--collage-paper);
+  background: var(--collage-signal);
+  font: 900 clamp(1rem, 2vw, 1.7rem)/.88 var(--font-heading);
+  letter-spacing: -.05em;
+  transform: rotate(4deg);
+  pointer-events: none;
+}
+@media (min-width: 360px) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-collage-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1rem, 3vw, 2rem) clamp(.6rem, 2vw, 1rem);
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead,
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-1 {
+    grid-column: 1 / -1;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-3 {
+    margin-top: 2.5rem;
+  }
+}
+@media (min-width: 768px) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .stories-collage-layout {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 2rem;
+    padding-top: 2rem;
+  }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead { grid-column: 1 / -1; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate { grid-column: span 6; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-1 { grid-column: span 7; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-2 { grid-column: span 5; margin-top: 5rem; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-3 { grid-column: span 5; margin-top: 0; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-plate-4 { grid-column: span 7; margin-top: 4rem; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-paper-annotation { font-size: .83rem; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .visual-thesis .thesis-body-column { margin-bottom: .5rem; }
+}
+@media (max-width: 359px) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-editorial-masthead strong { font-size: 3.2rem; }
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate { max-width: 94%; }
+}
+@media (max-width: 767px) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-portrait-detail {
+    left: 0;
+    bottom: -8%;
+    width: 36%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-shell.immersive-home[data-theme-preset="colagem-autoral"] .collage-story-plate:nth-of-type(n) {
+    transform: none;
+    transition: none;
+  }
+}
