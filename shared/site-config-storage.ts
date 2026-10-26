@@ -1,10 +1,12 @@
 import {
   BACKGROUND_ASSET_REGISTRY,
   PUNCTUM_DEFAULT_SITE_CONFIG,
+  applySitePreset,
   refreshLegacyPublishedConfig,
   safeParseSiteConfig,
   siteConfigSchema,
   type SiteConfig,
+  type SitePresetId,
 } from "./config";
 import {
   readPublishedImagesById,
@@ -659,6 +661,111 @@ export async function publishDraftSiteConfig(
   const draft = await readDraftSiteConfigState(db);
   if (draft.revision !== expectedRevision) throw new DraftRevisionConflictError();
   return publishConfigSnapshot(db, draft.config, expectedRevision, actor, null);
+}
+
+/**
+ * Publish only the visual variant of the current published site, leaving the
+ * pending Studio draft untouched (including its revision and content).
+ */
+export async function publishVisualPresetPreservingDraft(
+  db: D1Database,
+  presetId: SitePresetId,
+  expectedPublishedVersionId: string,
+  expectedDraftRevision: number,
+  actor: string,
+): Promise<{ previousVersionId: string; publishedVersionId: string; draftRevision: number }> {
+  const settings = await readPublicSiteSettings(db);
+  const { pointers } = await ensureVersionedSiteConfig(db, settings);
+  if (pointers.publishedVersionId !== expectedPublishedVersionId) {
+    throw new DraftRevisionConflictError();
+  }
+  const [published, draft] = await Promise.all([
+    readVersion(db, pointers.publishedVersionId),
+    readVersion(db, pointers.draftVersionId),
+  ]);
+  if (!published || published.state !== "published" || !draft || draft.state !== "draft") {
+    throw new InvalidStoredSiteConfigError();
+  }
+  if (draft.revision !== expectedDraftRevision) throw new DraftRevisionConflictError();
+  const parsed = parseStoredConfig(published.configJson, settings);
+  if (parsed.source === "safe-fallback") throw new InvalidStoredSiteConfigError();
+  const original = parsed.config;
+  const candidate = applySitePreset(original, presetId);
+  const normalized = structuredClone(candidate);
+  normalized.identity = structuredClone(original.identity);
+  normalized.theme = structuredClone(original.theme);
+  if (normalized.pages.home.sections.length !== original.pages.home.sections.length) {
+    throw new InvalidStoredSiteConfigError("O preset altera a estrutura da página.");
+  }
+  for (const [index, item] of normalized.pages.home.sections.entries()) {
+    const previous = original.pages.home.sections[index];
+    if (item.id !== previous.id || item.type !== previous.type) {
+      throw new InvalidStoredSiteConfigError("O preset altera a identidade das seções.");
+    }
+    item.variant = previous.variant;
+  }
+  if (serializeSiteConfig(normalized) !== serializeSiteConfig(original)) {
+    throw new InvalidStoredSiteConfigError("O preset tenta modificar conteúdo não visual.");
+  }
+  await assertSiteConfigReferences(db, candidate);
+
+  const publishedVersionId = crypto.randomUUID();
+  const auditId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const results = await db.batch([
+    db.prepare(
+      `INSERT INTO site_config_versions (
+         id, schema_version, state, revision, config_json,
+         based_on_version_id, restored_from_version_id,
+         created_at, updated_at, published_at,
+         created_by, updated_by, published_by
+       ) SELECT ?, ?, 'published', ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?
+         WHERE EXISTS (
+           SELECT 1 FROM site_config_pointers p
+             JOIN site_config_versions d ON d.id = p.draft_version_id
+           WHERE p.id = 1 AND p.published_version_id = ?
+             AND p.draft_version_id = ? AND d.state = 'draft'
+             AND d.revision = ?
+         )`,
+    ).bind(
+      publishedVersionId, candidate.schemaVersion, published.revision + 1,
+      serializeSiteConfig(candidate), published.id,
+      now, now, now, actor, actor, actor,
+      published.id, draft.id, expectedDraftRevision,
+    ),
+    db.prepare(
+      `UPDATE site_config_pointers
+       SET published_version_id = ?, updated_at = ?
+       WHERE id = 1 AND published_version_id = ? AND draft_version_id = ?
+         AND EXISTS (
+           SELECT 1 FROM site_config_versions d
+           WHERE d.id = ? AND d.state = 'draft' AND d.revision = ?
+         )
+         AND EXISTS (
+           SELECT 1 FROM site_config_versions p
+           WHERE p.id = ? AND p.state = 'published'
+         )`,
+    ).bind(
+      publishedVersionId, now, published.id, draft.id,
+      draft.id, expectedDraftRevision, publishedVersionId,
+    ),
+    db.prepare(
+      `INSERT INTO audit_log (
+         id, actor_email, action, entity_type, entity_id, data_json, created_at
+       ) SELECT ?, ?, 'studio.visual_preset_published', 'site_config', ?, ?, ?
+         WHERE EXISTS (
+           SELECT 1 FROM site_config_pointers WHERE id = 1 AND published_version_id = ?
+         )`,
+    ).bind(
+      auditId, actor, publishedVersionId,
+      JSON.stringify({ presetId, previousVersionId: published.id, preservedDraftVersionId: draft.id }),
+      now, publishedVersionId,
+    ),
+  ]);
+  if (!resultChanges(results[0]) || !resultChanges(results[1]) || !resultChanges(results[2])) {
+    throw new DraftRevisionConflictError();
+  }
+  return { previousVersionId: published.id, publishedVersionId, draftRevision: expectedDraftRevision };
 }
 
 export async function restorePublishedSiteConfig(

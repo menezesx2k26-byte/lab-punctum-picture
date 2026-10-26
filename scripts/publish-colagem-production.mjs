@@ -16,14 +16,8 @@ export function assertSafeReleaseState(studio, published) {
   if (!studio || !published?.siteConfig || !studio.siteConfig) {
     throw Error("studio_or_published_config_missing");
   }
-  if (studio.hasUnpublishedChanges) {
-    throw Error("studio_has_unpublished_draft_do_not_overwrite_marias_work");
-  }
   if (!Number.isSafeInteger(studio.revision) || studio.revision < 1) {
     throw Error("studio_revision_invalid");
-  }
-  if (!isDeepStrictEqual(studio.siteConfig, published.siteConfig)) {
-    throw Error("studio_draft_does_not_match_published_config");
   }
   if (!studio.history?.some((version) => version.isCurrent && version.id)) {
     throw Error("published_version_rollback_checkpoint_missing");
@@ -125,8 +119,11 @@ async function main(mode) {
   ]);
   assertSafeReleaseState(studio, before);
   const previousVersion = studio.history.find((version) => version.isCurrent).id;
-  const candidate = await createCandidate(studio.siteConfig);
-  const initial = studio.siteConfig.identity.sourcePresetId;
+  // A pending draft is legitimate editorial work. Apply the visual preset to
+  // the PUBLISHED snapshot only and preserve the complete draft separately.
+  const candidate = await createCandidate(before.siteConfig);
+  const initial = before.siteConfig.identity.sourcePresetId;
+  const draftHashBefore = hash(studio.siteConfig);
   if (!isDeepStrictEqual(statsBefore.stats, {
     photoCount: statsBefore.stats.photoCount,
     albumCount: statsBefore.stats.albumCount,
@@ -144,25 +141,24 @@ async function main(mode) {
       photoCount: statsBefore.stats.photoCount,
       albumCount: statsBefore.stats.albumCount,
       categoryCount: statsBefore.stats.categoryCount,
+      pendingDraftExists: Boolean(studio.hasUnpublishedChanges),
+      pendingDraftHash: draftHashBefore,
       draftPreserved: true,
     }));
     return;
   }
-  if (initial === PRESET && isDeepStrictEqual(studio.siteConfig, candidate)) {
+  if (initial === PRESET && isDeepStrictEqual(before.siteConfig, candidate)) {
     console.log(JSON.stringify({ status: "already_published", preset: PRESET, publishedVersion: previousVersion }));
     return;
   }
-  const patched = await adminJson("/admin/api/studio", "PATCH", {
-    siteConfig: candidate,
-    revision: studio.revision,
+  const published = await adminJson("/admin/api/studio/publish-visual", "POST", {
+    presetId: PRESET,
+    expectedPublishedVersionId: previousVersion,
+    expectedDraftRevision: studio.revision,
   });
-  if (!isDeepStrictEqual(patched.siteConfig, candidate) || !Number.isSafeInteger(patched.revision)) {
-    throw Error("draft_response_mismatch_abort_before_publish");
+  if (!published.draftPreserved || published.previousVersionId !== previousVersion) {
+    throw Error("visual_release_response_invalid");
   }
-  const published = await adminJson("/admin/api/studio/publish", "POST", {
-    revision: patched.revision,
-  });
-  if (published.hasUnpublishedChanges) throw Error("published_but_pending_draft");
   let after;
   for (let i = 0; i < 5; i++) {
     after = await publicRead("/api/public/site?visual-release=" + Date.now());
@@ -170,8 +166,12 @@ async function main(mode) {
     await sleep(2500);
   }
   const statsAfter = await publicRead("/api/public/stats?visual-release=after");
+  const draftAfter = await adminJson("/admin/api/studio");
   if (!isDeepStrictEqual(after?.siteConfig, candidate) ||
-      !isDeepStrictEqual(statsBefore.stats, statsAfter.stats)) {
+      !isDeepStrictEqual(statsBefore.stats, statsAfter.stats) ||
+      hash(draftAfter.siteConfig) !== draftHashBefore ||
+      draftAfter.revision !== studio.revision ||
+      draftAfter.hasUnpublishedChanges !== studio.hasUnpublishedChanges) {
     // The former published version is retained in Studio history for an audited
     // restore; do not blindly roll back if another administrator changed it.
     throw Error("post_publish_verification_failed_restore_previous_version_" + previousVersion);
@@ -181,10 +181,13 @@ async function main(mode) {
     beforePreset: initial,
     preset: PRESET,
     previousVersion,
-    revision: published.revision,
+    publishedVersion: published.publishedVersionId,
+    draftRevisionUnchanged: draftAfter.revision,
+    draftHashUnchanged: true,
+    pendingDraftPreserved: Boolean(draftAfter.hasUnpublishedChanges),
     contentPreserved: true,
     archivePreserved: true,
-    originalHash: hash(studio.siteConfig),
+    originalHash: hash(before.siteConfig),
     releasedHash: hash(candidate),
     productionUrl: ORIGIN,
   }));

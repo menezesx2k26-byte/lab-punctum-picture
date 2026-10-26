@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
       - name: Validate versioned visual-only transition
         run: node --test scripts/publish-colagem-production.test.mjs
-      - name: Protect pending Studio drafts before release
+      - name: Verify published baseline and preserve pending draft
         run: node scripts/publish-colagem-production.mjs --check
       - name: Apply and verify published visual preset
         run: node scripts/publish-colagem-production.mjs --apply
