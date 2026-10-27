@@ -14,3 +14,11 @@ Leitura UTC: 2026-10-27 (execução atual). Repositório: menezesx2k26-byte/lab-
 - Bloqueios iniciais: BLOCKED_REAL_OTP (identidade real não comprovada), BLOCKED_QA_AUTHORITY (isolamento/permissões atuais desconhecidos), BLOCKED_DEVICE_QA (aparelhos físicos não disponíveis), BLOCKED_BILLING_READ (custo efetivo não observado), BLOCKED_LGPD_APPROVAL. Situação registrada; verificação atual pendente.
 
 Produção tocada: não. Próxima ação: inventário e integração controlada, com os workflows e dependências da main preservados.
+
+## Releitura Cloudflare — 27/10/2026 UTC
+
+Consulta somente leitura identificou Worker de produção `punctum-picture-migration` e Worker `punctum-picture-albums-qa`. Existem bancos QA de origem e restauração distintos entre si e do D1 principal. Os bindings atuais do Worker QA apontam para o D1 de **restauração**, bucket QA restaurado e bucket QA de backup; modo Access e flag QA `true`. Team, audience de cliente e secret de sessão aparecem como bindings presentes, sem inspeção de valores secretos; audience administrativa não aparece nos bindings QA consultados.
+
+App Access QA self-hosted identificada para `/albuns/entrar`, sessão configurada de 1h, com uma política allow contendo uma condição. Isso não confirma entrega OTP nem o conteúdo da política para um usuário específico. Os buckets QA de originais, restaurados e backups retornaram `r2.dev` desabilitado e zero domínios customizados. Não houve teste direto de leitura anônima de objetos.
+
+Settings consultados do Worker de produção não retornaram binding `PRIVATE_GALLERIES_ENABLED`; isso é uma observação da configuração lida, não comprovação independente de todo o tráfego implantado. Nenhum binding ou política foi modificado. Billing subscriptions retornou 403 por falta de Billing Read no OAuth. Não foi possível confirmar gasto/uso atual.
