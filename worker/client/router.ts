@@ -23,6 +23,12 @@ export function isPrivateGalleryPath(path: string) {
     path,
   );
 }
+function isPrivateStorageOrGalleryPath(path: string) {
+  return (
+    isPrivateGalleryPath(path) ||
+    /^\/(?:client-galleries|private-galleries)(?:\/|$)/.test(path)
+  );
+}
 export async function handlePrivateGalleryRoutes(
   request: Request,
   url: URL,
@@ -33,12 +39,13 @@ export async function handlePrivateGalleryRoutes(
     if (source) {
       try {
         let path = new URL(source, url).pathname;
-        for (let i = 0; i < 3; i++) {
-          if (isPrivateGalleryPath(path))
+        for (let i = 0; i < 4; i++) {
+          if (isPrivateStorageOrGalleryPath(path))
             return privateResponse(new Response(null, { status: 404 }));
           const decoded = decodeURIComponent(path);
-          if (decoded === path) break;
-          path = decoded;
+          const normalized = new URL(decoded, url).pathname;
+          if (normalized === path && decoded === path) break;
+          path = normalized;
         }
       } catch {
         /* The public optimizer validates malformed sources. */
@@ -46,6 +53,9 @@ export async function handlePrivateGalleryRoutes(
     }
   }
   if (!isPrivateGalleryPath(url.pathname)) return null;
+  const media = url.pathname.match(
+    /^\/(api\/client\/galleries|admin\/api\/albuns-privados)\/([^/]+)\/images\/([^/]+)\/(thumb|gallery|download)$/,
+  );
   try {
     if (!isPrivateGalleriesEnabled(env))
       throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
@@ -59,9 +69,6 @@ export async function handlePrivateGalleryRoutes(
     if (page) return page;
     const session = await handleClientSessionApi(request, url, env);
     if (session) return session;
-    const media = url.pathname.match(
-      /^\/(api\/client\/galleries|admin\/api\/albuns-privados)\/([^/]+)\/images\/([^/]+)\/(thumb|gallery|download)$/,
-    );
     if (media && (request.method === "GET" || request.method === "HEAD")) {
       const response = await servePrivateGalleryImage(
         request,
@@ -94,6 +101,9 @@ export async function handlePrivateGalleryRoutes(
       url.pathname === "/albuns/entrar" && request.method === "GET" &&
       request.headers.get("Accept")?.includes("text/html"))
       return privateEntryError(response.status);
+    if (media || request.method === "HEAD") {
+      return privateResponse(new Response(null, { status: response.status }));
+    }
     return privateResponse(response);
   }
 }

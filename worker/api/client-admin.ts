@@ -23,6 +23,7 @@ import { AppError } from "../utils/errors";
 import { assertRateLimit } from "../utils/rate-limit";
 import { parseJson } from "../client/validation";
 import { clientAuthMode } from "../client/auth-mode";
+import { loadSanitizedTitularExport } from "../client/lgpd";
 
 const accountColumns =
   "id,name,email,disabled_at AS disabledAt,must_change_password AS mustChangePassword,created_at AS createdAt";
@@ -40,7 +41,7 @@ export async function handleClientAdminApi(
   const mode = clientAuthMode(env);
   await assertRateLimit(request, db, "client-admin", 200, 60);
   const match = url.pathname.match(
-    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password))?)?$/,
+    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password|lgpd-export))?)?$/,
   );
   if (!match) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   const id = match[1];
@@ -127,7 +128,18 @@ export async function handleClientAdminApi(
     .first();
   if (!existing)
     throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
-  if (match[2] && request.method === "POST") {
+  if (match[2] === "lgpd-export" && request.method === "GET") {
+    const exported = await loadSanitizedTitularExport(db, id);
+    await writeAudit(
+      db,
+      actor.email,
+      "client.lgpd_exported",
+      "client_account",
+      id,
+    );
+    return privateJson(exported);
+  }
+  if (match[2] === "reset-password" && request.method === "POST") {
     if (mode === "access") {
       await db
         .prepare(

@@ -1,5 +1,5 @@
 import { assertSeparateAccessAudiences } from "../client/audience";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { AppError } from "./errors";
 import { envString, requiredEnvString } from "./env";
 
@@ -250,7 +250,11 @@ export async function verifyAdminPassword(
   return difference === 0;
 }
 
-export async function requireAdmin(request: Request, env: Env): Promise<AdminIdentity> {
+export async function requireAdmin(
+  request: Request,
+  env: Env,
+  jwksOverride?: JWTVerifyGetKey,
+): Promise<AdminIdentity> {
   if (isLocalRequest(request, env)) {
     return { email: "maria.helena@local.dev", roles: ["admin"] };
   }
@@ -267,7 +271,7 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminIde
   const teamDomain = normalizeTeamDomain(requiredEnvString(env, "CLOUDFLARE_TEAM_DOMAIN"));
   const audience = requiredEnvString(env, "CLOUDFLARE_ACCESS_AUD");
   const issuer = `https://${teamDomain}`;
-  const jwks = createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
+  const jwks = jwksOverride ?? createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
 
   try {
     const { payload } = await jwtVerify(assertion, jwks, {
@@ -275,9 +279,11 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminIde
       audience,
       algorithms: ["RS256"],
     });
-    const email = typeof payload.email === "string" ? payload.email : null;
-    if (!email) {
-      throw new Error("JWT sem e-mail");
+    const email =
+      typeof payload.email === "string" ? payload.email.trim().toLowerCase() : null;
+    const allowed = allowedAdminEmails(env);
+    if (!email || (allowed.length > 0 && !allowed.includes(email))) {
+      throw new Error("JWT sem e-mail administrativo permitido");
     }
     return { email, roles: ["admin"] };
   } catch {
