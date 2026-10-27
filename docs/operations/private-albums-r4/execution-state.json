@@ -1,10 +1,10 @@
 {
   "mission": "punctum-private-albums-r4",
-  "phase": "P12-local-recovery",
-  "branch": "integration/punctum-private-albums-r4-20261027",
-  "baseSha": "a77654281a80be3c9e8857f4aef2744a942a991b",
+  "phase": "P5-commits-pr",
+  "branch": "agent/argon-punctum-r4-dod-20261027",
+  "baseSha": "a242b6eed8b829e51980ee8e61d20bef82c2e938",
   "headSha": null,
-  "featureEnabledInProduction": null,
+  "featureEnabledInProduction": false,
   "productionWritesAuthorized": false,
   "gates": {
     "baseline": "PASS",
@@ -25,7 +25,11 @@
     "BROWSER_BINARY_DOWNLOAD_INVALID"
   ],
   "lastVerifiedAt": "2026-10-27T13:14:34.439845+00:00",
-  "lastValidatedCodeCommit": "3cc4db8c7a936f51d75025226970676a87f89ba7",
+  "lastValidatedCodeCommit": "a242b6eed8b829e51980ee8e61d20bef82c2e938",
   "lastValidatedCodeCI": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40465566814",
-  "qaResourceWritesPerformed": false
+  "qaResourceWritesPerformed": false,
+  "agentBranch": "agent/argon-punctum-r4-dod-20261027",
+  "prTarget": "integration/punctum-private-albums-r4-20261027",
+  "technicalDod": "TECHNICAL_DOD_PARTIAL",
+  "productionStatus": "PRODUCTION_NO_GO"
 }
