@@ -7,6 +7,8 @@ export default defineConfig({
       main: "./worker/test-entry.ts",
       wrangler: { configPath: "./wrangler.jsonc" },
       miniflare: {
+        d1Databases: { DB: "punctum-local-tests", RESTORE_DB: "punctum-local-restore-tests" },
+        r2Buckets: { ORIGINALS: "punctum-local-originals", BACKUPS: "punctum-local-backups", RESTORE_ORIGINALS: "punctum-local-restored" },
         assets: {
           directory: "./public",
           binding: "ASSETS",

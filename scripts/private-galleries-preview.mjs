@@ -4,6 +4,11 @@ import { createHmac, createHash, randomBytes, randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import {
   privatePreviewConfig,
+  privateRecoveryConfig,
+  assertPrivateQaVacant,
+  r2RestListing,
+  d1QueryRows,
+  assertPrivateBucketPrivacy,
   waitForPreviewStatus,
   PRIVATE_PREVIEW_NAMES as names,
   assertPreviewLoginEntry,
@@ -43,7 +48,7 @@ const record = (value) => {
   report.checks.push(value);
   console.log("PASS " + value);
 };
-async function api(path, { method = "GET", body, database = false } = {}) {
+async function api(path, { method = "GET", body, database = false, envelope = false } = {}) {
   const response = await fetch(
     "https://api.cloudflare.com/client/v4/accounts/" + account + path,
     {
@@ -67,7 +72,7 @@ async function api(path, { method = "GET", body, database = false } = {}) {
         " codes " +
         JSON.stringify(result.errors?.map((e) => e.code)),
     );
-  return result.result;
+  return envelope ? result : result.result;
 }
 function wrangler(args, input, database = false) {
   const result = spawnSync("node_modules/.bin/wrangler", args, {
@@ -92,10 +97,8 @@ async function database(name) {
     { database: true },
   );
   const existing = list.find((d) => d.name === name);
-  return (
-    existing ??
-    api("/d1/database", { method: "POST", database: true, body: { name } })
-  );
+  assert.ok(existing, "Pre-existing isolated QA database required; resource creation is disabled.");
+  return existing;
 }
 async function query(id, sql, params = []) {
   const result = await api("/d1/database/" + id + "/query", {
@@ -103,7 +106,7 @@ async function query(id, sql, params = []) {
     database: true,
     body: { sql, params },
   });
-  return result[0]?.results ?? [];
+  return d1QueryRows(result);
 }
 const sign = (payload, secret) => {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -126,12 +129,16 @@ try {
   const restored = await database(names.restoreDatabase);
   assert.notEqual(source.uuid, restored.uuid);
   for (const name of [names.originals, names.restoreOriginals, names.backups]) {
-    if (!buckets.buckets.some((b) => b.name === name))
-      await api("/r2/buckets", { method: "POST", body: { name } });
+    assert.ok(buckets.buckets.some((b) => b.name === name), "Pre-existing isolated QA bucket required; resource creation is disabled.");
     const managed = await api("/r2/buckets/" + name + "/domains/managed");
-    assert.equal(managed.enabled, false, "QA buckets must remain private.");
+    const custom = await api("/r2/buckets/" + name + "/domains/custom");
+    assertPrivateBucketPrivacy(managed, custom);
   }
-  record("isolated D1 databases and private R2 buckets");
+  await assertPrivateQaVacant(
+    (role, sql, params) => query(role === "source" ? source.uuid : restored.uuid, sql, params),
+    async (role) => r2RestListing(await api("/r2/buckets/" + (role === "source" ? names.originals : names.restoreOriginals) + "/objects?per_page=1", { envelope: true })),
+  );
+  record("isolated D1 databases and private R2 buckets verified without changing existing data");
   const originalConfig = JSON.parse(await readFile(generated, "utf8"));
   assert.equal(
     originalConfig.vars?.CLIENT_AUTH_MODE,
@@ -174,7 +181,7 @@ try {
   await configure(source.uuid);
   wrangler(["deploy", "--config", generated]);
   const adminSecret = randomBytes(32).toString("base64url");
-  const clientSecret = randomBytes(32).toString("base64url");
+  let clientSecret = randomBytes(32).toString("base64url");
   const password = randomBytes(24).toString("base64url");
   for (const value of [adminSecret, clientSecret, password]) mask(value);
   wrangler(
@@ -451,104 +458,53 @@ try {
     "ten uploads, isolated retry, publication, favorites, downloads and public-media denial",
   );
 
-  // Restore the private relational domain into another D1 and another private R2 bucket.
-  const tables = [
-    "client_accounts",
-    "client_galleries",
-    "client_gallery_images",
-    "client_gallery_upload_intents",
-    "client_gallery_favorites",
-  ];
-  let restoredRows = 0;
-  for (const table of tables) {
-    const rows = await query(source.uuid, "SELECT * FROM " + table);
-    for (const row of rows) {
-      const columns = Object.keys(row);
-      assert.ok(columns.every((c) => /^[a-z_]+$/.test(c)));
-      const keys =
-        table === "client_gallery_favorites"
-          ? ["client_id", "gallery_id", "image_id"]
-          : ["id"];
-      const updates = columns.filter((c) => !keys.includes(c));
-      const sql =
-        "INSERT INTO " +
-        table +
-        " (" +
-        columns.join(",") +
-        ") VALUES (" +
-        columns.map(() => "?").join(",") +
-        ") ON CONFLICT(" +
-        keys.join(",") +
-        ") DO UPDATE SET " +
-        updates.map((c) => c + "=excluded." + c).join(",");
-      await query(
-        restored.uuid,
-        sql,
-        columns.map((c) => row[c]),
-      );
-      restoredRows++;
-    }
-  }
-  const objects = await query(
-    source.uuid,
-    "SELECT gallery_id,storage_key,mime_type FROM client_gallery_images WHERE status='ready'",
-  );
-  for (let i = 0; i < objects.length; i++) {
-    const key = objects[i].storage_key;
-    assert.ok(
-      key.startsWith("client-galleries/" + objects[i].gallery_id + "/"),
-    );
-    const file = "outputs/private-object-" + i + ".bin";
-    wrangler([
-      "r2",
-      "object",
-      "get",
-      names.originals + "/" + key,
-      "--file",
-      file,
-      "--remote",
-    ]);
-    const originalBytes = await readFile(file);
-    wrangler([
-      "r2",
-      "object",
-      "put",
-      names.restoreOriginals + "/" + key,
-      "--file",
-      file,
-      "--content-type",
-      objects[i].mime_type,
-      "--remote",
-    ]);
-    const restoredFile = "outputs/restored-object-" + i + ".bin";
-    wrangler([
-      "r2",
-      "object",
-      "get",
-      names.restoreOriginals + "/" + key,
-      "--file",
-      restoredFile,
-      "--remote",
-    ]);
-    assert.deepEqual(await readFile(restoredFile), originalBytes);
-  }
-  // A source-only revocation proves subsequent requests actually use restored bindings.
-  await query(
-    source.uuid,
-    "UPDATE client_accounts SET disabled_at=? WHERE id=?",
-    [new Date().toISOString(), accountData.client.id],
-  );
+  // Source-only revocation is scoped to this run's synthetic client.
+  await query(source.uuid, "UPDATE client_accounts SET disabled_at=?,session_version=session_version+1 WHERE id=?", [new Date().toISOString(), accountData.client.id]);
   await request("/api/client/me", "GET", undefined, cookie, 401);
+  const recoveryConfigPath = "outputs/private-recovery-wrangler.json";
+  await writeFile(recoveryConfigPath, JSON.stringify(privateRecoveryConfig({ sourceId: source.uuid, restoreId: restored.uuid, origin, clientId: accountData.client.id })));
+  report.qaWorkerStage = "recovery";
+  wrangler(["deploy", "--config", recoveryConfigPath]);
+  const recoverySecret = randomBytes(32).toString("base64url");
+  mask(recoverySecret);
+  wrangler(["secret", "bulk", "--config", recoveryConfigPath], JSON.stringify({ QA_RECOVERY_SECRET: recoverySecret }));
+  // Never retry an ambiguous recovery write automatically; inspect the sanitized report/state.
+  const recoveryResponse = await fetch(origin + "/qa/recover", { method: "POST", redirect: "manual", headers: {
+    Origin: origin, Authorization: "Bearer " + recoverySecret, "Content-Type": "application/json",
+  }, body: JSON.stringify({ clientIds: [accountData.client.id] }) });
+  assert.equal(recoveryResponse.status, 200, "QA recovery failed; inspect preserved resources before retrying.");
+  const recovery = await recoveryResponse.json();
+  assert.equal(recovery.backupVerified, true);
+  assert.equal(recovery.accountsQuarantined, true);
+  assert.equal(recovery.requiresSessionSecretRotation, true);
+  assert.equal(recovery.objects, 10);
+  report.restoredRows = recovery.rows;
+  report.restoredObjects = recovery.objects;
+  report.backupHash = recovery.backupHash;
+  report.objectHashes = recovery.hashes;
+  // Quarantine prevents reopening until a fresh secret is installed.
   await configure(restored.uuid, true);
   wrangler(["deploy", "--config", generated]);
-  // Old cookies must remain valid against the restored credential/session rows.
-  await waitForPreviewStatus({
-    probe: async () =>
-      (await fetch(origin + "/api/client/me", { headers: { Cookie: cookie } }))
-        .status,
-    transient: [401],
-    pause: () => sleep(1000),
-  });
+  report.qaWorkerStage = "restored-app-quarantined";
+  clientSecret = randomBytes(32).toString("base64url");
+  mask(clientSecret);
+  wrangler(["secret", "bulk", "--config", generated], JSON.stringify({ CLIENT_SESSION_SECRET: clientSecret }));
+  await waitForPreviewStatus({ probe: async () => (await fetch(origin + "/admin/api/clientes", { headers: { Cookie: adminCookie } })).status, pause: () => sleep(1000) });
+  await request("/api/client/me", "GET", undefined, cookie, 401);
+  await request("/admin/api/clientes/" + accountData.client.id, "PATCH", { disabled: false });
+  const [restoredAccount] = await query(restored.uuid, "SELECT session_version FROM client_accounts WHERE id=?", [accountData.client.id]);
+  const restoredSessionVersion = restoredAccount.session_version;
+  if (accessMode) {
+    const now = Math.floor(Date.now() / 1000);
+    cookie = "punctum_client_session=" + sign({ sub: accountData.client.id, version: restoredSessionVersion, iat: now, exp: now + 3600, audience: "punctum-client-access" }, clientSecret);
+    mask(cookie);
+  } else {
+    const login = await request("/api/client/session", "POST", { email, password }, "");
+    cookie = login.headers.get("set-cookie").split(";")[0];
+    mask(cookie);
+  }
+  await waitForPreviewStatus({ probe: async () => (await fetch(origin + "/api/client/me", { headers: { Cookie: cookie } })).status, transient: [401], pause: () => sleep(1000) });
+  report.qaWorkerStage = "restored-app";
   const restoredGallery = await (
     await request(client, "GET", undefined, cookie)
   ).json();
@@ -566,8 +522,6 @@ try {
     );
     assert.deepEqual(Buffer.from(await result.arrayBuffer()), bytes);
   }
-  report.restoredRows = restoredRows;
-  report.restoredObjects = objects.length;
   record(
     "D1 and R2 restoration: authenticated gallery, favorite and every original verified byte-for-byte",
   );
@@ -596,7 +550,7 @@ try {
       sign(
         {
           sub: accountData.client.id,
-          version: 2,
+          version: restoredSessionVersion + 1,
           iat: now,
           exp: now + 3600,
           audience: "punctum-client-access",

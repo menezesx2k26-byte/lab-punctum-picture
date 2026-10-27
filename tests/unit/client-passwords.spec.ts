@@ -70,7 +70,7 @@ describe("client credentials", () => {
     } finally {
       capped.mockRestore();
     }
-  });
+  }, 60_000); // Full 310000-iteration JS fallback measured >20s in this workerd environment.
   it("uses a client-only hardened cookie", () => {
     expect(clientSessionCookie("token")).toContain(
       "punctum_client_session=token",

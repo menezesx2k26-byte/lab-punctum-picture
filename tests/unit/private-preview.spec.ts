@@ -145,3 +145,37 @@ describe("preview propagation gate", () => {
     ).rejects.toThrow("HTTP 500");
   });
 });
+
+// The recovery stage has no portfolio routes or production bindings.
+describe("standalone QA recovery configuration", () => {
+  it("uses only distinct QA databases/buckets and refuses production or shared databases", async () => {
+    const { privateRecoveryConfig } = await import("../../scripts/lib/private-preview.mjs");
+    const config = privateRecoveryConfig({ clientId: "44444444-4444-4444-8444-444444444444", sourceId: "22222222-2222-4222-8222-222222222222", restoreId: "33333333-3333-4333-8333-333333333333", origin: "https://punctum-picture-albums-qa.example.workers.dev" });
+    expect(config.routes).toEqual([]);
+    expect(config.main).toBe("../scripts/private-recovery-worker.ts");
+    expect(config.d1_databases.map((b: {binding:string}) => b.binding)).toEqual(["SOURCE_DB", "RESTORE_DB"]);
+    expect(config.r2_buckets.every((b: {bucket_name:string}) => b.bucket_name.includes("albums-qa"))).toBe(true);
+    for (const restoreId of ["22222222-2222-4222-8222-222222222222", "22697f13-7484-41e3-9441-f7b902c6577a"])
+      expect(() => privateRecoveryConfig({ clientId: "44444444-4444-4444-8444-444444444444", sourceId: "22222222-2222-4222-8222-222222222222", restoreId, origin: "https://punctum-picture-albums-qa.example.workers.dev" })).toThrow();
+  });
+  it("rejects public, unknown or custom-domain bucket access", async () => {
+    const { assertPrivateBucketPrivacy } = await import("../../scripts/lib/private-preview.mjs");
+    expect(() => assertPrivateBucketPrivacy({ enabled: false }, { domains: [] })).not.toThrow();
+    for (const [managed, custom] of [[{ enabled: true }, { domains: [] }], [{}, { domains: [] }], [{ enabled: false }, {}], [{ enabled: false }, { domains: [{ enabled: true }] }]])
+      expect(() => assertPrivateBucketPrivacy(managed, custom)).toThrow();
+  });
+});
+
+it("adapts REST object-list envelopes and refuses unknown pagination", async () => {
+  const { r2RestListing } = await import("../../scripts/lib/private-preview.mjs");
+  expect(r2RestListing({ success: true, result: [], result_info: { is_truncated: false } })).toEqual({ objects: [], truncated: false });
+  expect(() => r2RestListing({ success: true, result: [] })).toThrow();
+  expect(() => r2RestListing({ success: true, result: { objects: [] }, result_info: { is_truncated: false } })).toThrow();
+});
+
+it("refuses incomplete D1 responses instead of interpreting them as empty QA", async () => {
+  const { d1QueryRows } = await import("../../scripts/lib/private-preview.mjs");
+  expect(d1QueryRows([{ success: true, results: [] }])).toEqual([]);
+  for (const result of [[], [{}], [{ success: true }], [{ success: false, results: [] }], { results: [] }])
+    expect(() => d1QueryRows(result)).toThrow();
+});

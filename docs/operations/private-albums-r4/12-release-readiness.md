@@ -20,3 +20,9 @@
 | G22 autorização de release | BLOCKED_EXTERNAL | autorização específica após gates |
 | G23 rollback | NOT_RUN | procedimento existente não foi testado no HEAD atual |
 | G24 handoff | NOT_RUN | consolidar resultados e links verificáveis |
+
+## Continuação — 27/10/2026
+
+A biblioteca e o transporte standalone de QA foram implementados e validados localmente. Suíte atual: 187 testes do projeto, 7 de Colagem e 22 Node; typecheck/lint/build passaram. Isso não promove G18: o par QA observado tem 5 contas em cada D1 e agora é recusado pelo preflight antes de qualquer escrita. Não limpar o histórico para obter PASS. A revisão direcionada fechou seus achados específicos; a auditoria integral e o teste no edge continuam pendentes.
+
+G13–G15 seguem bloqueados: tentativa de instalar navegador local recebeu HTML em vez de ZIP. G07 OTP real, G17 billing/CPU e G20 aprovação LGPD não foram concluídos. Nenhuma autorização de merge/deploy/ativação foi solicitada nesta rodada; o estado continua NO-GO. Ver 14-recovery-followup-2026-10-27.md para evidências e falhas observadas.

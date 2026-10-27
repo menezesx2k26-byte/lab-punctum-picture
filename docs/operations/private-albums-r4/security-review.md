@@ -9,3 +9,9 @@ Revisão estática independente solicitada nesta execução. Não equivale a pen
 | R4-REL-03 | alta para confiabilidade | Duas confirmações concorrentes: falha tardia de decodificação podia rebaixar imagem `ready` e intent `completed`. | RED coordenou uma falha após a outra requisição concluir e observou `failed`; GREEN exige `ready`/`completed`. Atualizações de falha usam predicados condicionais em batch. A revisão independente confirmou o cenário específico; não executou a suíte. | Corrigido e testado localmente; QA edge pendente |
 
 Demais áreas exigem revisão complementar e evidências A/B, restore e OTP reais; não declarar ausência global de P0/P1 por esta revisão. Segredos, JWT completos e fotos reais não foram registrados.
+
+## Revisão direcionada da continuação — recuperação
+
+Foram encontrados e corrigidos: colisão de versão de sessão pós-backup (quarentena e rotação independente); snapshot com capa/tamanho/MIME incoerentes (recusa antes das escritas); UPSERT/cópia irrestrita no piloto (escopo exato e transporte D1/R2 nativo condicional); ausência do guard antes de alterações QA; confusão entre envelopes REST e bindings; domínio customizado de R2 não verificado; ID histórico aceito pelo Worker; resposta D1 incompleta interpretada como vazia. O revisor leu as correções e confirmou o fechamento desses achados específicos; não executou testes nem operações remotas. A biblioteca não deve ser apresentada como política LGPD de exportação ao titular, e não devolve fotos/hashes de credenciais na resposta da etapa QA.
+
+A revisão completa de toda a aplicação e homologação remota continuam distintas. Não remover gates NO-GO por causa desta revisão parcial.
