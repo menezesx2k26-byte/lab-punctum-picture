@@ -50,11 +50,45 @@ describe("collage featured photography", () => {
       variant: "collage",
     }));
     expect(html).toContain('class="collage-editorial-masthead"');
-    expect(html).toContain("PUNCTUM / SELEÇÃO");
+    expect(html).toContain("PUNCTUM PICTURE / ENSAIOS");
+    expect(html).toContain("MARIA<br/>HELENA.");
     expect(html).toContain("02 ENSAIOS");
     expect(html).toContain('class="collage-plate-number"');
     expect(html).toContain("01 / 02");
     expect(html).toContain("02 / 02");
-    expect(html).toContain('class="collage-paper-annotation"');
+    expect(html).not.toContain("ESTUDOS DO OLHAR");
+    expect(html).not.toContain("ACERVO VIVO");
+    expect(html).not.toContain("arquivo<br");
+    expect(html).not.toContain("✳");
+  });
+  it("uses album location only when supplied and reserves tape for a single print", () => {
+    const html = renderToStaticMarkup(createElement(FeaturedStories, {
+      albums: [
+        album({ location: "Joinville" }),
+        album({ id: "album-2", slug: "segundo-ensaio", title: "Segundo ensaio", location: null }),
+        album({ id: "album-3", slug: "terceiro-ensaio", title: "Terceiro ensaio", location: null }),
+      ], variant: "collage",
+    }));
+    expect(html).toContain("Joinville");
+    expect(html).toContain("collage-caption-location");
+    expect((html.match(/collage-tape-mark/g) ?? [])).toHaveLength(1);
+    expect(html).not.toContain("arquivo autoral");
+  });
+  it("never invents a location for the editorial grid or emits blank category captions", () => {
+    const withPlace = renderToStaticMarkup(createElement(FeaturedStories, {
+      albums: [album({ location: "São Bento do Sul" })], variant: "gallery",
+    }));
+    expect(withPlace).toContain("São Bento do Sul");
+    expect(withPlace).not.toContain("Joinville &amp; Curitiba");
+
+    const withoutPlace = renderToStaticMarkup(createElement(FeaturedStories, {
+      albums: [album({ location: null })], variant: "gallery",
+    }));
+    expect(withoutPlace).not.toContain('class="editorial-lead-loc"');
+
+    const collage = renderToStaticMarkup(createElement(FeaturedStories, {
+      albums: [album({ categories: [] })], variant: "collage",
+    }));
+    expect(collage).not.toContain("<p></p>");
   });
 });
