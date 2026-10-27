@@ -1,0 +1,25 @@
+{
+  "mission": "punctum-private-albums-r4",
+  "phase": "P1-integration",
+  "branch": "integration/punctum-private-albums-r4-20261027",
+  "baseSha": "a77654281a80be3c9e8857f4aef2744a942a991b",
+  "headSha": null,
+  "featureEnabledInProduction": null,
+  "productionWritesAuthorized": false,
+  "gates": {
+    "baseline": "PASS",
+    "integration": "NOT_RUN",
+    "realOtp": "BLOCKED_EXTERNAL",
+    "securityReview": "BLOCKED_SECURITY",
+    "recovery": "BLOCKED_EXTERNAL",
+    "productionRelease": "BLOCKED_EXTERNAL"
+  },
+  "blockers": [
+    "BLOCKED_REAL_OTP",
+    "BLOCKED_QA_AUTHORITY",
+    "BLOCKED_DEVICE_QA",
+    "BLOCKED_BILLING_READ",
+    "BLOCKED_LGPD_APPROVAL"
+  ],
+  "lastVerifiedAt": "2026-10-27T07:06:35.848794+00:00"
+}
