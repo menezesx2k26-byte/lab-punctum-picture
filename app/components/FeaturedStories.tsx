@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { StorySequence } from "./visual/StorySequence";
 import { useState } from "react";
-import { ArrowUpRight, Sparkles, Grid, Layers } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { PublicAlbumSummary } from "../../shared/public-content";
 import { albumArtworkSource } from "../lib/album-artwork";
 import { EssayLink } from "./EssayLink";
@@ -26,7 +26,7 @@ export function FeaturedStories({
     <div className="featured-stories-container">
       {/* Seletor Curatorial de Visualização */}
       <div className="stories-view-bar" role="group" aria-label="Modo de visualização dos ensaios">
-        <span className="view-bar-label">Curadoria Visual:</span>
+        <span className="view-bar-label">Visualização:</span>
         <div className="view-bar-buttons">
           <button
             type="button"
@@ -34,7 +34,6 @@ export function FeaturedStories({
             className={`view-switch-btn ${mode === "projector" ? "is-active" : ""}`}
             aria-pressed={mode === "projector"}
           >
-            <Sparkles size={13} />
             <span>Percorrer</span>
           </button>
           <button
@@ -43,7 +42,6 @@ export function FeaturedStories({
             className={`view-switch-btn ${mode === "editorial" ? "is-active" : ""}`}
             aria-pressed={mode === "editorial"}
           >
-            <Grid size={13} />
             <span>Grade</span>
           </button>
           <button
@@ -52,7 +50,6 @@ export function FeaturedStories({
             className={`view-switch-btn ${mode === "collage" ? "is-active" : ""}`}
             aria-pressed={mode === "collage"}
           >
-            <Layers size={13} />
             <span>Composição</span>
           </button>
         </div>
@@ -92,7 +89,9 @@ export function FeaturedStories({
                   <span className="editorial-lead-category">
                     {albums[0].categories.map((c) => c.name).join(" · ")}
                   </span>
-                  <span className="editorial-lead-loc">Joinville & Curitiba</span>
+                  {albums[0].location?.trim() ? (
+                    <span className="editorial-lead-loc">{albums[0].location.trim()}</span>
+                  ) : null}
                 </div>
                 <h3 className="editorial-lead-title">{albums[0].title}</h3>
                 {albums[0].subtitle ? (
@@ -124,9 +123,9 @@ export function FeaturedStories({
       {mode === "collage" && (
         <div className="stories-collage-layout">
           <div className="collage-editorial-masthead" aria-hidden="true">
-            <span>PUNCTUM / SELEÇÃO</span>
-            <strong>ESTUDOS<br />DO OLHAR.</strong>
-            <small>{String(albums.length).padStart(2, "0")} ENSAIOS / ACERVO VIVO</small>
+            <span>PUNCTUM PICTURE / ENSAIOS</span>
+            <strong>MARIA<br />HELENA.</strong>
+            <small>{String(albums.length).padStart(2, "0")} ENSAIOS / SELEÇÃO</small>
           </div>
           {albums.map((album, index) => {
             const source = albumArtworkSource(album);
@@ -141,7 +140,7 @@ export function FeaturedStories({
                   {String(index + 1).padStart(2, "0")} / {String(albums.length).padStart(2, "0")}
                 </span>
                 <div className="collage-photo-frame">
-                  <span className="collage-tape-mark" aria-hidden="true" />
+                  {index === 0 ? <span className="collage-tape-mark" aria-hidden="true" /> : null}
                   {source ? (
                     <Image
                       src={source}
@@ -159,9 +158,13 @@ export function FeaturedStories({
                 </div>
                 <div className="collage-caption">
                   <h3>{album.title}</h3>
-                  <p>{album.categories.map((c) => c.name).join(" · ")}</p>
+                  {album.categories.length ? (
+                    <p>{album.categories.map((c) => c.name).join(" · ")}</p>
+                  ) : null}
+                  {album.location?.trim() ? (
+                    <small className="collage-caption-location">{album.location.trim()}</small>
+                  ) : null}
                 </div>
-                <span className="collage-paper-annotation" aria-hidden="true">arquivo<br />autoral ✳</span>
               </Link>
             );
           })}

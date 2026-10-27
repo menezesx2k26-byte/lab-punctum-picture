@@ -81,7 +81,7 @@ export function HomeAboutSection({
             </div>
           </div>
           <div className="manifesto-image manifesto-editorial-image reveal">
-            <span className="collage-portrait-edition" aria-hidden="true">RETRATO / EM PROCESSO</span>
+            <span className="collage-portrait-edition" aria-hidden="true">MARIA HELENA</span>
             <Image
               src="/photos/p001.jpg"
               alt="Maria Helena fotografando com uma câmera"
@@ -98,7 +98,6 @@ export function HomeAboutSection({
                 sizes="(max-width: 900px) 35vw, 190px"
               />
             </div>
-            <span className="collage-portrait-index" aria-hidden="true">FOTO<br />GRAFIA<br />EM<br />CAMADAS.</span>
             <span aria-hidden="true">{copy.imageNote}</span>
           </div>
         </div>

@@ -41,7 +41,7 @@ describe("Collage mobile CSS contract", () => {
     assert.match(css, /\.stories-collage-layout\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
     assert.match(css, /\.collage-story-plate:nth-of-type\(2n\)/);
     assert.match(css, /\.collage-editorial-masthead\s*\{/);
-    assert.match(css, /\.collage-paper-annotation\s*\{/);
+    assert.match(css, /\.collage-caption-location\s*\{/);
     assert.match(css, /\.collage-photo-frame img\s*\{[^}]*object-fit:\s*contain/s);
   });
   it("adds print textures as noninteractive overlays instead of filtering originals", () => {
@@ -50,14 +50,19 @@ describe("Collage mobile CSS contract", () => {
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   });
   it("places editorial labels over photographs rather than covering album captions", () => {
-    const label = css.match(/\.collage-paper-annotation\s*\{([^}]+)\}/);
-    assert.ok(label);
-    assert.match(label[1], /top:\s*1\.25rem/);
-    assert.match(label[1], /bottom:\s*auto/);
+    assert.doesNotMatch(css, /content:\s*["']✳["']/);
+    assert.doesNotMatch(css, /\.collage-paper-annotation\s*\{/);
+    assert.match(css, /\.collage-caption-location\s*\{/);
     assert.match(
       css,
       /@media \(max-width: 767px\)\s*\{[\s\S]*?\.manifesto-editorial-image \.collage-portrait-detail\s*\{[^}]*left:\s*1\.25rem/s,
       "decorative portrait inset must clear rotation clipping at 360–430px",
+    );
+  });
+  it("keeps complete words in the selected-work title on narrow phones", () => {
+    assert.match(
+      css,
+      /@media \(max-width: 479px\)\s*\{[\s\S]*?\.stories-section \.section-heading h2\s*\{[^}]*overflow-wrap:\s*normal[^}]*word-break:\s*normal/s,
     );
   });
 });
