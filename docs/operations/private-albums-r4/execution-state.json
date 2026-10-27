@@ -21,5 +21,7 @@
     "BLOCKED_BILLING_READ",
     "BLOCKED_LGPD_APPROVAL"
   ],
-  "lastVerifiedAt": "2026-10-27T07:06:35.848794+00:00"
+  "lastVerifiedAt": "2026-10-27T07:06:35.848794+00:00",
+  "lastValidatedCodeCommit": "7525adb0732102ea7aed1a7a2f58c55a2cb6943c",
+  "lastValidatedCodeCI": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40465566814"
 }
