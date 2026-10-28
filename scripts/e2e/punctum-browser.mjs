@@ -287,6 +287,7 @@ try {
   assert.equal(publishResponse.status(), 200);
   for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
     await studio.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(studio);
+    assert.ok(await studio.locator(".pga-editor-form .pga-actions .button").evaluateAll(buttons => buttons.every(button => button.scrollWidth <= button.clientWidth + 1)), "private admin action text is clipped at " + width + "px");
   }
   await studio.setViewportSize({ width: 390, height: 844 });
   await studio.screenshot({ path: join(reportDirectory, "private-admin-mobile.png"), fullPage: true });
