@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { R4_QA, R4_RESUME_DATABASES, assertFreshQaBudget, assertResumeQaInventory, isolatedQaConfig, summarizeQaSamples } from './lib/r4-edge-qa.mjs';
+import { R4_QA, R4_RESUME_DATABASES, assertFreshQaBudget, assertResumeQaInventory, isolatedQaConfig, summarizeQaSamples, assertReadOnlyPerformanceFixture } from './lib/r4-edge-qa.mjs';
 const ACCOUNT = '257bca437616da74ece1ce4bbaf0bd89';
 const pause = ms => new Promise(r=>setTimeout(r,ms));
 const sum = (rows, field) => rows.reduce((n,row)=>n+Number(row.sum?.[field]??0),0);
@@ -63,7 +63,32 @@ export async function runFreshQa(report, api) {
    assert.ok(Array.isArray(result) && result.every(r=>r.success===true),'D1 query failed');
    return result.flatMap(r=>r.results);
  };
+ const preserveFixture=process.env.R4_EDGE_QA_PERFORMANCE_ONLY==='true';
+ if(preserveFixture) {
+   assert.equal(resume,true,'Read-only occupied continuation requires immutable QA allocation');
+   assert.notEqual(process.env.R4_EDGE_QA_RECOVERY,'true','Occupied performance continuation cannot run recovery');
+ }
+ const readPreservedFixture=async()=>{
+   const [counts]=await query(sourceId,`SELECT
+     (SELECT COUNT(*) FROM client_accounts) AS accounts,
+     (SELECT COUNT(*) FROM client_galleries) AS galleries,
+     (SELECT COUNT(*) FROM client_gallery_images) AS images,
+     (SELECT COUNT(*) FROM client_gallery_upload_intents) AS intents,
+     (SELECT COUNT(*) FROM client_gallery_favorites) AS favorites,
+     (SELECT COUNT(*) FROM site_config_pointers WHERE id=1) AS pointers`);
+   const rows=await query(sourceId,`SELECT a.id AS clientId,g.id AS galleryId,i.id AS imageId,u.id AS intentId,
+     i.status AS imageStatus,u.status AS intentStatus FROM client_accounts a
+     JOIN client_galleries g ON g.client_id=a.id
+     JOIN client_gallery_images i ON i.gallery_id=g.id
+     JOIN client_gallery_upload_intents u ON u.image_id=i.id AND u.gallery_id=g.id`);
+   assertReadOnlyPerformanceFixture({counts,rows});
+   return {counts,rows};
+ };
  for(const id of createdDatabaseIds) {
+   if(preserveFixture && id===sourceId) {
+     report.preservedFixtureBefore=await readPreservedFixture();
+     continue;
+   }
    const rows=await query(id,resume ? 'SELECT COUNT(*) AS count FROM client_accounts' : "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'");
    assert.equal(rows[0].count,0,resume ? 'Interrupted QA contains accounts; preserve data and stop' : 'New database unexpectedly contains application tables');
  }
@@ -89,7 +114,7 @@ export async function runFreshQa(report, api) {
    const path=resolve(roots.baseline,'dist/server/r4-migration.wrangler.json');await writeFile(path,JSON.stringify(config));
    wrangler(['d1','migrations','apply',database.name,'--remote','--config',path]);report.writes++;
  }
- report.checks.push(resume ? 'Adopted only exact interrupted QA IDs, confirmed zero client accounts, no migrations or resource creation' : 'Two new empty D1 databases migrated; historical IDs never queried or migrated');
+ report.checks.push(preserveFixture ? 'Preserved exact failed QA fixture; performance reads public state only, no private activation, recovery, migrations or resource creation' : resume ? 'Adopted only exact interrupted QA IDs, confirmed zero client accounts, no migrations or resource creation' : 'Two new empty D1 databases migrated; historical IDs never queried or migrated');
  let previousVersionId;
  const deploy=async(label)=>{
    wrangler(['deploy','--config',configs[label].path]);report.writes++;
@@ -158,6 +183,11 @@ export async function runFreshQa(report, api) {
    baselineFailedRequests:report.performance[0].errors,candidateFailedRequests:report.performance[1].errors,
    versionMismatches:report.performance.reduce((sum,p)=>sum+p.versionMismatches,0)};
  report.functionalQa='NOT_RUN';report.accessOtp='NOT_RUN';
+ if(preserveFixture) {
+   report.preservedFixtureAfter=await readPreservedFixture();
+   assert.deepEqual(report.preservedFixtureAfter,report.preservedFixtureBefore,'Performance must preserve private QA fixture');
+   report.privateFixturePreserved=true;
+ }
  if(process.env.R4_EDGE_QA_RECOVERY==='true') {
    assert.equal(resume,true,'Functional recovery is only permitted on exact interrupted QA resources');
    // G17/SSR stays failed. The private D1/R2 recovery gate is independently guarded.

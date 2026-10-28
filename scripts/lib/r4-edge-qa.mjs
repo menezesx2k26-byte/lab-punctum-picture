@@ -72,3 +72,17 @@ export function summarizeQaSamples(samples,versionId) {
     versionMismatches:samples.filter(s=>(s.status===200 || s.actualVersionId != null) && s.actualVersionId!==versionId).length,
   };
 }
+
+// Read-only performance may preserve the exact failed fixture from run40768574085.
+// This receipt does not authorize upload/recovery or any write to private tables.
+export function assertReadOnlyPerformanceFixture({counts,rows}) {
+  assert.deepEqual(counts,{accounts:1,galleries:1,images:1,intents:1,favorites:0,pointers:1},'Performance continuation requires the exact preserved QA counts and initialized public configuration');
+  assert.deepEqual(rows,[{
+    clientId:'39a03fb3-d913-4380-a30d-f983fabd22e1',
+    galleryId:'66c091c1-8a4f-47a8-bc57-43cfbebfa0f0',
+    imageId:'e5afb187-6384-4812-b647-eddb430dbe02',
+    intentId:'b7bf8640-b49e-4d34-8092-9cfd3e6314e5',
+    imageStatus:'failed',intentStatus:'failed',
+  }],'Unexpected QA private records; stop instead of resetting them');
+  return true;
+}
