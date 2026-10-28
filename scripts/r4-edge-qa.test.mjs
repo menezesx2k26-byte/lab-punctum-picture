@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assertFreshQaBudget, assertFreshPerformanceBudget, isolatedQaConfig, R4_QA } from './lib/r4-edge-qa.mjs';
+import { assertFreshQaBudget, assertFreshPerformanceBudget, isolatedQaConfig, R4_QA, assertResumeQaInventory, summarizeQaSamples } from './lib/r4-edge-qa.mjs';
 const budget = { databaseCount:8, workerRequestsToday:10, r2:{ maximumStorageBytes:1_000, classARequests:10, classBRequests:100 }, subscriptions:[{id:'free'},{id:'teams_free'},{id:'r2_paid'}], namesInUse:[] };
 test('refuses unknown usage and existing QA resources before creating or modifying anything', () => {
  for (const input of [undefined, {...budget,r2:undefined}, {...budget,databaseCount:9}, {...budget,workerRequestsToday:99_000}, {...budget,namesInUse:[R4_QA.source]}, {...budget,subscriptions:[{id:'workers_paid'}]}, {...budget,r2:{...budget.r2,maximumStorageBytes:10_000_000_000}}]) assert.throws(()=>assertFreshQaBudget(input));
@@ -30,4 +30,21 @@ test('performance QA has no object bindings or private routes even if private fl
  const id='11111111-1111-4111-8111-111111111111';
  const config=isolatedQaConfig({main:'index.js',vars:{}},{databaseId:id,createdDatabaseIds:[id],origin:`https://${R4_QA.worker}.owner.workers.dev`,performanceOnly:true});
  assert.equal(config.vars.PRIVATE_GALLERIES_ENABLED,'false');assert.deepEqual(config.r2_buckets,[]);
+});
+
+test('network failures remain errors without falsely claiming that another version answered', () => {
+ const version='qa-version';
+ assert.deepEqual(summarizeQaSamples([{status:200,actualVersionId:version},{status:'NETWORK_ERROR'}],version),{errors:1,versionMismatches:0});
+ assert.deepEqual(summarizeQaSamples([{status:200,actualVersionId:null},{status:200,actualVersionId:'other'}],version),{errors:0,versionMismatches:2});
+ assert.deepEqual(summarizeQaSamples([{status:503,actualVersionId:'other'}],version),{errors:1,versionMismatches:1});
+});
+
+test('resume accepts only the exact dedicated resource IDs from interrupted run 40756797747', () => {
+ const databases=[{name:R4_QA.source,uuid:'2e7710f3-dc92-4aeb-976a-5f15d8c5262c'},{name:R4_QA.restore,uuid:'0141b8f9-3074-4aa4-a184-92a4f7379ecc'}];
+ const buckets=[R4_QA.originals,R4_QA.restored,R4_QA.backups].map(name=>({name}));
+ const workers=[{name:R4_QA.worker}];
+ assert.equal(assertResumeQaInventory({databases,buckets,workers}),true);
+ assert.throws(()=>assertResumeQaInventory({databases:[{...databases[0],uuid:'0801d4f1-7c85-4db4-8643-7b7c9e34862c'},databases[1]],buckets,workers}));
+ assert.throws(()=>assertResumeQaInventory({databases,buckets:[],workers}));
+ assert.throws(()=>assertResumeQaInventory({databases,buckets,workers:[]}));
 });
