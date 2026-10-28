@@ -1,5 +1,17 @@
 import assert from 'node:assert/strict';
-import { r4VacancyListing, r4ObservedOneListing } from './lib/r4-recovery-qa.mjs';
+import { r4VacancyListing, r4ObservedOneListing, inspectR4ReadyVersion } from './lib/r4-recovery-qa.mjs';
+
+test('inspector waits only for a prior deployment and never accepts or retries current-version 403',async()=>{
+ const calls=[];
+ const replies=[new Response(null,{status:403,headers:{'X-QA-Version':'old'}}),Response.json({ready:true},{headers:{'X-QA-Version':'current'}})];
+ const options={origin:'https://punctum-picture-r4-qa-20261028.test.workers.dev',secret:'test-only-secret',versionId:'current',pause:async()=>{},attempts:2};
+ assert.deepEqual(await inspectR4ReadyVersion({...options,fetch:async(url,init)=>{calls.push({url,method:init.method});return replies.shift()}}),{ready:true});
+ assert.ok(calls.every(c=>c.method==='GET'&&c.url.endsWith('/qa/inspect')));
+ let deniedCalls=0;
+ await assert.rejects(()=>inspectR4ReadyVersion({...options,fetch:async()=>{deniedCalls++;return new Response(null,{status:403,headers:{'X-QA-Version':'current'}})}}),/current-version.*403/i);
+ assert.equal(deniedCalls,1);
+ await assert.rejects(()=>inspectR4ReadyVersion({...options,fetch:async()=>Response.json({stale:true},{headers:{'X-QA-Version':'old'}})}),/not propagate/i);
+});
 
 test('accepts only the live verified empty R2 envelope when optional pagination is omitted', () => {
   const observed={success:true,errors:[],messages:[],result:[]};
