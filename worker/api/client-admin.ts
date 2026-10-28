@@ -16,7 +16,7 @@ import {
 import { generateTemporaryPassword } from "../client/passwords";
 import { hashClientPasswordWithProvider } from "../client/password-provider";
 import { privateJson } from "../client/response";
-import { assertAllowedOrigin, requireAdmin } from "../utils/auth";
+import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
 import { writeAudit } from "../utils/audit";
 import { requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
@@ -108,7 +108,7 @@ export async function handleClientAdminApi(
     }
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client.created",
       "client_account",
       clientId,
@@ -132,7 +132,7 @@ export async function handleClientAdminApi(
     const exported = await loadSanitizedTitularExport(db, id);
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client.lgpd_exported",
       "client_account",
       id,
@@ -149,7 +149,7 @@ export async function handleClientAdminApi(
         )
         .bind(new Date().toISOString(), id)
         .run();
-      await writeAudit(db, actor.email, "client.access_reauthorized", "client_account", id);
+      await writeAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id);
       return privateJson({ ok: true, authMode: mode });
     }
     const temporaryPassword = generateTemporaryPassword();
@@ -169,7 +169,7 @@ export async function handleClientAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client.password_reset",
       "client_account",
       id,
@@ -193,7 +193,7 @@ export async function handleClientAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       input.disabled ? "client.disabled" : "client.enabled",
       "client_account",
       id,
@@ -245,7 +245,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.created",
       "client_gallery",
       galleryId,
@@ -273,7 +273,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.cover_changed",
       "client_gallery",
       id,
@@ -328,7 +328,7 @@ async function handleGalleryAdminApi(
       );
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.published",
       "client_gallery",
       id,
@@ -349,7 +349,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery." + action,
       "client_gallery",
       id,
@@ -403,7 +403,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.updated",
       "client_gallery",
       id,
