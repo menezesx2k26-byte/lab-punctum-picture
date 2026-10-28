@@ -63,9 +63,16 @@ function fromBase64Url(value: string): Uint8Array {
 
 async function hmacKey(env: Env): Promise<CryptoKey> {
   const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
+  // Bind password-auth cookies to the current credential revision. A password
+  // rotation changes this signing key and invalidates previously copied cookies.
+  // Never place the stored credential hash or salt in the cookie payload.
+  const stored = env.DB ? await storedCredential(env.DB) : null;
+  const credentialRevision = stored
+    ? "d1:" + stored.passwordHash
+    : "env:" + requiredEnvString(env, "ADMIN_PASSWORD_HASH");
   return crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(secret + "\u0000" + credentialRevision),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"],
