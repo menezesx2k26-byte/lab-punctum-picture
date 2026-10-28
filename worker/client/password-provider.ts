@@ -9,6 +9,39 @@ import { AppError } from "../utils/errors";
 
 const PATH = "/internal/punctum-password/v1";
 type BridgeFetch = typeof fetch;
+const circuits = new WeakMap<Env, { failures: number; until: number; probing: boolean; generation: number }>();
+const unavailable = () => new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
+
+// Best-effort containment per Worker isolate/binding object, never auth state.
+// Only one half-open probe is admitted; stale in-flight successes cannot close it.
+async function withCircuit<T>(env: Env, operation: () => Promise<T>): Promise<T> {
+  let state = circuits.get(env);
+  if (!state) {
+    state = { failures: 0, until: 0, probing: false, generation: 0 };
+    circuits.set(env, state);
+  }
+  if (state.until > Date.now() || state.probing) throw unavailable();
+  const probe = state.until !== 0;
+  const generation = state.generation;
+  if (probe) state.probing = true;
+  try {
+    const result = await operation();
+    if (state.generation === generation) { state.failures = 0; state.until = 0; }
+    return result;
+  } catch {
+    if (state.generation === generation && (probe || ++state.failures >= 3)) {
+      state.until = Date.now() + 30_000;
+      state.generation++;
+    }
+    throw unavailable();
+  } finally {
+    if (probe) state.probing = false;
+  }
+}
+function exactKeys(value: unknown, keys: string[]): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value) &&
+    Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+}
 const DUMMY_CREDENTIAL: ClientCredential = {
   passwordHash: "A".repeat(43), passwordSalt: "A".repeat(22), passwordIterations: 310_000,
 };
@@ -40,6 +73,18 @@ async function callBridge(
 ) {
   const config = providerConfig(env);
   if (!config) throw new AppError(503, "PASSWORD_BACKEND_INVALID", "Serviço de senhas indisponível.");
+  return withCircuit(env, async () => {
+  const controller = new AbortController();
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      void reader?.cancel().catch(() => undefined);
+      reject(unavailable());
+    }, 5000);
+  });
+  try {
   const body = JSON.stringify(payload);
   const timestamp = String(Date.now());
   const nonce = crypto.randomUUID();
@@ -53,7 +98,7 @@ async function callBridge(
   );
   let response: Response;
   try {
-    response = await fetcher(config.url, {
+    response = await Promise.race([fetcher(config.url, {
       method: "POST",
       body,
       headers: {
@@ -64,31 +109,39 @@ async function callBridge(
       },
       redirect: "error",
       cache: "no-store",
-      signal: AbortSignal.timeout(5000),
-    });
+      signal: controller.signal,
+    }).then((received) => {
+      // Also release a response arriving after the request budget has expired.
+      if (controller.signal.aborted) { void received.body?.cancel().catch(() => undefined); throw unavailable(); }
+      return received;
+    }), deadline]);
   } catch {
     throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
   }
-  if (!response.ok)
+  if (!response.ok) {
+    void response.body?.cancel().catch(() => undefined);
     throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
+  }
   let data: unknown;
   try {
-    if (Number(response.headers.get("content-length") ?? "0") > 2048)
+    if (Number(response.headers.get("content-length") ?? "0") > 2048) {
+      void response.body?.cancel().catch(() => undefined);
       throw new Error("response too large");
-    const reader = response.body?.getReader();
+    }
+    reader = response.body?.getReader();
     if (!reader) throw new Error("empty response");
     let size = 0;
     const chunks: Uint8Array[] = [];
     try {
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await Promise.race([reader.read(), deadline]);
         if (done) break;
         size += value.byteLength;
         if (size > 2048) throw new Error("response too large");
         chunks.push(value);
       }
     } finally {
-      await reader.cancel().catch(() => undefined);
+      void reader.cancel().catch(() => undefined);
       reader.releaseLock();
     }
     const bytes = new Uint8Array(size);
@@ -99,10 +152,18 @@ async function callBridge(
   } catch {
     throw new AppError(503, "PASSWORD_BACKEND_UNAVAILABLE", "Serviço de senhas indisponível.");
   }
+  if (controller.signal.aborted) throw unavailable();
+  if (payload.operation === "hash") {
+    if (!exactKeys(data, ["credential"]) || !isCredential(data.credential)) throw unavailable();
+  } else if (!exactKeys(data, ["valid"]) || typeof data.valid !== "boolean") throw unavailable();
   return data;
+  } finally {
+    clearTimeout(timer);
+  }
+  });
 }
 function isCredential(value: unknown): value is ClientCredential {
-  if (!value || typeof value !== "object") return false;
+  if (!exactKeys(value, ["passwordHash", "passwordSalt", "passwordIterations"])) return false;
   const c = value as Record<string, unknown>;
   return (
     typeof c.passwordHash === "string" && /^[A-Za-z0-9_-]{43}$/.test(c.passwordHash) &&

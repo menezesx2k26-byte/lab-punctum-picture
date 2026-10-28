@@ -23,6 +23,8 @@ const json = (response, status, payload) => {
   response.end(body);
 };
 const validSecret = (value) => typeof value === "string" && Buffer.byteLength(value) >= 32;
+const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+  Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 
 export function createPasswordBridgeServer({ secret, replayDirectory, now = Date.now, maxRequestsPerMinute = 120 } = {}) {
   if (!validSecret(secret)) throw new Error("PUNCTUM_PASSWORD_BRIDGE_SECRET requires 32+ bytes.");
@@ -98,13 +100,13 @@ export function createPasswordBridgeServer({ secret, replayDirectory, now = Date
     try { input = JSON.parse(body); }
     catch { return json(response, 400, { error: "INVALID_REQUEST" }); }
     if (
-      !input || typeof input !== "object" ||
+      !exactKeys(input, input?.operation === "verify" ? ["operation", "password", "credential"] : ["operation", "password"]) ||
       !["hash", "verify"].includes(input.operation) ||
       typeof input.password !== "string" ||
       input.password.length < 1 || input.password.length > 1024
     ) return json(response, 400, { error: "INVALID_REQUEST" });
     if (input.operation === "verify" && (
-      !input.credential ||
+      !exactKeys(input.credential, ["passwordHash", "passwordSalt", "passwordIterations"]) ||
       input.credential.passwordIterations !== ITERATIONS ||
       typeof input.credential.passwordHash !== "string" ||
       typeof input.credential.passwordSalt !== "string" ||
