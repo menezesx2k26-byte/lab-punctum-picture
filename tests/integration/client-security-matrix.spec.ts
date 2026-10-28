@@ -300,4 +300,39 @@ describe("complete A1 / A2 / B1 security matrix and zero-byte media denials", ()
       },
     ]);
   });
+
+  it("rejects a valid administrative Access JWT if ADMIN_ALLOWED_EMAILS is unset or empty", async () => {
+    const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const jwk = await exportJWK(publicKey);
+    jwk.kid = "admin-empty-allowlist";
+    jwk.use = "sig";
+    jwk.alg = "RS256";
+    const jwks = createLocalJWKSet({ keys: [jwk] });
+    const assertion = await new SignJWT({ email: "unapproved@example.com", type: "app" })
+      .setProtectedHeader({ alg: "RS256", kid: "admin-empty-allowlist" })
+      .setIssuer("https://punctum.cloudflareaccess.com")
+      .setAudience("admin-aud-distinct-from-client")
+      .setIssuedAt()
+      .setExpirationTime("5m")
+      .sign(privateKey);
+
+    for (const adminAllowedEmails of ["", "   ,  "]) {
+      const testEnv = {
+        ...env,
+        ENVIRONMENT: "production",
+        CLOUDFLARE_TEAM_DOMAIN: "punctum.cloudflareaccess.com",
+        CLOUDFLARE_ACCESS_AUD: "admin-aud-distinct-from-client",
+        CLIENT_ACCESS_TEAM_DOMAIN: "punctum.cloudflareaccess.com",
+        CLIENT_ACCESS_AUD: "client-aud-distinct-from-admin",
+        ADMIN_ALLOWED_EMAILS: adminAllowedEmails,
+      } as Env;
+      await expect(requireAdmin(new Request("https://punctumpicture.com/admin/api/clientes", {
+        headers: { "cf-access-jwt-assertion": assertion },
+      }), testEnv, jwks)).rejects.toMatchObject({
+        status: 403,
+        code: "ADMIN_UNAUTHORIZED",
+      });
+    }
+  });
+
 });
