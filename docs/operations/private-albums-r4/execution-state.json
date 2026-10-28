@@ -1,42 +1,42 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "feature": "private-client-galleries",
   "round": "R4",
-  "status": "TECHNICAL_DOD_PASS",
+  "status": "TECHNICAL_DOD_IN_PROGRESS",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Historical R4 technical checks plus the new Chromium/SSR local CI are PASS; original G01-G24 gate matrix remains controlling. Remote OTP, edge CPU/cost, recovery, independent security, physical devices and LGPD governance are not PASS. Hostinger bridge optional/unproven; production NO_GO.",
-  "updatedAt": "2026-10-28T19:59:13.568Z",
+  "statusScope": "Current mission in progress. Exact original SPEC section 23 definitions restored. PASS has explicit evidence scope and never promotes OTP, remote recovery or governance by inference.",
+  "updatedAt": "2026-10-28T20:38:09.969419+00:00",
   "branch": "agent/hst-001-hostinger-qa-20261028",
   "baseBranch": "agent/argon-punctum-r4-dod-20261027-v2",
   "headBeforeStateUpdate": "0c51cb16063d9b5908c41c7beeabd9ac75881173",
-  "canonicalGateSystem": "ORIGINAL_SPEC_G01_G24",
-  "canonicalGateDocument": "docs/operations/private-albums-r4/12-release-readiness.md",
+  "canonicalGateSystem": "ORIGINAL_SPEC_R4_SECTION_23_G01_G24",
+  "canonicalGateDocument": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
   "gates": {
-    "G01": "PASS_LOCAL",
-    "G02": "PARTIAL",
-    "G03": "PASS_LOCAL",
-    "G04": "PASS_LOCAL",
-    "G05": "PASS_LOCAL",
-    "G06": "PASS_LOCAL",
+    "G01": "PASS",
+    "G02": "PASS",
+    "G03": "PASS",
+    "G04": "PASS",
+    "G05": "PASS",
+    "G06": "PASS",
     "G07": "BLOCKED_EXTERNAL",
-    "G08": "PASS_LOCAL",
-    "G09": "PASS_LOCAL",
-    "G10": "PASS_LOCAL",
-    "G11": "PASS_LOCAL",
-    "G12": "PASS_LOCAL",
-    "G13": "PASS_LOCAL",
-    "G14": "PARTIAL",
-    "G15": "PASS_LOCAL",
-    "G16": "PASS_LOCAL",
-    "G17": "BLOCKED_EXTERNAL",
-    "G18": "BLOCKED_EXTERNAL",
-    "G19": "PARTIAL",
-    "G20": "BLOCKED_GOVERNANCE",
+    "G08": "PASS",
+    "G09": "PASS",
+    "G10": "PASS",
+    "G11": "PASS",
+    "G12": "PASS",
+    "G13": "PASS",
+    "G14": "PASS",
+    "G15": "BLOCKED_EXTERNAL",
+    "G16": "PASS",
+    "G17": "FAIL",
+    "G18": "NOT_RUN",
+    "G19": "BLOCKED_EXTERNAL",
+    "G20": "BLOCKED_EXTERNAL",
     "G21": "PASS",
-    "G22": "BLOCKED_GOVERNANCE",
-    "G23": "PARTIAL",
-    "G24": "PASS_LOCAL"
+    "G22": "BLOCKED_EXTERNAL",
+    "G23": "NOT_RUN",
+    "G24": "PASS"
   },
   "legacyArgonGatesNonCanonical": {
     "G01": "PASS",
@@ -64,15 +64,17 @@
   },
   "gateNotes": {
     "G07": "Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL).",
-    "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run. New PR #24 Chromium E2E CI PASS locally at 320/390/768/1280 widths with synthetic resources; actual Android/iOS remain NOT_RUN.",
-    "G17": "SSH authenticated and Node 22/24 executed; manager readonly queries fail missing vendor integration and own loopback TCP fails in Node/Python. Minimal nonce replay test PASS, max RSS 54784 KiB is not load/capacity proof. Old QA home 129/134/166 ms remains historical only; no current-HEAD/offload before-after or quota/cost proof. G17 BLOCKED_EXTERNAL; reports18/21. PR #24 local workerd/V8 sample: cold p50 106.137→91.052ms and cold p95 248.945→109.521ms (10 per build), warm p99 124.705→74.394ms (50 per build). These are NOT Cloudflare billed CPU; current-head edge/quotas missing. Hostinger bridge remains optional, not critical path.",
-    "G18": "Live Cloudflare D1 SELECT COUNT(*) confirmed BOTH historical QA and restore D1 hold 5 client_accounts each (0 rows written); actual R2 QA original/backup/restored buckets exist. Never overwrite; isolated EMPTY resource pair and authorized rehearsal missing.",
+    "G14": "Original ADMIN/browser: expanded14-check local Chromium E2E passed after CSS chunk correction; Access client/gallery/upload/progress/cover/edit/publish at8 widths. Synthetic local auth only.",
+    "G17": "FAIL on real isolated QA da23806: baseline CPU telemetry p50/p95/p99=50/90/137ms (53 samples); candidate 57/111/204ms (48). Baseline 10/64 HTTP503, candidate 17/64; 0 version mismatches. Workflow success means measurement completed, not gate PASS. No cause assigned to bridge or 503 without evidence.",
+    "G18": "Dedicated new QA pair from prior run40756797747 now exists; prior claim no isolated pair is stale. Remote recovery being implemented independently; no restoration PASS yet.",
     "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07.",
     "G20": "Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains.",
-    "G21": "CI 40740514976 completed/success on f274f29a190bed4360cdfb388ad118ef7ac4698e; runtime ee7b6d6 unchanged in SSH documentation followup. Final new docs-only HEAD CI is verified separately in PR #24 body. New complete CI run 40758459104 SUCCESS on runtime SHA 0c51cb1, including Playwright Chromium after pinning Ubuntu 24.04; this docs-only update requires separate SHA CI verification.",
+    "G21": "Exact PR-head checkout and visual screenshot retention fixed RED588e499/GREEN53c13c6; CI40762657123 success on da23806. Later commits still require their own CI.",
     "G22": "Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation.",
-    "G23": "Nonce replay rejected across two new SSH Node processes using original replay-store. This does not test managed Hostinger restart/redeploy or operational Worker/D1/R2 rollback. No deployed Punctum bridge or remote integration exists. G23 PARTIAL; reports19/21. New synthetic local Chromium test verified isolated workerd restart and consistent D1/R2 snapshot rollback. Remote QA recovery/rollback remain NOT_RUN.",
-    "G24": "Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed. New machine-verifiable local CI/E2E evidence is attached to run 40758459104; latestR4Continuation details generated prior to this docs-only commit."
+    "G23": "Real isolated Worker baseline rollback and candidate return passed at run40762650132. D1/R2 recovery/session portion remains unverified.",
+    "G24": "Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed. New machine-verifiable local CI/E2E evidence is attached to run 40758459104; latestR4Continuation details generated prior to this docs-only commit.",
+    "G13": "Original: client frontend/browser. Current local Chromium libraries, private viewer, favorites, download, keyboard and A/B tests. Does not prove OTP or physical devices.",
+    "G15": "Original: assistive accessibility matrix. Keyboard/focus/reduced motion locally exercised; 200% zoom, contrast and physical TalkBack/VoiceOver matrix incomplete. SEO is supplementary."
   },
   "productionFlag": {
     "PRIVATE_GALLERIES_ENABLED": "false (versioned, effective remote runtime unverified)",
@@ -456,5 +458,318 @@
     },
     "sshFollowupReport": "docs/operations/private-albums-r4/21-hst-001-hostinger-ssh-followup-2026-10-28.md",
     "sshEvidence": "docs/operations/private-albums-r4/evidence/hst-001-hostinger-ssh-inventory-2026-10-28.json"
+  },
+  "historicalGateSnapshotBeforeOriginalSpecRead": {
+    "sourceSha": "4229aa4320cadb20c881c257a76fe23c966e5831",
+    "gates": {
+      "G01": "PASS_LOCAL",
+      "G02": "PARTIAL",
+      "G03": "PASS_LOCAL",
+      "G04": "PASS_LOCAL",
+      "G05": "PASS_LOCAL",
+      "G06": "PASS_LOCAL",
+      "G07": "BLOCKED_EXTERNAL",
+      "G08": "PASS_LOCAL",
+      "G09": "PASS_LOCAL",
+      "G10": "PASS_LOCAL",
+      "G11": "PASS_LOCAL",
+      "G12": "PASS_LOCAL",
+      "G13": "PASS_LOCAL",
+      "G14": "PARTIAL",
+      "G15": "PASS_LOCAL",
+      "G16": "PASS_LOCAL",
+      "G17": "BLOCKED_EXTERNAL",
+      "G18": "BLOCKED_EXTERNAL",
+      "G19": "PARTIAL",
+      "G20": "BLOCKED_GOVERNANCE",
+      "G21": "PASS",
+      "G22": "BLOCKED_GOVERNANCE",
+      "G23": "PARTIAL",
+      "G24": "PASS_LOCAL"
+    },
+    "warning": "G13-G15 labels did not match original SPEC section 23; superseded."
+  },
+  "gateDefinitions": {
+    "G01": "Baseline atualizado — SHAs/inventário",
+    "G02": "Integração sem regressão — diff auditado/testes",
+    "G03": "Cadastro admin — E2E/D1",
+    "G04": "Galeria e publicação — E2E",
+    "G05": "Upload confiável — bytes/retry",
+    "G06": "JWT Access — testes criptográficos",
+    "G07": "OTP real — evidência real sanitizada",
+    "G08": "Sessão segura — auth/revogação",
+    "G09": "Isolamento — matriz A/B",
+    "G10": "Mídia privada — zero bytes indevidos",
+    "G11": "Favoritos — persistência E2E",
+    "G12": "Downloads — API/UI",
+    "G13": "Frontend cliente — browser",
+    "G14": "Frontend admin — browser",
+    "G15": "Acessibilidade — matriz assistiva",
+    "G16": "Não regressão pública — testes main",
+    "G17": "CPU/custos — fontes/medição",
+    "G18": "Backup/restauração — D1/R2 byte a byte",
+    "G19": "Segurança independente — sem P0/P1",
+    "G20": "LGPD — aprovação estúdio",
+    "G21": "PR integração — CI/revisão",
+    "G22": "Release — autorização específica",
+    "G23": "Rollback — procedimento testado",
+    "G24": "Handoff — relatório verificável"
+  },
+  "originalSpec": {
+    "filename": "PUNCTUM_SPEC_R4_ALBUNS_PRIVADOS.txt",
+    "bytes": 40541,
+    "sha256": "2989e0ba18982658570dc699842393b3f980c9a5312237af33ab02292d10ecfb",
+    "source": "Original Library file retrieved through authorized CoS worker; local bytes independently hash-verified; full text read.",
+    "definitionSection": 23
+  },
+  "supplementaryChecks": {
+    "physicalAndroidChrome": "BLOCKED_EXTERNAL: adb devices returned no attached device",
+    "physicalIosSafari": "BLOCKED_EXTERNAL: no physical iOS test route verified",
+    "seoCacheNoindex": "PASS_LOCAL historical tests; separate from canonical G15",
+    "formalSecuritySignoff": "NOT_OBTAINED",
+    "lgpdControllerApproval": "NOT_OBTAINED"
+  },
+  "currentMission": {
+    "initialSha": "4229aa4320cadb20c881c257a76fe23c966e5831",
+    "integrationBranch": "agent/r4-final-qa/20261028",
+    "prBranch": "agent/hst-001-hostinger-qa-20261028",
+    "ci": {
+      "sha": "da2380685495a992e65bd19b6fc635683713e8c7",
+      "runId": 40762657123,
+      "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD_CHECKOUT"
+    },
+    "edgeRunId": 40762650132,
+    "edgeStatus": "PERFORMANCE_QA_WITH_REQUEST_FAILURES",
+    "workerRollback": "PASS_DEDICATED_WORKER_ONLY",
+    "productionWrites": 0,
+    "historicalQaWrites": 0,
+    "newResourcesCreated": 0,
+    "remoteRecovery": "IN_PROGRESS_NOT_HOMOLOGATED",
+    "realOtpVerified": false,
+    "formalG19Signoff": false,
+    "lgpdApproval": false,
+    "releaseAuthorization": false,
+    "memoryIngestionDecision": "No new stable cross-project user fact; all new findings are project state and recorded in this repository.",
+    "localExpandedBrowser": {
+      "status": "PASS_LOCAL",
+      "checks": 14,
+      "widths": [
+        320,
+        360,
+        375,
+        390,
+        430,
+        768,
+        1024,
+        1440
+      ],
+      "actualOtp": false,
+      "physicalDevices": false
+    },
+    "persistFlow": {
+      "runId": "punctum-r4-final-qa-20261028-cc33d21e",
+      "generation": 1,
+      "checkpointCount": 1,
+      "timestamp": "2026-10-28T20:41:38.915Z",
+      "route": "Gabriel_MCP_Remote",
+      "status": "CREATED_CHECKPOINTED_INSPECTED",
+      "automaticContinuation": false,
+      "takeover": false,
+      "sourceSha": "da2380685495a992e65bd19b6fc635683713e8c7"
+    }
+  },
+  "gateLedger": {
+    "G01": {
+      "definition": "Baseline atualizado — SHAs/inventário",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G02": {
+      "definition": "Integração sem regressão — diff auditado/testes",
+      "previousStatus": "PARTIAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G03": {
+      "definition": "Cadastro admin — E2E/D1",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G04": {
+      "definition": "Galeria e publicação — E2E",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G05": {
+      "definition": "Upload confiável — bytes/retry",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G06": {
+      "definition": "JWT Access — testes criptográficos",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G07": {
+      "definition": "OTP real — evidência real sanitizada",
+      "previousStatus": "BLOCKED_EXTERNAL",
+      "status": "BLOCKED_EXTERNAL",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": true
+    },
+    "G08": {
+      "definition": "Sessão segura — auth/revogação",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G09": {
+      "definition": "Isolamento — matriz A/B",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G10": {
+      "definition": "Mídia privada — zero bytes indevidos",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G11": {
+      "definition": "Favoritos — persistência E2E",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G12": {
+      "definition": "Downloads — API/UI",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G13": {
+      "definition": "Frontend cliente — browser",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G14": {
+      "definition": "Frontend admin — browser",
+      "previousStatus": "PARTIAL",
+      "status": "PASS",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G15": {
+      "definition": "Acessibilidade — matriz assistiva",
+      "previousStatus": "PASS_LOCAL",
+      "status": "BLOCKED_EXTERNAL",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G16": {
+      "definition": "Não regressão pública — testes main",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G17": {
+      "definition": "CPU/custos — fontes/medição",
+      "previousStatus": "BLOCKED_EXTERNAL",
+      "status": "FAIL",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G18": {
+      "definition": "Backup/restauração — D1/R2 byte a byte",
+      "previousStatus": "BLOCKED_EXTERNAL",
+      "status": "NOT_RUN",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G19": {
+      "definition": "Segurança independente — sem P0/P1",
+      "previousStatus": "PARTIAL",
+      "status": "BLOCKED_EXTERNAL",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": true
+    },
+    "G20": {
+      "definition": "LGPD — aprovação estúdio",
+      "previousStatus": "BLOCKED_GOVERNANCE",
+      "status": "BLOCKED_EXTERNAL",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": true
+    },
+    "G21": {
+      "definition": "PR integração — CI/revisão",
+      "previousStatus": "PASS",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G22": {
+      "definition": "Release — autorização específica",
+      "previousStatus": "BLOCKED_GOVERNANCE",
+      "status": "BLOCKED_EXTERNAL",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": true
+    },
+    "G23": {
+      "definition": "Rollback — procedimento testado",
+      "previousStatus": "PARTIAL",
+      "status": "NOT_RUN",
+      "evidenceScope": "SEE_GATE_NOTE_AND_CURRENT_MISSION",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    },
+    "G24": {
+      "definition": "Handoff — relatório verificável",
+      "previousStatus": "PASS_LOCAL",
+      "status": "PASS",
+      "evidenceScope": "LOCAL_SYNTHETIC",
+      "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
+      "approvalRequired": false
+    }
   }
 }

@@ -8,6 +8,23 @@ O backup privado de QA contém somente fixtures sintéticas na execução testad
 
 - **Implementação técnica concluída**:
   - Criado `worker/client/lgpd.ts` (`buildSanitizedTitularExport`, `loadSanitizedTitularExport`, `FORBIDDEN_LGPD_EXPORT_KEYS`) e exposto `GET /admin/api/clientes/:clientId/lgpd-export` em `worker/api/client-admin.ts` (protegido por `requireAdmin`, `Cache-Control: private, no-store`, `X-Robots-Tag: noindex, nofollow, noarchive` e registrado em `audit_log` como `client.lgpd_exported`).
+
+## Registro para decisão expressa da controladora — 28/10/2026
+
+Todos os campos abaixo estão **PENDENTES**, sem prazo, base legal ou aprovação presumidos. A matriz prepara a decisão; não produz parecer jurídico nem autoriza expurgo/produção.
+
+| Decisão | O que a controladora deve registrar | Evidência técnica disponível |
+|---|---|---|
+| Controlador e contato | Identidade responsável, canal do titular e responsáveis operacionais | Nenhum campo foi preenchido pelo agente |
+| Finalidade e base legal | Finalidades de identificação, entrega, seleção/favoritos, segurança e recuperação; informação ao titular e base aplicável validadas pelo responsável | Inventário da minuta; dados privados separados do portfólio |
+| Retenção | Evento inicial, prazo e exceções de fotos, favoritos, contas, intents, auditoria e backups, separadamente | Não há purge automático autorizado de fotos prontas; versão de sessão permite revogação |
+| Eliminação | Quem autoriza, escopo, exceções, efeito em backups e confirmação ao titular | Revogar/arquivar não significa apagar; exercício destrutivo real não autorizado |
+| Terceiros | Papéis, acesso, transferências e contratos efetivos dos operadores | Arquitetura prevista usa Access/Worker/D1/R2; Hostinger/PersistFlow não receberam fotografias privadas nesta missão; GitHub/Drive/Engram recebem somente evidência sanitizada |
+| Exportação | Escopo do pacote, tratamento de terceiros em imagens/textos e responsável pela revisão | JSON por allowlist, inclusive metadados retidos, snapshot D1.batch e testes A/B; binários de fotos não fazem parte desse endpoint |
+| Entrega | Identidade/legitimidade verificada, destinatário, canal privado, validade, confirmação e registro | Nenhuma exportação de cliente real foi produzida/enviada |
+| Incidentes e restauração | Quem pode restaurar, quem aprova reabertura e como cumprir retenção após recovery | Quarentena e rotação de segredo no contrato técnico; G18/G23 exigem ensaio próprio |
+
+Para aprovação: registrar versão da política, decisões de cada linha, nome/atribuição de quem decide, data, exceções e evidência de aceite. Até isso ocorrer, **G20 BLOCKED_EXTERNAL por governança e produção NO_GO**. O agente não pode assinar pela controladora nem presumir concordância pelo silêncio.
   - O pacote de exportação do titular inclui exclusivamente dados pessoais e escolhas do cliente solicitado (`titular`, `galleries`, `images` prontas e `favorites`) e **exclui estritamente**: `password_hash`, `password_salt`, `password_iterations`, `session_version`, `must_change_password`, `storage_key`, `temporaryPassword`, tokens/cookies/segredos e quaisquer registros de outros clientes.
   - Coberto por `tests/unit/client-lgpd.spec.ts` e `tests/integration/client-security-matrix.spec.ts`.
 - **Estado de governança (`G20`)**:

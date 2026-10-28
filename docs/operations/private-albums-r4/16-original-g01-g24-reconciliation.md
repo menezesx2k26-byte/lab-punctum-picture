@@ -2,35 +2,39 @@
 
 Data: 2026-10-27. Contrato: matriz original preservada em `12-release-readiness.md`. Base da PR #20: PR #17; **main, produção, Cloudflare D1/R2/Access, billing e migrações remotas intactos nesta continuação**.
 
-## Regra de interpretação
-Os números G01–G22 do relatório `15-argon-execution-2026-10-27.md` são uma **matriz diferente**. Não representam os G01–G22 originais e não podem substituir a SPEC. Esta matriz volta aos **24 requisitos originais**. "PASS_LOCAL" significa validação reproduzível de código/simulações e **nunca** homologação Access/Workers/R2 real. "PARTIAL" não passa na liberação. "BLOCKED_EXTERNAL" e "BLOCKED_GOVERNANCE" exigem terceiros ou autorização específica. G23 e G24 **não foram eliminados**.
+## Retificação pela fonte primária — 28/10/2026
 
-| Gate original | Requisito da SPEC (referência `12-release-readiness.md`) | Estado da evidência | Relação com gates Argon / prova | Próxima ação |
-|---|---|---|---|---|
-| G01 | Baseline e preservação | PASS_LOCAL | `00-baseline.md`, PR #17/#20; não é Argon G01 (schema) | Conferir baseline no merge autorizado |
-| G02 | Integração e validação final | PARTIAL | PR #20 contra PR #17; Argon G01–G03 cobrem aspectos, não merge | CI SHA final + integração autorizada |
-| G03 | Cadastro administrativo de clientes | PASS_LOCAL | Argon G04; `client-galleries.spec.ts` e `client-security-matrix.spec.ts` | QA real antes de GO |
-| G04 | Publicação e gerenciamento de galerias | PASS_LOCAL | Argon G05; `client-galleries.spec.ts` | QA real antes de GO |
-| G05 | Upload privado e falhas | PASS_LOCAL | Argon G06; `client-media.spec.ts` | QA edge com fixture sintética |
-| G06 | JWT, audiences, claims | PASS_LOCAL | Argon G07 cobre apenas JWT simulado; `client-access.spec.ts`, `client-security-matrix.spec.ts` | Access JWT real em G07 |
-| G07 | OTP real Cloudflare Access | BLOCKED_EXTERNAL | Argon G07 parcial sintético; sem identidade JWT/OTP real ou política QA autorizada | Operador Access + identidade QA |
-| G08 | Sessões e revogação | PASS_LOCAL | Argon G07/G08; `client-galleries.spec.ts`, `client-access.spec.ts` | Revalidar com sessão real |
-| G09 | Isolamento entre clientes | PASS_LOCAL | Argon G08/G12; `client-security-matrix.spec.ts` | QA remoto A/B |
-| G10 | Mídia privada e negações | PASS_LOCAL | Argon G11/G12; `client-media.spec.ts`, negação com zero byte em `client-security-matrix.spec.ts` | Testar headers/bytes no edge |
-| G11 | Favoritos e operações do titular | PASS_LOCAL | Argon G10; `client-galleries.spec.ts`, `client-pilot.spec.ts` | QA real A/B |
-| G12 | Download, privacidade e autorização | PASS_LOCAL | Argon G11/G12; `client-media.spec.ts` | QA edge R2 privado |
-| G13 | Navegação e acessibilidade | PASS_LOCAL | Argon G13; browser Chromium registrado em `15-argon-execution-2026-10-27.md` | Teste assistivo/hardware |
-| G14 | Responsividade e dispositivos reais | PARTIAL | Argon G14: Chromium headless em 8 larguras; **não** é Android Chrome/iOS Safari físico | QA Android + iOS em aparelhos |
-| G15 | SEO/cache/noindex e superfícies privadas | PASS_LOCAL | Argon G15; testes do router e browser | Confirmar configuração edge |
-| G16 | Não regressão de site público, Studio e Colagem | PASS_LOCAL | Argon G03; suíte Colagem 7 testes + testes de app; Argon G16 é rate-limit, **não equivalente** | Smoke após release autorizado |
-| G17 | CPU, Workers Free, franquia e orçamento R$ 0 | BLOCKED_EXTERNAL | HST-001 relatório 18:142 requisições QA p99=134,2ms, home 3 eventos129–166ms; Billing 200 via credencial existente, uso variável não provado; Hostinger ocupado/inventário bloqueado | Medir causa/home do HEAD e comprovar capacidade/custos antes de offload |
-| G18 | Recuperação D1/R2 íntegra | BLOCKED_EXTERNAL | Argon G18; `client-recovery.spec.ts` em D1/R2 local, `10-d1-r2-recovery.md`; QA histórico contém 5 contas em cada D1 | Operador QA: autorizar par isolado vazio, verificar hashes, quarentena e rotação de segredo |
-| G19 | Revisão independente de segurança | PARTIAL | Argon G19; revisão dirigida existente NÃO é auditoria independente integral | Revisor distinto, inspeção configuração real, sign-off |
-| G20 | Decisão formal LGPD da responsável pelo estúdio | BLOCKED_GOVERNANCE | Argon G20; projeção explícita LGPD e testes `client-lgpd.spec.ts`; sem aprovação humana | Responsável do estúdio: revisar retenção, exportação, papéis e assinar |
-| G21 | PR, CI e rastreabilidade do SHA final | PASS | Argon G21 significa piloto simulado, **não** equivale; CI código SHA `7fccea1` run `40690668055` PASS, suíte completa 199 Vitest + Colagem 7 + Node 22; CI do HEAD documental deve ser conferida separadamente | Preservar referência ao run final na PR |
-| G22 | Autorização de release | BLOCKED_GOVERNANCE | Argon G22; release e flag desligados | Proprietário: GO explícito após todos gates |
-| G23 | Rollback controlado | PARTIAL | **Omitido da matriz Argon**; guard `isPrivateGalleriesEnabled`, `private-rollout.spec.ts` e deploy restrito a main demonstram desativação local; **não demonstram rollback operacional de D1/R2/Worker em QA/produção** | Responsável infraestrutura: ensaio de recuperação QA isolado e procedimento supervisionado sem sobrescrita |
-| G24 | Handoff rastreável e estado durável | PASS_LOCAL | **Omitido da matriz Argon**; este documento, `13-handoff.md`, PR #20 e `execution-state.json`; sem takeover PersistFlow comprovado | Manter atualização no HEAD final e compartilhar com responsável |
+O mapeamento anterior de G13–G15 estava incorreto. A seção 23 do arquivo original define cliente/browser, admin/browser e acessibilidade/matriz assistiva respectivamente. A tabela abaixo foi corrigida; dispositivos físicos e SEO ficam como verificações suplementares, sem renomear gates. Snapshot anterior preservado no Git e no estado v3. Relatório atual: `23-r4-final-homologation-2026-10-28.md`.
+
+## Regra de interpretação
+Os números G01–G22 do relatório `15-argon-execution-2026-10-27.md` são uma **matriz diferente**. Não representam os G01–G22 originais e não podem substituir a SPEC. Esta matriz volta aos **24 requisitos originais**. A tabela atual usa os seis estados da SPEC: PASS, FAIL, BLOCKED_EXTERNAL, BLOCKED_SECURITY, NOT_RUN, NOT_APPLICABLE. Escopo local/sintético é registrado separadamente; PASS local nunca comprova Access/Workers/R2 real. Os nomes de estados legados são mantidos apenas nos registros históricos. G23 e G24 **não foram eliminados**.
+
+| Gate original | Definição exata da SPEC §23 | Estado | Evidência e limite |
+|---|---|---|---|
+| G01 | Baseline atualizado — SHAs/inventário | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G02 | Integração sem regressão — diff auditado/testes | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G03 | Cadastro admin — E2E/D1 | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G04 | Galeria e publicação — E2E | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G05 | Upload confiável — bytes/retry | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G06 | JWT Access — testes criptográficos | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G07 | OTP real — evidência real sanitizada | BLOCKED_EXTERNAL | Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL). |
+| G08 | Sessão segura — auth/revogação | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G09 | Isolamento — matriz A/B | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G10 | Mídia privada — zero bytes indevidos | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G11 | Favoritos — persistência E2E | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G12 | Downloads — API/UI | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G13 | Frontend cliente — browser | PASS | Original: client frontend/browser. Current local Chromium libraries, private viewer, favorites, download, keyboard and A/B tests. Does not prove OTP or physical devices. |
+| G14 | Frontend admin — browser | PASS | Original ADMIN/browser: expanded14-check local Chromium E2E passed after CSS chunk correction; Access client/gallery/upload/progress/cover/edit/publish at8 widths. Synthetic local auth only. |
+| G15 | Acessibilidade — matriz assistiva | BLOCKED_EXTERNAL | Original: assistive accessibility matrix. Keyboard/focus/reduced motion locally exercised; 200% zoom, contrast and physical TalkBack/VoiceOver matrix incomplete. SEO is supplementary. |
+| G16 | Não regressão pública — testes main | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
+| G17 | CPU/custos — fontes/medição | FAIL | FAIL on real isolated QA da23806: baseline CPU telemetry p50/p95/p99=50/90/137ms (53 samples); candidate 57/111/204ms (48). Baseline 10/64 HTTP503, candidate 17/64; 0 version mismatches. Workflow success means measurement completed, not gate PASS. No cause assigned to bridge or 503 without evidence. |
+| G18 | Backup/restauração — D1/R2 byte a byte | NOT_RUN | Dedicated new QA pair from prior run40756797747 now exists; prior claim no isolated pair is stale. Remote recovery being implemented independently; no restoration PASS yet. |
+| G19 | Segurança independente — sem P0/P1 | BLOCKED_EXTERNAL | Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07. |
+| G20 | LGPD — aprovação estúdio | BLOCKED_EXTERNAL | Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains. |
+| G21 | PR integração — CI/revisão | PASS | Exact PR-head checkout and visual screenshot retention fixed RED588e499/GREEN53c13c6; CI40762657123 success on da23806. Later commits still require their own CI. |
+| G22 | Release — autorização específica | BLOCKED_EXTERNAL | Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation. |
+| G23 | Rollback — procedimento testado | NOT_RUN | Real isolated Worker baseline rollback and candidate return passed at run40762650132. D1/R2 recovery/session portion remains unverified. |
+| G24 | Handoff — relatório verificável | PASS | Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed. New machine-verifiable local CI/E2E evidence is attached to run 40758459104; latestR4Continuation details generated prior to this docs-only commit. |
 
 ### Tratamento obrigatório de G23 (rollback)
 1. Rollback lógico imediato: **flag `PRIVATE_GALLERIES_ENABLED=false`**, por alteração/release somente após aprovação específica; a configuração de código atual está desligada. Não confundir flag versionada com estado efetivo remoto (não lido aqui).

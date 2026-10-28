@@ -27,6 +27,7 @@ jobs:
       - run: node --test scripts/publish-colagem-production.test.mjs
       - run: node --test services/punctum-password-bridge/server.test.mjs
       - run: node --test scripts/r4-edge-qa.test.mjs
+      - run: node --test scripts/r4-recovery-qa.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs

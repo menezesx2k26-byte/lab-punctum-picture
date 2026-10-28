@@ -90,3 +90,26 @@ Esta continuação **não constitui revisão independente**; é implementação 
 - **Risco residual**: no modo senha compartilhada ainda não existe atribuição individual; não declarar prova pessoal de autoria. Migrar para identidade individual confiável (ex.: JWT Access com política real autorizada) precisa decisão operacional e G07/G19. Issue #21 continua aberta para essa decisão.
 
 Estas correções encerram os bugs específicos **em código/testes**, mas **G19 não está aprovado por revisor independente** e **G20 não está aprovado pela controladora**. G07/G14/G17/G18/G22/G23 continuam bloqueados. Nada foi alterado em Cloudflare real, D1/R2 remoto, Access, billing, main ou produção.
+
+## Homologação final incremental — 28/10/2026, relatório 23
+
+Os parágrafos anteriores são históricos. Nesta missão houve somente alterações no Worker QA dedicado, com recibos de recursos exatos; nenhuma escrita em produção ou QA histórico. CoS worker-2 fez revisão auxiliar distinta do implementador no SHA `da23806`; isso não é assinatura formal autorizada de G19. Gemini não produziu revisão material e não foi contado.
+
+| Achado confirmado | Reprodução | Correção e teste | Risco residual |
+|---|---|---|---|
+| R4-SEC-ADMIN-CLAIMS, P2 | JWT RS256 de emissor/audience corretos sem exp/iat/sub/type aceito; RED `3331ccc` (2 FAIL) | GREEN `f9f8b96`: claims obrigatórias, app/subject/lifetime; 19 testes focados PASS | Exige token do emissor autorizado com forma inesperada; sem forgery comprovada; OTP/JWKS real não homologado |
+| R4-AUDIT-ORDER, P2 | Reorder retorna 200 e muda posições sem audit_log; RED `a1fba42` | GREEN `22664cf`: `client_gallery.images_reordered`, `auditPrincipal(actor)` | Sessão por senha global continua não individual |
+| R4-AUDIT-PENDING-UPLOAD, P2 | Intent pending sem evento; RED `a1fba42` | GREEN `22664cf`: `client_gallery.upload_intent_created`, somente imageId opaco | Falhas/retenção de logs exigem decisão operacional |
+
+23 testes de galerias/mídia/auditoria passaram após os dois últimos GREEN. Não foram removidas asserções nem reduzido custo criptográfico.
+
+| Limite de confiança | Controle observado | Prova atual | Limite ainda aberto |
+|---|---|---|---|
+| Access → Worker | RS256/JWKS, issuer/aud separados, exp/iat/sub/email/type; allowlist admin | Testes criptográficos locais com chaves novas; regressão acima | OTP, JWKS remoto, política e logout/revogação do provedor reais |
+| Cookie → D1 | HMAC independente, versão/disabled na requisição, propriedade/publicação atuais | D1/workerd local, Chromium A/B e logout | Ciclo real Access e identidade individual de cada admin |
+| Worker → R2 | Chaves privadas, somente imagem ready/galeria autorizada, zero bytes nas negações e no-store | Suítes locais e download browser byte a byte | Restore/privacidade de objetos remotos no ensaio específico |
+| Administração → alterações | Origin, requireAdmin, auditoria com principal verificável ou compartilhado explícito | Regressões de ordem/intent, browser criação/publicação | Sign-off independente e aprovação da identidade operacional |
+| Exportação/retensão → titular | Projeção allowlist e snapshot D1.batch, sem hashes/storage keys/tokens | Testes locais LGPD | Finalidade, base legal, terceiros, retenção, eliminação e canal de entrega aprovados pela controladora |
+| Backup → restauração | Snapshot relacional, SHA-256/R2 onlyIf, INSERT-only, quarentena e segredo novo | Biblioteca testada; harness isolado revisado em worktree e sujeito a preflight | G18/G23 só avançam com relatório real, nunca pela existência do código |
+
+Hipótese sem causalidade demonstrada: HTTP 503 da home pode envolver limites do runtime, mas não foi capturado Error 1102. CPU real do candidato em 48 eventos foi 57/111/204 ms (p50/p95/p99); G17 FAIL e NO_GO. Isso não é medição PBKDF2/Password Bridge. Nenhum achado de ausência de vazamento local substitui uma auditoria integral real. A atribuição individual e as decisões LGPD continuam pendentes de pessoas autorizadas.
