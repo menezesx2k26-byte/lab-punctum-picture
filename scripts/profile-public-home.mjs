@@ -84,12 +84,22 @@ async function sampleBuild(variant, repetition) {
       const elapsedMs = performance.now() - start;
       const { profile } = await inspector.send("Profiler.stop");
       const idleIds = new Set(profile.nodes.filter(node => node.callFrame.functionName === "(idle)").map(node => node.id));
+      const nodes = new Map(profile.nodes.map(node => [node.id, node.callFrame]));
+      const frameCosts = new Map();
       let sampledExecutionUs = 0;
-      profile.samples.forEach((id, index) => { if (!idleIds.has(id)) sampledExecutionUs += profile.timeDeltas[index]; });
+      profile.samples.forEach((id, index) => {
+        if (idleIds.has(id)) return;
+        sampledExecutionUs += profile.timeDeltas[index];
+        frameCosts.set(id, (frameCosts.get(id) || 0) + profile.timeDeltas[index]);
+      });
+      const topFrames = [...frameCosts].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, us]) => {
+        const frame = nodes.get(id);
+        return { functionName: frame.functionName, module: frame.url.split(/[\\/]/).slice(-2).join("/"), line: frame.lineNumber + 1, sampledMs: us / 1000 };
+      });
       const heap = await inspector.send("Runtime.getHeapUsage");
       assert.equal(response.status, 200);
       assert.match(html, /__VINEXT_RSC_DONE__/);
-      report.samples.push({ build: variant.label, repetition, phase: index === 0 ? "cold" : "warm", index, status: response.status, htmlBytes: Buffer.byteLength(html), elapsedMs, sampledExecutionMs: sampledExecutionUs / 1000, heapUsedBytes: heap.usedSize });
+      report.samples.push({ build: variant.label, repetition, phase: index === 0 ? "cold" : "warm", index, status: response.status, htmlBytes: Buffer.byteLength(html), elapsedMs, sampledExecutionMs: sampledExecutionUs / 1000, heapUsedBytes: heap.usedSize, topFrames });
     }
     console.log(`PROFILE ${variant.label} isolate ${repetition + 1}/${repetitions}`);
   } finally {
