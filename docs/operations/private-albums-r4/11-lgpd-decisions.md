@@ -32,3 +32,11 @@ A aprovação é uma decisão real de governança e não pode ser inferida de te
 **Registro de aprovação:** Responsável: **PENDENTE** · data: **PENDENTE** · decisão: **NÃO APROVADO** · referência assinada: **AUSENTE**.
 
 A evidência local prova projeção técnica e isolamento nos fixtures; não prova conformidade integral com a LGPD nem constitui parecer jurídico. Preservar `G20 = BLOCKED_GOVERNANCE` até assinatura verificável.
+
+## Atualização técnica de 28/10/2026 — metadados retidos e consistência D1
+
+Na PR #20 foi acrescentada a seção `retainedImageMetadata` do export, incluindo registros de imagens **pendentes, falhadas e excluídas logicamente** que ainda permaneçam no banco. Os campos são selecionados individualmente e limitados ao cliente solicitado; as fotografias/bytes, chaves R2, hashes, sais, sessões e dados de outros titulares permanecem excluídos. O conjunto `galleries[].images` continua restrito às fotos prontas e não excluídas para preservar a semântica de apresentação. Os favoritos retidos são vinculados à mesma galeria e conta.
+
+A leitura de conta/galerias/imagens/favoritos agora ocorre num único `D1.batch` transacional, e não em quatro chamadas independentes. Testes de RED–GREEN e integração com D1 local sintético estão versionados. Não houve exportação de dados reais nem alteração de armazenamento remoto.
+
+**Limite de governança:** a controladora precisa definir se metadados de terceiros incidentais devem ser revisados antes da entrega, quem atende o titular, categorias de retenção, prazo de descarte, políticas sobre fotos soft-deleted e meios seguros de envio. A implementação é técnica, não uma aprovação de conformidade jurídica. Issue #22 documenta governança e verificação real, permanecendo aberta. **G20 = BLOCKED_GOVERNANCE.**
