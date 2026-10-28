@@ -192,9 +192,17 @@ export async function verifyClientPasswordWithProvider(
   if (!providerConfig(env)) return verifyClientPassword(password, credential);
   // ACCESS_ONLY markers/corrupt rows must produce the same denied login as an
   // unknown account. Still do equivalent backend work; never accept dummy success.
-  const usable = isCredential(credential);
+  // Repository rows carry identity/session fields as well as credentials. Never
+  // serialize that row across the service boundary, and validate the projection
+  // rather than rejecting an otherwise valid account for its extra local fields.
+  const projected = {
+    passwordHash: credential.passwordHash,
+    passwordSalt: credential.passwordSalt,
+    passwordIterations: credential.passwordIterations,
+  };
+  const usable = isCredential(projected);
   const data = await callBridge({
-    operation: "verify", password, credential: usable ? credential : DUMMY_CREDENTIAL,
+    operation: "verify", password, credential: usable ? projected : DUMMY_CREDENTIAL,
   }, env, fetcher);
   const valid = (data as { valid?: unknown } | null)?.valid;
   if (typeof valid !== "boolean")

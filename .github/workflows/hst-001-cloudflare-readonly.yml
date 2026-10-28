@@ -1,0 +1,101 @@
+name: HST-001 Cloudflare read only
+on:
+  push:
+    branches: ["agent/hst-001-hostinger-qa-20261028"]
+    paths: [".github/workflows/hst-001-cloudflare-readonly.yml"]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Read existing QA metadata and sanitized metrics
+        env:
+          CF_TOKEN_1: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_2: ${{ secrets.CLOUDFLARE_API_TOKEN2 }}
+          CF_TOKEN_3: ${{ secrets.CLOUDFLARE_API_TOKEN3 }}
+        run: |
+          node --input-type=module <<'HST_READONLY'
+          import { writeFileSync } from "node:fs";
+          const account = "257bca437616da74ece1ce4bbaf0bd89";
+          const worker = "punctum-picture-albums-qa";
+          const report = { schemaVersion: 1, observedAt: new Date().toISOString(), configurationWrites: 0, worker, candidates: [] };
+          const historical = ["2026-10-24T00:00:00Z", "2026-10-28T13:30:00Z"];
+          const timeframe = { from: Date.now() - 86400000, to: Date.now() };
+          function routeFamily(url) {
+            let p; try { p = new URL(url).pathname; } catch { return "unknown"; }
+            if (p === "/") return "public-home";
+            if (p === "/api/client/session") return "client-session";
+            if (p === "/api/client/password") return "client-password";
+            if (p === "/albuns/entrar") return "access-login";
+            if (p.startsWith("/api/client/")) return "client-api";
+            if (p.startsWith("/admin/auth")) return "admin-auth";
+            if (p.startsWith("/admin/")) return "admin";
+            if (p.startsWith("/media/")) return "public-media";
+            if (p.startsWith("/_vinext/image")) return "image-optimization";
+            if (p.startsWith("/albuns/")) return "private-gallery";
+            return "other";
+          }
+          for (const name of ["CF_TOKEN_1", "CF_TOKEN_2", "CF_TOKEN_3"]) {
+            const token = process.env[name]; if (!token) continue;
+            const result = { candidate: name, requests: [] };
+            async function api(endpoint, body) {
+              try {
+                const r = await fetch("https://api.cloudflare.com/client/v4" + endpoint, {
+                  method: body ? "POST" : "GET", redirect: "error",
+                  headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+                  ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20000),
+                });
+                result.requests.push({ endpoint: endpoint.replace(account, "[account]"), status: r.status });
+                if (!r.ok) { await r.body?.cancel(); return null; }
+                return await r.json();
+              } catch { result.requests.push({ endpoint: endpoint.replace(account, "[account]"), status: "NETWORK_ERROR" }); return null; }
+            }
+            const base = "/accounts/" + account;
+            const settings = await api(base + "/workers/scripts/" + worker + "/settings");
+            if (settings?.success) {
+              result.flags = (settings.result?.bindings ?? []).filter(b => ["CLIENT_AUTH_MODE", "PRIVATE_GALLERIES_ENABLED", "CLIENT_PASSWORD_BACKEND"].includes(b.name)).map(b => ({ name: b.name, value: b.text }));
+              await api(base + "/subscriptions");
+              const keys = await api(base + "/workers/observability/telemetry/keys", { datasets: [worker], from: timeframe.from, to: timeframe.to, limit: 100 });
+              result.telemetryKeysAccessible = keys?.success === true;
+              if (keys?.success) {
+                const logs = await api(base + "/workers/observability/telemetry/query", { queryId: "hst001-readonly", dry: true, timeframe, view: "events", limit: 200, parameters: { datasets: [worker] } });
+                const events = logs?.result?.events?.events ?? [];
+                const groups = new Map();
+                for (const event of events) {
+                  const w = event.$workers;
+                  if (typeof w?.cpuTimeMs !== "number" || !Number.isFinite(w.cpuTimeMs)) continue;
+                  const route = routeFamily(w.event?.request?.url ?? event.$metadata?.url);
+                  if (!groups.has(route)) groups.set(route, []);
+                  groups.get(route).push(w.cpuTimeMs);
+                }
+                result.telemetry = { interval: timeframe, returnedEvents: events.length, totalEvents: logs?.result?.events?.count, boundedSample: true,
+                  routes: [...groups].map(([route, values]) => {
+                    values.sort((a,b) => a-b);
+                    const p = n => values[Math.ceil(n * values.length) - 1];
+                    return { route, samples: values.length, cpuP50Ms: p(0.5), cpuP95Ms: p(0.95), cpuP99Ms: p(0.99) };
+                  }) };
+              }
+              const query = 'query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){workersInvocationsAdaptive(limit:1000,filter:{scriptName:"punctum-picture-albums-qa",datetime_geq:$start,datetime_lt:$end}){sum{requests errors} quantiles{cpuTimeP50 cpuTimeP95 cpuTimeP99 wallTimeP50 wallTimeP95 wallTimeP99}}}}}';
+              const metrics = await api("/graphql", { query, variables: { accountTag: account, start: historical[0], end: historical[1] } });
+              const rows = metrics?.data?.viewer?.accounts?.[0]?.workersInvocationsAdaptive;
+              result.historicalMetrics = { interval: historical, rows: rows?.map(row => ({
+                requests: row.sum?.requests, errors: row.sum?.errors,
+                cpuP50Ms: row.quantiles?.cpuTimeP50 / 1000, cpuP95Ms: row.quantiles?.cpuTimeP95 / 1000, cpuP99Ms: row.quantiles?.cpuTimeP99 / 1000,
+                wallP50Ms: row.quantiles?.wallTimeP50 / 1000, wallP95Ms: row.quantiles?.wallTimeP95 / 1000, wallP99Ms: row.quantiles?.wallTimeP99 / 1000,
+              })), graphqlError: !!metrics?.errors?.length };
+            }
+            report.candidates.push(result);
+          }
+          writeFileSync("hst-001-cloudflare-readonly.json", JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          HST_READONLY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hst-001-cloudflare-readonly
+          path: hst-001-cloudflare-readonly.json
+          retention-days: 3
