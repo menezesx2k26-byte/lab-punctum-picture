@@ -24,10 +24,13 @@ export function accessRuntimeConfig(base,settings,sha) {
  assert.equal(binding('IMAGES')?.type,'images','Never activate a missing Images binding');
  const vars=Object.fromEntries(bindings.filter(b=>b.type==='plain_text').map(b=>[b.name,b.text]));
  assert.equal(vars.CLIENT_AUTH_MODE,'access');assert.equal(vars.PRIVATE_GALLERIES_ENABLED,'true');
+ assert.equal(vars.ENVIRONMENT,'preview','Existing runtime must remain QA preview');
+ assert.equal(vars.SITE_ORIGIN,origin,'Retain only the exact QA mutation origin');
+ if(vars.PUBLIC_SITE_URL!==undefined)assert.equal(vars.PUBLIC_SITE_URL,origin,'Public URLs must stay on QA');
  assert.equal(vars.CLIENT_ACCESS_TEAM_DOMAIN,'shiny-violet-50ae.cloudflareaccess.com');
  assert.equal(vars.CLIENT_ACCESS_AUD,'e97a5fc50e1fa426f2bf06af68905b76871a598ab1201dd14c0441c11b8e919c');
  const config=privatePreviewConfig(base,{databaseId:dbId,origin,restored:true,accessTeamDomain:vars.CLIENT_ACCESS_TEAM_DOMAIN,accessAudience:vars.CLIENT_ACCESS_AUD});
- config.vars={...vars,QA_BUILD_SHA:sha};config.keep_vars=true;
+ config.vars={...vars,PUBLIC_SITE_URL:vars.PUBLIC_SITE_URL??origin,QA_BUILD_SHA:sha};config.keep_vars=true;
  config.version_metadata={binding:'QA_VERSION'};
  config.main='r4-access-wrapper.mjs';
  delete config.services;
