@@ -2,6 +2,7 @@ import vinext from "vinext";
 import { defineConfig } from "vite";
 import { localPhotographyFixtures } from "./build/local-photography-fixtures";
 import { sites } from "./build/sites-vite-plugin";
+import { ssrOnDemandClientReferences } from "./build/ssr-on-demand";
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
@@ -57,6 +58,7 @@ export default defineConfig(async ({ command }) => {
         : {}),
     },
     plugins: [
+      ssrOnDemandClientReferences(),
       localPhotographyFixtures(),
       vinext(),
       sites(),
