@@ -61,6 +61,11 @@ jobs:
             if (settings?.success) {
               result.flags = (settings.result?.bindings ?? []).filter(b => ["CLIENT_AUTH_MODE", "PRIVATE_GALLERIES_ENABLED", "CLIENT_PASSWORD_BACKEND"].includes(b.name)).map(b => ({ name: b.name, value: b.text }));
             }
+            const deployment = await api(base + "/workers/scripts/" + worker + "/deployments");
+            const latest = deployment?.result?.deployments?.[0];
+            result.latestDeployment = latest ? { id: latest.id, createdOn: latest.created_on, versions: latest.versions } : null;
+            const workerSettings = await api(base + "/workers/account-settings");
+            result.workerAccountSettings = workerSettings?.success ? { defaultUsageModel: workerSettings.result?.default_usage_model } : null;
             const subscriptions = await api(base + "/subscriptions");
             result.subscriptions = subscriptions?.result?.map(s => ({ product: s.rate_plan?.public_name, planId: s.rate_plan?.id, price: s.price, state: s.state }));
             const keys = await api(base + "/workers/observability/telemetry/keys", { datasets: [], filters, from: timeframe.from, to: timeframe.to, limit: 100 });
@@ -70,14 +75,16 @@ jobs:
               const logs = await api(base + "/workers/observability/telemetry/query", { queryId: "hst001-readonly", dry: true, timeframe, view: "events", limit: 200, parameters: { datasets: [], filters } });
               const events = logs?.result?.events?.events ?? [];
               const groups = new Map();
+              const homeSamples = [];
               for (const event of events) {
                 const w = event.$workers;
                 if (typeof w?.cpuTimeMs !== "number" || !Number.isFinite(w.cpuTimeMs)) continue;
                 const route = routeFamily(w.event?.request?.url ?? event.$metadata?.url);
+                if (route === "public-home") homeSamples.push({ cpuTimeMs: w.cpuTimeMs, wallTimeMs: w.wallTimeMs, timestamp: event.timestamp, versionId: w.scriptVersion?.id, coldStart: event.$metadata?.coldStart });
                 if (!groups.has(route)) groups.set(route, []);
                 groups.get(route).push(w.cpuTimeMs);
               }
-              result.telemetry = { interval: timeframe, filter: "$metadata.service == QA worker", returnedEvents: events.length, totalEvents: logs?.result?.events?.count, boundedSample: true,
+              result.telemetry = { interval: timeframe, filter: "$metadata.service == QA worker", returnedEvents: events.length, totalEvents: logs?.result?.events?.count, boundedSample: true, homeSamples,
                 routes: [...groups].map(([route, values]) => {
                   values.sort((a,b) => a-b);
                   const p = n => values[Math.ceil(n * values.length) - 1];
