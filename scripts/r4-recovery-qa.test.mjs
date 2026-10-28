@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { r4VacancyListing } from './lib/r4-recovery-qa.mjs';
+import { r4VacancyListing, r4ObservedOneListing } from './lib/r4-recovery-qa.mjs';
 
 test('accepts only the live verified empty R2 envelope when optional pagination is omitted', () => {
   const observed={success:true,errors:[],messages:[],result:[]};
@@ -12,13 +12,24 @@ test('accepts only the live verified empty R2 envelope when optional pagination 
     {...observed,errors:[{code:1}]},
   ]) assert.throws(()=>r4VacancyListing(unsafe));
 });
+test('one legacy R2 object may be observed with omitted pagination, but final count requires Worker R2.list',()=>{
+ const live={success:true,errors:[],messages:[],result:[{key:'qa-legacy-object'}]};
+ assert.equal(r4ObservedOneListing(live),1);
+ for(const changed of [
+  {...live,result:[]},{...live,result:[{key:'x'},{key:'y'}]},
+  {...live,result_info:{cursor:'next-page'}},{...live,errors:[{code:1}]},
+  {...live,success:false},{...live,result:[{key:'x'},{key:'x'}]},
+ ])assert.throws(()=>r4ObservedOneListing(changed));
+});
 import { test } from 'node:test';
 import { createHash, createHmac } from 'node:crypto';
+import { createScopedFixtureReceipt, validateScopedFixtureReceipt } from './lib/r4-scoped-fixture.mjs';
 import { R4_QA, R4_RESUME_DATABASES } from './lib/r4-edge-qa.mjs';
 import {
   assertR4RecoveryScope, r4RecoveryWorkerConfig, signR4QaAdminCookie,
   signR4QaClientCookie, assertR4RecoveryPreflight, assertR4RecoveryVacant,
   assertR4FlagDisabledCandidateConfig, withR4QaRestoration,
+  assertR4ScopedExisting, assertR4ScopedBudget, r4ScopedRecoveryWorkerConfig,
 } from './lib/r4-recovery-qa.mjs';
 
 const origin = 'https://' + R4_QA.worker + '.example.workers.dev';
@@ -131,4 +142,56 @@ test('fresh R4 recovery refuses any preexisting client relation, originals or ba
     {objects:{...vacant.objects,backups:1}},
     {objects:{...vacant.objects,restored:null}},
   ]) assert.throws(()=>assertR4RecoveryVacant({...vacant,...changed}));
+});
+
+test('scoped G18 explicitly preserves one known failed case and permits only an empty destination',()=>{
+ const counts={source:{client_accounts:1,client_galleries:1,client_gallery_images:1,client_gallery_upload_intents:1,client_gallery_favorites:0},restore:{client_accounts:0,client_galleries:0,client_gallery_images:0,client_gallery_upload_intents:0,client_gallery_favorites:0}};
+ const objects={originals:1,restored:0,backups:0};
+ assert.equal(assertR4ScopedExisting({...counts,objects}),true);
+ for(const changed of [
+  {source:{...counts.source,client_accounts:5}},
+  {source:{...counts.source,client_gallery_images:2}},
+  {restore:{...counts.restore,client_accounts:1}},
+  {objects:{...objects,originals:0}},
+  {objects:{...objects,restored:1}},
+  {objects:{...objects,backups:1}},
+ ]) assert.throws(()=>assertR4ScopedExisting({...counts,objects,...changed}));
+});
+
+test('scoped recovery rejects missing fresh quota evidence or unexpected resource ownership',()=>{
+ const verified={resources:R4_QA,created:{databases:R4_RESUME_DATABASES,buckets:[R4_QA.originals,R4_QA.restored,R4_QA.backups]},r2Storage:{accessible:true},r2Operations:{accessible:true},workerUsage:{accessible:true},d1Usage:{accessible:true},budget:{databaseCount:3,workerRequestsToday:100,r2:{maximumStorageBytes:1000,classARequests:2,classBRequests:3},subscriptions:[{id:'free'}],namesInUse:[R4_QA.source]},d1Budget:{rowsRead:100,rowsWritten:100}};
+ assert.equal(assertR4ScopedBudget(verified),true);
+ for(const bad of [{d1Usage:{accessible:false}},{r2Operations:{accessible:false}},{resources:{...R4_QA,source:'production'}},{budget:{...verified.budget,workerRequestsToday:90001}},{d1Budget:{rowsRead:100,rowsWritten:90000}}])assert.throws(()=>assertR4ScopedBudget({...verified,...bad}));
+});
+
+test('scoped seed worker is a standalone no-Images no-product-config isolated harness',()=>{
+ const base={origin,sourceId:expected[0],restoreId:expected[1],clientIds};
+ const config=r4ScopedRecoveryWorkerConfig(base);
+ assert.equal(config.main,'../scripts/private-recovery-worker.ts');
+ assert.equal(config.vars.QA_RECOVERY_SEED_MODE,'true');
+ assert.equal(config.vars.QA_RECOVERY_CLIENT_IDS,clientIds.join(','));
+ assert.deepEqual(config.d1_databases.map(x=>x.database_id),expected);
+ assert.equal(config.images,undefined);
+ assert.equal(config.services,undefined);
+ assert.deepEqual(config.routes,[]);
+ assert.deepEqual(config.triggers.crons,[]);
+ assert.equal(config.vars.CLIENT_AUTH_MODE,undefined);
+ assert.equal(config.vars.CLIENT_PASSWORD_BACKEND,undefined);
+});
+
+test('synthetic manifest preallocates exactly 2 independent owners, 10 unique 79B PNG images, 10 intents and 2 favorites',()=>{
+ let counter=0;
+ const ids=Array.from({length:24},()=>{counter++;return '00000000-0000-4000-8000-'+counter.toString(16).padStart(12,'0')});
+ const receipt=createScopedFixtureReceipt(()=>ids.shift());
+ assert.equal(validateScopedFixtureReceipt(receipt),true);
+ assert.deepEqual(receipt.clients.map(c=>c.email),receipt.clients.map(c=>'pilot-'+c.id+'@example.invalid'));
+ assert.equal(receipt.clients.length,2);
+ assert.equal(receipt.galleries.length,2);
+ assert.equal(receipt.images.length,10);
+ assert.equal(receipt.intents.length,10);
+ assert.equal(receipt.favorites.length,2);
+ assert.equal(new Set(receipt.images.map(x=>x.storageKey)).size,10);
+ assert.ok(receipt.images.every(x=>x.sizeBytes===79 && x.mimeType==='image/png'));
+ assert.throws(()=>validateScopedFixtureReceipt({...receipt,clients:[receipt.clients[0],receipt.clients[0]]}));
+ assert.throws(()=>validateScopedFixtureReceipt({...receipt,images:[...receipt.images.slice(0,9),{...receipt.images[9],storageKey:receipt.images[0].storageKey}]}));
 });

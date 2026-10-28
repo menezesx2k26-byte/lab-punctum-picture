@@ -1,7 +1,7 @@
 // Dedicated interrupted R4 allocation only. This module performs no I/O.
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { R4_QA, R4_RESUME_DATABASES } from './r4-edge-qa.mjs';
+import { R4_QA, R4_RESUME_DATABASES, assertFreshQaBudget } from './r4-edge-qa.mjs';
 import { r2RestListing } from './private-preview.mjs';
 
 // Run 40768031299 observed this exact empty envelope on all three dedicated buckets.
@@ -12,6 +12,20 @@ export function r4VacancyListing(envelope) {
     !Object.hasOwn(envelope,'result_info') && Array.isArray(envelope.errors) && envelope.errors.length===0 &&
     Array.isArray(envelope.messages) && envelope.messages.length===0) return {objects:[],truncated:false};
   return r2RestListing(envelope);
+}
+/** Provisional one-object inventory only; authenticated R2.list must confirm
+ * exact cardinality and legacy hash before the seed's first write. */
+export function r4ObservedOneListing(envelope) {
+ if(envelope?.success===true && Array.isArray(envelope.result) &&
+    envelope.result.length===1 && typeof envelope.result[0]?.key==='string' &&
+    !Object.hasOwn(envelope,'result_info') &&
+    Array.isArray(envelope.errors)&&envelope.errors.length===0 &&
+    Array.isArray(envelope.messages)&&envelope.messages.length===0)
+    return 1;
+ const parsed=r2RestListing(envelope);
+ assert.equal(parsed.truncated,false,'Complete legacy listing required');
+ assert.equal(parsed.objects.length,1,'Exactly one pre-existing object required');
+ return 1;
 }
 
 const ACCOUNT = '257bca437616da74ece1ce4bbaf0bd89';
@@ -172,4 +186,38 @@ export function assertR4RecoveryVacant({source,restore,objects}) {
   for (const bucket of ['originals','restored','backups'])
     assert.equal(objects?.[bucket],0,'Every dedicated R4 R2 bucket must be proven empty before recovery');
   return true;
+}
+
+/** The failed upload is immutable evidence, NOT an empty fixture. */
+export const R4_FAILED_OWNER = Object.freeze({
+ clientId:'39a03fb3-d913-4380-a30d-f983fabd22e1',
+ galleryId:'66c091c1-8a4f-47a8-bc57-43cfbebfa0f0',
+ imageId:'e5afb187-6384-4812-b647-eddb430dbe02',
+ intentId:'b7bf8640-b49e-4d34-8092-9cfd3e6314e5',
+});
+export function assertR4ScopedExisting({source,restore,objects}) {
+ const expected={client_accounts:1,client_galleries:1,client_gallery_images:1,client_gallery_upload_intents:1,client_gallery_favorites:0};
+ assert.deepEqual(source,expected,'Original failed QA fixture must be untouched');
+ assert.deepEqual(restore,Object.fromEntries(Object.keys(expected).map(k=>[k,0])),'Restore must remain empty');
+ assert.deepEqual(objects,{originals:1,restored:0,backups:0},'Exactly one existing original; no backup or restored objects');
+ return true;
+}
+
+/** Preserve all capacity checks, even though allocation is already owned. */
+export function assertR4ScopedBudget(report) {
+ assert.deepEqual(report.resources,R4_QA);
+ assert.deepEqual(report.created?.databases,R4_RESUME_DATABASES);
+ assert.deepEqual(report.created?.buckets,[R4_QA.originals,R4_QA.restored,R4_QA.backups]);
+ for(const metric of ['r2Storage','r2Operations','workerUsage','d1Usage']) assert.equal(report[metric]?.accessible,true,'Fresh quota missing '+metric);
+ const b=report.budget;
+ assertFreshQaBudget({...b,databaseCount:b.databaseCount-2,namesInUse:b.namesInUse.filter(name=>!Object.values(R4_QA).includes(name))});
+ assert.ok(Number.isSafeInteger(report.d1Budget?.rowsRead) && report.d1Budget.rowsRead<4_500_000);
+ assert.ok(Number.isSafeInteger(report.d1Budget?.rowsWritten) && report.d1Budget.rowsWritten<90_000);
+ return true;
+}
+
+export function r4ScopedRecoveryWorkerConfig(input) {
+ const config=r4RecoveryWorkerConfig(input);
+ config.vars.QA_RECOVERY_SEED_MODE='true';
+ return config;
 }

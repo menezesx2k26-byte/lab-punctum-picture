@@ -38,6 +38,12 @@ try {
  report.measurementIntervals={r2:[month.toISOString(),now.toISOString()],workers:[day.toISOString(),now.toISOString()]};
  // Explicit failure until every quota metric has a verifiable parser. No writes in preflight.
  report.status='READ_ONLY_PREFLIGHT_COMPLETE';
+ if(process.env.R4_RECOVERY_SCOPED_EXECUTE==='true') {
+   if(process.env.R4_EDGE_QA_EXECUTE!=='false' || process.env.R4_EDGE_QA_RECOVERY!=='false')
+     throw Error('Scoped recovery requires separate explicit opt-in, not combined with edge performance');
+   const {runR4ScopedRecoveryQa}=await import('./r4-recovery-execute.mjs');
+   await runR4ScopedRecoveryQa(report,api);
+ }
  if(process.env.R4_EDGE_QA_EXECUTE==='true') {
    const { runFreshQa } = await import('./r4-edge-execute.mjs');
    await runFreshQa(report,api);
