@@ -72,11 +72,29 @@ export async function handleClientSessionApi(
   assertAllowedOrigin(request, env);
   const db = requireDb(env);
   const mode = clientAuthMode(env);
-  if (url.pathname === "/api/client/session" && request.method === "DELETE")
+  if (url.pathname === "/api/client/session" && request.method === "DELETE") {
+    // A cleared browser cookie alone does not revoke a copied HMAC session.
+    // This invalidates every current session for this account, across devices.
+    try {
+      const identity = await requireClient(request, env, db, {
+        allowPasswordChange: true,
+      });
+      await db
+        .prepare(
+          `UPDATE client_accounts SET session_version=session_version+1,updated_at=?
+           WHERE id=? AND session_version=? AND disabled_at IS NULL`,
+        )
+        .bind(new Date().toISOString(), identity.id, identity.sessionVersion)
+        .run();
+    } catch (error) {
+      // Preserve idempotent logout for anonymous, expired and revoked cookies.
+      if (!(error instanceof AppError && error.status === 401)) throw error;
+    }
     return privateJson(
       { ok: true, logoutUrl: mode === "access" ? "/cdn-cgi/access/logout" : "/albuns/entrar" },
       { headers: { "Set-Cookie": clearClientSessionCookie() } },
     );
+  }
   if (url.pathname === "/api/client/session" && request.method === "POST") {
     if (mode === "access")
       throw new AppError(405, "METHOD_NOT_ALLOWED", "Use o acesso por e-mail.");
