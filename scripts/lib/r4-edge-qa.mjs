@@ -86,3 +86,10 @@ export function assertReadOnlyPerformanceFixture({counts,rows}) {
   }],'Unexpected QA private records; stop instead of resetting them');
   return true;
 }
+
+export function qaBuildSourceSha(label,{baselineSha,candidateSha}) {
+  assert.ok(['baseline','candidate'].includes(label),'Unknown QA build label');
+  const sha=label==='baseline'?baselineSha:candidateSha;
+  assert.match(sha??'',/^[a-f0-9]{40}$/,'Actual configured build SHA is required');
+  return sha;
+}

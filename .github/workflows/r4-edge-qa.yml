@@ -13,6 +13,8 @@ jobs:
     if: contains(github.event.head_commit.message, '[r4-qa-run]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      R4_EDGE_BASELINE_SHA: "16c86d1110f34e1fb871bc9e5906ead5a6344f7a"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -23,8 +25,8 @@ jobs:
       - name: Build fixed baseline and current candidate without deploying production
         run: |
           mkdir .qa-baseline
-          git fetch origin 16c86d1110f34e1fb871bc9e5906ead5a6344f7a
-          git archive 16c86d1110f34e1fb871bc9e5906ead5a6344f7a | tar -x -C .qa-baseline
+          git fetch origin "$R4_EDGE_BASELINE_SHA"
+          git archive "$R4_EDGE_BASELINE_SHA" | tar -x -C .qa-baseline
           ln -s ../node_modules .qa-baseline/node_modules
           npm --prefix .qa-baseline run build
           npm run build

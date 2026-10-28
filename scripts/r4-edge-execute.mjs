@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { R4_QA, R4_RESUME_DATABASES, assertFreshQaBudget, assertResumeQaInventory, isolatedQaConfig, summarizeQaSamples, assertReadOnlyPerformanceFixture } from './lib/r4-edge-qa.mjs';
+import { R4_QA, R4_RESUME_DATABASES, assertFreshQaBudget, assertResumeQaInventory, isolatedQaConfig, summarizeQaSamples, assertReadOnlyPerformanceFixture, qaBuildSourceSha } from './lib/r4-edge-qa.mjs';
 const ACCOUNT = '257bca437616da74ece1ce4bbaf0bd89';
 const pause = ms => new Promise(r=>setTimeout(r,ms));
 const sum = (rows, field) => rows.reduce((n,row)=>n+Number(row.sum?.[field]??0),0);
@@ -153,7 +153,7 @@ export async function runFreshQa(report, api) {
      }catch{samples.push({index:i,status:'NETWORK_ERROR',latencyMs:performance.now()-start});}
    }
    const completedAt=new Date().toISOString();
-   const result={label,...version,sourceSha:label==='baseline'?'b417405c0406daf286b192a8151cf45c4a50f89c':process.env.GITHUB_SHA,startedAt,completedAt,samples,latencyMs:summary(samples.map(s=>s.latencyMs)),...summarizeQaSamples(samples,version.versionId)};
+   const result={label,...version,sourceSha:qaBuildSourceSha(label,{baselineSha:process.env.R4_EDGE_BASELINE_SHA,candidateSha:process.env.GITHUB_SHA}),startedAt,completedAt,samples,latencyMs:summary(samples.map(s=>s.latencyMs)),...summarizeQaSamples(samples,version.versionId)};
    report.performance??=[];report.performance.push(result);await checkpoint();
    assert.equal(result.versionMismatches,0,'Mixed application versions invalidate performance comparison');
    // Allow analytics ingestion; this is bounded and doesn't warm either application version.
