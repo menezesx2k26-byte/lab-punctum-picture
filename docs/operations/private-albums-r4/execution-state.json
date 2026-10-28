@@ -5,7 +5,7 @@
   "status": "TECHNICAL_DOD_PASS",
   "decision": "NO_GO_PRODUCTION",
   "statusScope": "Technical code/test DoD verified locally and on GitHub CI; external QA, remote rollback, security independent signoff and human approvals not included in PASS.",
-  "updatedAt": "2026-10-28T12:47:00Z",
+  "updatedAt": "2026-10-28T13:40:36.360Z",
   "branch": "agent/argon-punctum-r4-dod-20261027-v2",
   "baseBranch": "integration/punctum-private-albums-r4-20261027",
   "headBeforeStateUpdate": "98c1e9b1786a2455b90c4b60158d540f80e340a8",
@@ -63,10 +63,10 @@
     "G22": "BLOCKED_GOVERNANCE"
   },
   "gateNotes": {
-    "G07": "Real Cloudflare Access OTP, authentic identity/JWT/session and D1 revocation still blocked.",
+    "G07": "Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL).",
     "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run.",
-    "G17": "Workers Free 10 ms CPU limit; account usage/billing and edge CPU unverified.",
-    "G18": "Historical D1 QA both contain five accounts; no remote restore/migration, local recovery tests only.",
+    "G17": "READ-ONLY REMOTE QA METRICS: 142 Workers invocations 2026-10-24..28, errors=0, cpuTimeP50=4.259 ms, cpuTimeP99=134.2 ms vs documented Workers Free 10 ms CPU/request. QA deploy last modified 2026-10-24, does NOT represent PR HEAD. Billing/subscriptions GET 403 missing Billing Read. G17 remains BLOCKED_EXTERNAL; investigate CPU outliers and validate new version plus billing before GO.",
+    "G18": "Live Cloudflare D1 SELECT COUNT(*) confirmed BOTH historical QA and restore D1 hold 5 client_accounts each (0 rows written); actual R2 QA original/backup/restored buckets exist. Never overwrite; isolated EMPTY resource pair and authorized rehearsal missing.",
     "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent signoff missing. Issue #21 remains for G19/G07.",
     "G20": "Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains.",
     "G21": "Code SHA 7fccea1 GitHub Actions run 40690668055 completed/success, 199 Vitest, 7 Collage, 22 Node, typecheck/lint/build/audit PASS. Final docs-only HEAD CI verify separately in PR body.",
@@ -170,6 +170,39 @@
         "testCommit": "44d0615791a59f35798c5538bb0eef998094604b",
         "outcome": "PASS_LOCAL_SHARED_PRINCIPAL_NOT_INDIVIDUAL_ATTRIBUTION"
       }
+    },
+    "remoteQa20261028": {
+      "evidenceDocument": "docs/operations/private-albums-r4/17-cloudflare-qa-readonly-evidence-2026-10-28.md",
+      "worker": "punctum-picture-albums-qa",
+      "lastDeployedObserved": "2026-10-24T19:17:43.763Z",
+      "qaFeatureFlag": "PRIVATE_GALLERIES_ENABLED=true (QA only)",
+      "authMode": "access",
+      "accessApp": "Punctum private albums QA 20261024",
+      "accessPolicy": "Owner QA OTP only",
+      "accessSessionDuration": "1h",
+      "realOtpTest": "NOT_RUN",
+      "d1QaClientCount": 5,
+      "d1RestoreClientCount": 5,
+      "d1RowsWritten": 0,
+      "r2QaBucketsPresent": [
+        "punctum-picture-albums-qa-originals",
+        "punctum-picture-albums-qa-backups",
+        "punctum-picture-albums-qa-restored"
+      ],
+      "cpuAnalytics": {
+        "intervalUtc": [
+          "2026-10-24T00:00:00Z",
+          "2026-10-28T13:30:00Z"
+        ],
+        "requests": 142,
+        "errors": 0,
+        "cpuP50Ms": 4.259,
+        "cpuP99Ms": 134.2,
+        "source": "Cloudflare GraphQL workersInvocationsAdaptive; deployed QA version, not PR HEAD"
+      },
+      "billing": "HTTP 403 / missing Billing Read",
+      "writes": "NONE",
+      "status": "PARTIAL_READ_ONLY_NO_GO"
     }
   },
   "securityRisks": [
@@ -181,7 +214,8 @@
     "Mobile Safari iOS and Chrome Android physical QA outstanding.",
     "LGPD studio-controller approval and explicit production authorization missing.",
     "Shared-password operations are now logged with an explicitly non-individual principal; authenticated per-person Access identity and G19 formal signoff remain pending (issue #21).",
-    "LGPD retained metadata and D1 batch consistency fixed and locally tested; studio approval of scope, retention, delivery and third-party data remains pending (issue #22)."
+    "LGPD retained metadata and D1 batch consistency fixed and locally tested; studio approval of scope, retention, delivery and third-party data remains pending (issue #22).",
+    "Cloudflare QA deployed Oct 24 p99 CPU 134.2ms across 142 requests; above published 10ms Workers Free reference. Not measured on PR HEAD and account billing unavailable (403). G17 blocked; see evidence 17."
   ],
   "externalBlockers": [
     {
