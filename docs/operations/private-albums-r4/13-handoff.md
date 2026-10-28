@@ -53,3 +53,11 @@ ZIP v2:2369bytes, SHA256 `c388255e81ff4407800bc90a544442cc250abfc033266441b560bc
 ### Fechamento do adendo v2
 
 CI40774699509 **completed/success exact6e994691e469f9830b9a7d44b83f1fb7f09a5d17**:218Workers/53arquivos,7Colagem,46Node,14Chromium; typecheck/lint/audit0/buildPASS. Artefato12853928040 relido SHA correto/checkoutlimpo/cincoPNGs/zeroerrosinesperados. Evidência `evidence/ci-code-6e99469.json`. Adendo Drive https://drive.google.com/file/d/1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p/view?usp=drivesdk criado emSgtmenezes e raw SHA256 7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2 verificado. Engram3mensagens/get; PersistFlowgeração1/checkpoint4 às21:51:54.566Z inspecionado, sem takeover/continuidadeautomática. Recibos `evidence/hostinger-v2-{drive,persistence}-receipt.json`. G24PASS documental; demaisgatesnão promovidos. CI do commit documental final deve ser conferida na PR; não criar autorreferência impossível no próprioarquivo.
+
+
+## Continuação corrente — 28/10/2026
+
+Os estados anteriores acima são históricos. [Relatório25](25-r4-continuation-real-otp-2026-10-28.md) e execution-state.json reconciliam G07PASS real desktop, G18PASS remoto40786688338, CI40786692800/13a6c83;17PASS/2FAIL/5bloqueados. G15 não passou pelo login Android/tela vazia; G23 continua parcial. ProduçãoNO_GO.
+
+
+Persistência confirmada: [novo DriveSgtmenezes](https://drive.google.com/file/d/1qoEvcvRKPn4D5uRpbJuj5kb38fuEBxDV/view?usp=drivesdk),14404B/SHA2567dce4addaa3737a595af4f45524d6beb51ba7dace48dcf684fb645e1269e65ab verificados por metadata e download bruto independente; Engram mensagem4 lida de volta; PersistFlow geração1/checkpoint5 inspecionado23:32:22.712Z, sem continuidade automática. Recibos sanitizados em evidence/resume-*-receipt.json.

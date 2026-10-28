@@ -1,0 +1,2733 @@
+{
+  "startedUtc": "2026-10-28T22:14:32.968Z",
+  "scope": "LOCAL workerd/V8 sampled execution; excludes idle samples, includes compilation/program samples; not edge CPU or billable CPU",
+  "node": "v24.19.0",
+  "repetitions": 3,
+  "warmRequestsPerIsolate": 5,
+  "builds": [
+    {
+      "label": "baseline",
+      "bundleSha256": "da46367a06505034298eb92dca20e6d9b8b1149baf0302cbf88b9161dab10d79",
+      "ssrBundleSha256": "3b8549b32a4ad762779600f26319c750c5e0dada30748bd8f9dc9229a4fdc74c"
+    },
+    {
+      "label": "candidate",
+      "bundleSha256": "64ba0f2fc0bf51cd57898168ccc81a757c32abd4d78ee2ae3b1168a7307c1127",
+      "ssrBundleSha256": "3b8549b32a4ad762779600f26319c750c5e0dada30748bd8f9dc9229a4fdc74c"
+    }
+  ],
+  "samples": [
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 171.6002000000003,
+      "sampledExecutionMs": 159.631,
+      "heapUsedBytes": 13811616,
+      "topFrames": [
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 33471,
+          "sampledMs": 9.748
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 8.519
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 7.356
+        },
+        {
+          "functionName": "readPublishedImagesById",
+          "module": "index.js",
+          "line": 14797,
+          "sampledMs": 6.826
+        },
+        {
+          "functionName": "_wrappedFetch",
+          "module": "cloudflare-internal:d1-api",
+          "line": 167,
+          "sampledMs": 6.782
+        },
+        {
+          "functionName": "renderFunctionComponent",
+          "module": "index.js",
+          "line": 3025,
+          "sampledMs": 6.368
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 4.99
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 4.417
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 4.123
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.247
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 66.90570000000025,
+      "sampledExecutionMs": 62.535,
+      "heapUsedBytes": 16128556,
+      "topFrames": [
+        {
+          "functionName": "inst._zod.run",
+          "module": "index.js",
+          "line": 16534,
+          "sampledMs": 11.585
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 8.512
+        },
+        {
+          "functionName": "flushBuffered",
+          "module": "ssr/index.js",
+          "line": 1078,
+          "sampledMs": 7.607
+        },
+        {
+          "functionName": "performWork",
+          "module": "ssr/index.js",
+          "line": 4890,
+          "sampledMs": 7.271
+        },
+        {
+          "functionName": "setAttributes",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.723
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.617
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.786
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 22039,
+          "sampledMs": 2.454
+        },
+        {
+          "functionName": "finishedSegment",
+          "module": "ssr/index.js",
+          "line": 4856,
+          "sampledMs": 2.249
+        },
+        {
+          "functionName": "readChunk",
+          "module": "ssr/index.js",
+          "line": 9983,
+          "sampledMs": 1.409
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 56.9372000000003,
+      "sampledExecutionMs": 56.129,
+      "heapUsedBytes": 15582632,
+      "topFrames": [
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 7.395
+        },
+        {
+          "functionName": "clearTimeout",
+          "module": "node-internal:internal_timers",
+          "line": 108,
+          "sampledMs": 7.174
+        },
+        {
+          "functionName": "encode",
+          "module": "",
+          "line": 0,
+          "sampledMs": 6.763
+        },
+        {
+          "functionName": "Resources",
+          "module": "index.js",
+          "line": 24323,
+          "sampledMs": 5.163
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.618
+        },
+        {
+          "functionName": "buildEditorialCarousel",
+          "module": "index.js",
+          "line": 23364,
+          "sampledMs": 4.484
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "ssr/index.js",
+          "line": 1372,
+          "sampledMs": 4.336
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.256
+        },
+        {
+          "functionName": "requestContextFromRequest",
+          "module": "index.js",
+          "line": 952,
+          "sampledMs": 3.169
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20953,
+          "sampledMs": 2.832
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 50.74360000000024,
+      "sampledExecutionMs": 38.005,
+      "heapUsedBytes": 17793552,
+      "topFrames": [
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 6.003
+        },
+        {
+          "functionName": "loadSsrHandler",
+          "module": "index.js",
+          "line": 28358,
+          "sampledMs": 4.396
+        },
+        {
+          "functionName": "inst._zod.run",
+          "module": "index.js",
+          "line": 16534,
+          "sampledMs": 4.016
+        },
+        {
+          "functionName": "readPublicSiteConfigState",
+          "module": "index.js",
+          "line": 23086,
+          "sampledMs": 3.9
+        },
+        {
+          "functionName": "refreshLegacyPublishedConfig",
+          "module": "index.js",
+          "line": 22138,
+          "sampledMs": 2.542
+        },
+        {
+          "functionName": "readPublicSiteSettings",
+          "module": "index.js",
+          "line": 14671,
+          "sampledMs": 2.243
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.217
+        },
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 2.202
+        },
+        {
+          "functionName": "readPublicSiteConfig",
+          "module": "index.js",
+          "line": 23106,
+          "sampledMs": 2.118
+        },
+        {
+          "functionName": "pushStartGenericElement",
+          "module": "ssr/index.js",
+          "line": 2042,
+          "sampledMs": 1.346
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 52.121200000000044,
+      "sampledExecutionMs": 45.525,
+      "heapUsedBytes": 19960176,
+      "topFrames": [
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22945,
+          "sampledMs": 6.449
+        },
+        {
+          "functionName": "HomeExperience",
+          "module": "index.js",
+          "line": 24389,
+          "sampledMs": 3.841
+        },
+        {
+          "functionName": "withSpan",
+          "module": "cloudflare-internal:tracing-helpers",
+          "line": 34,
+          "sampledMs": 3.827
+        },
+        {
+          "functionName": "createTickBufferedTransform",
+          "module": "ssr/index.js",
+          "line": 1066,
+          "sampledMs": 3.256
+        },
+        {
+          "functionName": "buildPageElements$1",
+          "module": "index.js",
+          "line": 12529,
+          "sampledMs": 2.759
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 15918,
+          "sampledMs": 2.435
+        },
+        {
+          "functionName": "_wrappedFetch",
+          "module": "cloudflare-internal:d1-api",
+          "line": 167,
+          "sampledMs": 2.162
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.705
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.683
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 1.668
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 46.10559999999987,
+      "sampledExecutionMs": 44.87,
+      "heapUsedBytes": 15530452,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 12.215
+        },
+        {
+          "functionName": "handlePropertyResult",
+          "module": "index.js",
+          "line": 17033,
+          "sampledMs": 5.515
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 5.419
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 3.849
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.828
+        },
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 33471,
+          "sampledMs": 1.75
+        },
+        {
+          "functionName": "initializeModelChunk",
+          "module": "ssr/index.js",
+          "line": 10080,
+          "sampledMs": 1.173
+        },
+        {
+          "functionName": "serializeClientReference",
+          "module": "index.js",
+          "line": 3139,
+          "sampledMs": 1.07
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 0.98
+        },
+        {
+          "functionName": "renderChildrenArray",
+          "module": "ssr/index.js",
+          "line": 4539,
+          "sampledMs": 0.655
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 0,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 132.6232,
+      "sampledExecutionMs": 120.955,
+      "heapUsedBytes": 13829768,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 8.172
+        },
+        {
+          "functionName": "parseCategories",
+          "module": "index.js",
+          "line": 14611,
+          "sampledMs": 6.999
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 6.081
+        },
+        {
+          "functionName": "_send",
+          "module": "cloudflare-internal:d1-api",
+          "line": 201,
+          "sampledMs": 4.577
+        },
+        {
+          "functionName": "albumFromRow",
+          "module": "index.js",
+          "line": 14621,
+          "sampledMs": 3.3
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.816
+        },
+        {
+          "functionName": "safeParse",
+          "module": "index.js",
+          "line": 19687,
+          "sampledMs": 2.795
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.662
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22949,
+          "sampledMs": 2.202
+        },
+        {
+          "functionName": "enterSpan",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.188
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 50.11729999999989,
+      "sampledExecutionMs": 48.087,
+      "heapUsedBytes": 16151916,
+      "topFrames": [
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 5.435
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 4.396
+        },
+        {
+          "functionName": "readPublishedImagesById",
+          "module": "index.js",
+          "line": 14797,
+          "sampledMs": 3.913
+        },
+        {
+          "functionName": "addD1MetaToSpan",
+          "module": "cloudflare-internal:d1-api",
+          "line": 632,
+          "sampledMs": 3.849
+        },
+        {
+          "functionName": "_send",
+          "module": "cloudflare-internal:d1-api",
+          "line": 201,
+          "sampledMs": 3.648
+        },
+        {
+          "functionName": "flushCompletedChunks",
+          "module": "index.js",
+          "line": 3473,
+          "sampledMs": 3.064
+        },
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 2.13
+        },
+        {
+          "functionName": "readPointers",
+          "module": "index.js",
+          "line": 22993,
+          "sampledMs": 2.007
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17546,
+          "sampledMs": 1.912
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.321
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 49.29039999999986,
+      "sampledExecutionMs": 48.941,
+      "heapUsedBytes": 15623944,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 8.853
+        },
+        {
+          "functionName": "readPublicSiteConfigState",
+          "module": "index.js",
+          "line": 23090,
+          "sampledMs": 5.379
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 3.886
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.534
+        },
+        {
+          "functionName": "preparePreambleFromSegment",
+          "module": "ssr/index.js",
+          "line": 4995,
+          "sampledMs": 2.428
+        },
+        {
+          "functionName": "mapD1Result",
+          "module": "cloudflare-internal:d1-api",
+          "line": 602,
+          "sampledMs": 2.418
+        },
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 28574,
+          "sampledMs": 2.073
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.922
+        },
+        {
+          "functionName": "resolveSiteSettings",
+          "module": "index.js",
+          "line": 14598,
+          "sampledMs": 1.898
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.278
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 48.20269999999982,
+      "sampledExecutionMs": 43.942,
+      "heapUsedBytes": 17827340,
+      "topFrames": [
+        {
+          "functionName": "inst._zod.run",
+          "module": "index.js",
+          "line": 16534,
+          "sampledMs": 6.019
+        },
+        {
+          "functionName": "renderModelDestructive",
+          "module": "index.js",
+          "line": 3206,
+          "sampledMs": 4.788
+        },
+        {
+          "functionName": "run",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.592
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 407,
+          "sampledMs": 4.283
+        },
+        {
+          "functionName": "resolveModelChunk",
+          "module": "ssr/index.js",
+          "line": 10059,
+          "sampledMs": 3.079
+        },
+        {
+          "functionName": "filterInternalHeaders",
+          "module": "index.js",
+          "line": 1699,
+          "sampledMs": 2.057
+        },
+        {
+          "functionName": "get",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.005
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.834
+        },
+        {
+          "functionName": "pull",
+          "module": "ssr/index.js",
+          "line": 972,
+          "sampledMs": 1.243
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.174
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 52.10480000000007,
+      "sampledExecutionMs": 47.469,
+      "heapUsedBytes": 20010188,
+      "topFrames": [
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 7.711
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 6.362
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 5.834
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 4.837
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.29
+        },
+        {
+          "functionName": "consumeDynamicUsage",
+          "module": "index.js",
+          "line": 5629,
+          "sampledMs": 2.367
+        },
+        {
+          "functionName": "encodePathDelimiters",
+          "module": "index.js",
+          "line": 7407,
+          "sampledMs": 2.35
+        },
+        {
+          "functionName": "initializeModelChunk",
+          "module": "ssr/index.js",
+          "line": 10080,
+          "sampledMs": 1.222
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 0.73
+        },
+        {
+          "functionName": "escapeTextForBrowser",
+          "module": "ssr/index.js",
+          "line": 1478,
+          "sampledMs": 0.679
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 50.568199999999706,
+      "sampledExecutionMs": 56.114,
+      "heapUsedBytes": 15535660,
+      "topFrames": [
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 9.978
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22949,
+          "sampledMs": 8.37
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.574
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 464,
+          "sampledMs": 4.339
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.149
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "index.js",
+          "line": 2327,
+          "sampledMs": 2.768
+        },
+        {
+          "functionName": "inst._zod.check",
+          "module": "index.js",
+          "line": 16275,
+          "sampledMs": 2.243
+        },
+        {
+          "functionName": "read",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.072
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 1.864
+        },
+        {
+          "functionName": "pushStartInstance",
+          "module": "ssr/index.js",
+          "line": 2074,
+          "sampledMs": 1.795
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 1,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 122.48110000000088,
+      "sampledExecutionMs": 115.614,
+      "heapUsedBytes": 13769368,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 12.368
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 6.788
+        },
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 33475,
+          "sampledMs": 3.905
+        },
+        {
+          "functionName": "next",
+          "module": "index.js",
+          "line": 22146,
+          "sampledMs": 3.591
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 3.273
+        },
+        {
+          "functionName": "renderWithHooks",
+          "module": "ssr/index.js",
+          "line": 4064,
+          "sampledMs": 2.888
+        },
+        {
+          "functionName": "addAggregatedD1MetaToSpan",
+          "module": "cloudflare-internal:d1-api",
+          "line": 625,
+          "sampledMs": 2.744
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22949,
+          "sampledMs": 2.725
+        },
+        {
+          "functionName": "flushCompletedChunks",
+          "module": "index.js",
+          "line": 3473,
+          "sampledMs": 2.225
+        },
+        {
+          "functionName": "_send",
+          "module": "cloudflare-internal:d1-api",
+          "line": 201,
+          "sampledMs": 2.191
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 50.078700000000026,
+      "sampledExecutionMs": 45.541,
+      "heapUsedBytes": 16107008,
+      "topFrames": [
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 5.665
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 5.481
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20953,
+          "sampledMs": 4.383
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.382
+        },
+        {
+          "functionName": "emitChunk",
+          "module": "index.js",
+          "line": 3386,
+          "sampledMs": 2.304
+        },
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 2.24
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.926
+        },
+        {
+          "functionName": "byteLength",
+          "module": "index.js",
+          "line": 22943,
+          "sampledMs": 1.716
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "ssr/index.js",
+          "line": 1372,
+          "sampledMs": 0.997
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "ssr/index.js",
+          "line": 1372,
+          "sampledMs": 0.896
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 45.16640000000007,
+      "sampledExecutionMs": 42.764,
+      "heapUsedBytes": 15595592,
+      "topFrames": [
+        {
+          "functionName": "setAttributes",
+          "module": "",
+          "line": 0,
+          "sampledMs": 5.058
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 3.899
+        },
+        {
+          "functionName": "fnv1a64",
+          "module": "index.js",
+          "line": 4806,
+          "sampledMs": 3.886
+        },
+        {
+          "functionName": "writeChunkAndReturn",
+          "module": "index.js",
+          "line": 2316,
+          "sampledMs": 3.885
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 3.272
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.91
+        },
+        {
+          "functionName": "withSpan",
+          "module": "cloudflare-internal:tracing-helpers",
+          "line": 34,
+          "sampledMs": 2.191
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.185
+        },
+        {
+          "functionName": "initializeModelChunk",
+          "module": "ssr/index.js",
+          "line": 10080,
+          "sampledMs": 1.196
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.085
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 43.42840000000069,
+      "sampledExecutionMs": 35.957,
+      "heapUsedBytes": 17803564,
+      "topFrames": [
+        {
+          "functionName": "next",
+          "module": "index.js",
+          "line": 22146,
+          "sampledMs": 5.573
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 4.387
+        },
+        {
+          "functionName": "setTimeout",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.341
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 2.279
+        },
+        {
+          "functionName": "refreshLegacyPublishedConfig",
+          "module": "index.js",
+          "line": 22138,
+          "sampledMs": 2.003
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.763
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.671
+        },
+        {
+          "functionName": "setAttributes",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.638
+        },
+        {
+          "functionName": "addD1MetaToSpan",
+          "module": "cloudflare-internal:d1-api",
+          "line": 632,
+          "sampledMs": 1.593
+        },
+        {
+          "functionName": "initializeModelChunk",
+          "module": "ssr/index.js",
+          "line": 10080,
+          "sampledMs": 1.13
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 45.31530000000021,
+      "sampledExecutionMs": 39.038,
+      "heapUsedBytes": 19970220,
+      "topFrames": [
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.595
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 3.803
+        },
+        {
+          "functionName": "next",
+          "module": "index.js",
+          "line": 22146,
+          "sampledMs": 3.665
+        },
+        {
+          "functionName": "_send",
+          "module": "cloudflare-internal:d1-api",
+          "line": 201,
+          "sampledMs": 3.433
+        },
+        {
+          "functionName": "read",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.938
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 2.177
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.825
+        },
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 33475,
+          "sampledMs": 1.784
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 1.756
+        },
+        {
+          "functionName": "byteLength",
+          "module": "index.js",
+          "line": 22943,
+          "sampledMs": 1.746
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 49.138999999999214,
+      "sampledExecutionMs": 48.228,
+      "heapUsedBytes": 15537200,
+      "topFrames": [
+        {
+          "functionName": "next",
+          "module": "index.js",
+          "line": 22146,
+          "sampledMs": 5.831
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 5.663
+        },
+        {
+          "functionName": "$$typeof",
+          "module": "index.js",
+          "line": 3002,
+          "sampledMs": 4.956
+        },
+        {
+          "functionName": "TransformStream",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.462
+        },
+        {
+          "functionName": "resolveAppPageHeadInner",
+          "module": "index.js",
+          "line": 11957,
+          "sampledMs": 3.961
+        },
+        {
+          "functionName": "publicStatText",
+          "module": "index.js",
+          "line": 23433,
+          "sampledMs": 2.732
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.35
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.134
+        },
+        {
+          "functionName": "appRscHandler",
+          "module": "index.js",
+          "line": 9268,
+          "sampledMs": 1.986
+        },
+        {
+          "functionName": "read",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.424
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 128.47220000000016,
+      "sampledExecutionMs": 123.103,
+      "heapUsedBytes": 13806844,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 12.485
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 6.494
+        },
+        {
+          "functionName": "archiveImageFromRow",
+          "module": "index.js",
+          "line": 14775,
+          "sampledMs": 5.531
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 5.364
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 4.53
+        },
+        {
+          "functionName": "renderWithHooks",
+          "module": "ssr/index.js",
+          "line": 4064,
+          "sampledMs": 3.373
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.363
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.325
+        },
+        {
+          "functionName": "set",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.3
+        },
+        {
+          "functionName": "readPublicSiteConfigState",
+          "module": "index.js",
+          "line": 23086,
+          "sampledMs": 2.269
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 49.4411999999993,
+      "sampledExecutionMs": 48.858,
+      "heapUsedBytes": 16132308,
+      "topFrames": [
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20953,
+          "sampledMs": 6.01
+        },
+        {
+          "functionName": "fixPreloadAs",
+          "module": "ssr/index.js",
+          "line": 1059,
+          "sampledMs": 5.257
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.919
+        },
+        {
+          "functionName": "RequestInstance",
+          "module": "index.js",
+          "line": 2844,
+          "sampledMs": 4.372
+        },
+        {
+          "functionName": "readPublishedImagesById",
+          "module": "index.js",
+          "line": 14797,
+          "sampledMs": 3.777
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.436
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 3.293
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.798
+        },
+        {
+          "functionName": "routeRequest",
+          "module": "index.js",
+          "line": 33404,
+          "sampledMs": 1.763
+        },
+        {
+          "functionName": "renderModelDestructive",
+          "module": "index.js",
+          "line": 3206,
+          "sampledMs": 1.116
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 58.21140000000014,
+      "sampledExecutionMs": 54.532,
+      "heapUsedBytes": 15597532,
+      "topFrames": [
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 11.634
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 6.9
+        },
+        {
+          "functionName": "addD1MetaToSpan",
+          "module": "cloudflare-internal:d1-api",
+          "line": 632,
+          "sampledMs": 4.498
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 4.379
+        },
+        {
+          "functionName": "resolveAppPageHeadInner",
+          "module": "index.js",
+          "line": 11957,
+          "sampledMs": 3.138
+        },
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 2.412
+        },
+        {
+          "functionName": "toArrayOfObjects",
+          "module": "cloudflare-internal:d1-api",
+          "line": 583,
+          "sampledMs": 2.234
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22945,
+          "sampledMs": 2.172
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.298
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.189
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 49.641600000000835,
+      "sampledExecutionMs": 45.227,
+      "heapUsedBytes": 17801320,
+      "topFrames": [
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22945,
+          "sampledMs": 5.544
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 3.868
+        },
+        {
+          "functionName": "get",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.525
+        },
+        {
+          "functionName": "setAttributes",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.29
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.818
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.57
+        },
+        {
+          "functionName": "retryTask",
+          "module": "index.js",
+          "line": 3398,
+          "sampledMs": 2.221
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 2.204
+        },
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 1.771
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.665
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 55.65309999999954,
+      "sampledExecutionMs": 50.885,
+      "heapUsedBytes": 19965440,
+      "topFrames": [
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 5.878
+        },
+        {
+          "functionName": "buildEditorialCarousel",
+          "module": "index.js",
+          "line": 23364,
+          "sampledMs": 5.796
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 5.622
+        },
+        {
+          "functionName": "readChunk",
+          "module": "ssr/index.js",
+          "line": 9983,
+          "sampledMs": 4.969
+        },
+        {
+          "functionName": "refreshLegacyPublishedConfig",
+          "module": "index.js",
+          "line": 22138,
+          "sampledMs": 4.851
+        },
+        {
+          "functionName": "performWork",
+          "module": "index.js",
+          "line": 3445,
+          "sampledMs": 4.654
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.176
+        },
+        {
+          "functionName": "close",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.069
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.479
+        },
+        {
+          "functionName": "withSecurityHeaders",
+          "module": "index.js",
+          "line": 29816,
+          "sampledMs": 1.454
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 56.63559999999961,
+      "sampledExecutionMs": 52.729,
+      "heapUsedBytes": 15460100,
+      "topFrames": [
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 6.598
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 6.144
+        },
+        {
+          "functionName": "TransformStream",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.993
+        },
+        {
+          "functionName": "HomeExperience",
+          "module": "index.js",
+          "line": 24389,
+          "sampledMs": 4.752
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.704
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.328
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22945,
+          "sampledMs": 3.597
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.353
+        },
+        {
+          "functionName": "writeChunk",
+          "module": "ssr/index.js",
+          "line": 1355,
+          "sampledMs": 2.712
+        },
+        {
+          "functionName": "Headers",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.538
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 126.25410000000011,
+      "sampledExecutionMs": 121.783,
+      "heapUsedBytes": 13815356,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 6.139
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 5.533
+        },
+        {
+          "functionName": "archiveImageFromRow",
+          "module": "index.js",
+          "line": 14775,
+          "sampledMs": 4.856
+        },
+        {
+          "functionName": "addD1MetaToSpan",
+          "module": "cloudflare-internal:d1-api",
+          "line": 632,
+          "sampledMs": 4.75
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 407,
+          "sampledMs": 4.513
+        },
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 33471,
+          "sampledMs": 3.997
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22945,
+          "sampledMs": 3.782
+        },
+        {
+          "functionName": "completeShell",
+          "module": "ssr/index.js",
+          "line": 4835,
+          "sampledMs": 2.961
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.371
+        },
+        {
+          "functionName": "renderFunctionComponent",
+          "module": "index.js",
+          "line": 3025,
+          "sampledMs": 1.734
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 52.65440000000126,
+      "sampledExecutionMs": 48.412,
+      "heapUsedBytes": 16138812,
+      "topFrames": [
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 5.441
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 4.448
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 3.898
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.84
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.031
+        },
+        {
+          "functionName": "byteLength",
+          "module": "index.js",
+          "line": 22939,
+          "sampledMs": 2.241
+        },
+        {
+          "functionName": "enterSpan",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.199
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.192
+        },
+        {
+          "functionName": "URL",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.903
+        },
+        {
+          "functionName": "",
+          "module": "ssr/index.js",
+          "line": 973,
+          "sampledMs": 1.101
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 53.16679999999906,
+      "sampledExecutionMs": 47.6,
+      "heapUsedBytes": 15551988,
+      "topFrames": [
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22945,
+          "sampledMs": 8.808
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 407,
+          "sampledMs": 5.069
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 4.585
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20953,
+          "sampledMs": 3.793
+        },
+        {
+          "functionName": "",
+          "module": "ssr/index.js",
+          "line": 5438,
+          "sampledMs": 2.922
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.803
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.409
+        },
+        {
+          "functionName": "text",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.8
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.155
+        },
+        {
+          "functionName": "globalThis.__vite_rsc_require__",
+          "module": "ssr/index.js",
+          "line": 9471,
+          "sampledMs": 1.041
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 49.62699999999859,
+      "sampledExecutionMs": 45.017,
+      "heapUsedBytes": 17759444,
+      "topFrames": [
+        {
+          "functionName": "flushCompletedChunks",
+          "module": "index.js",
+          "line": 3473,
+          "sampledMs": 4.556
+        },
+        {
+          "functionName": "_wrappedFetch",
+          "module": "cloudflare-internal:d1-api",
+          "line": 167,
+          "sampledMs": 4.53
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17145,
+          "sampledMs": 4.305
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.814
+        },
+        {
+          "functionName": "pingTask",
+          "module": "ssr/index.js",
+          "line": 3830,
+          "sampledMs": 3.808
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 2.367
+        },
+        {
+          "functionName": "enterSpan",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.318
+        },
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 2.3
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 2.225
+        },
+        {
+          "functionName": "_send",
+          "module": "cloudflare-internal:d1-api",
+          "line": 201,
+          "sampledMs": 2.201
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 44.24170000000049,
+      "sampledExecutionMs": 43.541,
+      "heapUsedBytes": 19938168,
+      "topFrames": [
+        {
+          "functionName": "refreshLegacyPublishedConfig",
+          "module": "index.js",
+          "line": 22138,
+          "sampledMs": 5.925
+        },
+        {
+          "functionName": "inst._zod.run",
+          "module": "index.js",
+          "line": 16534,
+          "sampledMs": 5.449
+        },
+        {
+          "functionName": "renderModelDestructive",
+          "module": "index.js",
+          "line": 3206,
+          "sampledMs": 4.783
+        },
+        {
+          "functionName": "Home",
+          "module": "index.js",
+          "line": 24504,
+          "sampledMs": 3.845
+        },
+        {
+          "functionName": "readPublicSiteSettings",
+          "module": "index.js",
+          "line": 14671,
+          "sampledMs": 3.23
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 407,
+          "sampledMs": 2.215
+        },
+        {
+          "functionName": "Request",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.759
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.657
+        },
+        {
+          "functionName": "enterSpan",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.64
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 1.632
+        }
+      ]
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 46.668400000000474,
+      "sampledExecutionMs": 46.382,
+      "heapUsedBytes": 15535212,
+      "topFrames": [
+        {
+          "functionName": "buildPageElements$1",
+          "module": "index.js",
+          "line": 12529,
+          "sampledMs": 7.582
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 5.694
+        },
+        {
+          "functionName": "handleCatchall",
+          "module": "index.js",
+          "line": 17071,
+          "sampledMs": 4.996
+        },
+        {
+          "functionName": "createRscOnErrorHandler",
+          "module": "index.js",
+          "line": 27740,
+          "sampledMs": 3.971
+        },
+        {
+          "functionName": "HomeExperience",
+          "module": "index.js",
+          "line": 24389,
+          "sampledMs": 3.907
+        },
+        {
+          "functionName": "decode",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.547
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "index.js",
+          "line": 2327,
+          "sampledMs": 2.257
+        },
+        {
+          "functionName": "normalizeRscRequest",
+          "module": "index.js",
+          "line": 8578,
+          "sampledMs": 2.077
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.798
+        },
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.792
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 2,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 125.98079999999936,
+      "sampledExecutionMs": 123.288,
+      "heapUsedBytes": 13739784,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 9.459
+        },
+        {
+          "functionName": "readPublicSiteConfigState",
+          "module": "index.js",
+          "line": 23090,
+          "sampledMs": 7.819
+        },
+        {
+          "functionName": "addAggregatedD1MetaToSpan",
+          "module": "cloudflare-internal:d1-api",
+          "line": 625,
+          "sampledMs": 6.896
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20784,
+          "sampledMs": 6.136
+        },
+        {
+          "functionName": "albumFromRow",
+          "module": "index.js",
+          "line": 14621,
+          "sampledMs": 5.022
+        },
+        {
+          "functionName": "renderModelDestructive",
+          "module": "index.js",
+          "line": 3206,
+          "sampledMs": 4.099
+        },
+        {
+          "functionName": "preparePreamble",
+          "module": "ssr/index.js",
+          "line": 5012,
+          "sampledMs": 3.004
+        },
+        {
+          "functionName": "renderFunctionComponent",
+          "module": "index.js",
+          "line": 3025,
+          "sampledMs": 2.56
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 2.285
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 2.203
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 50.89819999999963,
+      "sampledExecutionMs": 42.321,
+      "heapUsedBytes": 16062288,
+      "topFrames": [
+        {
+          "functionName": "byteLength",
+          "module": "index.js",
+          "line": 22943,
+          "sampledMs": 5.5
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 5.487
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 464,
+          "sampledMs": 3.793
+        },
+        {
+          "functionName": "flushCompletedChunks",
+          "module": "index.js",
+          "line": 3473,
+          "sampledMs": 3.305
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.78
+        },
+        {
+          "functionName": "resolveSiteSettings",
+          "module": "index.js",
+          "line": 14598,
+          "sampledMs": 2.322
+        },
+        {
+          "functionName": "run",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.097
+        },
+        {
+          "functionName": "escapeTextForBrowser",
+          "module": "ssr/index.js",
+          "line": 1478,
+          "sampledMs": 1.016
+        },
+        {
+          "functionName": "renderModelDestructive",
+          "module": "index.js",
+          "line": 3206,
+          "sampledMs": 0.667
+        },
+        {
+          "functionName": "run",
+          "module": "",
+          "line": 0,
+          "sampledMs": 0.663
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 45.843300000000454,
+      "sampledExecutionMs": 39.777,
+      "heapUsedBytes": 15575112,
+      "topFrames": [
+        {
+          "functionName": "inst._zod.parse",
+          "module": "index.js",
+          "line": 17283,
+          "sampledMs": 3.83
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20724,
+          "sampledMs": 3.592
+        },
+        {
+          "functionName": "setAttributes",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.545
+        },
+        {
+          "functionName": "enterSpan",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.258
+        },
+        {
+          "functionName": "next",
+          "module": "index.js",
+          "line": 22146,
+          "sampledMs": 2.251
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.227
+        },
+        {
+          "functionName": "fetch",
+          "module": "index.js",
+          "line": 28574,
+          "sampledMs": 1.976
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22949,
+          "sampledMs": 1.86
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 1.837
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.783
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 44.330400000000736,
+      "sampledExecutionMs": 44.023,
+      "heapUsedBytes": 17783608,
+      "topFrames": [
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20953,
+          "sampledMs": 5.47
+        },
+        {
+          "functionName": "TransformStream",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.209
+        },
+        {
+          "functionName": "renderFunctionComponent",
+          "module": "index.js",
+          "line": 3025,
+          "sampledMs": 3.821
+        },
+        {
+          "functionName": "encode",
+          "module": "",
+          "line": 0,
+          "sampledMs": 3.451
+        },
+        {
+          "functionName": "isObject$1",
+          "module": "index.js",
+          "line": 15236,
+          "sampledMs": 3.42
+        },
+        {
+          "functionName": "initializeModelChunk",
+          "module": "ssr/index.js",
+          "line": 10080,
+          "sampledMs": 3.038
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.679
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.822
+        },
+        {
+          "functionName": "cloneRequestWithHeaders",
+          "module": "index.js",
+          "line": 1716,
+          "sampledMs": 1.797
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 180,
+          "sampledMs": 1.681
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 47.57129999999961,
+      "sampledExecutionMs": 44.545,
+      "heapUsedBytes": 19956644,
+      "topFrames": [
+        {
+          "functionName": "(program)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 8.719
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 598,
+          "sampledMs": 4.079
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 3.639
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 407,
+          "sampledMs": 3.191
+        },
+        {
+          "functionName": "runChecks",
+          "module": "index.js",
+          "line": 16493,
+          "sampledMs": 2.397
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "index.js",
+          "line": 2327,
+          "sampledMs": 2.313
+        },
+        {
+          "functionName": "enterSpan",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.967
+        },
+        {
+          "functionName": "setAttributes",
+          "module": "",
+          "line": 0,
+          "sampledMs": 1.917
+        },
+        {
+          "functionName": "_send",
+          "module": "cloudflare-internal:d1-api",
+          "line": 201,
+          "sampledMs": 1.842
+        },
+        {
+          "functionName": "flushBuffered",
+          "module": "ssr/index.js",
+          "line": 1078,
+          "sampledMs": 0.688
+        }
+      ]
+    },
+    {
+      "build": "candidate",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65869,
+      "elapsedMs": 49.57409999999982,
+      "sampledExecutionMs": 46.786,
+      "heapUsedBytes": 15536932,
+      "topFrames": [
+        {
+          "functionName": "emitChunk",
+          "module": "index.js",
+          "line": 3386,
+          "sampledMs": 4.835
+        },
+        {
+          "functionName": "parseStoredConfig",
+          "module": "index.js",
+          "line": 22949,
+          "sampledMs": 4.402
+        },
+        {
+          "functionName": "toJson",
+          "module": "cloudflare-internal:d1-api",
+          "line": 616,
+          "sampledMs": 4.21
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 4.193
+        },
+        {
+          "functionName": "",
+          "module": "cloudflare-internal:d1-api",
+          "line": 180,
+          "sampledMs": 3.284
+        },
+        {
+          "functionName": "(garbage collector)",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.883
+        },
+        {
+          "functionName": "stringToChunk",
+          "module": "index.js",
+          "line": 2327,
+          "sampledMs": 2.764
+        },
+        {
+          "functionName": "",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.354
+        },
+        {
+          "functionName": "",
+          "module": "index.js",
+          "line": 20953,
+          "sampledMs": 2.291
+        },
+        {
+          "functionName": "fetch",
+          "module": "",
+          "line": 0,
+          "sampledMs": 2.185
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "build": "baseline",
+      "phase": "cold",
+      "count": 3,
+      "sampledExecutionMs": {
+        "p50": 123.103,
+        "p95": 159.631,
+        "p99": 159.631
+      },
+      "elapsedMs": {
+        "p50": 128.47220000000016,
+        "p95": 171.6002000000003,
+        "p99": 171.6002000000003
+      },
+      "heapUsedBytes": {
+        "p50": 13811616,
+        "p95": 13815356,
+        "p99": 13815356
+      }
+    },
+    {
+      "build": "baseline",
+      "phase": "warm",
+      "count": 15,
+      "sampledExecutionMs": {
+        "p50": 47.6,
+        "p95": 62.535,
+        "p99": 62.535
+      },
+      "elapsedMs": {
+        "p50": 52.121200000000044,
+        "p95": 66.90570000000025,
+        "p99": 66.90570000000025
+      },
+      "heapUsedBytes": {
+        "p50": 16132308,
+        "p95": 19965440,
+        "p99": 19965440
+      }
+    },
+    {
+      "build": "candidate",
+      "phase": "cold",
+      "count": 3,
+      "sampledExecutionMs": {
+        "p50": 120.955,
+        "p95": 123.288,
+        "p99": 123.288
+      },
+      "elapsedMs": {
+        "p50": 125.98079999999936,
+        "p95": 132.6232,
+        "p99": 132.6232
+      },
+      "heapUsedBytes": {
+        "p50": 13769368,
+        "p95": 13829768,
+        "p99": 13829768
+      }
+    },
+    {
+      "build": "candidate",
+      "phase": "warm",
+      "count": 15,
+      "sampledExecutionMs": {
+        "p50": 44.545,
+        "p95": 56.114,
+        "p99": 56.114
+      },
+      "elapsedMs": {
+        "p50": 49.138999999999214,
+        "p95": 52.10480000000007,
+        "p99": 52.10480000000007
+      },
+      "heapUsedBytes": {
+        "p50": 16107008,
+        "p95": 20010188,
+        "p99": 20010188
+      }
+    }
+  ],
+  "status": "PASS_LOCAL_PROFILE",
+  "completedUtc": "2026-10-28T22:14:48.681Z"
+}

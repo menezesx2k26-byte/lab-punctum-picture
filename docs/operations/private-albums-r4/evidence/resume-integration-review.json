@@ -1,0 +1,139 @@
+{
+  "kind": "punctum-r4-read-only-integration-review",
+  "reviewedAt": "2026-10-28",
+  "repo": "menezesx2k26-byte/lab-punctum-picture",
+  "baseSha": "16c86d1110f34e1fb871bc9e5906ead5a6344f7a",
+  "headSha": "0a5e9a6abfb23e02d16e9661958530402ec1815a",
+  "scope": "Read-only inspection of actual HEAD diff, Access QA execution/workflow, performance fixture and source provenance, lazy-clone behavior. No credentials, deployments, live data queries or code edits.",
+  "productionDecision": "NO_GO",
+  "formalG19Signoff": false,
+  "assessment": {
+    "confirmedP0": [],
+    "confirmedP1": [],
+    "summary": "No demonstrated new P0/P1 or unintended production/data mutation in the inspected diff. Authorization remains limited to dedicated QA and specific historical D1/R2 IDs. A conditional guard gap in inherited plain text variables and workflow deployment mutability are documented, not falsely classified as proven exploits.",
+    "residualRisks": [
+      {
+        "id": "R1",
+        "severity": "CONDITIONAL_GUARD_GAP_NOT_CONFIRMED_P1",
+        "summary": "Access runtime replaces preview's guarded vars with all existing QA plain_text vars, but does not assert SITE_ORIGIN, PUBLIC_SITE_URL or ENVIRONMENT remain QA-scoped.",
+        "evidence": [
+          "scripts/r4-access-runtime.mjs:25-30 copies all plain_text settings then sets config.vars={...vars,QA_BUILD_SHA:sha}",
+          "scripts/lib/private-preview.mjs:56-71 computes preview ENVIRONMENT/SITE_ORIGIN/PUBLIC_SITE_URL; overridden by config.vars afterwards",
+          "worker/utils/auth.ts:318-326 uses SITE_ORIGIN in mutation Origin check",
+          "scripts/r4-access-runtime.test.mjs:5-19 tests DB, buckets, Access AUD/team and admin allowlist preservation; no SITE_ORIGIN/ENVIRONMENT invariant"
+        ],
+        "impact": "If pre-existing QA settings drift, deployment can carry an incorrect request-origin policy or environment value; no observed drift or authorization bypass in provided evidence. Guarding exact QA origin/environment is defense-in-depth and should not overwrite legitimate QA admin allowlist or secrets.",
+        "suggestedTest": "Synthetic QA settings containing SITE_ORIGIN=https://punctumpicture.com or ENVIRONMENT=production must be rejected; otherwise retain exact existing QA vars; no runtime/production change by reviewer."
+      },
+      {
+        "id": "R2",
+        "severity": "KNOWN_BOUNDED_QA_MUTATION_NOT_UNINTENDED",
+        "summary": "Performance-only continuation is read-only with respect to private D1 fixture but DOES redeploy the dedicated isolated QA Worker baseline/candidate/rollback/candidate.",
+        "evidence": [
+          ".github/workflows/r4-edge-qa.yml:36-40 sets R4_EDGE_QA_RESUME=true, RECOVERY=false, PERFORMANCE_ONLY=true",
+          "scripts/r4-edge-execute.mjs:66-94 gates source fixture with SELECT and exact counts/IDs",
+          "scripts/r4-edge-execute.mjs:111-120 skips migrations in resume; deploy invokes Wrangler",
+          "scripts/r4-edge-execute.mjs:169-189 measures and restores candidate; checks fixture post measurement"
+        ],
+        "impact": "Do not call operation entirely no-write. Worker versions/config are mutated in an isolated QA service. Current source contains no SQL INSERT/UPDATE/DELETE for the preserved fixture path; no R2 binding under performanceOnly."
+      },
+      {
+        "id": "R3",
+        "severity": "EVIDENCE_LIMITATION",
+        "summary": "The original Edge artifact had a stale baseline sourceSha literal. Its erroneous label must remain documented by erratum, not silently treated as correct or the artifact rewritten.",
+        "evidence": [
+          "scripts/r4-edge-execute.mjs:155-156 now uses qaBuildSourceSha(label,{baselineSha:env.R4_EDGE_BASELINE_SHA,candidateSha:env.GITHUB_SHA})",
+          "scripts/lib/r4-edge-qa.mjs:90-95 validates SHA format and label",
+          ".github/workflows/r4-edge-qa.yml:16-17 sets baseline 16c86d1110f34e1fb871bc9e5906ead5a6344f7a, :27-30 fetches and git archives same ref",
+          "scripts/r4-edge-qa.test.mjs:7-13 checks baseline and candidate provenance"
+        ],
+        "impact": "Run 40779241089 baseline was built from 16c86 by parent git archive log proof, not b417 from stale label. Fix applies prospectively to future report generation; do not infer old report field was automatically corrected."
+      }
+    ]
+  },
+  "accessRuntime": {
+    "source": [
+      "scripts/r4-access-runtime.mjs:11-34 fixed QA worker/database/owner IDs; checked DB/R2/IMAGES existing; assert Access mode, team and audience; config.keep_vars=true; delete services",
+      "scripts/r4-access-runtime.mjs:37-50 requires GITHUB_ACTIONS and R4_ACCESS_QA_EXECUTE, snapshot SELECT * from client_accounts; six rows, synthetic owner presence and unchanged original five digest",
+      "scripts/r4-access-runtime.mjs:53-75 existing QA settings/deployment read, wrapper version attest, Wrangler deploy, before/after row equality, authenticated-independent GET /api/client/me returns 401 current build/version",
+      ".github/workflows/r4-access-runtime.yml:2-15 restricted branch/path/commit marker, contents:read, no cancellation",
+      ".github/workflows/r4-access-runtime.yml:21-34 test, build, deploy QA and uploaded sanitized report"
+    ],
+    "runtimeObservationFromParent": {
+      "deployedCommit": "1570f61",
+      "versionPrefix": "8352cddb",
+      "actionsRun": 40779981780,
+      "result": "success",
+      "originalHistoricalRows": 5,
+      "originalRowsUnchanged": true,
+      "migrations": 0,
+      "sqlWrites": 0,
+      "accessConfigChanges": 0,
+      "existingImagesBindingRetained": true,
+      "newImagesBindingActivated": false,
+      "newSyntheticOwnerAddedSeparatelyBeforeDeployment": true
+    },
+    "humanQAReported": {
+      "realOTP200": true,
+      "JWKSverified": true,
+      "csrfExpected403": true,
+      "adminCookieDenied403": true,
+      "logout": true,
+      "staleReplayDenied401": true,
+      "reentry200": true,
+      "secretsStored": false
+    },
+    "notReviewedOrClaimed": "Human is now testing only synthetic owner's disable/reactivate; final post-toggle state not independently verified here. No formal G19 or release approval.",
+    "noNewPrivilegesConfirmed": true,
+    "noHistoricalRowsChangedAccordingToParent": true
+  },
+  "performance": {
+    "runId": 40779241089,
+    "candidateSourceSha": "1d30b97558af76b039dc60e80156dea5b4c2c434",
+    "baselineActualBuildSha": "16c86d1110f34e1fb871bc9e5906ead5a6344f7a",
+    "baselineOriginalSourceShaLabel": "b417405c0406daf286b192a8151cf45c4a50f89c",
+    "originalArtifactPreservedWithErratum": true,
+    "baselineHttpFailures": "14/64",
+    "candidate": {
+      "cpuMs": {
+        "p50": 31,
+        "p95": 57,
+        "p99": 145,
+        "samples": 63
+      },
+      "httpErrors": "0/64"
+    },
+    "fixturePreserved": true,
+    "isolatedRollback": "PASS",
+    "gate": "G17_FAIL",
+    "notes": "Baseline 14 failures invalidates a clean performance comparison; this is candidate 1d30b97 measurement, not HEAD0a5e9a6; no inference of Free 10ms compliance."
+  },
+  "lazyClone": {
+    "source": [
+      "shared/config/legacy-refresh.ts:66-69 draft is undefined; next() lazily structuredClones config",
+      "shared/config/legacy-refresh.ts:82-167 uses lazy draft for matching legacy substitutions",
+      "shared/config/legacy-refresh.ts:169-193 handles heading and hero on cloned draft, returns original config when unchanged",
+      "tests/unit/legacy-refresh.spec.ts:104-119 asserts 0 clones for current, 1 for legacy, immutable input and reference preservation"
+    ],
+    "assessment": "Behavior-preserving for inspected current/legacy paths and no new mutable shared cache or Studio draft mutation seen.",
+    "executionByReviewer": "NOT_RUN"
+  },
+  "tests": {
+    "parentReported": "GREEN",
+    "config": 26,
+    "nodeGuards": 20,
+    "reviewerReexecution": false,
+    "gitDiffCheck": "PASS",
+    "readOnly": true
+  },
+  "nextForParent": [
+    "Complete deactivation/reactivation evidence for the single synthetic owner; inspect its final restored enabled/session-version state and original-five digest after tests.",
+    "Consider non-mutating guard/test asserting SITE_ORIGIN and ENVIRONMENT correspond to the QA worker before future Access runtime deploys, preserving existing variables/secret bindings.",
+    "Keep original Edge artifact + erratum and use correct build SHA provenance for new measurements. Gate G17 remains FAIL.",
+    "No merge/release/G19 without separate approval and remaining gates."
+  ],
+  "artifact": "work/resume-integration-review.json",
+  "codeEdited": false,
+  "infrastructureChanged": false,
+  "credentialAccessed": false
+}

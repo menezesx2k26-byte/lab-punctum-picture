@@ -1,0 +1,42 @@
+{
+  "atUtc": "2026-10-28T23:25:53.759Z",
+  "channel": "actual Chromium same-origin fetch, no supplied credentials",
+  "expectedVersion": "e05a3001-3c78-4703-8055-acf3026bd450",
+  "checks": [
+    {
+      "path": "/robots.txt",
+      "method": "GET",
+      "status": 200,
+      "bytes": 126,
+      "version": "e05a3001-3c78-4703-8055-acf3026bd450",
+      "cache": "public, max-age=86400"
+    },
+    {
+      "path": "/api/client/me",
+      "method": "GET",
+      "status": 404,
+      "bytes": 118,
+      "version": "e05a3001-3c78-4703-8055-acf3026bd450",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/client/galleries/b608d853-318d-428a-9961-69aa21c0907e/images/511b7a76-bded-4653-bc9c-37eb58dfee55/download",
+      "method": "GET",
+      "status": 404,
+      "bytes": 0,
+      "version": "e05a3001-3c78-4703-8055-acf3026bd450",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/client/galleries/b608d853-318d-428a-9961-69aa21c0907e/images/511b7a76-bded-4653-bc9c-37eb58dfee55/download",
+      "method": "HEAD",
+      "status": 404,
+      "bytes": 0,
+      "version": "e05a3001-3c78-4703-8055-acf3026bd450",
+      "cache": "private, no-store"
+    }
+  ],
+  "passed": true,
+  "pythonPreWorker403": "resume-post-recovery-runtime.json; separate channel, not counted as Worker response",
+  "productionWrites": 0
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "status": "DENIAL_OBSERVED_CAUSE_NOT_EXPOSED",
+  "observedAtUtc": "2026-10-28T22:58:54Z",
+  "scope": "READ_ONLY Cloudflare Access app-only last-15-minute login records for Android QA report; no user-identifying log content retained",
+  "app": {
+    "id": "9ba6f47a-a0d2-4588-9d21-6b14d54dad6a",
+    "domain": "punctum-picture-albums-qa.menezesx2k26.workers.dev/albuns/entrar",
+    "policyId": "9fc898c0-21a0-40e3-9117-4f36604e9f06",
+    "policyName": "Owner QA OTP only",
+    "policyDecision": "allow",
+    "policyIncludeCount": 1,
+    "ownerEmailMatchesPolicy": true,
+    "policyExcludeCount": 0,
+    "policyRequiredLoginMethodId": "2f3f09a1-2715-4021-a359-810a3c596566",
+    "allowedIdpIds": [
+      "2f3f09a1-2715-4021-a359-810a3c596566"
+    ],
+    "requiredIdpType": "onetimepin",
+    "requiredIdpName": "Punctum albums QA OTP",
+    "googleLoginAllowed": false
+  },
+  "logQuery": {
+    "endpoint": "GET /accounts/{account_id}/access/logs/access_requests",
+    "documentedBy": "https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/logs/subresources/access_requests/methods/list/",
+    "windowStartUtc": "2026-10-28T22:43:54Z",
+    "windowEndUtc": "2026-10-28T22:58:54Z",
+    "appUidServerFilter": true,
+    "identityOwnerExactServerFilterSeparateQuery": true,
+    "fieldsRequested": [
+      "action",
+      "allowed",
+      "app_uid",
+      "app_domain",
+      "connection",
+      "created_at"
+    ],
+    "excludedFields": [
+      "user_email",
+      "ip_address",
+      "ray_id"
+    ],
+    "sourceSuccess": true,
+    "appEventsCount": 1,
+    "ownerMatchedEventsCount": 1
+  },
+  "denial": {
+    "createdAtUtc": "2026-10-28T22:55:41Z",
+    "action": "login",
+    "allowed": false,
+    "connection": "onetimepin",
+    "ownerEmailMatches": true,
+    "appIdMatches": true,
+    "googleConnection": false,
+    "reasonPresentInLog": false,
+    "denialReason": "NOT EXPOSED by this Access log API response; OTP method and owner email both match policy; cannot infer root cause or phone setup from log",
+    "deviceAssociation": "Human reports Android Chrome denial; audit records do not identify device type or correlate beyond time"
+  },
+  "parentEvidence": {
+    "desktopAuthenticatedStatus": "Reported prior /api/client/me HTTP200 at 2026-10-28T22:48:36Z; not revalidated by this task",
+    "currentOwnerStatus": "Not established by Access logs alone; D1 recheck separate"
+  },
+  "mutations": {
+    "cloudflareAccess": 0,
+    "identityProviders": 0,
+    "d1": 0,
+    "worker": 0,
+    "phoneBrowser": 0
+  },
+  "privacy": {
+    "storedOtherEmails": false,
+    "storedIpAddresses": false,
+    "storedOtp": false,
+    "storedJwt": false,
+    "storedCookies": false
+  }
+}

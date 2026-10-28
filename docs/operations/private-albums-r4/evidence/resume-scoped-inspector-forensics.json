@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "status": "READ_ONLY_FORENSIC_COMPLETE_ROOT_CAUSE_UNPROVEN",
+  "observedAtUtc": "2026-10-28T23:18:54.312Z",
+  "scope": "Only existing isolated G18 QA Worker punctum-picture-r4-qa-20261028 deployment and version metadata around 2026-10-28T23:09Z and pre-existing G18 local artifacts. No Worker code modules/secret values accessed.",
+  "provider": "Cloudflare authorized Composio connection cloudflare_gaub-clione",
+  "cloudflareAccountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "worker": "punctum-picture-r4-qa-20261028",
+  "githubActionsRunId": "40785204574",
+  "runSourceSha": "8adfe80cea52061c46c9f395bb9b1376632878d5",
+  "localEvidence": [
+    {
+      "path": "work/resume-scoped-g18/r4-edge-qa-report.json",
+      "bytes": 26326,
+      "sha256": "168aac2db541d4d767e89ae2d3ca1db00577235c6057656d274301f16afff9ef",
+      "topLevelStatus": "FAILED_CLOSED"
+    },
+    {
+      "path": "work/resume-scoped-g18/r4-scoped-recovery-report.json",
+      "bytes": 26288,
+      "sha256": "388975645b2149323d082e2b9e10a5bbed0d7b18830a56fd9465f2167e62a762",
+      "topLevelStatus": "READ_ONLY_PREFLIGHT_COMPLETE"
+    }
+  ],
+  "runResult": {
+    "failure": "Unexpected scoped inspector HTTP 403",
+    "failedBeforeSeed": true,
+    "startedAtUtcFromReport": "2026-10-28T23:09:05.643Z",
+    "recoveryStatus": "SCOPED_RECOVERY_WORKER_DEPLOYING",
+    "recordedWrites": 3,
+    "reportedCandidateRestoration": "RESTORED_FLAG_DISABLED",
+    "sourceAccountsReported": 1,
+    "restoreAccountsReported": 0,
+    "g18": "NOT_PASSED",
+    "g05": "NOT_RUN",
+    "g07": "NOT_RUN",
+    "g23": "PARTIAL_NOT_DATA_ROLLBACK",
+    "note": "The recovery-specific failure/status fields agree across both artifacts even though the top-level status differs; do not interpret READ_ONLY_PREFLIGHT_COMPLETE as a successful recovery."
+  },
+  "inventory": {
+    "deploymentCount": 23,
+    "versionCount": 23,
+    "allDeploymentsFetched": true,
+    "allVersionMetadataFetchedAsList": true,
+    "versionDetailFetchedFor": [
+      20,
+      21,
+      22,
+      23
+    ],
+    "versionRequestIncludedModules": false
+  },
+  "versions": [
+    {
+      "number": 20,
+      "id": "9768fed8-be3e-4980-bf58-d03dd83c23d3",
+      "createdAtUtc": "2026-10-28T22:24:28.953734Z",
+      "deployedAtUtc": "2026-10-28T22:24:29.801054Z",
+      "percentage": 100,
+      "mainModule": "r4-version-wrapper.mjs",
+      "qaRecoveryEnabledPresent": false,
+      "qaRecoverySecretPresent": false,
+      "role": "Prior candidate live before G18 scoped deployment, and possible previously propagated version. Exact endpoint behavior not independently queried."
+    },
+    {
+      "number": 21,
+      "id": "b7b0a7be-163c-4293-ba97-04c4c242af59",
+      "createdAtUtc": "2026-10-28T23:09:19.360128Z",
+      "deployedAtUtc": "2026-10-28T23:09:19.965888Z",
+      "percentage": 100,
+      "mainModule": "private-recovery-worker.js",
+      "bindingsCount": 14,
+      "environment": "preview",
+      "qaRecoveryEnabled": "true",
+      "qaRecoveryAllocation": "r4-20261028",
+      "qaRecoverySeedMode": "true",
+      "qaRecoveryConfiguredClientUuids": [
+        "4b80f97a-abf9-4138-8c78-56756e8c3dee",
+        "9feba3ab-6091-4ca8-97fd-9f6e2ac0a516"
+      ],
+      "siteOrigin": "https://punctum-picture-r4-qa-20261028.menezesx2k26.workers.dev",
+      "sourceD1": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c",
+      "restoreD1": "0141b8f9-3074-4aa4-a184-92a4f7379ecc",
+      "sourceOriginalsBucket": "punctum-r4-qa-originals-20261028",
+      "restoreOriginalsBucket": "punctum-r4-qa-restored-20261028",
+      "backupsBucket": "punctum-r4-qa-backups-20261028",
+      "qaRecoverySecretBindingPresent": false,
+      "otherSecretBindingNames": [
+        "ADMIN_PASSWORD_HASH",
+        "ADMIN_SESSION_SECRET",
+        "CLIENT_SESSION_SECRET"
+      ],
+      "role": "First scoped recovery Worker deployed without QA_RECOVERY_SECRET. Would not satisfy inspector secret guard, if this version actually served the request."
+    },
+    {
+      "number": 22,
+      "id": "258cdd3d-2029-4f30-b8af-66dcb8cef4c0",
+      "createdAtUtc": "2026-10-28T23:09:23.899308Z",
+      "deployedAtUtc": "2026-10-28T23:09:23.899308Z",
+      "percentage": 100,
+      "mainModule": "private-recovery-worker.js",
+      "bindingsCount": 15,
+      "environment": "preview",
+      "qaRecoveryEnabled": "true",
+      "qaRecoveryAllocation": "r4-20261028",
+      "qaRecoverySeedMode": "true",
+      "qaRecoveryConfiguredClientUuids": [
+        "4b80f97a-abf9-4138-8c78-56756e8c3dee",
+        "9feba3ab-6091-4ca8-97fd-9f6e2ac0a516"
+      ],
+      "siteOrigin": "https://punctum-picture-r4-qa-20261028.menezesx2k26.workers.dev",
+      "sourceD1": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c",
+      "restoreD1": "0141b8f9-3074-4aa4-a184-92a4f7379ecc",
+      "sourceOriginalsBucket": "punctum-r4-qa-originals-20261028",
+      "restoreOriginalsBucket": "punctum-r4-qa-restored-20261028",
+      "backupsBucket": "punctum-r4-qa-backups-20261028",
+      "qaRecoverySecretBindingPresent": true,
+      "qaRecoverySecretBindingType": "secret_text",
+      "otherSecretBindingNames": [
+        "ADMIN_PASSWORD_HASH",
+        "ADMIN_SESSION_SECRET",
+        "CLIENT_SESSION_SECRET"
+      ],
+      "role": "Second scoped recovery Worker deployed with secret binding present. Secret value/equality, guard satisfaction, and request-serving version NOT verified."
+    },
+    {
+      "number": 23,
+      "id": "0a19ca7e-aace-44ac-8ae1-47d54fd51c89",
+      "createdAtUtc": "2026-10-28T23:09:29.400688Z",
+      "deployedAtUtc": "2026-10-28T23:09:30.327972Z",
+      "percentage": 100,
+      "mainModule": "r4-version-wrapper.mjs",
+      "bindingsCount": 25,
+      "environment": "preview",
+      "privateGalleriesEnabled": "false",
+      "qaRecoveryEnabledPresent": false,
+      "qaRecoverySecretBindingPresent": true,
+      "qaRecoverySecretBindingType": "secret_text",
+      "dbBinding": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c",
+      "siteOrigin": "https://punctum-picture-r4-qa-20261028.menezesx2k26.workers.dev",
+      "qaVersionMetadataBindingPresent": true,
+      "role": "Final flag-disabled candidate restoration AFTER G18 inspector failure, not a proven cause of prior HTTP403."
+    }
+  ],
+  "timeline": {
+    "firstRecoveryDeploymentToSecretDeploymentMs": 3933.42,
+    "secretDeploymentToCandidateRestoreDeploymentMs": 6428.664,
+    "fullSet100PercentEach": true,
+    "note": "Successive 100% deployment records prove control-plane transitions, not instant global data-plane propagation."
+  },
+  "anomaly": {
+    "initialInspectorHttpStatus": 403,
+    "inspectorRequestVersionIdentified": false,
+    "inspectorRequestTimestampPreciselyIdentified": false,
+    "inspectorVersionResponseHeaderRecorded": false,
+    "possibleExplanations": [
+      "The old candidate version20 or recovery version21 without QA_RECOVERY_SECRET may have served the request during propagation.",
+      "Even if version22 served it, inspector authorization/guard may have rejected it for another reason."
+    ],
+    "notProven": [
+      "old-version propagation as the actual cause",
+      "QA_RECOVERY_SECRET value correct or synchronized with test credential",
+      "version22 actually served the inspector request",
+      "inspector guard mismatch as the actual cause",
+      "successful seed or recovery"
+    ],
+    "causalSequence": "Per G18 report, final candidate restoration follows inspector failure. Version23 cannot be assigned as the pre-restoration failing handler merely because it is now latest."
+  },
+  "safeNextGate": "Future G18 inspector readiness must positively identify the actually serving version by trusted version header/metadata (expected version22+appropriate bindings) and check expected guard before any seed. Never retry/mutate on 403 and never promote G18 by interpreting its response as normal propagation.",
+  "changes": {
+    "cloudflareWrites": 0,
+    "d1Writes": 0,
+    "r2Writes": 0,
+    "deployments": 0,
+    "secretsChanged": 0,
+    "sourceOrRestoreModified": 0,
+    "localFileCreatedOnly": true
+  },
+  "privacy": {
+    "secretValuesFetched": false,
+    "secretValuesEmitted": false,
+    "tokensFetched": false,
+    "personalEmailsRead": false,
+    "privateMediaRead": false
+  }
+}

@@ -118,3 +118,8 @@ Hipótese sem causalidade demonstrada: HTTP 503 da home pode envolver limites do
 ## Atualização final — 28/10/2026
 
 Missing IMAGES now returns503 without corrupting uploaded/pending state (RED5dcc5f7/GREEN96b71ea); real QA400 reproduced earlier, no remote restore attempted. Auxiliary review is not authorized G19 approval. Real OTP/admin identity/revocation still require runtime evidence.
+
+
+## Continuação corrente — 28/10/2026
+
+Os estados anteriores acima são históricos. [Relatório25](25-r4-continuation-real-otp-2026-10-28.md) e execution-state.json reconciliam G07PASS real desktop, G18PASS remoto40786688338, CI40786692800/13a6c83;17PASS/2FAIL/5bloqueados. G15 não passou pelo login Android/tela vazia; G23 continua parcial. ProduçãoNO_GO.

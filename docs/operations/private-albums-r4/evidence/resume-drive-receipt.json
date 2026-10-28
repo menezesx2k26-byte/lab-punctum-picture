@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "status": "OWNER_DRIVE_NEW_CONTINUATION_UPLOADED_BYTE_EXACT_VERIFIED",
+  "completedAtUtc": "2026-10-28T23:32:53.8293795Z",
+  "createdAtUtc": "2026-10-28T23:32:39.524Z",
+  "source": {
+    "localPath": "C:\\Users\\Pichau\\Documents\\Codex\\2026-10-28\\miss-o-aut-noma-punctum-picture\\outputs\\PUNCTUM_R4_HANDOFF_CONTINUACAO_2026-10-28.md",
+    "fileName": "PUNCTUM_R4_HANDOFF_CONTINUACAO_2026-10-28.md",
+    "mimeType": "text/markdown",
+    "sizeBytes": 14404,
+    "sha256": "7dce4addaa3737a595af4f45524d6beb51ba7dace48dcf684fb645e1269e65ab",
+    "utf8StrictValid": true
+  },
+  "googleDrive": {
+    "id": "1qoEvcvRKPn4D5uRpbJuj5kb38fuEBxDV",
+    "title": "PUNCTUM_R4_HANDOFF_CONTINUACAO_2026-10-28.md",
+    "url": "https://drive.google.com/file/d/1qoEvcvRKPn4D5uRpbJuj5kb38fuEBxDV/view?usp=drivesdk",
+    "ownerProfileVerifiedBeforeUpload": true,
+    "ownerMatchedComposioAccount": "googledrive_dessa-aloid",
+    "parentFolderId": "0AG-VdsW3oqauUk9PVA",
+    "parentFolderTitle": "Meu Drive",
+    "parentSameAsEarlierHandoffs": true,
+    "mimeType": "text/markdown",
+    "metadataSizeBytes": 14404,
+    "rawContentSizeBytes": 14404,
+    "sha256Verified": "7dce4addaa3737a595af4f45524d6beb51ba7dace48dcf684fb645e1269e65ab",
+    "contentReadbackVerified": true,
+    "independentRawFetchViaCorrectDirectLinkId": true,
+    "rawDownloadBase64Length": 19208,
+    "rawDownloadMatchedIndependentLocalBytesExactly": true,
+    "note": "Complete raw Google Drive download read through the explicitly selected account. Remote base64 and independently reread local-file base64 compared exactly; no byte normalization.",
+    "metadataReadbackVerified": true,
+    "downloadFileIdMatchesUpload": true,
+    "googleCreatedAtUtc": "2026-10-28T23:32:39.524Z",
+    "ownerMatchesRequestedSgtmenezes": true
+  },
+  "oldHandoffsPreserved": [
+    {
+      "id": "1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes",
+      "title": "PUNCTUM_R4_HANDOFF_CONSOLIDADO_2026-10-28.md",
+      "sizeBytes": 7191,
+      "modifiedAtUtc": "2026-10-28T21:39:22.881Z",
+      "sameAsPreUpload": true
+    },
+    {
+      "id": "1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p",
+      "title": "PUNCTUM_R4_ADENDO_HOSTINGER_V2.md",
+      "sizeBytes": 2426,
+      "modifiedAtUtc": "2026-10-28T21:51:29.668Z",
+      "sameAsPreUpload": true
+    }
+  ],
+  "contentScope": {
+    "runG18": "40786688338",
+    "codeCommit": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+    "codeCiReported": "40786692800 SUCCESS prior to documentation commit; final-document HEAD CI will be verified by parent, not claimed by this worker.",
+    "g18FinalWorkerVersion": "e05a3001-3c78-4703-8055-acf3026bd450",
+    "noPrematureProductionGo": true,
+    "goNoGo": "NO_GO",
+    "gateSummary": {
+      "pass": 17,
+      "fail": 2,
+      "blocked": 5
+    },
+    "g23": "PARTIAL",
+    "note": "Metadata summary reflects parent-provided handoff context; this Drive task only verified exact uploaded bytes, not reran CI, production tests, or gate analysis."
+  },
+  "changes": {
+    "newDriveFileCreated": 1,
+    "priorDriveFilesUpdated": 0,
+    "priorDriveFilesDeleted": 0,
+    "cloudflareDbR2WorkerChanges": 0,
+    "githubCodeChanges": 0,
+    "productionChanges": 0,
+    "localReceiptCreated": 1
+  },
+  "privacy": {
+    "tokensStored": false,
+    "cookiesStored": false,
+    "otpStored": false,
+    "secretsStored": false
+  },
+  "finalVerification": "PASS"
+}

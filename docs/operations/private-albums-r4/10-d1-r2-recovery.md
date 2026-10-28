@@ -26,3 +26,8 @@ A listagem REST R2 é adaptada a partir de `result` e `result_info.is_truncated`
 ## Atualização final — 28/10/2026
 
 Remote attempt40768574085 failed while seeding first synthetic upload (missing IMAGES). Source1client, restore0, buckets retained, flagfalse candidate versionc9f54971-adcf-4e2b-aa5d-b356caf7b830 restored. No backup/restore/session proof; G18/G23 blocked. Do not rerun empty-source harness, overwrite historical5-client DBs or delete fixtures. See report23.
+
+
+## Continuação corrente — 28/10/2026
+
+Os estados anteriores acima são históricos. [Relatório25](25-r4-continuation-real-otp-2026-10-28.md) e execution-state.json reconciliam G07PASS real desktop, G18PASS remoto40786688338, CI40786692800/13a6c83;17PASS/2FAIL/5bloqueados. G15 não passou pelo login Android/tela vazia; G23 continua parcial. ProduçãoNO_GO.

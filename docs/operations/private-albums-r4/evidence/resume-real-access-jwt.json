@@ -1,0 +1,42 @@
+{
+  "atUtc": "2026-10-28T22:26:36.822Z",
+  "scope": "REAL human OTP Access token; independently verified using live provider JWKS, no token retained",
+  "signatureVerified": true,
+  "algorithm": "RS256",
+  "issuerVerified": true,
+  "audienceVerified": true,
+  "subjectPresent": true,
+  "ownerEmailMatchesPolicy": true,
+  "type": "app",
+  "expiresInSeconds": 2798,
+  "wrongAudienceRejected": true,
+  "wrongIssuerRejected": true,
+  "alteredSignatureRejected": true,
+  "expiryRejectedWithFutureVerifierClock": true,
+  "futureClockTestIsNotRealTimeExpiry": true,
+  "cookies": [
+    {
+      "name": "CF_Authorization",
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax",
+      "path": "/"
+    },
+    {
+      "name": "CF_AppSession",
+      "httpOnly": true,
+      "secure": true,
+      "path": "/"
+    },
+    {
+      "name": "punctum_client_session",
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Strict",
+      "path": "/"
+    }
+  ],
+  "otpRead": false,
+  "tokenStored": false,
+  "cookieValuesStored": false
+}

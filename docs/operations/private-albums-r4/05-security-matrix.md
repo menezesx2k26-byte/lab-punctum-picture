@@ -26,3 +26,8 @@ A lista não comprova que todos os requisitos da SPEC passaram. Ver também `sec
 - **Fronteira B1 em Cloudflare Access (`worker/utils/auth.ts`)**:
   - `requireAdmin` normaliza `payload.email` para minúsculas e exige pertinência explícita a `ADMIN_ALLOWED_EMAILS` também no caminho `cf-access-jwt-assertion`, impedindo escalada de privilégio caso uma identidade não administrativa apresente JWT do domínio Access.
 - **Prova automatizada**: `tests/integration/client-security-matrix.spec.ts` (`PASS` local em Miniflare/D1/R2; validação de app Access e bucket R2 remotos permanece `BLOCKED_EXTERNAL` sob política R$ 0 e sem escrita remota).
+
+
+## Continuação corrente — 28/10/2026
+
+Os estados anteriores acima são históricos. [Relatório25](25-r4-continuation-real-otp-2026-10-28.md) e execution-state.json reconciliam G07PASS real desktop, G18PASS remoto40786688338, CI40786692800/13a6c83;17PASS/2FAIL/5bloqueados. G15 não passou pelo login Android/tela vazia; G23 continua parcial. ProduçãoNO_GO.
