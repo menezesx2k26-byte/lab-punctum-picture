@@ -2,24 +2,32 @@
 
 **NO-GO para produção.** A integração não autoriza merge: a main executa migrações D1 e deploy automático. A flag em produção, as políticas Access, custo real e recursos QA atuais não foram verificados.
 
-| Gate | Estado | Evidência ou dependência |
+| Gate original | Estado | Evidência ou dependência |
 |---|---|---|
-| G01 baseline | PASS | 00-baseline.md, SHAs e divergência observados |
-| G02 integração | NOT_RUN | validação final, diff e CI do HEAD integrado pendentes |
-| G03–G05 cadastro, publicação, upload | NOT_RUN | testes locais cobrem partes; E2E completo e falhas reais ainda pendentes |
-| G06 JWT | NOT_RUN | testes sintéticos existentes; matriz completa no HEAD pendente |
-| G07 OTP real | BLOCKED_EXTERNAL | acesso seguro ao provedor QA e identidade permitida; não usar código no chat |
-| G08–G12 sessões, isolamento, mídia, favoritos, downloads | NOT_RUN | requer matriz completa no HEAD e QA isolado |
-| G13–G15 browser e acessibilidade | BLOCKED_EXTERNAL | browser e dispositivos físicos ainda não homologados |
-| G16 não regressão pública | NOT_RUN | execução final e browser pendentes |
-| G17 CPU e custos | BLOCKED_EXTERNAL | billing e medições reais indisponíveis nesta execução |
-| G18 recuperação D1/R2 | BLOCKED_EXTERNAL | recursos QA isolados atuais e restauração byte a byte do HEAD ainda não verificados |
-| G19 revisão independente | BLOCKED_SECURITY | ver security-review.md; revisão completa e encerramento pendentes |
-| G20 LGPD | BLOCKED_EXTERNAL | decisões e aprovação da responsável pelo estúdio |
-| G21 PR e CI | NOT_RUN | PR de integração e CI do respectivo SHA pendentes |
-| G22 autorização de release | BLOCKED_EXTERNAL | autorização específica após gates |
-| G23 rollback | NOT_RUN | procedimento existente não foi testado no HEAD atual |
-| G24 handoff | NOT_RUN | consolidar resultados e links verificáveis |
+| G01 baseline | PASS_LOCAL | 00-baseline.md e relatório 18; checkout original preservado |
+| G02 integração | PARTIAL | PRs#17/#20 e HST empilhadas; sem merge, CI nova pendente |
+| G03 cadastro de clientes | PASS_LOCAL | suíte completa203 Workers; sem E2E remoto de titular |
+| G04 publicação de galerias | PASS_LOCAL | fluxos locais; nenhuma publicação privada em produção |
+| G05 upload privado/falhas | PASS_LOCAL | D1/R2 emulados; nenhuma foto transferida à Hostinger |
+| G06 JWT/claims | PASS_LOCAL | JWT/JWKS sintéticos; configuração não substitui OTP |
+| G07 OTP real | BLOCKED_EXTERNAL | OTP/JWT/identidade real ainda não homologados |
+| G08 sessões e revogação | PASS_LOCAL | hardening de#20 preservado; testes locais |
+| G09 isolamento entre clientes | PASS_LOCAL | D1/R2 local e credenciais sintéticas A/B |
+| G10 mídia privada e negações | PASS_LOCAL | testes locais; sem transferência de objetos privados |
+| G11 favoritos e titular | PASS_LOCAL | testes existentes; QA remoto pendente |
+| G12 downloads e privacidade | PASS_LOCAL | autorização local; QA edge pendente |
+| G13 acessibilidade | PASS_LOCAL | registro Chromium anterior; não repetido nesta missão |
+| G14 dispositivos físicos | PARTIAL | Android Chrome/iOS Safari físicos não ensaiados |
+| G15 SEO/cache/noindex | PASS_LOCAL | testes locais; configuração real completa pendente |
+| G16 site público/Studio/Colagem | PASS_LOCAL | 203 Workers +7 Colagem +26 Node; browser atual não executado |
+| G17 CPU/franquia/R$0 | BLOCKED_EXTERNAL | relatório 18: home QA129–166ms; Billing 200 parcial; Hostinger sem inventário, sem offload/mediçãoHEAD |
+| G18 recuperação D1/R2 | BLOCKED_EXTERNAL | históricos 5 contas preservados; par vazio e ensaio remoto ausentes |
+| G19 segurança independente | PARTIAL | revisão dirigida e fixes não são sign-off formal independente |
+| G20 LGPD | BLOCKED_GOVERNANCE | aprovação da controladora não obtida |
+| G21 PR/CI/SHA | PARTIAL | R4 CI histórica PASS; full CI HST deve ser conferida no SHA final da nova PR |
+| G22 autorização de release | BLOCKED_GOVERNANCE | nenhum GO de produção; main aciona deploy/migrations |
+| G23 rollback | PARTIAL | runbook 19; replay/flags locais; remotoNOT_RUN |
+| G24 handoff | PASS_LOCAL | relatórios18/19, JSON e estado; PR/CI/Drive final no corpo daPR |
 
 ## Continuação — 27/10/2026
 
@@ -43,3 +51,7 @@ G13–G15 seguem bloqueados: tentativa de instalar navegador local recebeu HTML 
   - `G13` (`Acessibilidade e teclado`): promovido de `FAIL` para `PASS` após auditoria real em Chromium headless (`playwright-cli`) e correções de alvos de toque/foco/teclado.
   - `G14` (`Responsividade mobile/desktop`): promovido para `PARTIAL` com `PASS` em browser Chromium real nos 8 viewports (`320`–`1440` px) e pendência apenas de hardware físico iOS Safari / Android Chrome.
   - `G07`, `G17`, `G18` permanecem `BLOCKED_EXTERNAL`; `G19` permanece `PARTIAL`; `G20` e `G22` permanecem `BLOCKED_GOVERNANCE`.
+
+## HST-001 — 28/10/2026
+
+A tabela acima foi reconciliada com os24 gates originais, sem substituir sua numeração pela matriz Argon. Detalhes: [relatório 18](18-hst-001-hostinger-qa-2026-10-28.md), [runbook 19](19-hst-001-deploy-rollback.md) e `execution-state.json`. HOSTINGER_BRIDGE_QA_BLOCKED; PRODUCTION_NO_GO.

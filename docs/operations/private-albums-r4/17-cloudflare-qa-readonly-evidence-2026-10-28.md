@@ -52,3 +52,7 @@ A CI da PR #20 para o SHA `f97b74a7eade1688171d54ea85bbdad12efb8bf1` foi verific
 3. Homologar o HEAD correto em QA independente, com recursos D1/R2 vazios e dentro da franquia gratuita verificada.
 4. Executar OTP real, Android Chrome, iOS Safari, teste de restauração/rollback e auditoria de segurança independente; documentar aprovação LGPD.
 5. Somente após todos os gates, solicitar autorização separada para merge/deploy/ativação; preservar produção e colagem pública até lá.
+
+## Adendo HST-001 — evidência posterior no mesmo dia
+
+O [relatório 18](18-hst-001-hostinger-qa-2026-10-28.md) amplia estes dados: CPU p95=12,667ms, eventos por família de rota e versão, e Billing subscriptionsHTTP 200 com uma credencial já existente do repositório. Os403 deste relatório continuam histórico correto da conexão OAuth usada. Home pública129/134/166ms em três versões QA; senha não foi demonstrada como causa. Sem medição do HEAD/offload, franquias agregadas ou Hostinger isolada, G17 continua BLOCKED_EXTERNAL.

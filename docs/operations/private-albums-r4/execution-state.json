@@ -4,10 +4,10 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PASS",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Technical code/test DoD verified locally and on GitHub CI; external QA, remote rollback, security independent signoff and human approvals not included in PASS.",
-  "updatedAt": "2026-10-28T13:40:36.360Z",
-  "branch": "agent/argon-punctum-r4-dod-20261027-v2",
-  "baseBranch": "integration/punctum-private-albums-r4-20261027",
+  "statusScope": "Historical R4 technical PASS retained; HST-001 is BLOCKED. Local bridge hardening is not a deployed or remotely homologated service. No production authorization.",
+  "updatedAt": "2026-10-28T17:50:39.617813Z",
+  "branch": "agent/hst-001-hostinger-qa-20261028",
+  "baseBranch": "agent/argon-punctum-r4-dod-20261027-v2",
   "headBeforeStateUpdate": "98c1e9b1786a2455b90c4b60158d540f80e340a8",
   "canonicalGateSystem": "ORIGINAL_SPEC_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/12-release-readiness.md",
@@ -33,7 +33,7 @@
     "G18": "BLOCKED_EXTERNAL",
     "G19": "PARTIAL",
     "G20": "BLOCKED_GOVERNANCE",
-    "G21": "PASS",
+    "G21": "PARTIAL",
     "G22": "BLOCKED_GOVERNANCE",
     "G23": "PARTIAL",
     "G24": "PASS_LOCAL"
@@ -65,14 +65,14 @@
   "gateNotes": {
     "G07": "Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL).",
     "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run.",
-    "G17": "READ-ONLY REMOTE QA METRICS: 142 Workers invocations 2026-10-24..28, errors=0, cpuTimeP50=4.259 ms, cpuTimeP99=134.2 ms vs documented Workers Free 10 ms CPU/request. QA deploy last modified 2026-10-24, does NOT represent PR HEAD. Billing/subscriptions GET 403 missing Billing Read. G17 remains BLOCKED_EXTERNAL; investigate CPU outliers and validate new version plus billing before GO.",
+    "G17": "HST-001: GraphQL142requests CPU p50=4.259,p95=12.667,p99=134.2ms on old QA. Bounded200event sample contains126CPU events:3public-home calls129/134/166ms across3Oct24versions; current version one134ms sample. Access session4samples0..2ms does not measure PBKDF2. Billing now read200 using existing repo candidate2: Free/TeamsFree/R2Paid base0; Workers-specific effective budget and aggregate usage not proved. Hostinger dedicated capacity unverified; no offload or before/after. G17 BLOCKED_EXTERNAL; report18.",
     "G18": "Live Cloudflare D1 SELECT COUNT(*) confirmed BOTH historical QA and restore D1 hold 5 client_accounts each (0 rows written); actual R2 QA original/backup/restored buckets exist. Never overwrite; isolated EMPTY resource pair and authorized rehearsal missing.",
-    "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent signoff missing. Issue #21 remains for G19/G07.",
+    "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07.",
     "G20": "Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains.",
-    "G21": "Code SHA 7fccea1 GitHub Actions run 40690668055 completed/success, 199 Vitest, 7 Collage, 22 Node, typecheck/lint/build/audit PASS. Final docs-only HEAD CI verify separately in PR body.",
+    "G21": "R4 CI71ddde6 run40698647038 historical PASS. HST runtimeee7b6d6 local203 Workers/7Collage/26 Node, typecheck/lint/build/auditPASS; diagnostic64023a9 run40738766054SUCCESS is NOT full CI. New PR full CI pending exact finalSHA.",
     "G22": "Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation.",
-    "G23": "Local feature flag and rollback guard tested; D1/R2/Worker QA restore or live rollback not exercised. PARTIAL.",
-    "G24": "Versioned handoff and original gate mapping in PR #20; PersistFlow takeover not proven."
+    "G23": "No Hostinger/Worker deploy or remote bridge configuration was made, so there is no deployed Punctum bridge to roll back. Local nonce replay/new-process, fail-closed and flags tested; actual remote rollback/restartNOT_RUN. G23 PARTIAL; runbook 19.",
+    "G24": "HST-001 reports18/19, immutable sanitized evidence and execution-state track completed code plus external blockers. New PR/CI/Drive references finalized in PR body. No PersistFlow takeover claimed."
   },
   "productionFlag": {
     "PRIVATE_GALLERIES_ENABLED": "false (versioned, effective remote runtime unverified)",
@@ -203,17 +203,56 @@
       "billing": "HTTP 403 / missing Billing Read",
       "writes": "NONE",
       "status": "PARTIAL_READ_ONLY_NO_GO"
+    },
+    "hst001": {
+      "runtimeCodeSha": "ee7b6d65e96fdcbc5490edcac58970f0779d412e",
+      "localEnvironment": "/workspace/hst-001; Node24.19.0",
+      "baseline": {
+        "files": 47,
+        "tests": 199,
+        "status": "PASS"
+      },
+      "workers": {
+        "files": 48,
+        "tests": 203,
+        "status": "PASS",
+        "durationSeconds": 71.34
+      },
+      "collage": {
+        "tests": 7,
+        "status": "PASS"
+      },
+      "node": {
+        "tests": 26,
+        "bridgeTests": 14,
+        "status": "PASS"
+      },
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS_WITH_EXISTING_WARNINGS",
+      "npmAudit": {
+        "status": "PASS",
+        "vulnerabilities": 0
+      },
+      "gitDiffCheck": "PASS",
+      "fullCi": "PENDING",
+      "diagnosticRunId": 40738766054,
+      "diagnosticSha": "64023a9d6a36eaeba5bd82854f0520eacc92ca60",
+      "remoteBridgeTests": "NOT_RUN",
+      "realOtp": "NOT_RUN",
+      "physicalDevices": "NOT_RUN",
+      "formalG19Signoff": "NOT_OBTAINED"
     }
   },
   "securityRisks": [
     "Ten Dependabot alerts remain open in repository default-branch view, despite npm audit zero for PR lockfile (see security-review.md).",
-    "Independent comprehensive security signoff missing.",
+    "Independent comprehensive security sign-off missing.",
     "Access policies and actual client OTP not homologated.",
     "Workers Free CPU budget 10ms unverified against effective workload.",
     "QA D1/R2 recovery drill impossible on occupied historical QA without safe empty resources and owner approval.",
     "Mobile Safari iOS and Chrome Android physical QA outstanding.",
     "LGPD studio-controller approval and explicit production authorization missing.",
-    "Shared-password operations are now logged with an explicitly non-individual principal; authenticated per-person Access identity and G19 formal signoff remain pending (issue #21).",
+    "Shared-password operations are now logged with an explicitly non-individual principal; authenticated per-person Access identity and G19 formal sign-off remain pending (issue #21).",
     "LGPD retained metadata and D1 batch consistency fixed and locally tested; studio approval of scope, retention, delivery and third-party data remains pending (issue #22).",
     "Cloudflare QA deployed Oct 24 p99 CPU 134.2ms across 142 requests; above published 10ms Workers Free reference. Not measured on PR HEAD and account billing unavailable (403). G17 blocked; see evidence 17."
   ],
@@ -231,7 +270,7 @@
     {
       "gate": "G17",
       "owner": "Cloudflare account/billing owner",
-      "action": "Verify Workers Free plan, edge CPU metrics and aggregate R2/D1 usage, without paid provisioning."
+      "action": "Use HST evidence to isolate public-home renderer/startup CPU on current HEAD; inspect existing Hostinger capacity securely; prove effective plan/quotas, aggregate variable costs and controlled before-after. Do not activate Password Bridge or change Access based on historical p99."
     },
     {
       "gate": "G18",
@@ -258,5 +297,72 @@
       "owner": "Infrastructure/operator",
       "action": "Execute isolated supervised rollback drill after G18; do not overwrite production or historical QA."
     }
-  ]
+  ],
+  "r4Reference": {
+    "branch": "agent/argon-punctum-r4-dod-20261027-v2",
+    "baseBranch": "integration/punctum-private-albums-r4-20261027",
+    "sha": "71ddde6bc8188b655597fb5f2ab38a868b374ebf"
+  },
+  "hostingerBridgeQa": {
+    "mission": "HST-001",
+    "status": "BLOCKED",
+    "qaDecision": "HOSTINGER_BRIDGE_QA_BLOCKED",
+    "productionDecision": "NO_GO_PRODUCTION",
+    "report": "docs/operations/private-albums-r4/18-hst-001-hostinger-qa-2026-10-28.md",
+    "runbook": "docs/operations/private-albums-r4/19-hst-001-deploy-rollback.md",
+    "cloudflareEvidence": "docs/operations/private-albums-r4/evidence/hst-001-cloudflare-40738766054.json",
+    "hostinger": {
+      "historicalDomainService": "persistflow",
+      "httpsHealthStatus": 200,
+      "healthSamples": 6,
+      "authority": "file",
+      "durableHealthClaim": true,
+      "restartTest": "NOT_RUN",
+      "isolatedCapacity": "UNVERIFIED",
+      "inspectionRunId": 40735613050,
+      "inspectionRepository": "menezes-platform/ops-codex-os",
+      "inspectionBranch": "agent/hst-001-readonly-20261028",
+      "inspectionSha": "7a0897474d989471483d983a3c6eaad5a05951a8",
+      "inspectionResult": "JOB_NOT_STARTED_ACCOUNT_LOCKED_BILLING_ISSUE",
+      "stepsExecuted": 0,
+      "punctumDeployed": false,
+      "persistflowMutations": 0
+    },
+    "cloudflare": {
+      "worker": "punctum-picture-albums-qa",
+      "deployedVersion": "446943ce-1ea5-4f7e-94ae-351c7b016424",
+      "deployedOn": "2026-10-24T19:17:42.363094Z",
+      "deployGitSha": "UNPROVEN",
+      "clientAuthMode": "access",
+      "backendHostingerConfigured": false,
+      "writes": 0,
+      "historicalCpuMs": {
+        "p50": 4.259,
+        "p95": 12.667,
+        "p99": 134.2
+      },
+      "historicalSamples": 142,
+      "offloadCpuMs": null,
+      "homeCpuEventSamples": 3,
+      "homeCpuRangeMs": [
+        129,
+        166
+      ],
+      "exactOperationCause": "UNPROVEN_RENDERER_OR_STARTUP_CANDIDATE",
+      "billingRead": "HTTP 200_REPO_TOKEN_CANDIDATE2",
+      "variableCostAndQuotas": "UNVERIFIED"
+    },
+    "transferredOperations": [],
+    "newPaidResources": 0,
+    "incrementalDeploymentCost": "UNPROVEN_NO_DEPLOYMENT",
+    "remoteRollback": "NOT_RUN",
+    "blockers": [
+      "No current Hostinger app-slot/resource/isolation inventory; token-bound readonly job did not start due GitHub infrastructure-account billing lock.",
+      "Known Hostinger Node domain is PersistFlow and must not be repurposed.",
+      "Observed heavy path is public home in old QA, not a measured password operation; no cause decomposition or HEAD CPU benchmark.",
+      "No isolated bridge/QA integration, remote restart/rollback or before-after CPU/latency/memory/quota proof.",
+      "Effective Workers budget and aggregate variable usage not proved despite subscription metadata read."
+    ],
+    "pullRequest": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24"
+  }
 }
