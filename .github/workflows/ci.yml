@@ -28,6 +28,7 @@ jobs:
       - run: node --test services/punctum-password-bridge/server.test.mjs
       - run: node --test services/punctum-hostinger-qa/server.test.mjs
       - run: node --test scripts/r4-edge-qa.test.mjs
+      - run: node --test scripts/r4-access-runtime.test.mjs
       - run: node --test scripts/r4-recovery-qa.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build

@@ -1,0 +1,34 @@
+name: R4 current Access QA
+on:
+  push:
+    branches: ["agent/hst-001-hostinger-qa-20261028"]
+    paths: ["scripts/r4-access-runtime.mjs", "scripts/r4-access-runtime.test.mjs", ".github/workflows/r4-access-runtime.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: punctum-r4-access-qa
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: contains(github.event.head_commit.message, '[r4-auth-qa]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: node --test scripts/r4-access-runtime.test.mjs
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy only existing OTP QA and verify current SHA without SQL writes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN2 }}
+          R4_ACCESS_QA_EXECUTE: "true"
+        run: node scripts/r4-access-runtime.mjs
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-access-runtime
+          path: outputs/r4-access-runtime.json
+          retention-days: 14
