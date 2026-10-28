@@ -107,6 +107,22 @@ export type SanitizedTitularExport = {
     imageId: string;
     createdAt: string;
   }>;
+  /** All retained photo metadata, including pending/failed and soft-deleted records.
+   * No R2 keys, binary content or authentication data are exposed. */
+  retainedImageMetadata: Array<{
+    id: string;
+    galleryId: string;
+    originalFilename: string;
+    altText: string;
+    mimeType: string;
+    sizeBytes: number;
+    width: number | null;
+    height: number | null;
+    position: number;
+    status: "pending" | "ready" | "failed";
+    createdAt: string;
+    deletedAt: string | null;
+  }>;
 };
 
 export function buildSanitizedTitularExport(input: {
@@ -121,15 +137,29 @@ export function buildSanitizedTitularExport(input: {
     (gallery) => gallery.clientId === clientId,
   );
   const ownedGalleryIds = new Set(ownedGalleries.map((g) => g.id));
+  const ownedImages = input.images.filter((image) => ownedGalleryIds.has(image.galleryId));
+  const retainedImageMetadata = ownedImages.map((image) => ({
+    id: image.id,
+    galleryId: image.galleryId,
+    originalFilename: image.originalFilename,
+    altText: image.altText,
+    mimeType: image.mimeType,
+    sizeBytes: Number(image.sizeBytes),
+    width: image.width === null ? null : Number(image.width),
+    height: image.height === null ? null : Number(image.height),
+    position: Number(image.position),
+    status: image.status,
+    createdAt: image.createdAt,
+    deletedAt: image.deletedAt,
+  }));
 
   const readyImagesByGallery = new Map<
     string,
     SanitizedTitularExport["galleries"][number]["images"]
   >();
 
-  for (const image of input.images) {
+  for (const image of ownedImages) {
     if (
-      !ownedGalleryIds.has(image.galleryId) ||
       image.deletedAt ||
       image.status !== "ready"
     ) {
@@ -150,10 +180,8 @@ export function buildSanitizedTitularExport(input: {
     readyImagesByGallery.set(image.galleryId, list);
   }
 
-  const readyImageIds = new Set(
-    Array.from(readyImagesByGallery.values()).flatMap((imgs) =>
-      imgs.map((img) => img.id),
-    ),
+  const ownedImagePairs = new Set(
+    ownedImages.map((image) => image.galleryId + ":" + image.id),
   );
 
   const sanitizedFavorites = input.favorites
@@ -161,7 +189,7 @@ export function buildSanitizedTitularExport(input: {
       (fav) =>
         (!fav.clientId || fav.clientId === clientId) &&
         ownedGalleryIds.has(fav.galleryId) &&
-        readyImageIds.has(fav.imageId),
+        ownedImagePairs.has(fav.galleryId + ":" + fav.imageId),
     )
     .map((fav) => ({
       galleryId: fav.galleryId,
@@ -203,6 +231,7 @@ export function buildSanitizedTitularExport(input: {
       images: readyImagesByGallery.get(gallery.id) ?? [],
     })),
     favorites: sanitizedFavorites,
+    retainedImageMetadata,
   };
 }
 
@@ -266,7 +295,7 @@ export async function loadSanitizedTitularExport(
         i.deleted_at AS deletedAt
        FROM client_gallery_images i
        INNER JOIN client_galleries g ON g.id = i.gallery_id
-       WHERE g.client_id = ? AND i.deleted_at IS NULL AND i.status = 'ready'
+       WHERE g.client_id = ?
        ORDER BY i.position ASC, i.created_at ASC, i.id ASC`,
     )
     .bind(clientId)
