@@ -14,7 +14,7 @@ export type AdminIdentity = {
 };
 
 /** Audit attribution must not impersonate an individual through a shared secret. */
-export function auditPrincipal(identity: AdminIdentity): string {
+export function auditPrincipal(identity: Pick<AdminIdentity, "email" | "authSource">): string {
   return identity.authSource === "shared-password"
     ? "shared-password@punctum.invalid"
     : identity.email;
