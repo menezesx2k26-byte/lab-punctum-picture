@@ -46,3 +46,26 @@ A documentação Cloudflare Workers atual (12/10/2026) informa limite de CPU **1
 
 ### Independência
 Esta continuação **não constitui revisão independente**; é implementação e verificação pelo mesmo assistente. A revisão estática histórica cobriu casos específicos, não pentest/Access/edge nem auditoria completa. G19 permanece PARTIAL e exige revisor distinto e evidência de sua avaliação antes de GO. G17 e G18 permanecem BLOCKED_EXTERNAL.
+
+## Continuação de hardening — 28/10/2026, execução no Codespace e pareceres auxiliares
+
+### Correção R4-SEC-CLIENT-LOGOUT — sessão capturada depois do logout
+- **RED:** commit `8340b8a`; `tests/integration/client-access.spec.ts` confirmou que `DELETE /api/client/session` apenas removia cookie do navegador, mas o mesmo cookie guardado seguia autenticando no D1 (`1 FAIL / 7 PASS`).
+- **GREEN:** commit `ed2b94c`; `worker/api/client-session.ts` faz compare-and-update em `session_version` quando o cookie é válido e preserva logout idempotente para cookies ausentes/expirados. Focado Access `8 PASS`. **Comportamento explícito:** logout invalida todas as sessões daquela conta, inclusive em outros aparelhos. Não revoga, por si só, a sessão do provedor Cloudflare Access; `logoutUrl` continua disponível e a prova real G07 não foi feita.
+
+### Correção R4-SEC-ADMIN-ROTATION — cookies anteriores à troca da senha
+- **RED:** commit `4d687bd`; `tests/integration/admin-session-rotation.spec.ts` confirmou que uma sessão HMAC administrativa permanecia autenticada após alteração da credencial armazenada (`1 FAIL`).
+- **GREEN:** commit `8c8d324`; assinatura e verificação HMAC agora derivam de `ADMIN_SESSION_SECRET` e da revisão da credencial ativa (hash na D1 ou fallback de hash de ambiente), **sem enviar hash/salt ao cliente**. O token emitido sob credencial anterior não verifica após rotação. Teste focado `1 PASS` e teste legado de login/troca administrativa `1 PASS` (16 outros testes não selecionados naquele comando; a suíte completa foi executada separadamente). Rotacionar credencial automaticamente invalida cookies administrativos antigos.
+- Nenhum segredo real, senha pessoal ou JWT real foi usado na regressão; fixtures sintéticas.
+
+### Revisão read-only por dois revisores auxiliares (sem pentest, sem sign-off G19)
+- **Confidencialidade:** não foi demonstrado vazamento cross-tenant pelos caminhos inspecionados (`lgpd.ts`, admin API, client repository, media R2). Isso não equivale a prova global de ausência de falhas.
+- **P2 audit attribution:** com senha administrativa global, quem conhece a senha pode atribuir a sessão a outro e-mail permitido. A trilha `actor_email` não identifica inequivocamente o operador no modo senha compartilhada. Issue [#21](https://github.com/menezesx2k26-byte/lab-punctum-picture/issues/21). Exige escolha de identidade verificável ou auditoria sem falsa atribuição. Não alterar política Access sem autorização.
+- **P2 LGPD completeness:** export atual exclui metadados de foto pendente, falhada e soft-deleted ainda retidos no D1. Issue [#22](https://github.com/menezesx2k26-byte/lab-punctum-picture/issues/22). Escopo e retenção requerem decisão da responsável; evitar afirmar cumprimento integral da LGPD.
+- **P3 LGPD consistency:** export faz várias consultas D1 sem snapshot transacional, podendo conter dados de instantes diferentes sob concorrência. Mesma issue #22.
+- Revisores somente leram código do SHA `9854115`; as correções desta continuação foram realizadas e testadas por este agente, portanto **G19 continua PARTIAL**.
+
+### Prova técnica local e CI
+- Após ambas correções, Codespace: typecheck/lint/build PASS; Vitest **47 arquivos / 194 PASS**, Colagem 7 PASS, Node 22 PASS, `npm audit --audit-level=low` zero vulnerabilidades, `git diff --check` PASS.
+- CI GitHub Actions [40657070283](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40657070283) concluiu **success** no commit de código `8c8d324612b7786b77155d2a6ded06daf07eb30e`. Qualquer commit posterior exige validação do novo HEAD.
+- Permanecem externos: OTP real, physical mobile QA, CPU e billing Free, restore isolado D1/R2, revisor independente formal, decisão LGPD e autorização explícita de release. **PRODUCTION_NO_GO**.
