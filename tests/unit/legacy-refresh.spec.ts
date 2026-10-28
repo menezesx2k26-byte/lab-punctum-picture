@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   LEGACY_DEFAULT_HERO_MEDIA_ID,
   PUNCTUM_DEFAULT_SITE_CONFIG,
@@ -99,5 +99,22 @@ describe("refreshLegacyPublishedConfig", () => {
     expect(refreshLegacyPublishedConfig(PUNCTUM_DEFAULT_SITE_CONFIG)).toBe(
       PUNCTUM_DEFAULT_SITE_CONFIG,
     );
+  });
+
+  it("allocates a draft only when a legacy replacement is actually needed", () => {
+    const legacy = legacyPublishedConfig();
+    const original = JSON.stringify(legacy);
+    const clone = vi.spyOn(globalThis, "structuredClone");
+    try {
+      expect(refreshLegacyPublishedConfig(PUNCTUM_DEFAULT_SITE_CONFIG)).toBe(PUNCTUM_DEFAULT_SITE_CONFIG);
+      expect(clone).not.toHaveBeenCalled();
+      const refreshed = refreshLegacyPublishedConfig(legacy);
+      expect(clone).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify(legacy)).toBe(original);
+      expect(refreshed.editorial.home).toEqual(PUNCTUM_DEFAULT_SITE_CONFIG.editorial.home);
+      clone.mockClear();
+      expect(refreshLegacyPublishedConfig(refreshed)).toBe(refreshed);
+      expect(clone).not.toHaveBeenCalled();
+    } finally { clone.mockRestore(); }
   });
 });
