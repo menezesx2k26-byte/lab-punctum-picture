@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { env } from "cloudflare:workers";
+import { handleClientAdminApi } from "../../worker/api/client-admin";
+import { bootstrapPrivateDb, privateRequest } from "./client-fixture";
 import { auditPrincipal, createAdminSession, requireAdmin } from "../../worker/utils/auth";
 
 describe("admin session revocation on credential rotation", () => {
+  beforeAll(bootstrapPrivateDb);
   it("rejects a previously signed admin cookie after the credential revision changes", async () => {
     const credential = { passwordHash: "synthetic-password-hash-v1" };
     const db = {
@@ -60,6 +64,31 @@ describe("admin session revocation on credential rotation", () => {
     expect(auditPrincipal(second)).toBe("shared-password@punctum.invalid");
     expect(auditPrincipal(first)).not.toBe(first.email);
     expect(auditPrincipal(second)).not.toBe(second.email);
+  });
+
+  it("records the shared credential principal rather than a caller-selected admin email in D1 audit_log", async () => {
+    const testEnv = {
+      ...env,
+      ENVIRONMENT: "production",
+      CLIENT_AUTH_MODE: "access",
+      ADMIN_ALLOWED_EMAILS: "first@example.test,second@example.test",
+      SITE_ORIGIN: "http://localhost:8787",
+    } as Env;
+    const token = await createAdminSession("second@example.test", testEnv);
+    const email = crypto.randomUUID() + "@example.test";
+    const url = new URL("http://localhost:8787/admin/api/clientes");
+    const res = await handleClientAdminApi(
+      privateRequest(url.pathname, "POST", { name: "Synthetic Audit Client", email },
+        "punctum_admin_session=" + token),
+      url,
+      testEnv,
+    );
+    expect(res?.status).toBe(201);
+    const body = await res!.json() as { client: { id: string } };
+    const audit = await env.DB.prepare(
+      "SELECT actor_email AS actorEmail FROM audit_log WHERE entity_id=? AND action='client.created' ORDER BY created_at DESC LIMIT 1",
+    ).bind(body.client.id).first<{ actorEmail: string }>();
+    expect(audit?.actorEmail).toBe("shared-password@punctum.invalid");
   });
 
 });
