@@ -8,6 +8,7 @@ test('a cross-site identity return commits a same-origin document before using i
  let origin;const entryStatuses=[];
  const server=createServer(async(req,res)=>{
    const path=new URL(req.url,'http://fixture.invalid').pathname;
+   if(path==='/provider'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<a href="/begin">OTP concluído</a>');return;}
    if(path==='/begin'){res.writeHead(302,{Location:origin+'/albuns/entrar'});res.end();return;}
    if(path==='/albuns/entrar'){
      const r=clientAccessNavigation('qa_strict=authenticated; Path=/; HttpOnly; Secure; SameSite=Strict',true);
@@ -29,7 +30,8 @@ test('a cross-site identity return commits a same-origin document before using i
  try{
    browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,headless:true,args:['--no-sandbox']});
    const context=await browser.newContext();const page=await context.newPage();
-   await page.goto('http://localhost:'+port+'/begin',{waitUntil:'domcontentloaded',timeout:15000});
+   await page.goto('http://localhost:'+port+'/provider',{waitUntil:'domcontentloaded',timeout:15000});
+   await page.getByRole('link',{name:'OTP concluído'}).click();
    await page.getByRole('heading',{name:'Álbuns de teste'}).waitFor({timeout:15000});
    assert.equal(new URL(page.url()).pathname,'/albuns');
    assert.deepEqual(entryStatuses,[200]);
