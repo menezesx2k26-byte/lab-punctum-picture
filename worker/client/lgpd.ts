@@ -239,86 +239,54 @@ export async function loadSanitizedTitularExport(
   db: D1Database,
   clientId: string,
 ): Promise<SanitizedTitularExport> {
-  const account = await db
-    .prepare(
-      `SELECT
-        id,
-        name,
-        email,
-        disabled_at AS disabledAt,
-        created_at AS createdAt,
-        updated_at AS updatedAt
-       FROM client_accounts
-       WHERE id = ?`,
-    )
-    .bind(clientId)
-    .first<RawTitularAccountRow>();
+  // One D1 transaction gives account, galleries, photo metadata and favorites
+  // the same snapshot, instead of four independently changing read windows.
+  const results = await db.batch([
+    db.prepare(
+      `SELECT id,name,email,disabled_at AS disabledAt,
+        created_at AS createdAt,updated_at AS updatedAt
+       FROM client_accounts WHERE id = ?`,
+    ).bind(clientId),
+    db.prepare(
+      `SELECT id,client_id AS clientId,title,introduction,status,theme,
+        allow_downloads AS allowDownloads,published_at AS publishedAt,
+        created_at AS createdAt,updated_at AS updatedAt
+       FROM client_galleries WHERE client_id = ?
+       ORDER BY created_at DESC,id`,
+    ).bind(clientId),
+    db.prepare(
+      `SELECT i.id,i.gallery_id AS galleryId,
+        i.original_filename AS originalFilename,i.alt_text AS altText,
+        i.mime_type AS mimeType,i.size_bytes AS sizeBytes,
+        i.width,i.height,i.position,i.status,
+        i.created_at AS createdAt,i.deleted_at AS deletedAt
+       FROM client_gallery_images i
+       INNER JOIN client_galleries g ON g.id = i.gallery_id
+       WHERE g.client_id = ?
+       ORDER BY i.position ASC,i.created_at ASC,i.id ASC`,
+    ).bind(clientId),
+    db.prepare(
+      `SELECT f.client_id AS clientId,f.gallery_id AS galleryId,
+        f.image_id AS imageId,f.created_at AS createdAt
+       FROM client_gallery_favorites f
+       WHERE f.client_id = ?
+       ORDER BY f.created_at ASC,f.image_id ASC`,
+    ).bind(clientId),
+  ]);
 
+  if (results.length !== 4 || results.some((entry) => !entry.success || !Array.isArray(entry.results))) {
+    throw new AppError(503, "LGPD_EXPORT_UNAVAILABLE", "Exportação temporariamente indisponível.");
+  }
+
+  const account = (results[0].results[0] ?? null) as RawTitularAccountRow | null;
   if (!account) {
     throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   }
 
-  const galleriesResult = await db
-    .prepare(
-      `SELECT
-        id,
-        client_id AS clientId,
-        title,
-        introduction,
-        status,
-        theme,
-        allow_downloads AS allowDownloads,
-        published_at AS publishedAt,
-        created_at AS createdAt,
-        updated_at AS updatedAt
-       FROM client_galleries
-       WHERE client_id = ?
-       ORDER BY created_at DESC, id`,
-    )
-    .bind(clientId)
-    .all<RawTitularGalleryRow>();
-
-  const imagesResult = await db
-    .prepare(
-      `SELECT
-        i.id,
-        i.gallery_id AS galleryId,
-        i.original_filename AS originalFilename,
-        i.alt_text AS altText,
-        i.mime_type AS mimeType,
-        i.size_bytes AS sizeBytes,
-        i.width,
-        i.height,
-        i.position,
-        i.status,
-        i.created_at AS createdAt,
-        i.deleted_at AS deletedAt
-       FROM client_gallery_images i
-       INNER JOIN client_galleries g ON g.id = i.gallery_id
-       WHERE g.client_id = ?
-       ORDER BY i.position ASC, i.created_at ASC, i.id ASC`,
-    )
-    .bind(clientId)
-    .all<RawTitularImageRow>();
-
-  const favoritesResult = await db
-    .prepare(
-      `SELECT
-        f.client_id AS clientId,
-        f.gallery_id AS galleryId,
-        f.image_id AS imageId,
-        f.created_at AS createdAt
-       FROM client_gallery_favorites f
-       WHERE f.client_id = ?
-       ORDER BY f.created_at ASC, f.image_id ASC`,
-    )
-    .bind(clientId)
-    .all<RawTitularFavoriteRow>();
-
   return buildSanitizedTitularExport({
     account,
-    galleries: galleriesResult.results ?? [],
-    images: imagesResult.results ?? [],
-    favorites: favoritesResult.results ?? [],
+    galleries: results[1].results as RawTitularGalleryRow[],
+    images: results[2].results as RawTitularImageRow[],
+    favorites: results[3].results as RawTitularFavoriteRow[],
   });
 }
