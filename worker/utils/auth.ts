@@ -282,7 +282,7 @@ export async function requireAdmin(
     const email =
       typeof payload.email === "string" ? payload.email.trim().toLowerCase() : null;
     const allowed = allowedAdminEmails(env);
-    if (!email || (allowed.length > 0 && !allowed.includes(email))) {
+    if (!email || !allowed.includes(email)) {
       throw new Error("JWT sem e-mail administrativo permitido");
     }
     return { email, roles: ["admin"] };
