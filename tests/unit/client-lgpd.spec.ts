@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSanitizedTitularExport,
   FORBIDDEN_LGPD_EXPORT_KEYS,
+  loadSanitizedTitularExport,
 } from "../../worker/client/lgpd";
 
 describe("LGPD titular export sanitization", () => {
@@ -187,6 +188,46 @@ describe("LGPD titular export sanitization", () => {
     for (const forbidden of ["private-secret", "passwordHash", "must-never-export", "owner-b", "foreign-private-name"]) {
       expect(text).not.toContain(forbidden);
     }
+  });
+
+  it("reads the four titular tables within one D1 transaction batch", async () => {
+    const account = {
+      id: "owner-a", name: "Client A", email: "a@example.test",
+      disabledAt: null, createdAt: "2026-10-20T00:00:00Z", updatedAt: "2026-10-21T00:00:00Z",
+    };
+    const sqls: string[] = [];
+    let batchCalls = 0;
+    const db = {
+      prepare(sql: string) {
+        return {
+          bind(...params: unknown[]) {
+            expect(params).toEqual(["owner-a"]);
+            return {
+              sql,
+              // Sequential individual reads cannot guarantee one consistent D1 snapshot.
+              async first() { throw new Error("non-atomic first() call"); },
+              async all() { throw new Error("non-atomic all() call"); },
+            };
+          },
+        };
+      },
+      async batch(statements: Array<{sql: string}>) {
+        batchCalls++;
+        sqls.push(...statements.map((stmt) => stmt.sql));
+        return [
+          { success: true, results: [account] },
+          { success: true, results: [] },
+          { success: true, results: [] },
+          { success: true, results: [] },
+        ];
+      },
+    } as unknown as D1Database;
+    const exported = await loadSanitizedTitularExport(db, "owner-a");
+    expect(exported.titular.id).toBe("owner-a");
+    expect(exported.galleries).toEqual([]);
+    expect(exported.retainedImageMetadata).toEqual([]);
+    expect(batchCalls).toBe(1);
+    expect(sqls).toHaveLength(4);
   });
 
 });
