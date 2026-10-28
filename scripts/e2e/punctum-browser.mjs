@@ -163,7 +163,7 @@ try {
   assert.deepEqual(await readFile(await download.path()), png);
   assert.equal((await b.request.put(origin + `/api/client/galleries/${clients[0].gallery}/favorites/${clients[0].images[0]}`, { headers: { Origin: origin } })).status(), 404);
   record("favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified");
-  for (const width of [320, 390, 768]) {
+  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
     await pageA.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(pageA);
   }
   await pageA.setViewportSize({ width: 390, height: 844 });
@@ -234,12 +234,64 @@ try {
   await studio.getByText("Alterações publicadas. O site já está atualizado.", { exact: true }).waitFor();
   await publicPage.reload();
   await publicPage.locator('[data-theme-preset="colagem-autoral"]').first().waitFor();
-  for (const width of [320, 390, 768, 1280]) {
+  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
     await publicPage.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(publicPage);
   }
   await publicPage.setViewportSize({ width: 390, height: 844 });
   await publicPage.screenshot({ path: join(reportDirectory, "colagem-mobile.png"), fullPage: true });
   record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/390/768/1280px");
+  // Exercise the private administration through hydrated forms, with fictional data only.
+  await studio.goto(origin + "/admin/clientes");
+  await studio.getByRole("button", { name: "Cadastrar cliente", exact: true }).waitFor();
+  await studio.getByLabel("Nome", { exact: true }).fill("Cliente fictício browser");
+  await studio.getByLabel("E-mail", { exact: true }).fill("browser-" + randomUUID() + "@example.invalid");
+  const [createdClient] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === "/admin/api/clientes" && r.request().method() === "POST"),
+    studio.getByRole("button", { name: "Cadastrar cliente", exact: true }).click(),
+  ]);
+  assert.equal(createdClient.status(), 201);
+  const browserClient = (await createdClient.json()).client;
+  await studio.getByRole("heading", { name: "Cliente fictício browser", exact: true }).waitFor();
+  assert.equal(await studio.getByLabel("Credencial temporária").count(), 0, "Access registration must not emit a password");
+  await studio.goto(origin + "/admin/albuns-privados");
+  await studio.getByLabel("Título", { exact: true }).fill("Galeria fictícia browser");
+  await studio.getByRole("combobox", { name: /^Cliente/ }).selectOption(browserClient.id);
+  await studio.getByRole("button", { name: "Criar rascunho", exact: true }).click();
+  await studio.waitForURL(/\/admin\/albuns-privados\/[a-f0-9-]+$/);
+  const browserGalleryId = new URL(studio.url()).pathname.split("/").at(-1);
+  const browserGalleryApi = "/admin/api/albuns-privados/" + browserGalleryId;
+  const publishButton = studio.getByRole("button", { name: "Publicar para o cliente", exact: true });
+  await publishButton.waitFor();
+  assert.equal(await publishButton.isDisabled(), true, "empty gallery publication is blocked");
+  await studio.getByLabel("Adicionar fotos").setInputFiles({ name: "browser-synthetic.png", mimeType: "image/png", buffer: png });
+  await studio.getByText("Concluído", { exact: true }).waitFor();
+  assert.equal(await studio.getByRole("progressbar", { name: "Envio de browser-synthetic.png", exact: true }).getAttribute("value"), "100");
+  const [coverResponse] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi + "/cover" && r.request().method() === "PUT"),
+    studio.getByRole("button", { name: "Usar na capa", exact: true }).click(),
+  ]);
+  assert.equal(coverResponse.status(), 200);
+  await studio.getByRole("combobox", { name: /^Tema/ }).selectOption("ivory");
+  await studio.getByLabel("Introdução", { exact: true }).fill("Somente dados fictícios para homologação.");
+  const [saveResponse] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi && r.request().method() === "PATCH"),
+    studio.getByRole("button", { name: "Salvar alterações", exact: true }).click(),
+  ]);
+  assert.equal(saveResponse.status(), 200);
+  const [publishResponse] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi + "/publish" && r.request().method() === "POST"),
+    publishButton.click(),
+  ]);
+  assert.equal(publishResponse.status(), 200);
+  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
+    await studio.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(studio);
+  }
+  await studio.setViewportSize({ width: 390, height: 844 });
+  await studio.screenshot({ path: join(reportDirectory, "private-admin-mobile.png"), fullPage: true });
+  const row = await db.prepare("SELECT status,theme,introduction FROM client_galleries WHERE id=?").bind(browserGalleryId).first();
+  assert.equal(row.status, "published"); assert.equal(row.theme, "ivory");
+  assert.equal(row.introduction, "Somente dados fictícios para homologação.");
+  record("private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; eight responsive widths");
   // Close live pages before the deliberately injected runtime restarts.
   await Promise.all(contexts.flatMap((context) => context.pages().map((page) => page.close())));
   // Persist only synthetic local data, stop workerd, then make a consistent snapshot.
