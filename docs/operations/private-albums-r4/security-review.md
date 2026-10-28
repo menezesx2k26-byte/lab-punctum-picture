@@ -69,3 +69,24 @@ Esta continuação **não constitui revisão independente**; é implementação 
 - Após ambas correções, Codespace: typecheck/lint/build PASS; Vitest **47 arquivos / 194 PASS**, Colagem 7 PASS, Node 22 PASS, `npm audit --audit-level=low` zero vulnerabilidades, `git diff --check` PASS.
 - CI GitHub Actions [40657070283](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40657070283) concluiu **success** no commit de código `8c8d324612b7786b77155d2a6ded06daf07eb30e`. Qualquer commit posterior exige validação do novo HEAD.
 - Permanecem externos: OTP real, physical mobile QA, CPU e billing Free, restore isolado D1/R2, revisor independente formal, decisão LGPD e autorização explícita de release. **PRODUCTION_NO_GO**.
+
+## Última rodada de hardening — 28/10/2026 (PR #20, sem release)
+
+### R4-LGPD-RETAINED-METADATA
+- **RED `840b702`**: teste unitário reproduziu ausência de metadados de fotos `pending`, `failed`, ou `deleted_at IS NOT NULL` ainda persistidas no D1.
+- **GREEN `f318e5b`**: `worker/client/lgpd.ts` inclui `retainedImageMetadata` com campos explicitamente permitidos, status e data de exclusão lógica, preservando `galleries[].images` como fotos prontas não removidas. Nenhum objeto R2, armazenamento interno, senha, token, hash/salt ou dados de outro titular entra no JSON.
+- O filtro de favoritos exige que o par `(galleryId,imageId)` exista nas imagens do titular (inclusive estados ainda retidos), e não apenas na coleção pronta para exibição.
+- Teste de integração `eddccc0` valida a API HTTP de exportação com D1 local real e fixtures sintéticas A/B, incluindo estados retidos e `Cache-Control: private, no-store`.
+
+### R4-LGPD-CONSISTENT-SNAPSHOT
+- **RED `c271128`**: teste reproduziu dependência de quatro leituras independentes de conta, galerias, fotos e favoritos.
+- **GREEN `3347c93`**: usa `D1Database.batch([...])` para ler as quatro tabelas em uma transação D1. Conforme documentação oficial, chamadas batch são transacionais e executadas sequencialmente; testes locais de contrato e D1 real passaram. Não se alega medição sob concorrência no edge.
+- A exportação não entrega binários das fotos nem prova direito a cópia integral de cada obra; a responsável pelo estúdio deve definir operações, alcance, retenção, dados incidentais de terceiros e canal de entrega.
+
+### R4-AUDIT-SHARED-SECRET
+- **RED `c21dfc4`**: teste reproduziu a impossibilidade de atribuição individual confiável quando um segredo administrativo global pode iniciar sessões com qualquer e-mail permitido.
+- **GREEN `3242adc` e commits subsequentes**: `requireAdmin` identifica sessões de senha compartilhada com `authSource: shared-password`; `auditPrincipal` retorna `shared-password@punctum.invalid` para auditorias, sem imputar identidade individual não comprovada. Caminho de JWT Access assinado preserva o e-mail efetivamente verificado e o formato anterior.
+- `worker/api/admin.ts`, `admin-auth.ts`, `client-admin.ts`, `client-gallery-upload.ts` e `worker/site-media.ts` agora atribuem também `updatedBy` a `auditPrincipal`. Teste sintético de integração `44d0615` verifica coluna `audit_log.actor_email` de evento real em D1 local.
+- **Risco residual**: no modo senha compartilhada ainda não existe atribuição individual; não declarar prova pessoal de autoria. Migrar para identidade individual confiável (ex.: JWT Access com política real autorizada) precisa decisão operacional e G07/G19. Issue #21 continua aberta para essa decisão.
+
+Estas correções encerram os bugs específicos **em código/testes**, mas **G19 não está aprovado por revisor independente** e **G20 não está aprovado pela controladora**. G07/G14/G17/G18/G22/G23 continuam bloqueados. Nada foi alterado em Cloudflare real, D1/R2 remoto, Access, billing, main ou produção.
