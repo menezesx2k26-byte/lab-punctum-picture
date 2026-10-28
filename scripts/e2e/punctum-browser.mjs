@@ -168,7 +168,7 @@ try {
   }
   await pageA.setViewportSize({ width: 390, height: 844 });
   await pageA.screenshot({ path: join(reportDirectory, "private-gallery-mobile.png"), fullPage: true });
-  record("private gallery has no horizontal overflow at 320/390/768px");
+  record("private gallery has no horizontal overflow at 320/360/375/390/430/768/1024/1440px");
   const media = `/api/client/galleries/${clients[0].gallery}/images/${clients[0].images[0]}/gallery`;
   assert.equal((await anonymous.request.get(origin + media)).status(), 404);
   assert.equal((await a.request.get(origin + "/_vinext/image?url=" + encodeURIComponent(media) + "&w=640&q=75")).status(), 404);
@@ -239,7 +239,7 @@ try {
   }
   await publicPage.setViewportSize({ width: 390, height: 844 });
   await publicPage.screenshot({ path: join(reportDirectory, "colagem-mobile.png"), fullPage: true });
-  record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/390/768/1280px");
+  record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/768/1024/1440px");
   // Exercise the private administration through hydrated forms, with fictional data only.
   await studio.goto(origin + "/admin/clientes");
   await studio.getByRole("button", { name: "Cadastrar cliente", exact: true }).waitFor();
@@ -254,6 +254,8 @@ try {
   await studio.getByRole("heading", { name: "Cliente fictício browser", exact: true }).waitFor();
   assert.equal(await studio.getByLabel("Credencial temporária").count(), 0, "Access registration must not emit a password");
   await studio.goto(origin + "/admin/albuns-privados");
+  // Options arrive from the hydrated component's effect; avoid filling SSR markup before hydration.
+  await studio.locator('select option[value="' + browserClient.id + '"]').waitFor({ state: "attached" });
   await studio.getByLabel("Título", { exact: true }).fill("Galeria fictícia browser");
   await studio.getByRole("combobox", { name: /^Cliente/ }).selectOption(browserClient.id);
   await studio.getByRole("button", { name: "Criar rascunho", exact: true }).click();

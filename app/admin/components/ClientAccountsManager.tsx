@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { privateApi, errorMessage } from "../../albuns/components/api";
 import type { ClientAccountSummary } from "./private-gallery-utils";
-import "./private-gallery-admin.css";
 
 export function ClientAccountsManager() {
   const [clients, setClients] = useState<ClientAccountSummary[]>([]);

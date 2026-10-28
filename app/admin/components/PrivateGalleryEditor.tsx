@@ -22,7 +22,6 @@ import {
   PRIVATE_GALLERY_STATUS,
   type ClientAccountSummary,
 } from "./private-gallery-utils";
-import "./private-gallery-admin.css";
 
 export function PrivateGalleriesManager() {
   const [galleries, setGalleries] = useState<ClientGallery[]>([]);
