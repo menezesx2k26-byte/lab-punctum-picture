@@ -138,4 +138,55 @@ describe("LGPD titular export sanitization", () => {
       },
     ]);
   });
+  it("exports metadata for every retained image state, including logical deletions, without R2 keys or other clients", () => {
+    const account = {
+      id: "owner-a", name: "Client A", email: "a@example.test",
+      disabledAt: null, createdAt: "2026-10-20T00:00:00Z", updatedAt: "2026-10-21T00:00:00Z",
+    };
+    const gallery = {
+      id: "owned", clientId: "owner-a", title: "Private",
+      introduction: "", status: "draft" as const, theme: "ivory" as const,
+      allowDownloads: 0, publishedAt: null,
+      createdAt: "2026-10-20T00:00:00Z", updatedAt: "2026-10-21T00:00:00Z",
+    };
+    const image = (id: string, status: "pending" | "ready" | "failed", deletedAt: string | null, galleryId = "owned") => ({
+      id, galleryId, originalFilename: id + "-private-name.jpg",
+      altText: id + "-private-description", mimeType: "image/jpeg", sizeBytes: 11,
+      width: null, height: null, position: 1, status, deletedAt,
+      createdAt: "2026-10-20T00:00:00Z", storageKey: "private-secret-" + id,
+      passwordHash: "must-never-export",
+    });
+    const exported = buildSanitizedTitularExport({
+      account,
+      galleries: [gallery, { ...gallery, id: "foreign", clientId: "owner-b" }],
+      images: [
+        image("ready", "ready", null),
+        image("pending", "pending", null),
+        image("failed", "failed", null),
+        image("deleted", "ready", "2026-10-22T00:00:00Z"),
+        image("foreign", "ready", null, "foreign"),
+      ],
+      favorites: [
+        { galleryId: "owned", imageId: "ready", clientId: "owner-a", createdAt: "2026-10-23T00:00:00Z" },
+        { galleryId: "owned", imageId: "pending", clientId: "owner-a", createdAt: "2026-10-23T00:00:00Z" },
+        { galleryId: "foreign", imageId: "foreign", clientId: "owner-b", createdAt: "2026-10-23T00:00:00Z" },
+      ],
+      exportedAt: "2026-10-28T12:00:00Z",
+    });
+    // The public-gallery presentation still includes only ready, non-deleted photos.
+    expect(exported.galleries[0].images.map((i) => i.id)).toEqual(["ready"]);
+    const retained = (exported as unknown as { retainedImageMetadata: Array<{
+      id: string; status: string; deletedAt: string | null;
+    }> }).retainedImageMetadata;
+    expect(retained.map((i) => [i.id, i.status, i.deletedAt])).toEqual([
+      ["ready", "ready", null], ["pending", "pending", null],
+      ["failed", "failed", null], ["deleted", "ready", "2026-10-22T00:00:00Z"],
+    ]);
+    expect(exported.favorites.map((f) => f.imageId)).toEqual(["ready", "pending"]);
+    const text = JSON.stringify(exported);
+    for (const forbidden of ["private-secret", "passwordHash", "must-never-export", "owner-b", "foreign-private-name"]) {
+      expect(text).not.toContain(forbidden);
+    }
+  });
+
 });
