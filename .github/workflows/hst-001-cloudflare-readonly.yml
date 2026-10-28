@@ -59,36 +59,37 @@ jobs:
             const settings = await api(base + "/workers/scripts/" + worker + "/settings");
             if (settings?.success) {
               result.flags = (settings.result?.bindings ?? []).filter(b => ["CLIENT_AUTH_MODE", "PRIVATE_GALLERIES_ENABLED", "CLIENT_PASSWORD_BACKEND"].includes(b.name)).map(b => ({ name: b.name, value: b.text }));
-              await api(base + "/subscriptions");
-              const keys = await api(base + "/workers/observability/telemetry/keys", { datasets: [worker], from: timeframe.from, to: timeframe.to, limit: 100 });
-              result.telemetryKeysAccessible = keys?.success === true;
-              if (keys?.success) {
-                const logs = await api(base + "/workers/observability/telemetry/query", { queryId: "hst001-readonly", dry: true, timeframe, view: "events", limit: 200, parameters: { datasets: [worker] } });
-                const events = logs?.result?.events?.events ?? [];
-                const groups = new Map();
-                for (const event of events) {
-                  const w = event.$workers;
-                  if (typeof w?.cpuTimeMs !== "number" || !Number.isFinite(w.cpuTimeMs)) continue;
-                  const route = routeFamily(w.event?.request?.url ?? event.$metadata?.url);
-                  if (!groups.has(route)) groups.set(route, []);
-                  groups.get(route).push(w.cpuTimeMs);
-                }
-                result.telemetry = { interval: timeframe, returnedEvents: events.length, totalEvents: logs?.result?.events?.count, boundedSample: true,
-                  routes: [...groups].map(([route, values]) => {
-                    values.sort((a,b) => a-b);
-                    const p = n => values[Math.ceil(n * values.length) - 1];
-                    return { route, samples: values.length, cpuP50Ms: p(0.5), cpuP95Ms: p(0.95), cpuP99Ms: p(0.99) };
-                  }) };
-              }
-              const query = 'query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){workersInvocationsAdaptive(limit:1000,filter:{scriptName:"punctum-picture-albums-qa",datetime_geq:$start,datetime_lt:$end}){sum{requests errors} quantiles{cpuTimeP50 cpuTimeP95 cpuTimeP99 wallTimeP50 wallTimeP95 wallTimeP99}}}}}';
-              const metrics = await api("/graphql", { query, variables: { accountTag: account, start: historical[0], end: historical[1] } });
-              const rows = metrics?.data?.viewer?.accounts?.[0]?.workersInvocationsAdaptive;
-              result.historicalMetrics = { interval: historical, rows: rows?.map(row => ({
-                requests: row.sum?.requests, errors: row.sum?.errors,
-                cpuP50Ms: row.quantiles?.cpuTimeP50 / 1000, cpuP95Ms: row.quantiles?.cpuTimeP95 / 1000, cpuP99Ms: row.quantiles?.cpuTimeP99 / 1000,
-                wallP50Ms: row.quantiles?.wallTimeP50 / 1000, wallP95Ms: row.quantiles?.wallTimeP95 / 1000, wallP99Ms: row.quantiles?.wallTimeP99 / 1000,
-              })), graphqlError: !!metrics?.errors?.length };
             }
+            const subscriptions = await api(base + "/subscriptions");
+            result.subscriptions = subscriptions?.result?.map(s => ({ product: s.rate_plan?.public_name, planId: s.rate_plan?.id, price: s.price, state: s.state }));
+            const keys = await api(base + "/workers/observability/telemetry/keys", { datasets: [worker], from: timeframe.from, to: timeframe.to, limit: 100 });
+            result.telemetryKeysAccessible = keys?.success === true;
+            if (keys?.success) {
+              const logs = await api(base + "/workers/observability/telemetry/query", { queryId: "hst001-readonly", dry: true, timeframe, view: "events", limit: 200, parameters: { datasets: [worker] } });
+              const events = logs?.result?.events?.events ?? [];
+              const groups = new Map();
+              for (const event of events) {
+                const w = event.$workers;
+                if (typeof w?.cpuTimeMs !== "number" || !Number.isFinite(w.cpuTimeMs)) continue;
+                const route = routeFamily(w.event?.request?.url ?? event.$metadata?.url);
+                if (!groups.has(route)) groups.set(route, []);
+                groups.get(route).push(w.cpuTimeMs);
+              }
+              result.telemetry = { interval: timeframe, returnedEvents: events.length, totalEvents: logs?.result?.events?.count, boundedSample: true,
+                routes: [...groups].map(([route, values]) => {
+                  values.sort((a,b) => a-b);
+                  const p = n => values[Math.ceil(n * values.length) - 1];
+                  return { route, samples: values.length, cpuP50Ms: p(0.5), cpuP95Ms: p(0.95), cpuP99Ms: p(0.99) };
+                }) };
+            }
+            const query = 'query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){workersInvocationsAdaptive(limit:1000,filter:{scriptName:"punctum-picture-albums-qa",datetime_geq:$start,datetime_lt:$end}){sum{requests errors} quantiles{cpuTimeP50 cpuTimeP95 cpuTimeP99 wallTimeP50 wallTimeP95 wallTimeP99}}}}}';
+            const metrics = await api("/graphql", { query, variables: { accountTag: account, start: historical[0], end: historical[1] } });
+            const rows = metrics?.data?.viewer?.accounts?.[0]?.workersInvocationsAdaptive;
+            result.historicalMetrics = { interval: historical, rows: rows?.map(row => ({
+              requests: row.sum?.requests, errors: row.sum?.errors,
+              cpuP50Ms: row.quantiles?.cpuTimeP50 / 1000, cpuP95Ms: row.quantiles?.cpuTimeP95 / 1000, cpuP99Ms: row.quantiles?.cpuTimeP99 / 1000,
+              wallP50Ms: row.quantiles?.wallTimeP50 / 1000, wallP95Ms: row.quantiles?.wallTimeP95 / 1000, wallP99Ms: row.quantiles?.wallTimeP99 / 1000,
+            })), graphqlError: !!metrics?.errors?.length };
             report.candidates.push(result);
           }
           writeFileSync("hst-001-cloudflare-readonly.json", JSON.stringify(report, null, 2));
