@@ -219,5 +219,25 @@ export function assertR4ScopedBudget(report) {
 export function r4ScopedRecoveryWorkerConfig(input) {
  const config=r4RecoveryWorkerConfig(input);
  config.vars.QA_RECOVERY_SEED_MODE='true';
+ config.version_metadata={binding:'QA_VERSION'};
  return config;
+}
+
+// GET only: a newly published secret creates another Worker version. A denial
+// from that exact version is final; only a prior version may still propagate.
+export async function inspectR4ReadyVersion({origin,secret,versionId,fetch:fetcher=globalThis.fetch,pause,attempts=15,observations=[]}) {
+ assert.ok(typeof versionId==='string'&&versionId.length>0);
+ for(let i=0;i<attempts;i++) {
+  const res=await fetcher(origin+'/qa/inspect',{method:'GET',redirect:'manual',signal:AbortSignal.timeout(15000),headers:{Origin:origin,Authorization:'Bearer '+secret}});
+  const actual=res.headers.get('X-QA-Version');
+  observations.push({status:res.status,version:actual,expectedVersion:versionId});
+  if(actual===versionId) {
+   if(res.status!==200)throw Error('Scoped inspector current-version HTTP '+res.status);
+   return res.json();
+  }
+  await res.arrayBuffer();
+  if(![200,403,404,503].includes(res.status))throw Error('Unexpected prior-version inspector HTTP '+res.status);
+  await pause(1000);
+ }
+ throw Error('Scoped inspector version did not propagate; no mutation replay');
 }

@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { R4_QA, R4_RESUME_DATABASES, isolatedQaConfig } from './lib/r4-edge-qa.mjs';
 import { assertPrivateBucketPrivacy, d1QueryRows } from './lib/private-preview.mjs';
 import { assertR4RecoveryPreflight, assertR4RecoveryVacant, assertR4RecoveryScope, assertR4FlagDisabledCandidateConfig, withR4QaRestoration, r4RecoveryWorkerConfig, signR4QaAdminCookie, signR4QaClientCookie, r4VacancyListing } from './lib/r4-recovery-qa.mjs';
-import { assertR4ScopedExisting, assertR4ScopedBudget, r4ScopedRecoveryWorkerConfig, r4ObservedOneListing, R4_FAILED_OWNER } from './lib/r4-recovery-qa.mjs';
+import { assertR4ScopedExisting, assertR4ScopedBudget, r4ScopedRecoveryWorkerConfig, r4ObservedOneListing, R4_FAILED_OWNER, inspectR4ReadyVersion } from './lib/r4-recovery-qa.mjs';
 import { createScopedFixtureReceipt } from './lib/r4-scoped-fixture.mjs';
 import { assertResumeQaInventory } from './lib/r4-edge-qa.mjs';
 
@@ -352,15 +352,10 @@ export async function runR4ScopedRecoveryQa(report, api) {
     console.log('::add-mask::'+secret);
     wrangler(['secret','bulk','--config',recoveryPath],JSON.stringify({QA_RECOVERY_SECRET:secret}));
     const inspect=async()=>{
-      // GET-only propagation wait. Never repeat seed or backup POST on ambiguity.
-      for(let i=0;i<15;i++){
-        const res=await fetch(origin+'/qa/inspect',{redirect:'manual',signal:AbortSignal.timeout(15000),
-          headers:{Origin:origin,Authorization:'Bearer '+secret}});
-        if(res.status===200)return res.json();
-        if(![404,503].includes(res.status))throw Error('Unexpected scoped inspector HTTP '+res.status);
-        await pause(1000);
-      }
-      throw Error('Scoped inspector did not propagate; no mutation replay');
+      const deployed=await requireApi(base+'/workers/scripts/'+R4_QA.worker+'/deployments');
+      const versionId=deployed?.deployments?.[0]?.versions?.[0]?.version_id;
+      report.recovery.inspectorObservations??=[];
+      return inspectR4ReadyVersion({origin,secret,versionId,pause,observations:report.recovery.inspectorObservations});
     };
     const before=await inspect();
     assertR4ScopedExisting({source:before.source,restore:before.restore,

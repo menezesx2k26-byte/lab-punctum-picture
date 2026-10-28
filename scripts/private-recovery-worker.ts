@@ -9,6 +9,7 @@ type RecoveryEnv = {
   QA_RECOVERY_CLIENT_ID?: string; QA_RECOVERY_CLIENT_IDS?: string; QA_RECOVERY_ALLOCATION?: string; QA_RECOVERY_SEED_MODE?: string;
   SOURCE_DB: D1Database; RESTORE_DB: D1Database;
   SOURCE_ORIGINALS: R2Bucket; RESTORE_ORIGINALS: R2Bucket; BACKUPS: R2Bucket;
+  QA_VERSION?: { id: string };
 };
 const inputSchema = z.object({ clientIds: z.array(z.uuid()).min(1).max(2) }).strict();
 function response(status: number, body: unknown) {
@@ -95,5 +96,9 @@ export async function handleQaRecovery(request: Request, env: RecoveryEnv): Prom
     return response(/exists|conflict/.test(message) ? 409 : 400, { error: "QA_RECOVERY_FAILED" });
   }
 }
-const recoveryWorker = { fetch: handleQaRecovery };
+const recoveryWorker = { async fetch(request: Request, env: RecoveryEnv) {
+  const result = await handleQaRecovery(request, env);
+  if (env.QA_VERSION?.id) result.headers.set("X-QA-Version", env.QA_VERSION.id);
+  return result;
+} };
 export default recoveryWorker;
