@@ -301,6 +301,39 @@ describe("complete A1 / A2 / B1 security matrix and zero-byte media denials", ()
     ]);
   });
 
+  it("exports retained pending, failed and soft-deleted photo metadata from D1 without disclosing another titular or R2 keys", async () => {
+    const a = await seedClient();
+    const b = await seedClient();
+    const owned = await seedGallery(a, "draft");
+    const foreign = await seedGallery(b, "draft");
+    const ready = await seedReadyImage(owned);
+    const pending = await seedReadyImage(owned);
+    const failed = await seedReadyImage(owned);
+    const deleted = await seedReadyImage(owned);
+    const other = await seedReadyImage(foreign);
+    await env.DB.prepare("UPDATE client_gallery_images SET status='pending',original_filename='my-pending-personal-name.jpg' WHERE id=?").bind(pending).run();
+    await env.DB.prepare("UPDATE client_gallery_images SET status='failed',original_filename='my-failed-personal-name.jpg' WHERE id=?").bind(failed).run();
+    await env.DB.prepare("UPDATE client_gallery_images SET deleted_at=? WHERE id=?").bind("2026-10-28T12:00:00Z", deleted).run();
+    const res = await exports.default.fetch(privateRequest(`/admin/api/clientes/${a}/lgpd-export`, "GET"));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("private, no-store");
+    const data = await res.json() as {
+      retainedImageMetadata: Array<{id:string;status:string;deletedAt:string|null;originalFilename:string}>;
+      galleries: Array<{id:string;images:Array<{id:string}>}>;
+    };
+    expect(new Set(data.retainedImageMetadata.map((i) => i.id))).toEqual(new Set([ready, pending, failed, deleted]));
+    expect(data.galleries[0].images.map((i) => i.id)).toEqual([ready]);
+    expect(data.retainedImageMetadata.find((i) => i.id === pending)).toMatchObject({
+      status: "pending", originalFilename: "my-pending-personal-name.jpg",
+    });
+    expect(data.retainedImageMetadata.find((i) => i.id === failed)?.status).toBe("failed");
+    expect(data.retainedImageMetadata.find((i) => i.id === deleted)?.deletedAt).toBe("2026-10-28T12:00:00Z");
+    const serialized = JSON.stringify(data);
+    for (const forbidden of [b, foreign, other, "storageKey", "storage_key", "client-galleries/"]) {
+      expect(serialized).not.toContain(forbidden);
+    }
+  });
+
   it("rejects a valid administrative Access JWT if ADMIN_ALLOWED_EMAILS is unset or empty", async () => {
     const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: true });
     const jwk = await exportJWK(publicKey);
