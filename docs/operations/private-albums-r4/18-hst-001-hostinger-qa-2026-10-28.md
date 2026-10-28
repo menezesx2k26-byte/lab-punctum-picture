@@ -22,6 +22,8 @@ O terminal local conectado possui SSH e autenticação GitHub. Não foi encontra
 
 O secret `HOSTINGER_API_TOKEN` existe no repositório de infraestrutura `menezes-platform/ops-codex-os`; apenas seu nome foi lido. Para consultar a API sem copiar esse secret, foi criada a branch auxiliar **não integrada** `agent/hst-001-readonly-20261028`, commit `7a0897474d989471483d983a3c6eaad5a05951a8`, contendo somente um workflow de inventário por GET. Nenhum arquivo da aplicação foi modificado.
 
+Evidência consolidada: [observações Hostinger](evidence/hst-001-hostinger-observations.json).
+
 O [run 40735613050](https://github.com/menezes-platform/ops-codex-os/actions/runs/40735613050) falhou **antes de iniciar qualquer step**. Annotation do check `122983194700`:
 
 > The job was not started because your account is locked due to a billing issue.
@@ -111,6 +113,7 @@ Procedimentos de implantação/rollback e alternativas sem contratação: [runbo
 | Typecheck / lint / build | **PASS** |
 | `npm audit --audit-level=low --json` | **0 vulnerabilidades** no lockfile desta branch |
 | `git diff --check` | **PASS** |
+| CI GitHub em `f25d51f` | **completed/success**, [run 40739701038](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40739701038) |
 
 Bridge Node foi testado em HTTP **loopback**, não HTTPS remoto. Cobertura: credencial válida, assinatura inválida/ausente, timestamp vencido/futuro, nonce repetido, corpo adulterado, payload excessivo, saturação, rate limit, credenciais A/B, schemas, logs sanitizados e replay compartilhado após nova instância/processo. O Worker cobre falha/reposta inválida, timeout do body, circuito/probe exclusiva e cancelamento. A suíte completa cobre isolamento D1/R2, sessões, site/Studio e Colagem em emulação/código.
 
@@ -128,9 +131,13 @@ Um subagente revisou o código e o workflow somente em leitura; os dois achados 
 | Worker QA integrado reversivelmente | **BLOCKED**, sem configuração/deploy remoto |
 | Operação pesada processada pelo intermediário | **BLOCKED**; home antiga identificada por rota, offload não justificado |
 | CPU e latência antes/depois | **BLOCKED**; somente baseline antigo e eventos históricos |
-| Testes completos e CI | testes locais PASS; CI da nova PR deve ser confirmada no SHA final e registrada na PR |
+| Testes completos e CI | **PASS código/local+CI** em f25d51f; HEAD documental final verificado na PR; homologação remota continua BLOCKED |
 | Custo incremental | **BLOCKED** para implantação futura; nenhuma contratação/novo recurso nesta missão |
 | Rollback remoto testado | **BLOCKED / NOT_RUN** |
 | Commits, PR, matriz, estado e handoff | commits e documentos produzidos; referências finais de PR/CI/Drive no encerramento da PR |
 
 **Decisão:** não emitir `HOSTINGER_BRIDGE_QA_PASS`. Não executar merge, deploy de produção, migração, troca de Access para senha nem publicação de álbuns privados. OTP real, LGPD, segurança, recuperação e dispositivos mantêm seus gates independentes.
+
+## Handoff durável
+
+[Handoff no Google Drive Sgtmenezes](https://drive.google.com/file/d/1gzKs4XXk5wjZrXskHENov_qm627ZBXqX/view?usp=drivesdk), enviado à pasta Punctum Picture e relido pelo conector após upload. Contém somente decisões, provas sanitizadas, links e bloqueios; nenhum secret ou arquivo temporário. [PR #24](https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24) registra o SHA e a CI finais.

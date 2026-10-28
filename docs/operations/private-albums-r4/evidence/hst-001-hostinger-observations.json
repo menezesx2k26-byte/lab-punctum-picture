@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "mission": "HST-001",
+  "status": "BLOCKED",
+  "hostingerConfigurationWrites": 0,
+  "domain": "darkslategrey-raccoon-448222.hostingersite.com",
+  "initialHttpsHealth": {
+    "status": 200,
+    "service": "persistflow",
+    "authority": "file",
+    "durable": true
+  },
+  "repeatedHealthObservedAt": "2026-10-28T17:39:24.154Z",
+  "repeatedHttpsStatus": [200, 200, 200, 200, 200, 200],
+  "repeatedLatencyMs": [233.822, 10.626, 26.462, 15.046, 14.163, 15.23],
+  "measurementScope": "GET /healthz of existing PersistFlow from connected local terminal with reused connections; not Punctum bridge performance",
+  "hostingerApiInventory": {
+    "secretValueReadOrCopied": false,
+    "credentialBinding": "Existing HOSTINGER_API_TOKEN repository secret in menezes-platform/ops-codex-os",
+    "branch": "agent/hst-001-readonly-20261028",
+    "sha": "7a0897474d989471483d983a3c6eaad5a05951a8",
+    "runUrl": "https://github.com/menezes-platform/ops-codex-os/actions/runs/40735613050",
+    "runConclusion": "failure",
+    "checkRunId": 122983194700,
+    "stepsExecuted": 0,
+    "failureAnnotation": "The job was not started because your account is locked due to a billing issue.",
+    "providerApiCallsExecuted": 0
+  },
+  "plan": "UNVERIFIED",
+  "cpuRamDiskProcessLimits": "UNVERIFIED",
+  "separateNodeSlot": "UNVERIFIED",
+  "persistentReplayStorage": "UNVERIFIED",
+  "dedicatedBridgeHttps": "NOT_DEPLOYED",
+  "restartRecovery": "NOT_RUN",
+  "remoteRollback": "NOT_RUN",
+  "newPaidResources": 0,
+  "incrementalDeploymentCost": "NOT_PROVEN_NO_DEPLOYMENT"
+}

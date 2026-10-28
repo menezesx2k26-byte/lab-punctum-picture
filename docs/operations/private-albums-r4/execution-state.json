@@ -5,10 +5,10 @@
   "status": "TECHNICAL_DOD_PASS",
   "decision": "NO_GO_PRODUCTION",
   "statusScope": "Historical R4 technical PASS retained; HST-001 is BLOCKED. Local bridge hardening is not a deployed or remotely homologated service. No production authorization.",
-  "updatedAt": "2026-10-28T17:50:39.617813Z",
+  "updatedAt": "2026-10-28T17:55:56.853356Z",
   "branch": "agent/hst-001-hostinger-qa-20261028",
   "baseBranch": "agent/argon-punctum-r4-dod-20261027-v2",
-  "headBeforeStateUpdate": "98c1e9b1786a2455b90c4b60158d540f80e340a8",
+  "headBeforeStateUpdate": "f25d51f56ea96fbe8ef88069b7954383d9d134ff",
   "canonicalGateSystem": "ORIGINAL_SPEC_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/12-release-readiness.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
@@ -33,7 +33,7 @@
     "G18": "BLOCKED_EXTERNAL",
     "G19": "PARTIAL",
     "G20": "BLOCKED_GOVERNANCE",
-    "G21": "PARTIAL",
+    "G21": "PASS",
     "G22": "BLOCKED_GOVERNANCE",
     "G23": "PARTIAL",
     "G24": "PASS_LOCAL"
@@ -69,7 +69,7 @@
     "G18": "Live Cloudflare D1 SELECT COUNT(*) confirmed BOTH historical QA and restore D1 hold 5 client_accounts each (0 rows written); actual R2 QA original/backup/restored buckets exist. Never overwrite; isolated EMPTY resource pair and authorized rehearsal missing.",
     "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07.",
     "G20": "Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains.",
-    "G21": "R4 CI71ddde6 run40698647038 historical PASS. HST runtimeee7b6d6 local203 Workers/7Collage/26 Node, typecheck/lint/build/auditPASS; diagnostic64023a9 run40738766054SUCCESS is NOT full CI. New PR full CI pending exact finalSHA.",
+    "G21": "Full CI run 40739701038 completed/success verified on f25d51f56ea96fbe8ef88069b7954383d9d134ff; runtime code ee7b6d6. Local 203 Workers / 7 Collage / 26 Node and checks PASS. Final docs-only HEAD CI is verified separately in PR #24 body; diagnostic success is not full CI proof.",
     "G22": "Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation.",
     "G23": "No Hostinger/Worker deploy or remote bridge configuration was made, so there is no deployed Punctum bridge to roll back. Local nonce replay/new-process, fail-closed and flags tested; actual remote rollback/restartNOT_RUN. G23 PARTIAL; runbook 19.",
     "G24": "HST-001 reports18/19, immutable sanitized evidence and execution-state track completed code plus external blockers. New PR/CI/Drive references finalized in PR body. No PersistFlow takeover claimed."
@@ -235,7 +235,13 @@
         "vulnerabilities": 0
       },
       "gitDiffCheck": "PASS",
-      "fullCi": "PENDING",
+      "fullCi": {
+        "status": "PASS",
+        "sha": "f25d51f56ea96fbe8ef88069b7954383d9d134ff",
+        "runId": 40739701038,
+        "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40739701038",
+        "scope": "Runtime and initial documentation; final docs-only HEAD CI reference verified separately in PR24 body"
+      },
       "diagnosticRunId": 40738766054,
       "diagnosticSha": "64023a9d6a36eaeba5bd82854f0520eacc92ca60",
       "remoteBridgeTests": "NOT_RUN",
@@ -363,6 +369,14 @@
       "No isolated bridge/QA integration, remote restart/rollback or before-after CPU/latency/memory/quota proof.",
       "Effective Workers budget and aggregate variable usage not proved despite subscription metadata read."
     ],
-    "pullRequest": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24"
+    "pullRequest": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24",
+    "hostingerEvidence": "docs/operations/private-albums-r4/evidence/hst-001-hostinger-observations.json",
+    "handoffDocument": "docs/operations/private-albums-r4/20-hst-001-handoff-2026-10-28.md",
+    "driveHandoff": {
+      "url": "https://drive.google.com/file/d/1gzKs4XXk5wjZrXskHENov_qm627ZBXqX/view?usp=drivesdk",
+      "account": "Sgtmenezes",
+      "status": "UPLOADED_AND_READBACK_VERIFIED",
+      "fileId": "1gzKs4XXk5wjZrXskHENov_qm627ZBXqX"
+    }
   }
 }

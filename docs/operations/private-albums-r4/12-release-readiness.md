@@ -5,7 +5,7 @@
 | Gate original | Estado | Evidência ou dependência |
 |---|---|---|
 | G01 baseline | PASS_LOCAL | 00-baseline.md e relatório 18; checkout original preservado |
-| G02 integração | PARTIAL | PRs#17/#20 e HST empilhadas; sem merge, CI nova pendente |
+| G02 integração | PARTIAL | PRs #17/#20/#24 empilhadas; CI código HST PASS, integração/QA final e merge não autorizados |
 | G03 cadastro de clientes | PASS_LOCAL | suíte completa203 Workers; sem E2E remoto de titular |
 | G04 publicação de galerias | PASS_LOCAL | fluxos locais; nenhuma publicação privada em produção |
 | G05 upload privado/falhas | PASS_LOCAL | D1/R2 emulados; nenhuma foto transferida à Hostinger |
@@ -20,14 +20,14 @@
 | G14 dispositivos físicos | PARTIAL | Android Chrome/iOS Safari físicos não ensaiados |
 | G15 SEO/cache/noindex | PASS_LOCAL | testes locais; configuração real completa pendente |
 | G16 site público/Studio/Colagem | PASS_LOCAL | 203 Workers +7 Colagem +26 Node; browser atual não executado |
-| G17 CPU/franquia/R$0 | BLOCKED_EXTERNAL | relatório 18: home QA129–166ms; Billing 200 parcial; Hostinger sem inventário, sem offload/mediçãoHEAD |
+| G17 CPU/franquia/R$0 | BLOCKED_EXTERNAL | relatório 18: home QA 129–166 ms; Billing 200 parcial; Hostinger sem inventário, sem offload/medição do HEAD |
 | G18 recuperação D1/R2 | BLOCKED_EXTERNAL | históricos 5 contas preservados; par vazio e ensaio remoto ausentes |
 | G19 segurança independente | PARTIAL | revisão dirigida e fixes não são sign-off formal independente |
 | G20 LGPD | BLOCKED_GOVERNANCE | aprovação da controladora não obtida |
-| G21 PR/CI/SHA | PARTIAL | R4 CI histórica PASS; full CI HST deve ser conferida no SHA final da nova PR |
+| G21 PR/CI/SHA | PASS | HST CI 40739701038 success no SHA f25d51f; CI do HEAD documental final conferida no corpo da PR #24 |
 | G22 autorização de release | BLOCKED_GOVERNANCE | nenhum GO de produção; main aciona deploy/migrations |
 | G23 rollback | PARTIAL | runbook 19; replay/flags locais; remotoNOT_RUN |
-| G24 handoff | PASS_LOCAL | relatórios18/19, JSON e estado; PR/CI/Drive final no corpo daPR |
+| G24 handoff | PASS_LOCAL | relatórios 18/19/20, JSON e estado; PR/CI/Drive final no corpo da PR |
 
 ## Continuação — 27/10/2026
 
