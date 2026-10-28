@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -25,6 +27,7 @@ jobs:
       - run: node --test scripts/publish-colagem-production.test.mjs
       - run: node --test services/punctum-password-bridge/server.test.mjs
       - run: node --test scripts/r4-edge-qa.test.mjs
+      - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
       - run: npx playwright install --with-deps chromium
@@ -33,5 +36,5 @@ jobs:
         if: always()
         with:
           name: r4-browser-evidence
-          path: outputs/browser-e2e/report.json
+          path: outputs/browser-e2e/
           retention-days: 14
