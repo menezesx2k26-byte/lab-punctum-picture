@@ -27,7 +27,7 @@ Os números G01–G22 do relatório `15-argon-execution-2026-10-27.md` são uma 
 | G18 | Recuperação D1/R2 íntegra | BLOCKED_EXTERNAL | Argon G18; `client-recovery.spec.ts` em D1/R2 local, `10-d1-r2-recovery.md`; QA histórico contém 5 contas em cada D1 | Operador QA: autorizar par isolado vazio, verificar hashes, quarentena e rotação de segredo |
 | G19 | Revisão independente de segurança | PARTIAL | Argon G19; revisão dirigida existente NÃO é auditoria independente integral | Revisor distinto, inspeção configuração real, sign-off |
 | G20 | Decisão formal LGPD da responsável pelo estúdio | BLOCKED_GOVERNANCE | Argon G20; projeção explícita LGPD e testes `client-lgpd.spec.ts`; sem aprovação humana | Responsável do estúdio: revisar retenção, exportação, papéis e assinar |
-| G21 | PR, CI e rastreabilidade do SHA final | PARTIAL | Argon G21 significa piloto simulado, **não** equivale; CI base run 40602994214 verde em `932f679`; aguarda resultado do HEAD corrigido | Conferir run final do SHA exato |
+| G21 | PR, CI e rastreabilidade do SHA final | PASS | Argon G21 significa piloto simulado, **não** equivale; CI código SHA `7fccea1` run `40690668055` PASS, suíte completa 199 Vitest + Colagem 7 + Node 22; CI do HEAD documental deve ser conferida separadamente | Preservar referência ao run final na PR |
 | G22 | Autorização de release | BLOCKED_GOVERNANCE | Argon G22; release e flag desligados | Proprietário: GO explícito após todos gates |
 | G23 | Rollback controlado | PARTIAL | **Omitido da matriz Argon**; guard `isPrivateGalleriesEnabled`, `private-rollout.spec.ts` e deploy restrito a main demonstram desativação local; **não demonstram rollback operacional de D1/R2/Worker em QA/produção** | Responsável infraestrutura: ensaio de recuperação QA isolado e procedimento supervisionado sem sobrescrita |
 | G24 | Handoff rastreável e estado durável | PASS_LOCAL | **Omitido da matriz Argon**; este documento, `13-handoff.md`, PR #20 e `execution-state.json`; sem takeover PersistFlow comprovado | Manter atualização no HEAD final e compartilhar com responsável |
@@ -52,3 +52,12 @@ Os números G01–G22 do relatório `15-argon-execution-2026-10-27.md` são uma 
 - Testes emulador existentes abrangem isolamento A/B, JWT synthetic, mídia negada sem corpo e tentativas de traversal, concorrência/retry, sessões e recuperação local. Histórico: overrides de `satori` e `fflate` em lockfile com audit anterior zero; executar novo `npm audit` sobre lockfile final.
 - Revisão anterior foi direcionada, sem pentest ou verificação independente integral; não declarar G19 PASS. Sem credenciais, OTP, JWT completo ou mídia privada real em testes/evidências.
 - Cloudflare Access real, billing CPU, REST/D1/R2 remotos, QA físico, aprovação LGPD e autorização de release permanecem bloqueios. **PRODUCTION_NO_GO.**
+
+## Fechamento técnico atualizado em 28/10/2026 — sem autorização de produção
+
+- **R4-LGPD**: RED `840b702` confirmou omissão de metadados retidos (pending/failed/deleted), GREEN `f318e5b` corrige projeção sanitizada sem storage key/R2; RED `c271128` identificou quatro leituras D1 independentes, GREEN `3347c93` consolida as quatro consultas em um único `D1.batch` transacional. Integração local A/B sintética `eddccc0` PASS.
+- **R4-AUDIT**: RED `c21dfc4` confirmou possibilidade de imputação de ato a e-mail não verificado com senha global; GREEN `3242adc` + propagação às rotas de escrita usa `auditPrincipal` genérico em modo senha compartilhada e mantém e-mail JWT de Access verificado. Integração real D1 local `44d0615` PASS. Isto **não** cria login individual e G19 continua PARTIAL.
+- **Validação de código** SHA `7fccea1dbc7e9b2f7589bab11bb4496ec124ae66`: Vitest 47 arquivos/199 PASS; Colagem 7 PASS; Node 22 PASS; typecheck, lint, build e npm audit 0 vulnerabilidades PASS, com avisos legados do builder. CI `40690668055` completed/success.
+- **G20**: técnica corrigida, controladora do estúdio ainda **não aprovou** escopo, retenção nem entrega segura. Não declarar conformidade total LGPD.
+- **G21**: PASS no código CI, mas qualquer novo HEAD documental precisa de sua própria verificação de CI.
+- **G02/G07/G14/G17/G18/G19/G20/G22/G23**: mantidos seus bloqueios originais. Nenhum merge na main, deploy, billing, migração remota, alteração Access, Cloudflare real ou ativação foi realizado. **PRODUCTION_NO_GO**.
