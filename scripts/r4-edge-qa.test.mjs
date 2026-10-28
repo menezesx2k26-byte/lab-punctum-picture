@@ -1,7 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import * as qa from './lib/r4-edge-qa.mjs';
 import { assertFreshQaBudget, assertFreshPerformanceBudget, isolatedQaConfig, R4_QA, assertResumeQaInventory, summarizeQaSamples } from './lib/r4-edge-qa.mjs';
 const budget = { databaseCount:8, workerRequestsToday:10, r2:{ maximumStorageBytes:1_000, classARequests:10, classBRequests:100 }, subscriptions:[{id:'free'},{id:'teams_free'},{id:'r2_paid'}], namesInUse:[] };
+
+test('read-only performance continuation accepts only the exact preserved failed fixture and initialized public state',()=>{
+ const counts={accounts:1,galleries:1,images:1,intents:1,favorites:0,pointers:1};
+ const rows=[{clientId:'39a03fb3-d913-4380-a30d-f983fabd22e1',galleryId:'66c091c1-8a4f-47a8-bc57-43cfbebfa0f0',imageId:'e5afb187-6384-4812-b647-eddb430dbe02',intentId:'b7bf8640-b49e-4d34-8092-9cfd3e6314e5',imageStatus:'failed',intentStatus:'failed'}];
+ assert.equal(qa.assertReadOnlyPerformanceFixture({counts,rows}),true);
+ for(const input of [{counts:{...counts,accounts:5},rows},{counts:{...counts,pointers:0},rows},{counts,rows:[{...rows[0],clientId:'foreign'}]},{counts,rows:[{...rows[0],imageStatus:'ready'}]},{counts,rows:[]}]) assert.throws(()=>qa.assertReadOnlyPerformanceFixture(input));
+});
 test('refuses unknown usage and existing QA resources before creating or modifying anything', () => {
  for (const input of [undefined, {...budget,r2:undefined}, {...budget,databaseCount:9}, {...budget,workerRequestsToday:99_000}, {...budget,namesInUse:[R4_QA.source]}, {...budget,subscriptions:[{id:'workers_paid'}]}, {...budget,r2:{...budget.r2,maximumStorageBytes:10_000_000_000}}]) assert.throws(()=>assertFreshQaBudget(input));
  assert.equal(assertFreshQaBudget(budget),true);
