@@ -2,7 +2,7 @@ name: R4 current Access QA
 on:
   push:
     branches: ["agent/hst-001-hostinger-qa-20261028"]
-    paths: ["scripts/r4-access-runtime.mjs", "scripts/r4-access-runtime.test.mjs", ".github/workflows/r4-access-runtime.yml"]
+    paths: ["scripts/r4-access-runtime.mjs", "scripts/r4-access-runtime.test.mjs", ".github/workflows/r4-access-runtime.yml", "worker/client/access.ts", "worker/client/access-navigation.ts"]
 permissions:
   contents: read
 concurrency:

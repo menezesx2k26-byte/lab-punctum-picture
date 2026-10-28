@@ -34,6 +34,7 @@ jobs:
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
       - run: npx playwright install --with-deps chromium
+      - run: node --test scripts/access-cookie-navigation.test.mjs
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v6
         if: always()

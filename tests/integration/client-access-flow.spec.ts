@@ -54,6 +54,15 @@ describe("integrated Access identity and private album flow on isolated D1/R2", 
     expect(entryA?.status).toBe(303);
     expect(entryA?.headers.get("Location")).toBe("/albuns");
     expect(entryA?.headers.get("Set-Cookie")).toContain("HttpOnly; Secure; SameSite=Strict");
+    const browserEntry = await route(new Request("http://localhost:8787/albuns/entrar", {
+      headers: { "cf-access-jwt-assertion": await sign(a + "@example.com"), Accept:"text/html", "Sec-Fetch-Site":"cross-site" },
+    }));
+    expect(browserEntry?.status).toBe(200);
+    expect(browserEntry?.headers.get("Set-Cookie")).toContain("HttpOnly; Secure; SameSite=Strict");
+    expect(browserEntry?.headers.get("Cache-Control")).toBe("private, no-store");
+    const handoff=await browserEntry!.text();
+    expect(handoff).toContain('http-equiv="refresh" content="0;url=/albuns"');
+    expect(handoff).not.toContain(browserEntry!.headers.get("Set-Cookie")!.split(";")[0]);
     const cookieA = entryA!.headers.get("Set-Cookie")!.split(";")[0];
     const entryB = await entry(b + "@example.com");
     expect(entryB?.status).toBe(303);
