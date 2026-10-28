@@ -155,4 +155,10 @@ export async function runFreshQa(report, api) {
  report.checks.push('Real edge baseline/candidate requests measured and isolated rollback verified');
  report.status=report.performance.every(p=>p.errors===0 && p.versionMismatches===0)?'PERFORMANCE_QA_EXECUTED':'PERFORMANCE_QA_WITH_REQUEST_FAILURES';report.stage='performance-complete';
  report.functionalQa='NOT_RUN';report.accessOtp='NOT_RUN';
+ if(process.env.R4_EDGE_QA_RECOVERY==='true') {
+   assert.equal(resume,true,'Functional recovery is only permitted on exact interrupted QA resources');
+   assert.equal(report.status,'PERFORMANCE_QA_EXECUTED','Successful performance evidence is required before recovery');
+   const { runR4RecoveryQa } = await import('./r4-recovery-execute.mjs');
+   await runR4RecoveryQa(report,api);
+ }
 }
