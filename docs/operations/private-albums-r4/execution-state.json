@@ -4,11 +4,11 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PASS",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Historical R4 technical PASS retained; HST-001 is BLOCKED. Local bridge hardening is not a deployed or remotely homologated service. No production authorization.",
-  "updatedAt": "2026-10-28T18:57:02.582081Z",
+  "statusScope": "Historical R4 technical checks plus the new Chromium/SSR local CI are PASS; original G01-G24 gate matrix remains controlling. Remote OTP, edge CPU/cost, recovery, independent security, physical devices and LGPD governance are not PASS. Hostinger bridge optional/unproven; production NO_GO.",
+  "updatedAt": "2026-10-28T19:59:13.568Z",
   "branch": "agent/hst-001-hostinger-qa-20261028",
   "baseBranch": "agent/argon-punctum-r4-dod-20261027-v2",
-  "headBeforeStateUpdate": "f274f29a190bed4360cdfb388ad118ef7ac4698e",
+  "headBeforeStateUpdate": "0c51cb16063d9b5908c41c7beeabd9ac75881173",
   "canonicalGateSystem": "ORIGINAL_SPEC_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/12-release-readiness.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
@@ -64,15 +64,15 @@
   },
   "gateNotes": {
     "G07": "Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL).",
-    "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run.",
-    "G17": "SSH authenticated and Node 22/24 executed; manager readonly queries fail missing vendor integration and own loopback TCP fails in Node/Python. Minimal nonce replay test PASS, max RSS 54784 KiB is not load/capacity proof. Old QA home 129/134/166 ms remains historical only; no current-HEAD/offload before-after or quota/cost proof. G17 BLOCKED_EXTERNAL; reports18/21.",
+    "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run. New PR #24 Chromium E2E CI PASS locally at 320/390/768/1280 widths with synthetic resources; actual Android/iOS remain NOT_RUN.",
+    "G17": "SSH authenticated and Node 22/24 executed; manager readonly queries fail missing vendor integration and own loopback TCP fails in Node/Python. Minimal nonce replay test PASS, max RSS 54784 KiB is not load/capacity proof. Old QA home 129/134/166 ms remains historical only; no current-HEAD/offload before-after or quota/cost proof. G17 BLOCKED_EXTERNAL; reports18/21. PR #24 local workerd/V8 sample: cold p50 106.137→91.052ms and cold p95 248.945→109.521ms (10 per build), warm p99 124.705→74.394ms (50 per build). These are NOT Cloudflare billed CPU; current-head edge/quotas missing. Hostinger bridge remains optional, not critical path.",
     "G18": "Live Cloudflare D1 SELECT COUNT(*) confirmed BOTH historical QA and restore D1 hold 5 client_accounts each (0 rows written); actual R2 QA original/backup/restored buckets exist. Never overwrite; isolated EMPTY resource pair and authorized rehearsal missing.",
     "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07.",
     "G20": "Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains.",
-    "G21": "CI 40740514976 completed/success on f274f29a190bed4360cdfb388ad118ef7ac4698e; runtime ee7b6d6 unchanged in SSH documentation followup. Final new docs-only HEAD CI is verified separately in PR #24 body.",
+    "G21": "CI 40740514976 completed/success on f274f29a190bed4360cdfb388ad118ef7ac4698e; runtime ee7b6d6 unchanged in SSH documentation followup. Final new docs-only HEAD CI is verified separately in PR #24 body. New complete CI run 40758459104 SUCCESS on runtime SHA 0c51cb1, including Playwright Chromium after pinning Ubuntu 24.04; this docs-only update requires separate SHA CI verification.",
     "G22": "Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation.",
-    "G23": "Nonce replay rejected across two new SSH Node processes using original replay-store. This does not test managed Hostinger restart/redeploy or operational Worker/D1/R2 rollback. No deployed Punctum bridge or remote integration exists. G23 PARTIAL; reports19/21.",
-    "G24": "Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed."
+    "G23": "Nonce replay rejected across two new SSH Node processes using original replay-store. This does not test managed Hostinger restart/redeploy or operational Worker/D1/R2 rollback. No deployed Punctum bridge or remote integration exists. G23 PARTIAL; reports19/21. New synthetic local Chromium test verified isolated workerd restart and consistent D1/R2 snapshot rollback. Remote QA recovery/rollback remain NOT_RUN.",
+    "G24": "Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed. New machine-verifiable local CI/E2E evidence is attached to run 40758459104; latestR4Continuation details generated prior to this docs-only commit."
   },
   "productionFlag": {
     "PRIVATE_GALLERIES_ENABLED": "false (versioned, effective remote runtime unverified)",
@@ -257,6 +257,52 @@
         "actualOffloadedWorkload": "NONE",
         "source": "docs/operations/private-albums-r4/evidence/hst-001-hostinger-ssh-inventory-2026-10-28.json"
       }
+    },
+    "latestR4Continuation": {
+      "testedRuntimeSha": "0c51cb16063d9b5908c41c7beeabd9ac75881173",
+      "verificationRunId": 40758459104,
+      "verificationUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40758459104",
+      "ciResult": "COMPLETED_SUCCESS_ON_RUNTIME_SHA_PRIOR_TO_THIS_DOC_UPDATE",
+      "auditVulnerabilities": 0,
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS",
+      "vitest": {
+        "files": 50,
+        "passed": 211
+      },
+      "collageVitest": {
+        "files": 1,
+        "passed": 7
+      },
+      "nodeSuites": {
+        "collageCss": 9,
+        "publishColagem": 3,
+        "passwordBridge": 14,
+        "edgeQaGuards": 4,
+        "ssrRouteImports": 1
+      },
+      "chromiumE2E": {
+        "status": "PASS_LOCAL",
+        "checks": 13,
+        "mode": "real Chromium against local production bundle in isolated workerd with synthetic client A/B, D1/R2",
+        "artifactId": 12847197497,
+        "realOtp": "NOT_RUN",
+        "physicalDevices": "NOT_RUN",
+        "remoteQa": "NOT_RUN"
+      },
+      "localProfile": {
+        "scope": "V8 sampled local workerd, NOT Cloudflare billed CPU",
+        "coldSamplesPerBuild": 10,
+        "warmSamplesPerBuild": 50,
+        "coldP50BeforeMs": 106.137,
+        "coldP50AfterMs": 91.052,
+        "coldP95BeforeMs": 248.945,
+        "coldP95AfterMs": 109.521,
+        "warmP99BeforeMs": 124.705,
+        "warmP99AfterMs": 74.394
+      },
+      "production": "NO_GO"
     }
   },
   "securityRisks": [
@@ -284,8 +330,8 @@
     },
     {
       "gate": "G17",
-      "owner": "Cloudflare account/billing owner",
-      "action": "Resolve provider Node manager/isolated HTTPS route through supported control plane; supplied SSH authenticates and runs Node but loopback is refused. Verify plan/quotas and then benchmark current-HEAD public-home work before choosing any offload; preserve Access/PersistFlow."
+      "owner": "Cloudflare QA account/operator",
+      "action": "Measure current PR HEAD public home p50/p95/p99 on an isolated QA Worker with real Cloudflare Analytics plus quotas and marginal cost. Do not require Hostinger until measured offload necessity exists; no prod writes, upgrades or historical D1/R2 mutations."
     },
     {
       "gate": "G18",
