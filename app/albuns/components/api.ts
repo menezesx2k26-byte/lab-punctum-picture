@@ -1,4 +1,5 @@
 "use client";
+import { validClientResponse } from "./responses";
 export class PrivateApiError extends Error {
   constructor(
     message: string,
@@ -45,7 +46,7 @@ export async function privateApi<T>(
       code,
     );
   }
-  if (!data)
+  if (!data || !validClientResponse(path, method, data))
     throw new PrivateApiError("Não foi possível concluir. Tente novamente.", 502);
   return data as T;
 }

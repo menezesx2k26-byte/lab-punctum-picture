@@ -9,6 +9,12 @@ import { privateApi, errorMessage } from "./api";
 import { privateImageUrl } from "./routes";
 
 export function PrivateGallery({ galleryId }: { galleryId: string }) {
+  // Route transitions can preserve this component. Each album needs fresh
+  // loading/viewer/favorite state and must discard prior async UI updates.
+  return <GalleryContent key={galleryId} galleryId={galleryId} />;
+}
+
+function GalleryContent({ galleryId }: { galleryId: string }) {
   const [gallery, setGallery] = useState<ClientGallery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
