@@ -1,4 +1,17 @@
 import assert from 'node:assert/strict';
+import { r4VacancyListing } from './lib/r4-recovery-qa.mjs';
+
+test('accepts only the live verified empty R2 envelope when optional pagination is omitted', () => {
+  const observed={success:true,errors:[],messages:[],result:[]};
+  assert.deepEqual(r4VacancyListing(observed),{objects:[],truncated:false});
+  for(const unsafe of [
+    {...observed,result:[{key:'unknown'}]},
+    {...observed,success:false},
+    {...observed,result_info:null},
+    {...observed,result_info:{cursor:'next-page'}},
+    {...observed,errors:[{code:1}]},
+  ]) assert.throws(()=>r4VacancyListing(unsafe));
+});
 import { test } from 'node:test';
 import { createHash, createHmac } from 'node:crypto';
 import { R4_QA, R4_RESUME_DATABASES } from './lib/r4-edge-qa.mjs';
