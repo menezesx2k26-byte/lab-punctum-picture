@@ -17,12 +17,7 @@ const PRESERVED_DATABASES = new Set([
 
 /** No resource mutation until every usage dimension is measured and has margin. */
 export function assertFreshQaBudget(input) {
-  assert.ok(input && typeof input === 'object', 'Verified budget required');
-  assert.ok(Array.isArray(input.subscriptions) && input.subscriptions.some(s => s.id === 'free'), 'Free subscription evidence required');
-  assert.ok(!input.subscriptions.some(s => /workers.*(?:paid|standard|bundled|unbound)/i.test(s.id)), 'Paid Workers allowance is outside QA scope');
-  assert.ok(Number.isInteger(input.databaseCount) && input.databaseCount >= 0 && input.databaseCount <= 8, 'Two free D1 slots required');
-  assert.ok(Number.isInteger(input.workerRequestsToday) && input.workerRequestsToday >= 0 && input.workerRequestsToday <= 90_000, 'Verified daily Worker request headroom required');
-  assert.ok(Array.isArray(input.namesInUse) && !input.namesInUse.some(name => Object.values(R4_QA).includes(name)), 'QA names already exist; preserve previous evidence');
+  assertFreshPerformanceBudget(input);
   for (const [name, maximum] of [['maximumStorageBytes',9_000_000_000],['classARequests',900_000],['classBRequests',9_000_000]]) {
     assert.ok(Number.isSafeInteger(input.r2?.[name]) && input.r2[name] >= 0 && input.r2[name] < maximum, `Verified R2 ${name} headroom required`);
   }
@@ -30,7 +25,7 @@ export function assertFreshQaBudget(input) {
 }
 
 /** Uses only newly created IDs from this run, never inherited bindings. */
-export function isolatedQaConfig(base, { databaseId, createdDatabaseIds, origin, restored = false, privateEnabled = true }) {
+export function isolatedQaConfig(base, { databaseId, createdDatabaseIds, origin, restored = false, privateEnabled = true, performanceOnly = false }) {
   assert.ok(/^[a-f0-9-]{36}$/i.test(databaseId ?? '') && !PRESERVED_DATABASES.has(databaseId) && createdDatabaseIds?.includes(databaseId), 'Newly allocated QA database required');
   const url = new URL(origin);
   assert.ok(url.protocol === 'https:' && new RegExp(`^${R4_QA.worker}\\.[a-z0-9-]+\\.workers\\.dev$`).test(url.hostname) && url.pathname === '/' && !url.search && !url.hash && !url.username && !url.password, 'Dedicated QA origin required');
@@ -44,8 +39,18 @@ export function isolatedQaConfig(base, { databaseId, createdDatabaseIds, origin,
     compatibility_date: base.compatibility_date, compatibility_flags: base.compatibility_flags,
     assets: base.assets, workers_dev: true, preview_urls: false, routes: [], triggers: {crons: []},
     observability: {enabled: true, logs: {head_sampling_rate: 1}},
-    vars: {...safeVars, ENVIRONMENT:'preview', PRIVATE_GALLERIES_ENABLED: String(privateEnabled), CLIENT_AUTH_MODE:'access', CLIENT_ACCESS_TEAM_DOMAIN:'qa-placeholder.cloudflareaccess.com', CLIENT_ACCESS_AUD:'r4-qa-access-unconfigured', SITE_ORIGIN:url.origin, PUBLIC_SITE_URL:url.origin, ADMIN_ALLOWED_EMAILS:'qa@punctum.invalid'},
+    vars: {...safeVars, ENVIRONMENT:'preview', PRIVATE_GALLERIES_ENABLED: String(privateEnabled && !performanceOnly), CLIENT_AUTH_MODE:'access', CLIENT_ACCESS_TEAM_DOMAIN:'qa-placeholder.cloudflareaccess.com', CLIENT_ACCESS_AUD:'r4-qa-access-unconfigured', SITE_ORIGIN:url.origin, PUBLIC_SITE_URL:url.origin, ADMIN_ALLOWED_EMAILS:'qa@punctum.invalid'},
     d1_databases: [{binding:'DB', database_name:restored ? R4_QA.restore : R4_QA.source, database_id:databaseId, migrations_dir:'../../migrations'}],
-    r2_buckets: [{binding:'ORIGINALS',bucket_name:restored ? R4_QA.restored : R4_QA.originals},{binding:'BACKUPS',bucket_name:R4_QA.backups}],
+    r2_buckets: performanceOnly ? [] : [{binding:'ORIGINALS',bucket_name:restored ? R4_QA.restored : R4_QA.originals},{binding:'BACKUPS',bucket_name:R4_QA.backups}],
   };
+}
+
+export function assertFreshPerformanceBudget(input) {
+  assert.ok(input && typeof input === 'object', 'Verified budget required');
+  assert.ok(Array.isArray(input.subscriptions) && input.subscriptions.some(s => s.id === 'free'), 'Free subscription evidence required');
+  assert.ok(!input.subscriptions.some(s => /workers.*(?:paid|standard|bundled|unbound)/i.test(s.id)), 'Paid Workers allowance is outside QA scope');
+  assert.ok(Number.isInteger(input.databaseCount) && input.databaseCount >= 0 && input.databaseCount <= 8, 'Two free D1 slots required');
+  assert.ok(Number.isInteger(input.workerRequestsToday) && input.workerRequestsToday >= 0 && input.workerRequestsToday <= 90_000, 'Verified daily Worker request headroom required');
+  assert.ok(Array.isArray(input.namesInUse) && !input.namesInUse.some(name => Object.values(R4_QA).includes(name)), 'QA names already exist; preserve previous evidence');
+  return true;
 }

@@ -1,6 +1,6 @@
 // Dedicated new QA only. Default is read-only; no historical QA or production mutation.
 import { mkdir, writeFile } from 'node:fs/promises';
-import { R4_QA, assertFreshQaBudget } from './lib/r4-edge-qa.mjs';
+import { R4_QA } from './lib/r4-edge-qa.mjs';
 const account = '257bca437616da74ece1ce4bbaf0bd89';
 const token = process.env.CLOUDFLARE_API_TOKEN;
 if (process.env.GITHUB_ACTIONS !== 'true' || !token) throw new Error('Run only in credential-masked GitHub Actions');
@@ -9,8 +9,8 @@ const day = new Date(now); day.setUTCHours(0,0,0,0);
 const month = new Date(now); month.setUTCDate(1); month.setUTCHours(0,0,0,0);
 const report = {schemaVersion:1, observedAt:now.toISOString(), sourceSha:process.env.GITHUB_SHA, stage:'preflight', productionTouched:false, historicalQaTouched:false, writes:0, resources:R4_QA, probes:[]};
 await mkdir('outputs',{recursive:true});
-async function api(path, body) {
- const response=await fetch('https://api.cloudflare.com/client/v4'+path,{method:body ? 'POST':'GET',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body ? {body:JSON.stringify(body)}:{}),redirect:'error',signal:AbortSignal.timeout(20000)});
+async function api(path, body, method) {
+ const response=await fetch('https://api.cloudflare.com/client/v4'+path,{method:method ?? (body ? 'POST':'GET'),headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body ? {body:JSON.stringify(body)}:{}),redirect:'error',signal:AbortSignal.timeout(20000)});
  const value=await response.json();
  report.probes.push({path:path.replace(account,'[account]'),status:response.status,success:value.success,errors:value.errors?.map(e=>({code:e.code,message:String(e.message??'').slice(0,200)}))});
  return value;
@@ -38,7 +38,8 @@ try {
  // Explicit failure until every quota metric has a verifiable parser. No writes in preflight.
  report.status='READ_ONLY_PREFLIGHT_COMPLETE';
  if(process.env.R4_EDGE_QA_EXECUTE==='true') {
-   assertFreshQaBudget(undefined);
+   const { runFreshQa } = await import('./r4-edge-execute.mjs');
+   await runFreshQa(report,api);
  }
 } catch(error) {
  report.status='FAILED_CLOSED';report.failure=error.message;
