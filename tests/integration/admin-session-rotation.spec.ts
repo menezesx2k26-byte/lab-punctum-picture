@@ -73,7 +73,7 @@ describe("admin session revocation on credential rotation", () => {
       CLIENT_AUTH_MODE: "access",
       ADMIN_ALLOWED_EMAILS: "first@example.test,second@example.test",
       SITE_ORIGIN: "http://localhost:8787",
-    } as Env;
+    } as unknown as Env;
     const token = await createAdminSession("second@example.test", testEnv);
     const email = crypto.randomUUID() + "@example.test";
     const url = new URL("http://localhost:8787/admin/api/clientes");
