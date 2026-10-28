@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { R4_QA, assertFreshQaBudget, isolatedQaConfig } from './lib/r4-edge-qa.mjs';
+import { R4_QA, R4_RESUME_DATABASES, assertFreshQaBudget, assertResumeQaInventory, isolatedQaConfig, summarizeQaSamples } from './lib/r4-edge-qa.mjs';
 const ACCOUNT = '257bca437616da74ece1ce4bbaf0bd89';
 const pause = ms => new Promise(r=>setTimeout(r,ms));
 const sum = (rows, field) => rows.reduce((n,row)=>n+Number(row.sum?.[field]??0),0);
 export async function runFreshQa(report, api) {
  const databaseList=report.databaseInventory, bucketList=report.bucketInventory, workerList=report.workerInventory;
+ const resume=process.env.R4_EDGE_QA_RESUME==='true';
  assert.ok(databaseList && bucketList && workerList && report.subdomain, 'Verified complete inventory required');
  assert.equal(report.r2Storage?.accessible,true,'Measured R2 storage required');
  assert.equal(report.r2Operations?.accessible,true,'Measured R2 operations required');
@@ -20,7 +21,16 @@ export async function runFreshQa(report, api) {
  // Count EVERY R2 operation as both A and B: conservative upper bounds avoid unrecognized-action undercounts.
  const allOperations=sum(operationsRows,'requests');
  const budget={databaseCount:databaseList.length,workerRequestsToday:sum(workerRows,'requests'),r2:{maximumStorageBytes:storageRows.reduce((n,row)=>n+Number(row.max?.payloadSize??0),0),classARequests:allOperations,classBRequests:allOperations},subscriptions:report.subscriptions,namesInUse:[...databaseList,...bucketList,...workerList].map(x=>x.name)};
- assertFreshQaBudget(budget);
+ if(resume) {
+   assertResumeQaInventory({databases:databaseList,buckets:bucketList,workers:workerList});
+   // This receipt is verified before excluding adopted names/slots from NEW allocation checks.
+   assertFreshQaBudget({...budget,databaseCount:databaseList.length-2,namesInUse:budget.namesInUse.filter(name=>!Object.values(R4_QA).includes(name))});
+   assert.equal(report.d1Usage?.accessible,true,'Current D1 usage required before resuming');
+   const rows=report.d1Usage.data.d1AnalyticsAdaptiveGroups;
+   assert.ok(Array.isArray(rows) && rows.length<1000 && rows.every(r=>['rowsRead','rowsWritten'].every(k=>Number.isSafeInteger(r.sum?.[k]) && r.sum[k]>=0)),'Complete D1 metrics required');
+   report.d1Budget={rowsRead:sum(rows,'rowsRead'),rowsWritten:sum(rows,'rowsWritten')};
+   assert.ok(report.d1Budget.rowsRead<4_500_000 && report.d1Budget.rowsWritten<90_000,'D1 free headroom required');
+ } else assertFreshQaBudget(budget);
  report.budget=budget;report.budget.operationClassification='Every observed operation counted against both free limits; upper bound';
  const origin=`https://${R4_QA.worker}.${report.subdomain}.workers.dev`;
  report.executionRunId=process.env.GITHUB_RUN_ID;report.origin=origin;report.created={databases:[],buckets:[]};report.checks=[];
@@ -32,12 +42,13 @@ export async function runFreshQa(report, api) {
  };
  const checkpoint=()=>writeFile('outputs/r4-edge-qa-report.json',JSON.stringify(report,null,2));
  const mutate=async(path,body,method)=>{const result=await requireApi(path,body,method);report.writes++;return result;};
- for(const name of [R4_QA.source,R4_QA.restore]) {
+ for(const name of resume ? [] : [R4_QA.source,R4_QA.restore]) {
    const result=await mutate(base+'/d1/database',{name});
    assert.equal(result.name,name);assert.match(result.uuid,/^[a-f0-9-]{36}$/i);
    report.created.databases.push({name,id:result.uuid});await checkpoint();
  }
- for(const name of [R4_QA.originals,R4_QA.restored,R4_QA.backups]) {
+ if(resume) { report.created.databases=R4_RESUME_DATABASES.map(d=>({...d}));report.created.buckets=[R4_QA.originals,R4_QA.restored,R4_QA.backups];report.adoptedFromRun='40756797747';await checkpoint(); }
+ for(const name of resume ? [] : [R4_QA.originals,R4_QA.restored,R4_QA.backups]) {
    await mutate(base+'/r2/buckets',{name});report.created.buckets.push(name);await checkpoint();
    const managed=await requireApi(base+'/r2/buckets/'+name+'/domains/managed');
    const custom=await requireApi(base+'/r2/buckets/'+name+'/domains/custom');
@@ -53,8 +64,8 @@ export async function runFreshQa(report, api) {
    return result.flatMap(r=>r.results);
  };
  for(const id of createdDatabaseIds) {
-   const rows=await query(id,"SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'");
-   assert.equal(rows[0].count,0,'New database unexpectedly contains application tables');
+   const rows=await query(id,resume ? 'SELECT COUNT(*) AS count FROM client_accounts' : "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'");
+   assert.equal(rows[0].count,0,resume ? 'Interrupted QA contains accounts; preserve data and stop' : 'New database unexpectedly contains application tables');
  }
  const roots={baseline:resolve('.qa-baseline'),candidate:process.cwd()};
  const configs={};
@@ -73,12 +84,12 @@ export async function runFreshQa(report, api) {
    return result.stdout;
  };
  // Baseline migration track is fixed. Both application builds read the same fresh DB.
- for(const database of report.created.databases) {
+ for(const database of resume ? [] : report.created.databases) {
    const config={...configs.baseline.config,d1_databases:[{binding:'DB',database_name:database.name,database_id:database.id,migrations_dir:'../../migrations'}]};
    const path=resolve(roots.baseline,'dist/server/r4-migration.wrangler.json');await writeFile(path,JSON.stringify(config));
    wrangler(['d1','migrations','apply',database.name,'--remote','--config',path]);report.writes++;
  }
- report.checks.push('Two new empty D1 databases migrated; historical IDs never queried or migrated');
+ report.checks.push(resume ? 'Adopted only exact interrupted QA IDs, confirmed zero client accounts, no migrations or resource creation' : 'Two new empty D1 databases migrated; historical IDs never queried or migrated');
  let previousVersionId;
  const deploy=async(label)=>{
    wrangler(['deploy','--config',configs[label].path]);report.writes++;
@@ -117,7 +128,7 @@ export async function runFreshQa(report, api) {
      }catch{samples.push({index:i,status:'NETWORK_ERROR',latencyMs:performance.now()-start});}
    }
    const completedAt=new Date().toISOString();
-   const result={label,...version,sourceSha:label==='baseline'?'b417405c0406daf286b192a8151cf45c4a50f89c':process.env.GITHUB_SHA,startedAt,completedAt,samples,latencyMs:summary(samples.map(s=>s.latencyMs)),errors:samples.filter(s=>s.status!==200).length,versionMismatches:samples.filter(s=>s.actualVersionId!==version.versionId).length};
+   const result={label,...version,sourceSha:label==='baseline'?'b417405c0406daf286b192a8151cf45c4a50f89c':process.env.GITHUB_SHA,startedAt,completedAt,samples,latencyMs:summary(samples.map(s=>s.latencyMs)),...summarizeQaSamples(samples,version.versionId)};
    report.performance??=[];report.performance.push(result);await checkpoint();
    assert.equal(result.versionMismatches,0,'Mixed application versions invalidate performance comparison');
    // Allow analytics ingestion; this is bounded and doesn't warm either application version.

@@ -54,3 +54,21 @@ export function assertFreshPerformanceBudget(input) {
   assert.ok(Array.isArray(input.namesInUse) && !input.namesInUse.some(name => Object.values(R4_QA).includes(name)), 'QA names already exist; preserve previous evidence');
   return true;
 }
+
+// Immutable allocation receipt: GitHub Actions 40756797747, before its network failure.
+export const R4_RESUME_DATABASES = Object.freeze([
+  Object.freeze({name:R4_QA.source,id:'2e7710f3-dc92-4aeb-976a-5f15d8c5262c'}),
+  Object.freeze({name:R4_QA.restore,id:'0141b8f9-3074-4aa4-a184-92a4f7379ecc'}),
+]);
+export function assertResumeQaInventory({databases,buckets,workers}) {
+  for(const expected of R4_RESUME_DATABASES) assert.equal(databases?.filter(d=>d.name===expected.name && d.uuid===expected.id).length,1,'Interrupted QA allocation must match both name and ID');
+  for(const name of [R4_QA.originals,R4_QA.restored,R4_QA.backups]) assert.equal(buckets?.filter(b=>b.name===name).length,1,'Interrupted QA bucket missing');
+  assert.equal(workers?.filter(w=>w.name===R4_QA.worker).length,1,'Interrupted QA Worker missing');
+  return true;
+}
+export function summarizeQaSamples(samples,versionId) {
+  return {
+    errors:samples.filter(s=>s.status!==200).length,
+    versionMismatches:samples.filter(s=>(s.status===200 || s.actualVersionId != null) && s.actualVersionId!==versionId).length,
+  };
+}

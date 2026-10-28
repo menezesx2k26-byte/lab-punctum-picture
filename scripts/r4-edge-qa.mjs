@@ -34,6 +34,7 @@ try {
  await graph('r2Storage','query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){r2StorageAdaptiveGroups(limit:1000,filter:{datetime_geq:$start,datetime_lt:$end}){dimensions{bucketName} max{payloadSize}}}}}',variables);
  await graph('r2Operations','query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){r2OperationsAdaptiveGroups(limit:1000,filter:{datetime_geq:$start,datetime_lt:$end}){dimensions{actionType} sum{requests}}}}}',variables);
  await graph('workerUsage','query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){workersInvocationsAdaptive(limit:1000,filter:{datetime_geq:$start,datetime_lt:$end}){sum{requests errors}}}}}',{...variables,start:day.toISOString()});
+ await graph('d1Usage','query($accountTag:String!,$start:Date!,$end:Date!){viewer{accounts(filter:{accountTag:$accountTag}){d1AnalyticsAdaptiveGroups(limit:1000,filter:{date_geq:$start,date_leq:$end}){sum{rowsRead rowsWritten}}}}}',{accountTag:account,start:day.toISOString().slice(0,10),end:now.toISOString().slice(0,10)});
  report.measurementIntervals={r2:[month.toISOString(),now.toISOString()],workers:[day.toISOString(),now.toISOString()]};
  // Explicit failure until every quota metric has a verifiable parser. No writes in preflight.
  report.status='READ_ONLY_PREFLIGHT_COMPLETE';
