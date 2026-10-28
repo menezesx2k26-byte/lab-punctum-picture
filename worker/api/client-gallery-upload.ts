@@ -163,6 +163,7 @@ export async function handleClientGalleryUploadApi(
           now,
         ),
     ]);
+    await writeAudit(db, auditPrincipal(actor), "client_gallery.upload_intent_created", "client_gallery", galleryId, { imageId });
     return privateJson(
       {
         intentId: id,
