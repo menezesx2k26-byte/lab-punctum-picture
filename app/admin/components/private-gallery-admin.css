@@ -192,6 +192,9 @@
   .pga .pga-actions .button {
     flex: 1;
   }
+  .pga .pga-editor-form .pga-actions .button {
+    flex: 1 0 100%;
+  }
   .pga .pga-credential code {
     font-size: 16px;
   }
