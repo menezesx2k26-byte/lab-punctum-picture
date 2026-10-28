@@ -5,8 +5,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { R4_QA, R4_RESUME_DATABASES, isolatedQaConfig } from './lib/r4-edge-qa.mjs';
-import { assertPrivateBucketPrivacy, d1QueryRows, r2RestListing } from './lib/private-preview.mjs';
-import { assertR4RecoveryPreflight, assertR4RecoveryVacant, assertR4RecoveryScope, assertR4FlagDisabledCandidateConfig, withR4QaRestoration, r4RecoveryWorkerConfig, signR4QaAdminCookie, signR4QaClientCookie } from './lib/r4-recovery-qa.mjs';
+import { assertPrivateBucketPrivacy, d1QueryRows } from './lib/private-preview.mjs';
+import { assertR4RecoveryPreflight, assertR4RecoveryVacant, assertR4RecoveryScope, assertR4FlagDisabledCandidateConfig, withR4QaRestoration, r4RecoveryWorkerConfig, signR4QaAdminCookie, signR4QaClientCookie, r4VacancyListing } from './lib/r4-recovery-qa.mjs';
 
 const account = '257bca437616da74ece1ce4bbaf0bd89';
 const tables = ['client_accounts','client_galleries','client_gallery_images','client_gallery_upload_intents','client_gallery_favorites'];
@@ -46,7 +46,7 @@ export async function runR4RecoveryQa(report, api) {
       await requireApi(base+'/r2/buckets/'+name+'/domains/managed'),
       await requireApi(base+'/r2/buckets/'+name+'/domains/custom')
     );
-    const listing=r2RestListing(await api(base+'/r2/buckets/'+name+'/objects?per_page=1'));
+    const listing=r4VacancyListing(await api(base+'/r2/buckets/'+name+'/objects?per_page=1'));
     assert.equal(listing.truncated,false,'Entire QA bucket vacancy must be verifiable');
     objects[role]=listing.objects.length;
   }

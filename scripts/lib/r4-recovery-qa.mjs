@@ -2,7 +2,17 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { R4_QA, R4_RESUME_DATABASES } from './r4-edge-qa.mjs';
-export { r2RestListing as r4VacancyListing } from './private-preview.mjs';
+import { r2RestListing } from './private-preview.mjs';
+
+// Run 40768031299 observed this exact empty envelope on all three dedicated buckets.
+// Cloudflare documents result_info as optional. Never infer vacancy for nonempty,
+// malformed or cursor-bearing responses, and preserve the legacy strict parser.
+export function r4VacancyListing(envelope) {
+  if(envelope?.success===true && Array.isArray(envelope.result) && envelope.result.length===0 &&
+    !Object.hasOwn(envelope,'result_info') && Array.isArray(envelope.errors) && envelope.errors.length===0 &&
+    Array.isArray(envelope.messages) && envelope.messages.length===0) return {objects:[],truncated:false};
+  return r2RestListing(envelope);
+}
 
 const ACCOUNT = '257bca437616da74ece1ce4bbaf0bd89';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
