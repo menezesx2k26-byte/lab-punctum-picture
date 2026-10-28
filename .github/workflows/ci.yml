@@ -21,4 +21,5 @@ jobs:
       - run: npx vitest run --config vitest.collage.config.ts
       - run: node --test scripts/collage-css.test.mjs
       - run: node --test scripts/publish-colagem-production.test.mjs
+      - run: node --test services/punctum-password-bridge/server.test.mjs
       - run: npm run build
