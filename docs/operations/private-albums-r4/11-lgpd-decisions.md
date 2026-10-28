@@ -13,3 +13,22 @@ O backup privado de QA contém somente fixtures sintéticas na execução testad
 - **Estado de governança (`G20`)**:
   - Parte técnica/documental: `PASS`.
   - Aprovação formal do controlador de dados / responsável pelo estúdio: `BLOCKED_GOVERNANCE`.
+
+## Pacote de decisão para a responsável do estúdio — **aprovação NÃO obtida**
+
+A aprovação é uma decisão real de governança e não pode ser inferida de testes. Antes de assinar, a responsável precisa confirmar por escrito:
+
+| Decisão | Resposta da responsável (pendente) |
+|---|---|
+| Identidade jurídica do controlador e contato privativo de atendimento | NÃO INFORMADA |
+| Base legal e finalidade por operação (cadastro, sessão, fotos, favoritos, download, exportação) | NÃO APROVADA |
+| Aviso ao titular, consentimentos quando aplicáveis e canal de oposição/correção | NÃO APROVADO |
+| Prazos de retenção, exclusão, backups, recuperação e tratamento de litígio | NÃO APROVADOS |
+| Suboperadores (Cloudflare D1, R2, Access), região/transferência, acesso da equipe | NÃO APROVADOS |
+| Operação de solicitação de acesso/portabilidade: autenticar solicitante, expurgar dados incidentais de terceiros, entregar canal seguro | NÃO APROVADA |
+| Política de incidentes, rastreabilidade e quem responde ao titular | NÃO APROVADA |
+| Autorização de coleta e exposição em piloto real | NÃO AUTORIZADA |
+
+**Registro de aprovação:** Responsável: **PENDENTE** · data: **PENDENTE** · decisão: **NÃO APROVADO** · referência assinada: **AUSENTE**.
+
+A evidência local prova projeção técnica e isolamento nos fixtures; não prova conformidade integral com a LGPD nem constitui parecer jurídico. Preservar `G20 = BLOCKED_GOVERNANCE` até assinatura verificável.
