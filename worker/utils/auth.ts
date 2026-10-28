@@ -9,7 +9,16 @@ const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
 export type AdminIdentity = {
   email: string;
   roles: ["admin"];
+  /** The email on a shared-password login is self-declared, not verified identity. */
+  authSource?: "shared-password";
 };
+
+/** Audit attribution must not impersonate an individual through a shared secret. */
+export function auditPrincipal(identity: AdminIdentity): string {
+  return identity.authSource === "shared-password"
+    ? "shared-password@punctum.invalid"
+    : identity.email;
+}
 
 export function normalizeTeamDomain(value: string): string {
   const withoutProtocol = value.replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -107,7 +116,7 @@ async function verifyPasswordSession(
     const email = payload.email.toLowerCase();
     if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
     if (!allowedAdminEmails(env).includes(email)) return null;
-    return { email, roles: ["admin"] };
+    return { email, roles: ["admin"], authSource: "shared-password" };
   } catch {
     return null;
   }
