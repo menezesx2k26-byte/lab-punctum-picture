@@ -3,6 +3,7 @@ import {
   adminSessionCookie,
   clearAdminSessionCookie,
   createAdminSession,
+  auditPrincipal,
   requireAdmin,
   setAdminPassword,
   verifyAdminPassword,
@@ -60,8 +61,8 @@ export async function handleAdminAuth(
     if (!(await verifyAdminPassword(input.currentPassword, env, db))) {
       throw new AppError(401, "ADMIN_LOGIN_FAILED", "A senha atual está incorreta.");
     }
-    await setAdminPassword(input.newPassword, db, identity.email);
-    await writeAudit(db, identity.email, "admin.password_changed", "admin", null);
+    await setAdminPassword(input.newPassword, db, auditPrincipal(identity));
+    await writeAudit(db, auditPrincipal(identity), "admin.password_changed", "admin", null);
     return json(
       { ok: true },
       {
