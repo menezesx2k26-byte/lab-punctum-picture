@@ -20,14 +20,14 @@
 | G14 dispositivos físicos | PARTIAL | Android Chrome/iOS Safari físicos não ensaiados |
 | G15 SEO/cache/noindex | PASS_LOCAL | testes locais; configuração real completa pendente |
 | G16 site público/Studio/Colagem | PASS_LOCAL | 203 Workers +7 Colagem +26 Node; browser atual não executado |
-| G17 CPU/franquia/R$0 | BLOCKED_EXTERNAL | relatório 18: home QA 129–166 ms; Billing 200 parcial; Hostinger sem inventário, sem offload/medição do HEAD |
+| G17 CPU/franquia/R$0 | BLOCKED_EXTERNAL | relatórios 18/21: home QA129–166ms; SSH/Node 22/24 confirmados, TCP loopback recusado e gerenciador inválido; sem endpoint/offload/quotas/medição do HEAD |
 | G18 recuperação D1/R2 | BLOCKED_EXTERNAL | históricos 5 contas preservados; par vazio e ensaio remoto ausentes |
 | G19 segurança independente | PARTIAL | revisão dirigida e fixes não são sign-off formal independente |
 | G20 LGPD | BLOCKED_GOVERNANCE | aprovação da controladora não obtida |
 | G21 PR/CI/SHA | PASS | HST CI 40739701038 success no SHA f25d51f; CI do HEAD documental final conferida no corpo da PR #24 |
 | G22 autorização de release | BLOCKED_GOVERNANCE | nenhum GO de produção; main aciona deploy/migrations |
 | G23 rollback | PARTIAL | runbook 19; replay/flags locais; remotoNOT_RUN |
-| G24 handoff | PASS_LOCAL | relatórios 18/19/20, JSON e estado; PR/CI/Drive final no corpo da PR |
+| G24 handoff | PASS_LOCAL | relatórios 18–21, JSON e estado; PR/CI/Drive final no corpo da PR |
 
 ## Continuação — 27/10/2026
 

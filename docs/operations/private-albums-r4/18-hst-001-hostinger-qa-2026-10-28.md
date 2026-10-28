@@ -4,6 +4,8 @@
 
 PR de implementação: [#24](https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24), draft sobre #20. A CI do SHA final e o handoff Drive são registrados no corpo da PR após verificação.
 
+**Atualização posterior com SSH autorizado:** [relatório 21](21-hst-001-hostinger-ssh-followup-2026-10-28.md). A autenticação foi resolvida e Node 22/24 executam; o gerenciador consultado falha e o TCP loopback recusa conexões. As limitações de acesso descritas abaixo são o histórico da coleta inicial, não o estado atual completo.
+
 ## Baseline e rastreabilidade
 
 - Checkout inicial `/workspace/lab-punctum-picture`: `aac2d448d9f54e9215c278892ab3a4a7f26237a4`, branch `work`, limpo, sem alterações não commitadas.
@@ -125,7 +127,7 @@ Um subagente revisou o código e o workflow somente em leitura; os dois achados 
 
 | Item | Estado / evidência |
 |---|---|
-| Hostinger inventariada e PersistFlow preservado | **BLOCKED** para inventário; HTTPS/identidade vivos e ausência de mutações comprovados |
+| Hostinger inventariada e PersistFlow preservado | **PARTIAL/BLOCKED**: inventário SSH autorizado no relatório 21; plano/capacidade/HTTPS dedicado sem prova; serviços existentes preservados |
 | Node isolado implantado por HTTPS | **BLOCKED**, nenhum alvo seguro demonstrado |
 | Autenticação/proteções do serviço remoto | **BLOCKED**; hardening e testes locais PASS |
 | Worker QA integrado reversivelmente | **BLOCKED**, sem configuração/deploy remoto |

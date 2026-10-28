@@ -5,10 +5,10 @@
   "status": "TECHNICAL_DOD_PASS",
   "decision": "NO_GO_PRODUCTION",
   "statusScope": "Historical R4 technical PASS retained; HST-001 is BLOCKED. Local bridge hardening is not a deployed or remotely homologated service. No production authorization.",
-  "updatedAt": "2026-10-28T17:55:56.853356Z",
+  "updatedAt": "2026-10-28T18:57:02.582081Z",
   "branch": "agent/hst-001-hostinger-qa-20261028",
   "baseBranch": "agent/argon-punctum-r4-dod-20261027-v2",
-  "headBeforeStateUpdate": "f25d51f56ea96fbe8ef88069b7954383d9d134ff",
+  "headBeforeStateUpdate": "f274f29a190bed4360cdfb388ad118ef7ac4698e",
   "canonicalGateSystem": "ORIGINAL_SPEC_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/12-release-readiness.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
@@ -65,14 +65,14 @@
   "gateNotes": {
     "G07": "Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL).",
     "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run.",
-    "G17": "HST-001: GraphQL142requests CPU p50=4.259,p95=12.667,p99=134.2ms on old QA. Bounded200event sample contains126CPU events:3public-home calls129/134/166ms across3Oct24versions; current version one134ms sample. Access session4samples0..2ms does not measure PBKDF2. Billing now read200 using existing repo candidate2: Free/TeamsFree/R2Paid base0; Workers-specific effective budget and aggregate usage not proved. Hostinger dedicated capacity unverified; no offload or before/after. G17 BLOCKED_EXTERNAL; report18.",
+    "G17": "SSH authenticated and Node 22/24 executed; manager readonly queries fail missing vendor integration and own loopback TCP fails in Node/Python. Minimal nonce replay test PASS, max RSS 54784 KiB is not load/capacity proof. Old QA home 129/134/166 ms remains historical only; no current-HEAD/offload before-after or quota/cost proof. G17 BLOCKED_EXTERNAL; reports18/21.",
     "G18": "Live Cloudflare D1 SELECT COUNT(*) confirmed BOTH historical QA and restore D1 hold 5 client_accounts each (0 rows written); actual R2 QA original/backup/restored buckets exist. Never overwrite; isolated EMPTY resource pair and authorized rehearsal missing.",
     "G19": "Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07.",
     "G20": "Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains.",
-    "G21": "Full CI run 40739701038 completed/success verified on f25d51f56ea96fbe8ef88069b7954383d9d134ff; runtime code ee7b6d6. Local 203 Workers / 7 Collage / 26 Node and checks PASS. Final docs-only HEAD CI is verified separately in PR #24 body; diagnostic success is not full CI proof.",
+    "G21": "CI 40740514976 completed/success on f274f29a190bed4360cdfb388ad118ef7ac4698e; runtime ee7b6d6 unchanged in SSH documentation followup. Final new docs-only HEAD CI is verified separately in PR #24 body.",
     "G22": "Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation.",
-    "G23": "No Hostinger/Worker deploy or remote bridge configuration was made, so there is no deployed Punctum bridge to roll back. Local nonce replay/new-process, fail-closed and flags tested; actual remote rollback/restartNOT_RUN. G23 PARTIAL; runbook 19.",
-    "G24": "HST-001 reports18/19, immutable sanitized evidence and execution-state track completed code plus external blockers. New PR/CI/Drive references finalized in PR body. No PersistFlow takeover claimed."
+    "G23": "Nonce replay rejected across two new SSH Node processes using original replay-store. This does not test managed Hostinger restart/redeploy or operational Worker/D1/R2 rollback. No deployed Punctum bridge or remote integration exists. G23 PARTIAL; reports19/21.",
+    "G24": "Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed."
   },
   "productionFlag": {
     "PRIVATE_GALLERIES_ENABLED": "false (versioned, effective remote runtime unverified)",
@@ -206,7 +206,7 @@
     },
     "hst001": {
       "runtimeCodeSha": "ee7b6d65e96fdcbc5490edcac58970f0779d412e",
-      "localEnvironment": "/workspace/hst-001; Node24.19.0",
+      "localEnvironment": "/workspace/hst-001; Node 24.19.0",
       "baseline": {
         "files": 47,
         "tests": 199,
@@ -237,17 +237,26 @@
       "gitDiffCheck": "PASS",
       "fullCi": {
         "status": "PASS",
-        "sha": "f25d51f56ea96fbe8ef88069b7954383d9d134ff",
-        "runId": 40739701038,
-        "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40739701038",
-        "scope": "Runtime and initial documentation; final docs-only HEAD CI reference verified separately in PR24 body"
+        "sha": "f274f29a190bed4360cdfb388ad118ef7ac4698e",
+        "runId": 40740514976,
+        "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40740514976",
+        "scope": "Previous exact HEAD; runtime unchanged in SSH followup; final docs-only HEAD CI verified separately in PR24 body"
       },
       "diagnosticRunId": 40738766054,
       "diagnosticSha": "64023a9d6a36eaeba5bd82854f0520eacc92ca60",
       "remoteBridgeTests": "NOT_RUN",
       "realOtp": "NOT_RUN",
       "physicalDevices": "NOT_RUN",
-      "formalG19Signoff": "NOT_OBTAINED"
+      "formalG19Signoff": "NOT_OBTAINED",
+      "sshFollowup": {
+        "runtimeCodeChanged": false,
+        "nodeHttpLoopback": "FAIL_ECONNREFUSED",
+        "pythonTcpControl": "FAIL_CONNECTION_REFUSED",
+        "nonceAcrossTwoProcesses": "PASS",
+        "providerRestartAndHttpsIntegration": "NOT_RUN",
+        "actualOffloadedWorkload": "NONE",
+        "source": "docs/operations/private-albums-r4/evidence/hst-001-hostinger-ssh-inventory-2026-10-28.json"
+      }
     }
   },
   "securityRisks": [
@@ -276,7 +285,7 @@
     {
       "gate": "G17",
       "owner": "Cloudflare account/billing owner",
-      "action": "Use HST evidence to isolate public-home renderer/startup CPU on current HEAD; inspect existing Hostinger capacity securely; prove effective plan/quotas, aggregate variable costs and controlled before-after. Do not activate Password Bridge or change Access based on historical p99."
+      "action": "Resolve provider Node manager/isolated HTTPS route through supported control plane; supplied SSH authenticates and runs Node but loopback is refused. Verify plan/quotas and then benchmark current-HEAD public-home work before choosing any offload; preserve Access/PersistFlow."
     },
     {
       "gate": "G18",
@@ -332,7 +341,27 @@
       "inspectionResult": "JOB_NOT_STARTED_ACCOUNT_LOCKED_BILLING_ISSUE",
       "stepsExecuted": 0,
       "punctumDeployed": false,
-      "persistflowMutations": 0
+      "persistflowMutations": 0,
+      "currentInspectionMethod": "SSH authorized by owner",
+      "sshInventoryStatus": "AUTHENTICATED_PARTIAL",
+      "nodeVersionsExecuted": [
+        "22.23.4",
+        "24.22.1"
+      ],
+      "managerReadQueryResult": "ERROR_MISSING_/etc/cl.cpapi/domains.py",
+      "loopbackTcpNode": "FAIL_ECONNREFUSED",
+      "loopbackTcpPython": "FAIL_CONNECTION_REFUSED_ERRNO_111",
+      "newProcessReplay": "PASS_SYNTHETIC_SSH_ONLY",
+      "probeProcessMaxRssKiB": 54784,
+      "probeMemoryScope": "Minimal nonce test, not service load or account quota",
+      "temporaryProbeDirectoriesRemaining": 0,
+      "postProbeExistingServicesHealth": {
+        "persistflowNode": 200,
+        "persistflowPhpSandbox": 200
+      },
+      "remoteRestartTest": "NOT_RUN_PROVIDER_MANAGED_RESTART",
+      "providerConfigWrites": 0,
+      "temporarySyntheticTestFiles": "Created in new private directories and removed; existing application files unchanged"
     },
     "cloudflare": {
       "worker": "punctum-picture-albums-qa",
@@ -363,11 +392,11 @@
     "incrementalDeploymentCost": "UNPROVEN_NO_DEPLOYMENT",
     "remoteRollback": "NOT_RUN",
     "blockers": [
-      "No current Hostinger app-slot/resource/isolation inventory; token-bound readonly job did not start due GitHub infrastructure-account billing lock.",
-      "Known Hostinger Node domain is PersistFlow and must not be repurposed.",
-      "Observed heavy path is public home in old QA, not a measured password operation; no cause decomposition or HEAD CPU benchmark.",
-      "No isolated bridge/QA integration, remote restart/rollback or before-after CPU/latency/memory/quota proof.",
-      "Effective Workers budget and aggregate variable usage not proved despite subscription metadata read."
+      "Authenticated shared SSH supports Node binaries and nonce persistence, but own loopback TCP connections fail in both Node/Python; no functional dedicated persistent HTTPS route demonstrated.",
+      "Node manager readonly queries fail due missing vendor integration /etc/cl.cpapi/domains.py; no vendor repair, daemon workaround or existing-app modification attempted.",
+      "Plan, included Node app slots and effective quotas remain unverified; owner requested bounded trial and does not know plan.",
+      "Actual high-CPU path is public home in old QA; current-HEAD cause decomposition and matched before-after offload remain missing.",
+      "No Worker-to-Hostinger HTTPS integration, provider restart/redeploy, remote rollback or aggregate cost/quota proof."
     ],
     "pullRequest": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24",
     "hostingerEvidence": "docs/operations/private-albums-r4/evidence/hst-001-hostinger-observations.json",
@@ -375,8 +404,11 @@
     "driveHandoff": {
       "url": "https://drive.google.com/file/d/1gzKs4XXk5wjZrXskHENov_qm627ZBXqX/view?usp=drivesdk",
       "account": "Sgtmenezes",
-      "status": "UPLOADED_AND_READBACK_VERIFIED",
-      "fileId": "1gzKs4XXk5wjZrXskHENov_qm627ZBXqX"
-    }
+      "status": "UPLOADED_AND_READBACK_VERIFIED_AFTER_SSH_FOLLOWUP",
+      "fileId": "1gzKs4XXk5wjZrXskHENov_qm627ZBXqX",
+      "updatedContent": "SSH/runtime/nonce/TCP results from report21"
+    },
+    "sshFollowupReport": "docs/operations/private-albums-r4/21-hst-001-hostinger-ssh-followup-2026-10-28.md",
+    "sshEvidence": "docs/operations/private-albums-r4/evidence/hst-001-hostinger-ssh-inventory-2026-10-28.json"
   }
 }

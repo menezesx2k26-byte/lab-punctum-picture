@@ -67,3 +67,7 @@ Os números G01–G22 do relatório `15-argon-execution-2026-10-27.md` são uma 
 Mantidos os24 gates originais. G17 BLOCKED_EXTERNAL e G23 PARTIAL: nenhuma ativação, restart, integração ou rollback remoto; o domínio histórico é PersistFlow. G21 temporariamente PARTIAL para a nova PR até CI do SHA final; CI anterior de #20 permanece prova histórica. HST local:203 Workers/7 Colagem/26 Node e checksPASS. [Relatório18](18-hst-001-hostinger-qa-2026-10-28.md); [runbook 19](19-hst-001-deploy-rollback.md).
 
 Atualização de CI HST: run [40739701038](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40739701038) **completed/success** verificado em `f25d51f56ea96fbe8ef88069b7954383d9d134ff`; G21 PASS para esse SHA. A CI do HEAD documental final é registrada separadamente na PR #24. O estado temporário PARTIAL acima está superado por esta verificação, sem alterar G17/G23.
+
+## Continuação por SSH — 28/10/2026
+
+[Relatório21](21-hst-001-hostinger-ssh-followup-2026-10-28.md): autenticação SSH resolvida, Node 22/24 executam; consultas do gerenciador falham e loopback TCP é recusado em Node/Python. Replay entre novos processos SSH PASS, sem restart/redeploy do provedor ou app HTTPS. G17 BLOCKED_EXTERNAL e G23 PARTIAL preservados. G21 usa a CI anterior exata f274f29 e a CI documental final registrada na PR #24. Nada foi integrado ao Worker ou ao PersistFlow.

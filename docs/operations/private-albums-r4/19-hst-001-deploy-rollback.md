@@ -66,3 +66,7 @@ Para um futuro QA dedicado já homologável:
 | Nó já pertencente ao ecossistema | Não utilizar automaticamente Fleet/PersistFlow/VMs: disponibilidade, isolamento, HTTPS e orçamento também precisam de prova. |
 
 Nenhuma alternativa libera G17 ou produção sem medições e gates próprios.
+
+## Evidência adicional por SSH — 28/10
+
+O [relatório 21](21-hst-001-hostinger-ssh-followup-2026-10-28.md) confirma Node 22/24 executáveis e replay entre processos, mas gerenciador com integração ausente e loopback TCP recusado em Node/Python. Autenticação SSH não equivale a app HTTPS permanente. Não iniciar daemon ou usar o sandbox PHP existente como proxy para contornar essa lacuna. Plano e recursos continuam não comprovados.
