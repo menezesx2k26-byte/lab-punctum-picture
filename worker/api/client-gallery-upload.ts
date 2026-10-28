@@ -252,6 +252,8 @@ export async function handleClientGalleryUploadApi(
   if (match[4] === "complete" && request.method === "POST") {
     if (intent.status !== "uploaded")
       throw new AppError(409, "UPLOAD_INCOMPLETE", "Conclua o envio da foto.");
+    if (!env.IMAGES)
+      throw new AppError(503, "IMAGE_VALIDATION_UNAVAILABLE", "A validação de fotos está indisponível. Tente novamente mais tarde.");
     const head = await bucket.head(intent.storageKey);
     if (
       !head ||

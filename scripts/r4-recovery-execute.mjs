@@ -80,6 +80,7 @@ export async function runR4RecoveryQa(report, api) {
   const appConfig=isolatedQaConfig(built,{
     databaseId:source,createdDatabaseIds:[source,restore],origin,privateEnabled:true,performanceOnly:false
   });
+  assert.equal(appConfig.images?.binding,'IMAGES','Upload-based recovery QA needs the IMAGES binding and verified transformation allowance before creating fixtures; do not bypass image validation');
   const appPath=resolve('dist/server/r4-functional-qa.wrangler.json');
   await writeFile(appPath,JSON.stringify(appConfig));
   await withR4QaRestoration(report,async()=>{
