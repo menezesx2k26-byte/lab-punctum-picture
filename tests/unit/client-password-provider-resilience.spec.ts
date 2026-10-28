@@ -9,6 +9,21 @@ const setup = () => ({ ...env, CLIENT_PASSWORD_BACKEND: "hostinger",
 afterEach(() => vi.restoreAllMocks());
 
 describe("bridge failure containment", () => {
+  it("accepts a D1 account while sending only its three credential fields", async () => {
+    const account = { ...credential, passwordHash: "B".repeat(43),
+      id: "synthetic-client-a", email: "synthetic-client-a@example.test", name: "Synthetic QA", sessionVersion: 9 };
+    let sent: string | undefined;
+    const valid = await verifyClientPasswordWithProvider("synthetic-password", account, setup(), async (_url, init) => {
+      sent = String(init?.body);
+      return Response.json({ valid: true });
+    });
+    expect(valid).toBe(true);
+    const payload = JSON.parse(sent!) as { credential: Record<string, unknown> };
+    expect(payload.credential).toEqual({ passwordHash: "B".repeat(43), passwordSalt: "A".repeat(22), passwordIterations: 310_000 });
+    for (const privateValue of [account.id, account.email, account.name, "sessionVersion"])
+      expect(sent).not.toContain(privateValue);
+  });
+
   it("rejects unexpected response fields instead of accepting a credential or token envelope", async () => {
     for (const payload of [
       { credential, token: "synthetic-token-must-not-be-accepted" },
