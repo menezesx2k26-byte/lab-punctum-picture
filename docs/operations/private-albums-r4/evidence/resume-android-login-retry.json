@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 2,
+  "status": "OWNER_ONETIMEPIN_ACCESS_LOGIN_VERIFIED_GALLERY_NOT_VALIDATED",
+  "scope": "Corrected one-time Cloudflare Access read-only exact owner+QA application event lookup since 2026-10-28T23:09:20Z, preserving earlier empty-window evidence; no modifications.",
+  "observedAtUtc": "2026-10-28T23:26:21Z",
+  "provider": "Existing authorized Cloudflare connection",
+  "cloudflareAccountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "accessApplicationId": "9ba6f47a-a0d2-4588-9d21-6b14d54dad6a",
+  "request": {
+    "endpoint": "GET /accounts/{account_id}/access/logs/access_requests",
+    "fromUtc": "2026-10-28T23:09:20Z",
+    "untilUtc": "2026-10-28T23:26:21Z",
+    "appUidFilterAppliedServerSide": true,
+    "exactAuthorizedOwnerEmailFilterAppliedServerSide": true,
+    "ownerEmailStored": false,
+    "fieldsRequested": [
+      "allowed",
+      "connection",
+      "created_at"
+    ],
+    "otherUsersRequested": false,
+    "ippersonalFieldsRequested": false,
+    "successfulApiResponse": true,
+    "apiErrors": [],
+    "eventCount": 1,
+    "events": [
+      {
+        "timeUtc": "2026-10-28T23:14:10Z",
+        "allowed": true,
+        "connection": "onetimepin"
+      }
+    ],
+    "reportedMorePages": false,
+    "logCompletenessNotEstablished": true
+  },
+  "previousQueryHistory": {
+    "fromUtc": "2026-10-28T23:15:00Z",
+    "untilUtc": "2026-10-28T23:22:13Z",
+    "eventCount": 0,
+    "successfulApiResponse": true,
+    "correction": "Original query started after the now-observed 23:14:10Z authorized OTP event. The zero-event result remains valid for its original narrower window."
+  },
+  "humanReport": {
+    "device": "Android Chrome incognito",
+    "authentication": "Human reports fresh OTP sign-in reached the \"Seus álbuns\" page.",
+    "confirmedByHuman": true,
+    "timeOfPhysicalAttemptVerifiedByCloudflareLog": false,
+    "matchingOwnerOtpAccessLoginObserved": true,
+    "deviceAttributionInAccessLog": false,
+    "pageOpened": true,
+    "emptyOrStaticPageReported": true,
+    "galleryDataOperationallyVerified": false,
+    "actualOwnerGalleryVisibleVerified": false,
+    "uploadOrPrivateMediaVerified": false,
+    "backendClientMeResultOnAndroidUnknown": true,
+    "androidAppBuildAndModelUnknown": true
+  },
+  "findings": {
+    "matchingAccessEventsInSpecifiedWindow": 1,
+    "loginSuccessInSpecifiedWindowVerifiedByLog": true,
+    "denialInSpecifiedWindowVerifiedByLog": false,
+    "loginMethodForFreshAttemptVerifiedByLog": true,
+    "doNotDisputeHumanReport": true,
+    "interpretation": "The corrected window contains an exact owner-and-app onetimepin login allowed=true at 23:14:10Z, consistent with the human-reported fresh Android incognito OTP entry. The provider log does not carry device identity, so physical Android attribution itself is not proven by log. The page opening and authentication do not establish gallery functionality, client model, private media or upload correctness.",
+    "galleryGate": "NOT_PASSED_BY_THIS_EVIDENCE",
+    "policyChanged": false
+  },
+  "context": {
+    "g18InspectorVersionReadinessCorrectionPushedByParent": true,
+    "g18CurrentVersion403Handling": "Immediate fail; stale-version GET-only bounded retry policy reported by parent, not examined or executed here",
+    "githubRunDiscoveryNotPerformed": true,
+    "noMoreVersionForensics": true
+  },
+  "changes": {
+    "cloudflareWrites": 0,
+    "accessPolicyWrites": 0,
+    "otpOrCookieAccess": 0,
+    "workerDeployments": 0,
+    "d1Writes": 0,
+    "r2Writes": 0,
+    "localReportOnly": true
+  },
+  "privacy": {
+    "ownerEmailStored": false,
+    "otherPersonalEmailsStored": false,
+    "ipAddressesStored": false,
+    "otpCodesStored": false,
+    "jwtStored": false,
+    "cookiesStored": false,
+    "secretValuesStored": false
+  }
+}

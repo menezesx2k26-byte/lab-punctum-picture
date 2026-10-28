@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "status": "INDEPENDENT_READ_ONLY_POST_RUN_RESOURCES_VERIFIED_WITH_R2_PAGINATION_LIMITATION",
+  "verificationWindowUtc": "2026-10-28T23:26Z",
+  "scope": "Exact existing isolated R4 G18 QA Worker, D1 source/restore, and three R2 bucket metadata pages only. No new resources, mutations, object fetches, recovery or deployment.",
+  "parentArtifacts": {
+    "githubActionsRunId": "40786688338",
+    "sourceCommit": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+    "localReportPath": "work/resume-scoped-g18-current/r4-scoped-recovery-report.json",
+    "reportedStatus": "SCOPED_G18_EVIDENCE_COMPLETE_AWAITING_REVIEW",
+    "reportedFunctionalQA": "QA_SYNTHETIC_G18_ONLY",
+    "note": "Full G18 26-row, 10-image hashes, authentication denial and session tests were reviewed by parent from the local report; this independent task validates resource state, not those historical test outcomes.",
+    "legacyOriginalCase": {
+      "clientId": "39a03fb3-d913-4380-a30d-f983fabd22e1",
+      "galleryId": "66c091c1-8a4f-47a8-bc57-43cfbebfa0f0",
+      "imageId": "e5afb187-6384-4812-b647-eddb430dbe02",
+      "intentId": "b7bf8640-b49e-4d34-8092-9cfd3e6314e5",
+      "parentArtifactCanonicalRowsSha256Before": "1bed347c9e77835545e7c3da6515ab4bb8f5463b8e301b12f438cc66377524f1",
+      "parentArtifactCanonicalRowsSha256After": "1bed347c9e77835545e7c3da6515ab4bb8f5463b8e301b12f438cc66377524f1",
+      "independentlyRecomputedRawRowHash": false,
+      "reason": "Preserved parent artifact's exact baseline/digest; no extra PII-bearing full-row snapshot or invented alternate canonicalization."
+    },
+    "g23": "PARTIAL_NO_DATA_ROLLBACK"
+  },
+  "cloudflareAccountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "worker": {
+    "name": "punctum-picture-r4-qa-20261028",
+    "latestDeploymentId": "5658b99f-3ff4-4282-aa0f-1e851f34eeb0",
+    "latestDeployedAtUtc": "2026-10-28T23:23:19.41691Z",
+    "versionId": "e05a3001-3c78-4703-8055-acf3026bd450",
+    "percentage": 100,
+    "versionMatchesParentExpected": true,
+    "deploymentCountObserved": 32,
+    "environment": "preview",
+    "privateGalleriesEnabled": false,
+    "clientAuthMode": "access",
+    "qaRecoveryEnabledBindingPresent": false,
+    "dbBindings": [
+      {
+        "name": "DB",
+        "databaseId": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c"
+      }
+    ],
+    "r2BindingsCount": 0,
+    "otherSecretValuesRead": false,
+    "secretNames": [
+      "ADMIN_PASSWORD_HASH",
+      "ADMIN_SESSION_SECRET",
+      "CLIENT_SESSION_SECRET",
+      "QA_RECOVERY_SECRET"
+    ],
+    "qaVersionBindingPresent": true,
+    "settingsApiReadOnly": true
+  },
+  "d1": {
+    "source": {
+      "id": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c",
+      "counts": {
+        "client_accounts": 3,
+        "client_galleries": 3,
+        "client_gallery_images": 11,
+        "client_gallery_upload_intents": 11,
+        "client_gallery_favorites": 2
+      },
+      "expectedCountsMatched": true,
+      "clients": {
+        "total": 3,
+        "disabled": 0,
+        "minSessionVersion": 1,
+        "maxSessionVersion": 1
+      },
+      "foreignKeyViolations": 0
+    },
+    "restore": {
+      "id": "0141b8f9-3074-4aa4-a184-92a4f7379ecc",
+      "counts": {
+        "client_accounts": 2,
+        "client_galleries": 2,
+        "client_gallery_images": 10,
+        "client_gallery_upload_intents": 10,
+        "client_gallery_favorites": 2
+      },
+      "expectedCountsMatched": true,
+      "clients": {
+        "total": 2,
+        "disabled": 2,
+        "minSessionVersion": 2,
+        "maxSessionVersion": 2
+      },
+      "allRestoredClientsDisabled": true,
+      "restoredClientSessionsVersionAtLeast2": true,
+      "foreignKeyViolations": 0
+    },
+    "sqlStatements": 6,
+    "eachD1SqlChangedDb": false,
+    "allD1ReadsRowsWritten": 0
+  },
+  "r2": {
+    "operation": "GET bucket objects metadata listings only; one page per exact existing bucket, per_page=100",
+    "objectContentsFetched": false,
+    "objectKeysPersisted": false,
+    "buckets": [
+      {
+        "role": "source_originals",
+        "name": "punctum-r4-qa-originals-20261028",
+        "observedFirstPageObjects": 11,
+        "expected": 11,
+        "expectedMatchesObserved": true,
+        "pageLimit": 100
+      },
+      {
+        "role": "restore_objects",
+        "name": "punctum-r4-qa-restored-20261028",
+        "observedFirstPageObjects": 10,
+        "expected": 10,
+        "expectedMatchesObserved": true,
+        "pageLimit": 100
+      },
+      {
+        "role": "backups",
+        "name": "punctum-r4-qa-backups-20261028",
+        "observedFirstPageObjects": 1,
+        "expected": 1,
+        "expectedMatchesObserved": true,
+        "pageLimit": 100
+      }
+    ],
+    "listingApiReturnedResultArray": true,
+    "listingSuccessAllThree": true,
+    "paginationMetadataPresent": false,
+    "cursorPresent": false,
+    "truncatedFieldPresent": false,
+    "exhaustiveObjectCountProven": false,
+    "interpretation": "All first-page counts matched expected and are below requested limit100; response omitted pagination/cursor/truncation indicators, so do not claim globally exhaustive counts or content hash parity from this independent read."
+  },
+  "decision": {
+    "isolatedG18ResourceStateVerified": true,
+    "failedClosedFinalCandidateFlagVerified": true,
+    "targetRunSuccessSource": "Parent-reported CI/artifact evidence, not independently reconstructed by this read-only task.",
+    "sourceLegacyCaseHashPreservedByLocalArtifact": true,
+    "g23StillPartial": true,
+    "doNotActivatePrivateGalleries": true,
+    "doNotRerunRecovery": true,
+    "pendingParentGetHeadDenialTest": "Parent owns this test and its evidence; not executed here."
+  },
+  "changes": {
+    "cloudflareWorkerWrites": 0,
+    "cloudflareD1Writes": 0,
+    "cloudflareR2Writes": 0,
+    "deployments": 0,
+    "migrations": 0,
+    "secretEdits": 0,
+    "otherDatabaseAccess": 0,
+    "localSanitizedReportCreated": 1
+  },
+  "privacy": {
+    "sourceClientEmailsStored": false,
+    "imageObjectKeysStored": false,
+    "passwordsRead": false,
+    "secretValuesRead": false,
+    "jwtOrCookiesRead": false,
+    "mediaFetched": false
+  }
+}

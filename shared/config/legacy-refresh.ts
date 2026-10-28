@@ -64,8 +64,9 @@ export function refreshLegacyPublishedConfig(config: SiteConfig): SiteConfig {
     currentHome.contact.title === legacyHome.contact.title;
 
   let changed = false;
-  const next = structuredClone(config);
-  const nextHome = next.editorial.home;
+  let draft: SiteConfig | undefined;
+  const next = () => (draft ??= structuredClone(config));
+  const nextHome = () => next().editorial.home;
 
   const replaceExact = (
     current: string,
@@ -79,81 +80,81 @@ export function refreshLegacyPublishedConfig(config: SiteConfig): SiteConfig {
   };
 
   replaceExact(currentHome.hero.eyebrow, legacyHome.hero.eyebrow, defaults.editorial.home.hero.eyebrow, () => {
-    nextHome.hero.eyebrow = defaults.editorial.home.hero.eyebrow;
+    nextHome().hero.eyebrow = defaults.editorial.home.hero.eyebrow;
   });
   replaceExact(currentHome.hero.title, legacyHome.hero.title, defaults.editorial.home.hero.title, () => {
-    nextHome.hero.title = defaults.editorial.home.hero.title;
+    nextHome().hero.title = defaults.editorial.home.hero.title;
   });
   replaceExact(currentHome.hero.accent, legacyHome.hero.accent, defaults.editorial.home.hero.accent, () => {
-    nextHome.hero.accent = defaults.editorial.home.hero.accent;
+    nextHome().hero.accent = defaults.editorial.home.hero.accent;
   });
   replaceExact(currentHome.hero.body, legacyHome.hero.body, defaults.editorial.home.hero.body, () => {
-    nextHome.hero.body = defaults.editorial.home.hero.body;
+    nextHome().hero.body = defaults.editorial.home.hero.body;
   });
   replaceExact(currentHome.hero.primaryCta, legacyHome.hero.primaryCta, defaults.editorial.home.hero.primaryCta, () => {
-    nextHome.hero.primaryCta = defaults.editorial.home.hero.primaryCta;
+    nextHome().hero.primaryCta = defaults.editorial.home.hero.primaryCta;
   });
   replaceExact(currentHome.hero.secondaryCta, legacyHome.hero.secondaryCta, defaults.editorial.home.hero.secondaryCta, () => {
-    nextHome.hero.secondaryCta = defaults.editorial.home.hero.secondaryCta;
+    nextHome().hero.secondaryCta = defaults.editorial.home.hero.secondaryCta;
   });
 
   replaceExact(currentHome.statement.eyebrow, legacyHome.statement.eyebrow, defaults.editorial.home.statement.eyebrow, () => {
-    nextHome.statement.eyebrow = defaults.editorial.home.statement.eyebrow;
+    nextHome().statement.eyebrow = defaults.editorial.home.statement.eyebrow;
   });
   replaceExact(currentHome.statement.title, legacyHome.statement.title, defaults.editorial.home.statement.title, () => {
-    nextHome.statement.title = defaults.editorial.home.statement.title;
+    nextHome().statement.title = defaults.editorial.home.statement.title;
   });
   replaceExact(currentHome.statement.body, legacyHome.statement.body, defaults.editorial.home.statement.body, () => {
-    nextHome.statement.body = defaults.editorial.home.statement.body;
+    nextHome().statement.body = defaults.editorial.home.statement.body;
   });
 
   replaceExact(currentHome.carousel.eyebrow, legacyHome.carousel.eyebrow, defaults.editorial.home.carousel.eyebrow, () => {
-    nextHome.carousel.eyebrow = defaults.editorial.home.carousel.eyebrow;
+    nextHome().carousel.eyebrow = defaults.editorial.home.carousel.eyebrow;
   });
   replaceExact(currentHome.carousel.title, legacyHome.carousel.title, defaults.editorial.home.carousel.title, () => {
-    nextHome.carousel.title = defaults.editorial.home.carousel.title;
+    nextHome().carousel.title = defaults.editorial.home.carousel.title;
   });
   replaceExact(currentHome.carousel.body, legacyHome.carousel.body, defaults.editorial.home.carousel.body, () => {
-    nextHome.carousel.body = defaults.editorial.home.carousel.body;
+    nextHome().carousel.body = defaults.editorial.home.carousel.body;
   });
   replaceExact(currentHome.carousel.hint, legacyHome.carousel.hint, defaults.editorial.home.carousel.hint, () => {
-    nextHome.carousel.hint = defaults.editorial.home.carousel.hint;
+    nextHome().carousel.hint = defaults.editorial.home.carousel.hint;
   });
 
   replaceExact(currentHome.featured.title, legacyHome.featured.title, defaults.editorial.home.featured.title, () => {
-    nextHome.featured.title = defaults.editorial.home.featured.title;
+    nextHome().featured.title = defaults.editorial.home.featured.title;
   });
   replaceExact(currentHome.featured.accent, legacyHome.featured.accent, defaults.editorial.home.featured.accent, () => {
-    nextHome.featured.accent = defaults.editorial.home.featured.accent;
+    nextHome().featured.accent = defaults.editorial.home.featured.accent;
   });
   replaceExact(currentHome.featured.body, legacyHome.featured.body, defaults.editorial.home.featured.body, () => {
-    nextHome.featured.body = defaults.editorial.home.featured.body;
+    nextHome().featured.body = defaults.editorial.home.featured.body;
   });
 
   replaceExact(currentHome.about.eyebrow, legacyHome.about.eyebrow, defaults.editorial.home.about.eyebrow, () => {
-    nextHome.about.eyebrow = defaults.editorial.home.about.eyebrow;
+    nextHome().about.eyebrow = defaults.editorial.home.about.eyebrow;
   });
   replaceExact(currentHome.about.quote, legacyHome.about.quote, defaults.editorial.home.about.quote, () => {
-    nextHome.about.quote = defaults.editorial.home.about.quote;
+    nextHome().about.quote = defaults.editorial.home.about.quote;
   });
   replaceExact(currentHome.about.body, legacyHome.about.body, defaults.editorial.home.about.body, () => {
-    nextHome.about.body = defaults.editorial.home.about.body;
+    nextHome().about.body = defaults.editorial.home.about.body;
   });
   replaceExact(currentHome.about.cta, legacyHome.about.cta, defaults.editorial.home.about.cta, () => {
-    nextHome.about.cta = defaults.editorial.home.about.cta;
+    nextHome().about.cta = defaults.editorial.home.about.cta;
   });
   replaceExact(currentHome.about.imageNote, legacyHome.about.imageNote, defaults.editorial.home.about.imageNote, () => {
-    nextHome.about.imageNote = defaults.editorial.home.about.imageNote;
+    nextHome().about.imageNote = defaults.editorial.home.about.imageNote;
   });
 
   replaceExact(currentHome.contact.eyebrow, legacyHome.contact.eyebrow, defaults.editorial.home.contact.eyebrow, () => {
-    nextHome.contact.eyebrow = defaults.editorial.home.contact.eyebrow;
+    nextHome().contact.eyebrow = defaults.editorial.home.contact.eyebrow;
   });
   replaceExact(currentHome.contact.title, legacyHome.contact.title, defaults.editorial.home.contact.title, () => {
-    nextHome.contact.title = defaults.editorial.home.contact.title;
+    nextHome().contact.title = defaults.editorial.home.contact.title;
   });
   replaceExact(currentHome.contact.body, legacyHome.contact.body, defaults.editorial.home.contact.body, () => {
-    nextHome.contact.body = defaults.editorial.home.contact.body;
+    nextHome().contact.body = defaults.editorial.home.contact.body;
   });
 
   replaceExact(
@@ -161,7 +162,7 @@ export function refreshLegacyPublishedConfig(config: SiteConfig): SiteConfig {
     LEGACY_PORTFOLIO_REEL_HINT,
     defaults.editorial.portfolio.reel.hint,
     () => {
-      next.editorial.portfolio.reel.hint = defaults.editorial.portfolio.reel.hint;
+      next().editorial.portfolio.reel.hint = defaults.editorial.portfolio.reel.hint;
     },
   );
 
@@ -169,22 +170,25 @@ export function refreshLegacyPublishedConfig(config: SiteConfig): SiteConfig {
     hadLegacyHomepageSignature &&
     config.theme.typography.headingFamily === "cormorant-garamond"
   ) {
-    next.theme.typography.headingFamily = defaults.theme.typography.headingFamily;
+    next().theme.typography.headingFamily = defaults.theme.typography.headingFamily;
     changed = true;
   }
 
-  const hero = next.pages.home.sections.find((section) => section.type === "hero");
+  const hero = config.pages.home.sections.find((section) => section.type === "hero");
   if (
     currentHome.hero.title === legacyHome.hero.title &&
     hero?.type === "hero" &&
     hero.heroMedia?.kind === "site-media" &&
     hero.heroMedia.id === LEGACY_DEFAULT_HERO_MEDIA_ID
   ) {
-    hero.heroMedia = null;
-    hero.appearance.surface = "default";
-    hero.appearance.backgroundImageId = null;
+    const draftHero = next().pages.home.sections.find((section) => section.type === "hero");
+    if (draftHero?.type === "hero") {
+      draftHero.heroMedia = null;
+      draftHero.appearance.surface = "default";
+      draftHero.appearance.backgroundImageId = null;
+    }
     changed = true;
   }
 
-  return changed ? siteConfigSchema.parse(next) : config;
+  return changed ? siteConfigSchema.parse(draft) : config;
 }

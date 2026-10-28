@@ -7,14 +7,18 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
@@ -22,4 +26,20 @@ jobs:
       - run: node --test scripts/collage-css.test.mjs
       - run: node --test scripts/publish-colagem-production.test.mjs
       - run: node --test services/punctum-password-bridge/server.test.mjs
+      - run: node --test services/punctum-hostinger-qa/server.test.mjs
+      - run: node --test scripts/r4-edge-qa.test.mjs
+      - run: node --test scripts/r4-access-runtime.test.mjs
+      - run: node --test scripts/r4-recovery-qa.test.mjs
+      - run: node --test scripts/r4-scoped-local.test.mjs
+      - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build
+      - run: node --test scripts/ssr-route-imports.test.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: node --test scripts/access-cookie-navigation.test.mjs
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-browser-evidence
+          path: outputs/browser-e2e/
+          retention-days: 14

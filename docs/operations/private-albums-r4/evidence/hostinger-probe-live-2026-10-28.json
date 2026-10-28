@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "collectedAtUtc": "2026-10-28T21:25:32Z",
+  "scope": "READ_ONLY Hostinger connected API and exactly two HTTPS GET requests on newly identified QA hostname; no existing PersistFlow GETs",
+  "api": {
+    "readCalls": 10,
+    "success": 10,
+    "failed": 0,
+    "mutations": 0,
+    "paginationComplete": true
+  },
+  "probe": {
+    "origin": "https://aliceblue-locust-999458.hostingersite.com",
+    "path": "/health",
+    "method": "GET",
+    "attempts": 2,
+    "nonces": "Two fresh distinct qa- UUID values, not stored",
+    "redirects": false,
+    "acceptedTls": true,
+    "requests": [
+      {
+        "atUtc": "2026-10-28T21:24:11.6938803Z",
+        "httpStatus": 503,
+        "latencyMs": 10196,
+        "contentType": "text/html",
+        "cacheControl": "no-store, must-revalidate, no-cache, max-age=0, private",
+        "bodyJson": false,
+        "expectedProbeFieldsObserved": false
+      },
+      {
+        "atUtc": "2026-10-28T21:24:25.6311307Z",
+        "httpStatus": 503,
+        "latencyMs": 6170,
+        "contentType": "text/html",
+        "cacheControl": "no-store, must-revalidate, no-cache, max-age=0, private",
+        "bodyJson": false,
+        "expectedProbeFieldsObserved": false
+      }
+    ],
+    "expected": {
+      "status": 200,
+      "service": "punctum-hostinger-qa-probe",
+      "version": "r4-node-probe-20261028-v1",
+      "cacheControl": "no-store",
+      "nonceEcho": true,
+      "processVersionPresent": true,
+      "uptimeSecondsPresent": true,
+      "rssBytesPresent": true,
+      "ssrValidated": false,
+      "production": false
+    },
+    "verified": false,
+    "observedService": null,
+    "observedVersion": null,
+    "observedNodeVersion": null,
+    "observedUptimeSeconds": null,
+    "observedRssBytes": null,
+    "observedSsrValidated": null,
+    "observedProduction": null,
+    "continuityProven": false,
+    "managedRestartProven": false,
+    "latestSingleFollowup": {
+      "observedAtUtc": "2026-10-28T21:35:12.1594795Z",
+      "method": "GET",
+      "host": "aliceblue-locust-999458.hostingersite.com",
+      "path": "/health",
+      "freshNonceUsedButNotRetained": true,
+      "httpStatus": 503,
+      "latencyMs": 11022,
+      "tlsSucceeded": true,
+      "cacheControl": "no-store, must-revalidate, no-cache, max-age=0, private",
+      "contentType": "text/html",
+      "jsonFieldsObserved": false,
+      "meetsHealthContract": false,
+      "requestCountThisFollowup": 1,
+      "interpretedAs": "Still unhealthy; HTTP response does not establish whether startup, build, routing or runtime is the cause"
+    }
+  },
+  "conclusions": {
+    "newNodeWebsiteExists": true,
+    "newWebsiteSetupCompleted": true,
+    "uploadedProbeSourceIdentityVerified": false,
+    "probeHealthy": false,
+    "httpsHandshakeSupported": true,
+    "isolatedFromAccountBPersistFlowNodeByHostingOrder": true,
+    "isolatedFromPriorAccountAPersistFlowPhpUnverified": false,
+    "priorAccountAPhpIntentionallyReplacedConfirmedByOwner": true,
+    "legacyPhpMissingFromCurrentInventory": true,
+    "zeroIncrementalCostProven": false,
+    "availableCpuRamProcessHeadroomProven": false,
+    "managedNodeBuildJobStatusExposedByConnector": false,
+    "ssrValidated": false,
+    "d1r2Validated": false,
+    "productionTouchedByThisInspection": false
+  },
+  "actions": {
+    "hostingerWrites": 0,
+    "oldApplicationRequests": 0,
+    "deployments": 0,
+    "restarts": 0,
+    "secretsRead": 0,
+    "billingActions": 0,
+    "oauthChanges": 0
+  },
+  "ownerConfirmation": {
+    "confirmedOn": "2026-10-28",
+    "statement": "Owner explicitly confirmed previous PHP sandbox was intentionally replaced by the new QA Node website.",
+    "previousPhpSiteAbsence": "EXPECTED_INTENTIONAL_REPLACEMENT",
+    "provenance": "Human owner confirmation, not independently validated via provider audit log",
+    "accountBPersistFlowNodePreserved": true
+  },
+  "readOnlyNodeDiagnostics": {
+    "connectedToolkit": "Hostinger via Composio; account A only",
+    "selectedTools": [
+      "HOSTINGER_LIST_WEBSITE_SETUPS",
+      "HOSTINGER_LIST_WEBSITES"
+    ],
+    "freshReads": 2,
+    "successfulReads": 2,
+    "websiteEnabled": true,
+    "websiteType": "nodejs",
+    "websiteSetupStatus": "completed",
+    "websiteSetupUpdatedAtUtc": "2026-10-28T21:18:06Z",
+    "buildHistoryExposed": false,
+    "buildOrStartLogsExposed": false,
+    "runtimeProcessStatusExposed": false,
+    "notes": "Directed discovery of connected Hostinger tools returned site inventory/setup actions only, not read-only Node build logs or application startup/error logs. A completed website setup does not prove a successful app build or started process.",
+    "requiredEvidence": "hPanel Node app build/deployment history, build result, startup command/result and sanitized startup/error logs for the QA app only; no credentials or environment-variable values"
+  },
+  "nextSafeAction": "Read sanitized build/start failure in intended QA app hPanel; connector does not expose those logs. Cause-directed reversible QA fixes are already authorized; no production, shared PersistFlow, billing or destructive changes.",
+  "inventoryDifference": {
+    "accountAWebsiteCounts": [
+      2,
+      2
+    ],
+    "newNodeDomain": "aliceblue-locust-999458.hostingersite.com",
+    "priorPhpSandboxStillListed": false,
+    "replacement": "INTENTIONAL_CONFIRMED_BY_HUMAN",
+    "accountBExistingPersistFlowNodeStillListed": true
+  }
+}

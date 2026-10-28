@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "status": "CREATED_AND_RAW_READBACK_VERIFIED",
+  "timestampUtc": "2026-10-28T21:39:39.4325853Z",
+  "source": {
+    "path": "C:\\Users\\Pichau\\Documents\\Codex\\2026-10-28\\miss-o-aut-noma-punctum-picture\\outputs\\PUNCTUM_R4_HANDOFF_2026-10-28.md",
+    "bytes": 7191,
+    "sha256": "539309e129c82557a1ef786aae2fc5b3d3630c2afca7fa2545bfcf9b65450fe4",
+    "encoding": "UTF-8 without BOM",
+    "lineEndings": "CRLF"
+  },
+  "drive": {
+    "fileId": "1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes",
+    "title": "PUNCTUM_R4_HANDOFF_CONSOLIDADO_2026-10-28.md",
+    "owner": "sgtmenezes2002@gmail.com",
+    "ownerVerifiedFromProvider": true,
+    "linkId": "link_6ab88b515eec8191b6f52705be9c37f6",
+    "url": "https://drive.google.com/file/d/1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes/view?usp=drivesdk",
+    "mimeType": "text/markdown",
+    "createdTime": "2026-10-28T21:39:22.881Z",
+    "trashed": false,
+    "bytes": 7191,
+    "sha256": "539309e129c82557a1ef786aae2fc5b3d3630c2afca7fa2545bfcf9b65450fe4",
+    "md5FromProvider": "e2af6325c02c395d3ab871087ec3e832"
+  },
+  "verification": {
+    "metadataReadbackVerified": true,
+    "rawContentDownloaded": true,
+    "readbackVerified": true,
+    "byteLengthMatched": true,
+    "sha256Matched": true,
+    "localBytes": 7191,
+    "downloadedBytes": 7191,
+    "localSha256": "539309e129c82557a1ef786aae2fc5b3d3630c2afca7fa2545bfcf9b65450fe4",
+    "downloadedSha256": "539309e129c82557a1ef786aae2fc5b3d3630c2afca7fa2545bfcf9b65450fe4",
+    "method": "Google Drive direct connected fetch(download_raw_file=true), independent container SHA256 of fetched raw file and independent PowerShell SHA256 on original local bytes"
+  },
+  "actions": {
+    "newFileCreated": true,
+    "originalHandoffOverwritten": false,
+    "permissionsChanged": false,
+    "billingChanged": false,
+    "productionTouched": false,
+    "hostingerTouched": false,
+    "persistFlowTouched": false
+  },
+  "notes": "Only the exact local final handoff bytes were uploaded as a new private Markdown file; no original file modification."
+}

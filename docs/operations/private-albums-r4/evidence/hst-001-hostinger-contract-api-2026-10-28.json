@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "collectedAtUtc": "2026-10-28T19:32:02Z",
+  "scope": "Read-only Hostinger API inventory through the already connected Composio accounts; no credentials exported or provider mutations",
+  "api": {
+    "transport": "connected Hostinger toolkit via Composio",
+    "calls": 13,
+    "successfulCalls": 12,
+    "failedCalls": 1,
+    "mutatingCalls": 0,
+    "paginationComplete": true,
+    "collectionLogs": [
+      "log_uEiJEBCdMo_8",
+      "log___POz1ZD0-jL",
+      "log_UO0HiwsaQQHV",
+      "log_Y7mTav0jZob0",
+      "log_n5EFqVykI90g",
+      "log_x4IvNSMoOD5r"
+    ],
+    "filterSerializationFailure": {
+      "tool": "HOSTINGER_LIST_ORDERS",
+      "httpStatus": 422,
+      "reason": "The connector serialized the array order_ids as a scalar query parameter",
+      "resolution": "Listed the single accessible order read-only and matched the already identified website order locally"
+    }
+  },
+  "hostingAccounts": [
+    {
+      "label": "supplied-ssh-php-sandbox-account",
+      "matchedDomain": "olivedrab-weasel-504267.hostingersite.com",
+      "websiteType": "other",
+      "websiteEnabled": true,
+      "hostingPlanCode": "hostinger_premium_v3",
+      "hostingPlanName": "Premium Web Hosting",
+      "orderStatus": "active",
+      "subscriptionStatus": "non_renewing",
+      "subscriptionExpiresAtUtc": "2027-01-22T14:15:53Z",
+      "accessibleOrders": 1,
+      "websitesOnMatchedOrder": 2,
+      "websiteTypesOnOrder": ["other", "builder"],
+      "virtualMachines": 0,
+      "currentNodeSlots": null,
+      "currentCpuRamProcessQuota": null,
+      "currentCpuRamProcessUsage": null
+    },
+    {
+      "label": "historical-persistflow-node-account",
+      "matchedDomain": "darkslategrey-raccoon-448222.hostingersite.com",
+      "websiteType": "nodejs",
+      "websiteEnabled": true,
+      "hostingPlanCode": "hostinger_premium_v3",
+      "hostingPlanName": "Premium Web Hosting",
+      "orderStatus": "active",
+      "subscriptionStatus": "non_renewing",
+      "subscriptionExpiresAtUtc": "2030-03-15T14:01:00Z",
+      "accessibleOrders": 1,
+      "websitesOnMatchedOrder": 2,
+      "websiteTypesOnOrder": ["nodejs", "builder"],
+      "virtualMachines": 0,
+      "currentNodeSlots": null,
+      "currentCpuRamProcessQuota": null,
+      "currentCpuRamProcessUsage": null
+    }
+  ],
+  "officialDocumentation": {
+    "documentationVersion": "Node documentation marked last updated 2026-10-21; retrieved excerpts acquired 2026-10-25/26",
+    "sources": [
+      "https://docs.hostinger.com/node.js/creating-an-app",
+      "https://docs.hostinger.com/node.js/overview",
+      "https://www.hostinger.com/support/hostinger-node-js-limits-for-web-and-cloud-plans/",
+      "https://www.hostinger.com/support/6976044-parameters-and-limits-of-hosting-plans-in-hostinger/",
+      "https://docs.hostinger.com/api-reference/endpoints/hosting/nodejs.md"
+    ],
+    "publishedManagedNodeEligibility": ["Business/Unlimited", "Cloud Startup", "Cloud Professional", "Cloud Enterprise", "Cloud Enterprise Plus"],
+    "publishedPremiumManagedNodeAvailability": false,
+    "publishedBusinessNodeWebsites": 5,
+    "publishedCloudNodeWebsites": 10,
+    "publishedPremiumReferenceOnly": {"cpuCores": 1, "ramGb": 2, "storageGb": 20, "websites": 3},
+    "legacyAccountQuotaVerified": false,
+    "resourceIsolation": "Node websites on a hosting plan share process and memory limits",
+    "requestTimeoutSeconds": 120,
+    "idleProcessSleep": true,
+    "automaticCrashRestart": true,
+    "alwaysRunningBackgroundWorkersSupported": false,
+    "customServicePortsSupported": false
+  },
+  "capabilityLimitations": {
+    "browserControlToolAvailable": false,
+    "connectedToolkitNodeSettingsOrQuotaToolAvailable": false,
+    "officialApiHasNodeGetEndpoints": true,
+    "settingsEnvironmentVariablesOrRuntimeLogsRead": false,
+    "rawTokensReadOrCopied": false,
+    "publicDocumentationVersusAccountConflict": "Published Premium excludes managed Node, while the existing PersistFlow website is explicitly typed nodejs on a Premium_v3 order; this may reflect legacy entitlement but its cause is not proven",
+    "dedicatedFreeQaSlotProven": false
+  },
+  "decision": {
+    "hostingerActivation": "OPTIONAL_NOT_ON_PRIVATE_ALBUM_CRITICAL_PATH",
+    "newHostingerServiceDeployed": false,
+    "newCostOrPlanChange": false,
+    "persistFlowChanges": 0,
+    "newSshProbesOrLoopbackRetests": 0,
+    "reason": "No workload measurement justifies the password bridge in Access mode, and neither account exposes a proven additional included Node slot with safe resource headroom. Continue album delivery on Cloudflare Access/D1/R2.",
+    "onlyIfOptionalBridgeIsReopened": "Provider-confirmed separate managed Node QA slot, included without upgrade, with effective resource quotas and resource headroom; never repurpose either PersistFlow site"
+  }
+}

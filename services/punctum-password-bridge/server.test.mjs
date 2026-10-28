@@ -23,7 +23,7 @@ after(async () => {
   await rm(replayDirectory, { recursive: true, force: true });
 });
 async function send(operation, password, credential, overrides = {}) {
-  const payload = JSON.stringify({ operation, password, ...(credential ? { credential } : {}) });
+  const payload = overrides.payload ?? JSON.stringify({ operation, password, ...(credential ? { credential } : {}) });
   const timestamp = String(overrides.timestamp ?? Date.now());
   const nonce = overrides.nonce ?? randomUUID();
   const signature = createHmac("sha256", overrides.secret ?? secret)
@@ -37,7 +37,7 @@ async function send(operation, password, credential, overrides = {}) {
       "X-Punctum-Nonce": nonce,
       "X-Punctum-Signature": overrides.signature ?? signature,
     },
-    body: payload,
+    body: overrides.sentPayload ?? payload,
   });
   return { status: response.status, json: await response.json() };
 }
@@ -63,6 +63,22 @@ test("rejects absent or incorrect HMAC signature and stale request", async () =>
     body: JSON.stringify({ operation: "hash", password: "password" }),
   });
   assert.equal(unauthenticated.status, 401);
+});
+test("rejects a tampered signed body and future timestamps", async () => {
+  const original = JSON.stringify({ operation: "hash", password: "synthetic-password" });
+  assert.equal((await send("hash", "synthetic-password", undefined, {
+    payload: original, sentPayload: original.replace("synthetic-password", "tampered-password"),
+  })).status, 401);
+  assert.equal((await send("hash", "synthetic-password", undefined, { timestamp: Date.now() + 120_000 })).status, 401);
+});
+test("rejects unknown signed fields and credentials on hash requests", async () => {
+  for (const input of [
+    { operation: "hash", password: "synthetic-password", clientId: "other-client" },
+    { operation: "hash", password: "synthetic-password", credential: {} },
+    { operation: "verify", password: "synthetic-password", credential: {
+      passwordHash: "A".repeat(43), passwordSalt: "A".repeat(22), passwordIterations: 310000, token: "must-not-accept",
+    } },
+  ]) assert.equal((await send("hash", "synthetic-password", undefined, { payload: JSON.stringify(input) })).status, 400);
 });
 test("rejects replay and malformed credential; never returns a session", async () => {
   const nonce = randomUUID();
@@ -173,5 +189,41 @@ test("bounds authenticated request rate without exposing account information", a
   } finally {
     base = originalBase;
     await new Promise((resolve) => limited.close(resolve));
+  }
+});
+
+test("keeps independent credentials isolated without returning cookies or account data", async () => {
+  const clientA = await send("hash", "synthetic-client-a-password");
+  const clientB = await send("hash", "synthetic-client-b-password");
+  assert.equal((await send("verify", "synthetic-client-a-password", clientB.json.credential)).json.valid, false);
+  assert.equal((await send("verify", "synthetic-client-b-password", clientA.json.credential)).json.valid, false);
+  assert.equal((await send("verify", "synthetic-client-a-password", clientA.json.credential)).json.valid, true);
+});
+
+test("emits only bounded structured metadata even when request data contains secrets", async () => {
+  const events = [];
+  const logged = createPasswordBridgeServer({ secret, replayDirectory, logger: (event) => events.push(event) });
+  await new Promise((resolve) => logged.listen(0, "127.0.0.1", resolve));
+  const originalBase = base;
+  try {
+    base = "http://127.0.0.1:" + logged.address().port;
+    await send("hash", "synthetic-private-password");
+    await fetch(base + "/unknown/synthetic-private-photo?token=synthetic-token", {
+      headers: { Cookie: "synthetic-session-cookie", Authorization: "Bearer synthetic-bearer" },
+    });
+    assert.equal(events.length, 2);
+    for (const event of events) {
+      assert.deepEqual(Object.keys(event).sort(), ["durationMs", "event", "status"]);
+      assert.equal(event.event, "bridge_request");
+      assert.ok(Number.isFinite(event.durationMs));
+    }
+    assert.equal(events[0].status, 200);
+    assert.equal(events[1].status, 404);
+    const output = JSON.stringify(events);
+    for (const sensitive of [secret, "synthetic-private-password", "synthetic-private-photo", "synthetic-token", "synthetic-session-cookie", "synthetic-bearer"])
+      assert.equal(output.includes(sensitive), false);
+  } finally {
+    base = originalBase;
+    await new Promise((resolve) => logged.close(resolve));
   }
 });

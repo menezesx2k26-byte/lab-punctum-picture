@@ -1,0 +1,152 @@
+{
+  "schema": "punctum-r4-g23-readonly-reconciliation-v1",
+  "date": "2026-10-28",
+  "reviewedRepoHead": "8adfe80cea52061c46c9f395bb9b1376632878d5",
+  "remoteG18": {
+    "runId": 40785204574,
+    "status": "IN_PROGRESS_PER_PARENT_NOT_INDEPENDENTLY_READ",
+    "finalResultAsserted": false
+  },
+  "source": [
+    {
+      "file": "work/original-spec-r4.txt",
+      "lines": "668-681",
+      "requirement": "G18: synthetic D1/R2 restore, byte/hash/relations/A-B/revocation; G23: flag off, access blocked, D1/R2 preserved, sessions invalidated, return to previously verified Worker, validated reopening"
+    },
+    {
+      "file": "work/original-spec-r4.txt",
+      "lines": "607-609; 775-785; 808-814",
+      "requirement": "Studio/Colagem preservation; G23 separately mandatory from G18, no production activation by inference"
+    },
+    {
+      "file": "work/repo/docs/visual-qa/punctum-integrated/rollback-procedure.md",
+      "section": "Design/collage; Private albums; Validation status",
+      "requirement": "Separate design preset rollback in isolated Studio, preserve media/IDs/copy/order/sections; flag/session/data/Worker rollback distinct; previous version was documented not run"
+    },
+    {
+      "file": "work/repo/docs/visual-qa/punctum-integrated/requirement-traceability.md",
+      "section": "STU-004..009; INT-004; OPS-004",
+      "requirement": "Independent visual and albums rollback and disposable QA execution"
+    },
+    {
+      "file": "work/repo/docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
+      "lines": "39-44",
+      "requirement": "Logical off, verified prior Worker/config, preserve snapshots, remote isolated D1/R2, evidence SHA/timestamp/roles, G23 historically partial"
+    },
+    {
+      "file": "work/repo/docs/operations/PUNCTUM-COLLAGE-PUBLISHED-PRESET-WITH-DRAFT-20261026.md",
+      "lines": "10-29",
+      "requirement": "Visual-only publish uses immutable published version and CAS preserving draft; generic Studio restore resets draft and must NOT be used to rollback published visual only"
+    }
+  ],
+  "currentHarness": [
+    {
+      "test": "Scoped seed and source protection",
+      "status": "IMPLEMENTED_REMOTE_RUN_PENDING",
+      "source": "scripts/r4-recovery-execute.mjs:289-375; scripts/lib/r4-scoped-seed.ts",
+      "evidence": "Preflight exact historical 1/1/1/1/0 and old object, fresh quotas, synthetic 26 new rows/10 PNGs, old row/object SHA checks; no Images or deleting fixtures"
+    },
+    {
+      "test": "Isolated G18 restore",
+      "status": "IMPLEMENTED_REMOTE_RUN_PENDING",
+      "source": "scripts/private-recovery-worker.ts:49-92; scripts/r4-recovery-execute.mjs:407-431",
+      "evidence": "One scoped recovery into empty R4 restore ID, backup readback, 26 rows and 10 objects, two quarantined accounts/session_version >=2, FK=0, legacy hashes unchanged"
+    },
+    {
+      "test": "Functional A/B and bytes before restore",
+      "status": "IMPLEMENTED_REMOTE_RUN_PENDING",
+      "source": "scripts/r4-recovery-execute.mjs:376-406",
+      "evidence": "QA app bound source validates two synthetic owner sessions, five image downloads each and cross-tenant 404; does not demonstrate return to authorized use after rollback"
+    },
+    {
+      "test": "Old session denial on restored data",
+      "status": "IMPLEMENTED_REMOTE_RUN_PENDING",
+      "source": "scripts/r4-recovery-execute.mjs:432-451",
+      "evidence": "Restored app uses independent rotated CLIENT_SESSION_SECRET and disabled accounts/session version 2; old source cookies GET /api/client/me ->401. This is not a separate source-account D1 revocation drill"
+    },
+    {
+      "test": "Flag-off return to candidate",
+      "status": "IMPLEMENTED_REMOTE_RUN_PENDING",
+      "source": "scripts/r4-recovery-execute.mjs:452-474; scripts/lib/r4-recovery-qa.mjs:137-150",
+      "evidence": "finally deploys candidate config with PRIVATE_GALLERIES_ENABLED=false, R2 bindings empty, Source DB only; confirms a single deployed version via /robots.txt X-QA-Version and records source/restore client account counts. Does not perform post-return 404 checks for actual private routes or compare candidate to pre-run immutable content/version"
+    },
+    {
+      "test": "Rollback failure-path guarantee",
+      "status": "LOCAL_UNIT_ONLY",
+      "source": "scripts/lib/r4-recovery-qa.mjs:153-177; scripts/r4-recovery-qa.test.mjs:95-114",
+      "evidence": "try/finally attempts flag-off restoration even on private-QA failures; remote failure injection and effective final binding readback not executed"
+    },
+    {
+      "test": "Public/Studio/Collage rollback",
+      "status": "NOT_RUN_IN_SCOPED_G18",
+      "source": "docs/visual-qa/punctum-integrated/rollback-procedure.md; scripts/r4-recovery-execute.mjs",
+      "evidence": "No separate preset/CAS/browser version/Studio draft preservation or post-return public/editorial smoke"
+    }
+  ],
+  "judgement": {
+    "G18": "MAY_BE_EVIDENCE_ON_SUCCESSFUL_EXACT_REMOTE_RUN_ONLY; DO_NOT_ASSERT_WHILE_IN_PROGRESS",
+    "G23": "PARTIAL_NOT_PASS",
+    "G19": "NO_FORMAL_INDEPENDENT_SIGNOFF",
+    "production": "NO_GO",
+    "doesCurrentSequenceProveCompleteG23": false,
+    "interpretation": "A successful isolated G18 remotely verifies data recovery and part of session safety. Current finally handles code/flag rollback by config/deployment, but lacks demonstrated runtime private-route blocking, restored/published reopening, pre/post immutable Worker version/config comparison, public/Studio/Collage smoke, and an isolated design rollback. No destructive data rollback is required; never undo migrations or delete historical data."
+  },
+  "missingEvidence": [
+    {
+      "id": "G23-A",
+      "priority": "P0",
+      "step": "Confirm post-finally PRIVATE_GALLERIES_ENABLED=false is EFFECTIVE, not merely config text",
+      "minimalReadOnlyCheck": "On dedicated R4 QA origin after the final candidate version propagates, GET /albuns/entrar, /api/client/me and /api/client/galleries/<synthetic-id> without cookie should each be 404 (not 200/302). HEAD and GET private download should be 404 with zero media bytes. Record method/status/version/headers/no-store/noindex; no JWT/cookie/photo contents.",
+      "hook": "Append sanitized post-return route-smoke array tied to exact versionId and UTC time; do NOT rerun seed/restore."
+    },
+    {
+      "id": "G23-B",
+      "priority": "P0",
+      "step": "Read back effective remote deployment and bindings",
+      "minimalReadOnlyCheck": "Read QA worker deployment/versions/settings under same fixed worker only; compare observed X-QA-Version and SHA/config hash against before-run receipt. Confirm private flag false, R2 binding count 0, only source QA D1 and workers.dev origin/routes empty; audit production/historical IDs untouched.",
+      "hook": "preRunCandidateVersionId/configSha256 vs postRunDeploymentId/versionId/configSha256; configuration equivalence acceptable even when version ID changes by redeploy. No production API changes."
+    },
+    {
+      "id": "G23-C",
+      "priority": "P1",
+      "step": "Prove preservation of D1/R2 and session invalidation across actual rollback",
+      "minimalReadOnlyCheck": "After finally, read exact scoped D1 counts (source 3/3/11/11/2; restore 2/2/10/10/2), legacy four full-row/object hashes, original 11 and restored 10 object hashes, backup 1 readback SHA and FK=0. In the restored-app phase, old synthetic cookies should be 401 and accounts disabled/session_version>=2; avoid logging tokens.",
+      "hook": "Preserved original UUID receipt plus before/after hashes, R2 inventories and oldSessionsRejected=true; current script only re-reads account counts after return. These checks are read-only and can use already persisted evidence/QA read APIs."
+    },
+    {
+      "id": "G23-D",
+      "priority": "P1",
+      "step": "Validate re-entry/reopening on a future authorized isolated drill",
+      "minimalReadOnlyCheck": "Existing success-path opens source synthetic sessions and later observes restored old cookies denied. It does not re-open restored clients after quarantine or return from flag-off into a working private route. An authorized future QA-only drill could first verify reopening of a synthetic account under new session/version and then disable again; this requires explicit controlled writes, and must NOT be attempted just to complete the current read-only review.",
+      "hook": "Two distinct receipts: private working before flag-off; blocked after flag-off; separately approved synthetic re-entry under fresh secret/session then flag-off again. Do not touch occupied/historical QA, existing accounts or production."
+    },
+    {
+      "id": "G23-E",
+      "priority": "P1",
+      "step": "Public/Studio/Colagem no-regression smoke after Worker return",
+      "minimalReadOnlyCheck": "GET public /, /api/public/site, robots and one published portfolio route at R4 QA with version header and expected status/body shape if current SSR/CPU allows; compare published config/preset/media-reference hashes with pre-run immutable values. Studio draft only through existing authorized read-only state endpoint; do not publish.",
+      "hook": "Before/after public hash, preset, draftVersionId/draftRevision/draftHash, gallery-independent public assets, dated browser viewport references if already available. Keep G17 failure separate."
+    },
+    {
+      "id": "G23-F",
+      "priority": "P1",
+      "step": "Independent isolated design/Collage rollback drill",
+      "minimalReadOnlyCheck": "Original integrated rollback procedure also covers selecting prior approved visual preset and checking copy, media IDs, order, disabled sections and responsive/admin styling. Existing G18 harness does not run this. No safe non-mutating procedure can *execute* a rollback; use existing local preset round-trip tests as partial only. For published-only visual rollback NEVER use generic Studio restore (would reset draft); authorized separate isolated visual CAS/pointer workflow would be required.",
+      "hook": "Record isolated environment, previous/published preset ID, draft revision/hash and media IDs before/after CAS, browser images responsive/private/admin. No production publishing or source history modification."
+    }
+  ],
+  "postRunDecisionRules": [
+    "Read the actual run40785204574 final conclusion/artifact before changing G18; in-progress means no PASS.",
+    "If remote seed/restore fails or finally flag-off fails, G18/G23 remain blocked and incident procedure prioritizes QA fail-closed; do not repeat writes/recover automatically.",
+    "If G18 succeeds but G23-A/B/C and re-entry/Collage-rollback drills are absent, keep G23 PARTIAL/BLOCKED_EXTERNAL, G19 not signed, production NO_GO.",
+    "Never infer G23 from G18, unit tests, Workers version rollback alone, or flag in a local JSON config. Deletion, historical data mutation, Images activation and production activation are unnecessary and prohibited here."
+  ],
+  "reviewScope": {
+    "readOnly": true,
+    "remoteApiCalls": false,
+    "cloudChanges": false,
+    "applicationCodeChanges": false,
+    "ciOrStateChanges": false,
+    "onlyFileCreated": "work/resume-g23-review.json"
+  }
+}

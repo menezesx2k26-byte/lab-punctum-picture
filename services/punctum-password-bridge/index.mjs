@@ -7,8 +7,9 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535)
 const server = createPasswordBridgeServer({
   secret,
   replayDirectory: process.env.PUNCTUM_PASSWORD_BRIDGE_REPLAY_DIR,
+  logger: (record) => console.log(JSON.stringify(record)),
 });
 server.listen(port, "0.0.0.0", () => {
   // Do not log credentials, request bodies or secrets.
-  console.log("Punctum password bridge listening.");
+  console.log(JSON.stringify({ event: "bridge_listening", component: "punctum-password-bridge" }));
 });

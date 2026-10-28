@@ -1,0 +1,1426 @@
+{
+  "startedUtc": "2026-10-28T19:41:12.916Z",
+  "scope": "LOCAL workerd/V8 sampled execution; excludes idle samples, includes compilation/program samples; not edge CPU or billable CPU",
+  "node": "v24.19.0",
+  "repetitions": 10,
+  "warmRequestsPerIsolate": 5,
+  "builds": [
+    {
+      "label": "baseline",
+      "bundleSha256": "91b489eebba5b7805071750a9ea97782bda34769351a7d26cf51bf3c0ad71922",
+      "sourceSha": "b417405c0406daf286b192a8151cf45c4a50f89c"
+    },
+    {
+      "label": "after",
+      "bundleSha256": "526af979a1a5d04bdd44833d994f805fa2b451132287d711338a38b6810810b1",
+      "sourceSha": "966b3d70af47f4aa72cffa6be938dca3ae9a5681"
+    }
+  ],
+  "samples": [
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 103.82404899999983,
+      "sampledExecutionMs": 102.141,
+      "heapUsedBytes": 17932272
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 32.77604199999996,
+      "sampledExecutionMs": 30.869,
+      "heapUsedBytes": 15389472
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.84267100000011,
+      "sampledExecutionMs": 26.028,
+      "heapUsedBytes": 17731216
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.349320000000034,
+      "sampledExecutionMs": 23.105,
+      "heapUsedBytes": 19916404
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.523541000000023,
+      "sampledExecutionMs": 29.595,
+      "heapUsedBytes": 16493544
+    },
+    {
+      "build": "baseline",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.517423000000008,
+      "sampledExecutionMs": 22.539,
+      "heapUsedBytes": 18640656
+    },
+    {
+      "build": "after",
+      "repetition": 0,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 97.09190100000023,
+      "sampledExecutionMs": 91.052,
+      "heapUsedBytes": 13980700
+    },
+    {
+      "build": "after",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 42.42514500000016,
+      "sampledExecutionMs": 41.159,
+      "heapUsedBytes": 16339988
+    },
+    {
+      "build": "after",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 25.211233999999877,
+      "sampledExecutionMs": 24.174,
+      "heapUsedBytes": 18630700
+    },
+    {
+      "build": "after",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.718811999999616,
+      "sampledExecutionMs": 25.342,
+      "heapUsedBytes": 14840800
+    },
+    {
+      "build": "after",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 49.797443999999814,
+      "sampledExecutionMs": 48.968,
+      "heapUsedBytes": 17000436
+    },
+    {
+      "build": "after",
+      "repetition": 0,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.8307920000002,
+      "sampledExecutionMs": 26.778,
+      "heapUsedBytes": 19168068
+    },
+    {
+      "build": "after",
+      "repetition": 1,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 85.1597040000006,
+      "sampledExecutionMs": 83.276,
+      "heapUsedBytes": 14015004
+    },
+    {
+      "build": "after",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.39734000000044,
+      "sampledExecutionMs": 29.651,
+      "heapUsedBytes": 16353336
+    },
+    {
+      "build": "after",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.18039399999998,
+      "sampledExecutionMs": 24.938,
+      "heapUsedBytes": 18640640
+    },
+    {
+      "build": "after",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.68084799999997,
+      "sampledExecutionMs": 29.408,
+      "heapUsedBytes": 14832060
+    },
+    {
+      "build": "after",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.83561699999973,
+      "sampledExecutionMs": 26.651,
+      "heapUsedBytes": 16991408
+    },
+    {
+      "build": "after",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 27.463380000000143,
+      "sampledExecutionMs": 25.981,
+      "heapUsedBytes": 19159328
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 101.52802500000143,
+      "sampledExecutionMs": 98.886,
+      "heapUsedBytes": 17881888
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 34.61730700000044,
+      "sampledExecutionMs": 32.901,
+      "heapUsedBytes": 15364008
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 25.327894000000015,
+      "sampledExecutionMs": 21.495,
+      "heapUsedBytes": 17663364
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.550547000000734,
+      "sampledExecutionMs": 20.314,
+      "heapUsedBytes": 19854388
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.649712000000363,
+      "sampledExecutionMs": 26.65,
+      "heapUsedBytes": 16454128
+    },
+    {
+      "build": "baseline",
+      "repetition": 1,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.272578000000067,
+      "sampledExecutionMs": 23.044,
+      "heapUsedBytes": 18607392
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 111.13574600000175,
+      "sampledExecutionMs": 106.137,
+      "heapUsedBytes": 17973368
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.901701000000685,
+      "sampledExecutionMs": 31.644,
+      "heapUsedBytes": 15986524
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.17214100000092,
+      "sampledExecutionMs": 23.157,
+      "heapUsedBytes": 18358044
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 25.870801000000938,
+      "sampledExecutionMs": 24.579,
+      "heapUsedBytes": 20473144
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.730470999998943,
+      "sampledExecutionMs": 29.638,
+      "heapUsedBytes": 17072072
+    },
+    {
+      "build": "baseline",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 22.847327999999834,
+      "sampledExecutionMs": 20.243,
+      "heapUsedBytes": 19235420
+    },
+    {
+      "build": "after",
+      "repetition": 2,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 111.1025840000002,
+      "sampledExecutionMs": 109.521,
+      "heapUsedBytes": 14048576
+    },
+    {
+      "build": "after",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.64591500000097,
+      "sampledExecutionMs": 27.002,
+      "heapUsedBytes": 16372036
+    },
+    {
+      "build": "after",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.542950999999448,
+      "sampledExecutionMs": 26.516,
+      "heapUsedBytes": 18661224
+    },
+    {
+      "build": "after",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.819760000000315,
+      "sampledExecutionMs": 30.884,
+      "heapUsedBytes": 14832316
+    },
+    {
+      "build": "after",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 33.25179200000093,
+      "sampledExecutionMs": 20.515,
+      "heapUsedBytes": 16991904
+    },
+    {
+      "build": "after",
+      "repetition": 2,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.928617000001395,
+      "sampledExecutionMs": 22.239,
+      "heapUsedBytes": 19159584
+    },
+    {
+      "build": "after",
+      "repetition": 3,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 103.76520299999902,
+      "sampledExecutionMs": 100.011,
+      "heapUsedBytes": 14009680
+    },
+    {
+      "build": "after",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 36.83943199999703,
+      "sampledExecutionMs": 33.865,
+      "heapUsedBytes": 16337652
+    },
+    {
+      "build": "after",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 33.665194999997766,
+      "sampledExecutionMs": 33.252,
+      "heapUsedBytes": 18628132
+    },
+    {
+      "build": "after",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.628752999997232,
+      "sampledExecutionMs": 30.051,
+      "heapUsedBytes": 14833432
+    },
+    {
+      "build": "after",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 32.85100599999714,
+      "sampledExecutionMs": 29.137,
+      "heapUsedBytes": 16993116
+    },
+    {
+      "build": "after",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 32.555333000000246,
+      "sampledExecutionMs": 28.359,
+      "heapUsedBytes": 19165688
+    },
+    {
+      "build": "baseline",
+      "repetition": 3,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 250.77049799999804,
+      "sampledExecutionMs": 248.945,
+      "heapUsedBytes": 17909524
+    },
+    {
+      "build": "baseline",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 125.51547800000117,
+      "sampledExecutionMs": 124.705,
+      "heapUsedBytes": 15378876
+    },
+    {
+      "build": "baseline",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 91.60713199999736,
+      "sampledExecutionMs": 81.628,
+      "heapUsedBytes": 17748016
+    },
+    {
+      "build": "baseline",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 86.24567000000025,
+      "sampledExecutionMs": 73.576,
+      "heapUsedBytes": 19865564
+    },
+    {
+      "build": "baseline",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 73.81410799999867,
+      "sampledExecutionMs": 70.119,
+      "heapUsedBytes": 16449372
+    },
+    {
+      "build": "baseline",
+      "repetition": 3,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 42.003177000002324,
+      "sampledExecutionMs": 35.636,
+      "heapUsedBytes": 18600704
+    },
+    {
+      "build": "baseline",
+      "repetition": 4,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 161.09010000000126,
+      "sampledExecutionMs": 158.619,
+      "heapUsedBytes": 17884616
+    },
+    {
+      "build": "baseline",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 63.318897000001016,
+      "sampledExecutionMs": 63.355,
+      "heapUsedBytes": 15345796
+    },
+    {
+      "build": "baseline",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 67.96965699999782,
+      "sampledExecutionMs": 69.374,
+      "heapUsedBytes": 17643956
+    },
+    {
+      "build": "baseline",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 51.6129310000033,
+      "sampledExecutionMs": 34.051,
+      "heapUsedBytes": 19823684
+    },
+    {
+      "build": "baseline",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 56.88502900000094,
+      "sampledExecutionMs": 50.73,
+      "heapUsedBytes": 16455952
+    },
+    {
+      "build": "baseline",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 25.213354999999865,
+      "sampledExecutionMs": 21.685,
+      "heapUsedBytes": 18605592
+    },
+    {
+      "build": "after",
+      "repetition": 4,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 107.93271599999935,
+      "sampledExecutionMs": 104.405,
+      "heapUsedBytes": 14037504
+    },
+    {
+      "build": "after",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 46.25616000000082,
+      "sampledExecutionMs": 38.832,
+      "heapUsedBytes": 16343164
+    },
+    {
+      "build": "after",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 80.22244499999942,
+      "sampledExecutionMs": 74.394,
+      "heapUsedBytes": 18630768
+    },
+    {
+      "build": "after",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 65.17974899999899,
+      "sampledExecutionMs": 64.903,
+      "heapUsedBytes": 14843628
+    },
+    {
+      "build": "after",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 70.6052950000012,
+      "sampledExecutionMs": 65.336,
+      "heapUsedBytes": 17003312
+    },
+    {
+      "build": "after",
+      "repetition": 4,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 44.32237600000008,
+      "sampledExecutionMs": 35.081,
+      "heapUsedBytes": 19170896
+    },
+    {
+      "build": "after",
+      "repetition": 5,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 86.10997200000202,
+      "sampledExecutionMs": 81.919,
+      "heapUsedBytes": 14008880
+    },
+    {
+      "build": "after",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.281119999999646,
+      "sampledExecutionMs": 28.533,
+      "heapUsedBytes": 16317888
+    },
+    {
+      "build": "after",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.472546000000875,
+      "sampledExecutionMs": 24.739,
+      "heapUsedBytes": 18616700
+    },
+    {
+      "build": "after",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.257152999998652,
+      "sampledExecutionMs": 27.474,
+      "heapUsedBytes": 14832548
+    },
+    {
+      "build": "after",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 25.989675000000716,
+      "sampledExecutionMs": 23.786,
+      "heapUsedBytes": 16991896
+    },
+    {
+      "build": "after",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.099676000001637,
+      "sampledExecutionMs": 25.98,
+      "heapUsedBytes": 19159816
+    },
+    {
+      "build": "baseline",
+      "repetition": 5,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 108.47173700000349,
+      "sampledExecutionMs": 106.771,
+      "heapUsedBytes": 17999964
+    },
+    {
+      "build": "baseline",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 35.95659599999999,
+      "sampledExecutionMs": 30.8,
+      "heapUsedBytes": 15990836
+    },
+    {
+      "build": "baseline",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.838051999999152,
+      "sampledExecutionMs": 23.873,
+      "heapUsedBytes": 18293144
+    },
+    {
+      "build": "baseline",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.125589999999647,
+      "sampledExecutionMs": 23.419,
+      "heapUsedBytes": 20475556
+    },
+    {
+      "build": "baseline",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.363670000002458,
+      "sampledExecutionMs": 28.498,
+      "heapUsedBytes": 17059684
+    },
+    {
+      "build": "baseline",
+      "repetition": 5,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.58650199999829,
+      "sampledExecutionMs": 20.993,
+      "heapUsedBytes": 19239964
+    },
+    {
+      "build": "baseline",
+      "repetition": 6,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 106.68438199999946,
+      "sampledExecutionMs": 99.215,
+      "heapUsedBytes": 17973552
+    },
+    {
+      "build": "baseline",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 33.690677999999025,
+      "sampledExecutionMs": 33.064,
+      "heapUsedBytes": 15991028
+    },
+    {
+      "build": "baseline",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.41823299999669,
+      "sampledExecutionMs": 29.388,
+      "heapUsedBytes": 18291632
+    },
+    {
+      "build": "baseline",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.109621999996307,
+      "sampledExecutionMs": 27.776,
+      "heapUsedBytes": 20474044
+    },
+    {
+      "build": "baseline",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.80968600000051,
+      "sampledExecutionMs": 29.458,
+      "heapUsedBytes": 17080516
+    },
+    {
+      "build": "baseline",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 23.826569999997446,
+      "sampledExecutionMs": 21.146,
+      "heapUsedBytes": 19240144
+    },
+    {
+      "build": "after",
+      "repetition": 6,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 93.30710999999428,
+      "sampledExecutionMs": 91.504,
+      "heapUsedBytes": 14023244
+    },
+    {
+      "build": "after",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.032188999997743,
+      "sampledExecutionMs": 29.966,
+      "heapUsedBytes": 16352196
+    },
+    {
+      "build": "after",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.516107999996166,
+      "sampledExecutionMs": 27.154,
+      "heapUsedBytes": 18641044
+    },
+    {
+      "build": "after",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.289519000005384,
+      "sampledExecutionMs": 22.006,
+      "heapUsedBytes": 14832428
+    },
+    {
+      "build": "after",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.023197000002256,
+      "sampledExecutionMs": 25.099,
+      "heapUsedBytes": 16991776
+    },
+    {
+      "build": "after",
+      "repetition": 6,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 25.619971000000078,
+      "sampledExecutionMs": 22.99,
+      "heapUsedBytes": 19159696
+    },
+    {
+      "build": "after",
+      "repetition": 7,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 85.88182199999574,
+      "sampledExecutionMs": 83.761,
+      "heapUsedBytes": 14031524
+    },
+    {
+      "build": "after",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 36.63890700000047,
+      "sampledExecutionMs": 36.201,
+      "heapUsedBytes": 16354968
+    },
+    {
+      "build": "after",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 35.64857199999824,
+      "sampledExecutionMs": 35.056,
+      "heapUsedBytes": 18658200
+    },
+    {
+      "build": "after",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 37.32788199999777,
+      "sampledExecutionMs": 36.577,
+      "heapUsedBytes": 14835356
+    },
+    {
+      "build": "after",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 33.415055999998,
+      "sampledExecutionMs": 30.212,
+      "heapUsedBytes": 16991776
+    },
+    {
+      "build": "after",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.809430000001157,
+      "sampledExecutionMs": 29.6,
+      "heapUsedBytes": 19159696
+    },
+    {
+      "build": "baseline",
+      "repetition": 7,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 111.67322799999965,
+      "sampledExecutionMs": 107.158,
+      "heapUsedBytes": 17890844
+    },
+    {
+      "build": "baseline",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 35.17024500000116,
+      "sampledExecutionMs": 29.517,
+      "heapUsedBytes": 15405908
+    },
+    {
+      "build": "baseline",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.7833810000011,
+      "sampledExecutionMs": 22.881,
+      "heapUsedBytes": 17737152
+    },
+    {
+      "build": "baseline",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 26.097098999998707,
+      "sampledExecutionMs": 25.932,
+      "heapUsedBytes": 19918948
+    },
+    {
+      "build": "baseline",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.597249999998894,
+      "sampledExecutionMs": 26.994,
+      "heapUsedBytes": 16493560
+    },
+    {
+      "build": "baseline",
+      "repetition": 7,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 27.310733999998774,
+      "sampledExecutionMs": 26.972,
+      "heapUsedBytes": 18646640
+    },
+    {
+      "build": "baseline",
+      "repetition": 8,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 110.60785599999508,
+      "sampledExecutionMs": 103.996,
+      "heapUsedBytes": 17920892
+    },
+    {
+      "build": "baseline",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 33.4843400000027,
+      "sampledExecutionMs": 32.912,
+      "heapUsedBytes": 15994156
+    },
+    {
+      "build": "baseline",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.80778499999724,
+      "sampledExecutionMs": 20.058,
+      "heapUsedBytes": 18298368
+    },
+    {
+      "build": "baseline",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.50954400000046,
+      "sampledExecutionMs": 16.981,
+      "heapUsedBytes": 20477448
+    },
+    {
+      "build": "baseline",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 32.908645999996224,
+      "sampledExecutionMs": 32.018,
+      "heapUsedBytes": 17060616
+    },
+    {
+      "build": "baseline",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 24.97081099999923,
+      "sampledExecutionMs": 21.34,
+      "heapUsedBytes": 19244484
+    },
+    {
+      "build": "after",
+      "repetition": 8,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 86.25141099999746,
+      "sampledExecutionMs": 84.687,
+      "heapUsedBytes": 14016360
+    },
+    {
+      "build": "after",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.98812100000214,
+      "sampledExecutionMs": 31.112,
+      "heapUsedBytes": 16322492
+    },
+    {
+      "build": "after",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 27.566799999993236,
+      "sampledExecutionMs": 25.461,
+      "heapUsedBytes": 18611364
+    },
+    {
+      "build": "after",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 29.707274000000325,
+      "sampledExecutionMs": 27.547,
+      "heapUsedBytes": 14832500
+    },
+    {
+      "build": "after",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 28.502539999994042,
+      "sampledExecutionMs": 27.657,
+      "heapUsedBytes": 16991848
+    },
+    {
+      "build": "after",
+      "repetition": 8,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.089968000000226,
+      "sampledExecutionMs": 30,
+      "heapUsedBytes": 19159768
+    },
+    {
+      "build": "after",
+      "repetition": 9,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 104.40977500000008,
+      "sampledExecutionMs": 103.589,
+      "heapUsedBytes": 14048084
+    },
+    {
+      "build": "after",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 36.73568599999999,
+      "sampledExecutionMs": 36.355,
+      "heapUsedBytes": 16357372
+    },
+    {
+      "build": "after",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 33.54026299999532,
+      "sampledExecutionMs": 31.286,
+      "heapUsedBytes": 18656644
+    },
+    {
+      "build": "after",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 35.97509899999568,
+      "sampledExecutionMs": 32.346,
+      "heapUsedBytes": 14833328
+    },
+    {
+      "build": "after",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 34.279558000002,
+      "sampledExecutionMs": 32.372,
+      "heapUsedBytes": 16992676
+    },
+    {
+      "build": "after",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 30.142432000000554,
+      "sampledExecutionMs": 29.861,
+      "heapUsedBytes": 19160596
+    },
+    {
+      "build": "baseline",
+      "repetition": 9,
+      "phase": "cold",
+      "index": 0,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 111.41896400000405,
+      "sampledExecutionMs": 108.892,
+      "heapUsedBytes": 17899420
+    },
+    {
+      "build": "baseline",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 1,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 41.48594400000002,
+      "sampledExecutionMs": 39.54,
+      "heapUsedBytes": 15411668
+    },
+    {
+      "build": "baseline",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 2,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 32.19698100000096,
+      "sampledExecutionMs": 31.295,
+      "heapUsedBytes": 17814608
+    },
+    {
+      "build": "baseline",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 3,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 31.9369330000045,
+      "sampledExecutionMs": 28.987,
+      "heapUsedBytes": 19929084
+    },
+    {
+      "build": "baseline",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 4,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 40.63786600000458,
+      "sampledExecutionMs": 31.801,
+      "heapUsedBytes": 16477876
+    },
+    {
+      "build": "baseline",
+      "repetition": 9,
+      "phase": "warm",
+      "index": 5,
+      "status": 200,
+      "htmlBytes": 65694,
+      "elapsedMs": 37.93584499999997,
+      "sampledExecutionMs": 33.264,
+      "heapUsedBytes": 18620280
+    }
+  ],
+  "summary": [
+    {
+      "build": "baseline",
+      "phase": "cold",
+      "count": 10,
+      "sampledExecutionMs": {
+        "p50": 106.137,
+        "p95": 248.945,
+        "p99": 248.945
+      },
+      "elapsedMs": {
+        "p50": 110.60785599999508,
+        "p95": 250.77049799999804,
+        "p99": 250.77049799999804
+      },
+      "heapUsedBytes": {
+        "p50": 17909524,
+        "p95": 17999964,
+        "p99": 17999964
+      }
+    },
+    {
+      "build": "baseline",
+      "phase": "warm",
+      "count": 50,
+      "sampledExecutionMs": {
+        "p50": 28.987,
+        "p95": 73.576,
+        "p99": 124.705
+      },
+      "elapsedMs": {
+        "p50": 29.730470999998943,
+        "p95": 86.24567000000025,
+        "p99": 125.51547800000117
+      },
+      "heapUsedBytes": {
+        "p50": 17748016,
+        "p95": 20474044,
+        "p99": 20477448
+      }
+    },
+    {
+      "build": "after",
+      "phase": "cold",
+      "count": 10,
+      "sampledExecutionMs": {
+        "p50": 91.052,
+        "p95": 109.521,
+        "p99": 109.521
+      },
+      "elapsedMs": {
+        "p50": 93.30710999999428,
+        "p95": 111.1025840000002,
+        "p99": 111.1025840000002
+      },
+      "heapUsedBytes": {
+        "p50": 14016360,
+        "p95": 14048576,
+        "p99": 14048576
+      }
+    },
+    {
+      "build": "after",
+      "phase": "warm",
+      "count": 50,
+      "sampledExecutionMs": {
+        "p50": 29.408,
+        "p95": 64.903,
+        "p99": 74.394
+      },
+      "elapsedMs": {
+        "p50": 30.718811999999616,
+        "p95": 65.17974899999899,
+        "p99": 80.22244499999942
+      },
+      "heapUsedBytes": {
+        "p50": 16991896,
+        "p95": 19165688,
+        "p99": 19170896
+      }
+    }
+  ],
+  "status": "PASS_LOCAL_PROFILE",
+  "completedUtc": "2026-10-28T19:42:07.958Z",
+  "provenanceNote": "Baseline is the preserved b417405 production build; after is the production build containing the version-pinned on-demand SSR transform committed as 966b3d7. Local V8 sampling is diagnostic and does not prove Cloudflare CPU allowances. Only ten cold samples: p95 and p99 both represent the maximum."
+}

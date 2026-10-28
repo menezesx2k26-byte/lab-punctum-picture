@@ -16,6 +16,7 @@ import {
 import { createClientSession, requireClient } from "../../worker/client/auth";
 import { handleClientAdminApi } from "../../worker/api/client-admin";
 import { handleClientSessionApi } from "../../worker/api/client-session";
+import { handleClientGalleriesApi } from "../../worker/api/client-galleries";
 
 describe("private gallery persistence", () => {
   beforeAll(bootstrapPrivateDb);
@@ -109,6 +110,58 @@ describe("private gallery persistence", () => {
 
 describe("private publication and favorites", () => {
   beforeAll(bootstrapPrivateDb);
+  it("does not report a saved favorite after session revocation or unpublication races the write", async () => {
+    for (const revoked of [true, false]) {
+      const clientId = await seedClient();
+      const galleryId = await seedGallery(clientId);
+      const imageId = await seedReadyImage(galleryId);
+      const cookie = "punctum_client_session=" +
+        await createClientSession({ id: clientId, sessionVersion: 1 }, env);
+      const path = `/api/client/galleries/${galleryId}/favorites/${imageId}`;
+      let raced = false;
+      // Schedule a real D1 revocation after all authorization reads, before INSERT.
+      const db = new Proxy(env.DB, {
+        get(target, property) {
+          if (property === "prepare") return (sql: string) => {
+            const wrap = (statement: D1PreparedStatement): D1PreparedStatement =>
+              new Proxy(statement, {
+                get(current, operation) {
+                  if (operation === "bind") return (...args: unknown[]) =>
+                    wrap(Reflect.apply(current.bind, current, args));
+                  if ((operation === "run" || operation === "first") &&
+                    sql.includes("INSERT INTO client_gallery_favorites"))
+                    return async (...args: unknown[]) => {
+                      raced = true;
+                      if (revoked) await env.DB.prepare(
+                        "UPDATE client_accounts SET session_version=session_version+1 WHERE id=?",
+                      ).bind(clientId).run();
+                      else await env.DB.prepare(
+                        "UPDATE client_galleries SET status='draft' WHERE id=?",
+                      ).bind(galleryId).run();
+                      return Reflect.apply(current[operation], current, args);
+                    };
+                  const value = Reflect.get(current, operation);
+                  return typeof value === "function" ? value.bind(current) : value;
+                },
+              });
+            return wrap(target.prepare(sql));
+          };
+          const value = Reflect.get(target, property);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      await expect(handleClientGalleriesApi(
+        privateRequest(path, "PUT", undefined, cookie),
+        new URL("http://localhost:8787" + path),
+        { ...env, DB: db } as Env,
+      )).rejects.toMatchObject({ status: revoked ? 401 : 404 });
+      expect(raced).toBe(true);
+      expect(await env.DB.prepare(
+        "SELECT COUNT(*) AS count FROM client_gallery_favorites WHERE client_id=?",
+      ).bind(clientId).first()).toEqual({ count: 0 });
+    }
+  });
+
   it("does not restore revoked downloads when metadata is updated concurrently", async () => {
     const gallery = await seedGallery(await seedClient());
     await env.DB.prepare(

@@ -23,12 +23,15 @@ const json = (response, status, payload) => {
   response.end(body);
 };
 const validSecret = (value) => typeof value === "string" && Buffer.byteLength(value) >= 32;
+const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+  Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 
-export function createPasswordBridgeServer({ secret, replayDirectory, now = Date.now, maxRequestsPerMinute = 120 } = {}) {
+export function createPasswordBridgeServer({ secret, replayDirectory, now = Date.now, maxRequestsPerMinute = 120, logger = () => {} } = {}) {
   if (!validSecret(secret)) throw new Error("PUNCTUM_PASSWORD_BRIDGE_SECRET requires 32+ bytes.");
   const claimNonce = createReplayStore(replayDirectory, now);
   if (!Number.isInteger(maxRequestsPerMinute) || maxRequestsPerMinute < 1 || maxRequestsPerMinute > 120)
     throw new Error("Invalid bridge request limit.");
+  if (typeof logger !== "function") throw new Error("Invalid bridge logger.");
   let working = 0;
   let windowStarted = now();
   let requests = 0;
@@ -60,6 +63,20 @@ export function createPasswordBridgeServer({ secret, replayDirectory, now = Date
     });
   }
   const server = http.createServer(async (request, response) => {
+    const started = performance.now();
+    let logged = false;
+    const log = () => {
+      if (logged) return;
+      logged = true;
+      // Construct a fresh allowlisted record: never log paths, headers, bodies,
+      // errors or credential objects, even for rejected requests.
+      try {
+        logger({ event: "bridge_request", status: response.writableFinished ? response.statusCode : 499,
+          durationMs: Math.max(0, Math.round(performance.now() - started)) });
+      } catch { /* Observability failure must not change authorization/results. */ }
+    };
+    response.once("finish", log);
+    response.once("close", log);
     if (request.method === "GET" && request.url === "/healthz") {
       return json(response, 200, { ok: true, component: "punctum-password-bridge" });
     }
@@ -98,13 +115,13 @@ export function createPasswordBridgeServer({ secret, replayDirectory, now = Date
     try { input = JSON.parse(body); }
     catch { return json(response, 400, { error: "INVALID_REQUEST" }); }
     if (
-      !input || typeof input !== "object" ||
+      !exactKeys(input, input?.operation === "verify" ? ["operation", "password", "credential"] : ["operation", "password"]) ||
       !["hash", "verify"].includes(input.operation) ||
       typeof input.password !== "string" ||
       input.password.length < 1 || input.password.length > 1024
     ) return json(response, 400, { error: "INVALID_REQUEST" });
     if (input.operation === "verify" && (
-      !input.credential ||
+      !exactKeys(input.credential, ["passwordHash", "passwordSalt", "passwordIterations"]) ||
       input.credential.passwordIterations !== ITERATIONS ||
       typeof input.credential.passwordHash !== "string" ||
       typeof input.credential.passwordSalt !== "string" ||

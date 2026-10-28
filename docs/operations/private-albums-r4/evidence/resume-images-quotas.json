@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-28T22:13:28.1697916Z",
+  "mode": "READ_ONLY",
+  "scope": "Exact existing R4 QA D1 sources, Cloudflare Images entitlement and account Worker/D1 subscription usage; no activation, SQL mutation or recovery retry",
+  "provider": "Cloudflare API via existing authorized Composio connection cloudflare_gaub-clione",
+  "accountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "images": {
+    "bindingSupportedByPublishedDocs": true,
+    "publishedDocs": "https://developers.cloudflare.com/images/optimization/binding/",
+    "publishedPricing": "https://developers.cloudflare.com/images/pricing/",
+    "pricingDocUpdated": "2026-10-19",
+    "publishedDefaultPlan": "Images Free",
+    "publishedFreeUniqueTransformationsPerCalendarMonth": 5000,
+    "publishedWhenExhausted": "New transformations error 9422; no excess charge on Images Free",
+    "publishedPaidPlan": "First 5000 transforms included then USD 0.50/1000 unique transformed source+params/month",
+    "infoMethodFree": true,
+    "imagesStorageOnFree": false,
+    "sourceImagesFromR2Supported": true,
+    "distinctSyntheticPngTransformsRequested": 10,
+    "hypotheticalUniqueTransformsIfEachDistinct": 10,
+    "accountSpecificImagesPlanVerified": false,
+    "accountSpecificTransformationUsageVerified": false,
+    "freeRemainingQuotaVerified": false,
+    "zeroCostFor10DecodedPngTransformsVerified": false,
+    "quotaRead": {
+      "endpoint": "GET /accounts/[account_id]/images/v1/stats",
+      "status": 403,
+      "error": "Forbidden via currently authorized Cloudflare toolkit; no stats returned",
+      "note": "This endpoint documents Images stored count allowance, not necessarily transformed monthly count."
+    },
+    "billingRead": {
+      "accountSubscriptionInventory": [
+        "zone:Cloudflare Free Plan x3 USD0",
+        "account:Teams Free Base USD0",
+        "account:R2 Paid USD0 subscription price"
+      ],
+      "dedicatedImagesPaidSubscriptionListed": false,
+      "absenceProvesFreeEntitlement": false
+    },
+    "conclusion": "NO_GO_IMAGING_TRANSFORM_PRECONDITION: cannot activate IMAGES binding or make 10 transformation requests based on unmeasured plan/monthly remaining allowance. Published default Free and 5000 allowance do not certify specific account headroom or successful transforms."
+  },
+  "workers": {
+    "accountScriptDefaultUsageModel": "standard",
+    "workersSubscriptionExplicitlyIdentified": false,
+    "workersPaidSubscriptionListed": false,
+    "zoneSubscriptions": [
+      {
+        "name": "Cloudflare Free Plan",
+        "rateId": "free",
+        "count": 3,
+        "priceUsd": 0
+      }
+    ],
+    "accountSubscriptions": [
+      {
+        "name": "Teams Free Base",
+        "rateId": "teams_free",
+        "priceUsd": 0
+      },
+      {
+        "name": "R2 Paid",
+        "rateId": "r2_paid",
+        "priceUsd": 0
+      }
+    ],
+    "caution": "Plan labels describe specific subscription products; R2 Paid account price0 does not imply zero usage charges. Usage model standard alone is not an effective Free/Paid account plan designation.",
+    "usageAnalytics": {
+      "source": "Cloudflare GraphQL workersInvocationsAdaptive",
+      "periodUtc": [
+        "2026-10-28T00:00:00Z",
+        "2026-10-28T22:13:00Z"
+      ],
+      "requestCount": 4973,
+      "errorCount": 305,
+      "groupCount": 1,
+      "groupLimit": 1000,
+      "errors": 0
+    },
+    "publishedWorkerFreeRequestsPerDay": 100000,
+    "measuredRequestHeadroomToReference": 95027,
+    "noExcessRequestsProvenAtObservation": true,
+    "actualCpuPlanQuotaVerified": false,
+    "referencePricing": "https://developers.cloudflare.com/workers/platform/pricing/"
+  },
+  "d1": {
+    "accountD1DatabasesCount": 10,
+    "dailyUsage": {
+      "dateUtc": "2026-10-28",
+      "source": "Cloudflare GraphQL d1AnalyticsAdaptiveGroups",
+      "rowsRead": 723371,
+      "rowsWritten": 1923,
+      "groupCount": 1,
+      "groupLimit": 1000,
+      "errors": 0
+    },
+    "source": {
+      "uuid": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c",
+      "name": "punctum-picture-r4-qa-20261028",
+      "counts": {
+        "client_accounts": 1,
+        "client_galleries": 1,
+        "client_gallery_images": 1,
+        "client_gallery_upload_intents": 1,
+        "client_gallery_favorites": 0
+      },
+      "clients": [
+        {
+          "id": "39a03fb3-d913-4380-a30d-f983fabd22e1",
+          "sessionVersion": 1,
+          "mustChangePassword": false,
+          "disabled": false,
+          "createdAtUtc": "2026-10-28T21:08:31.201Z"
+        }
+      ],
+      "galleries": [
+        {
+          "id": "66c091c1-8a4f-47a8-bc57-43cfbebfa0f0",
+          "clientId": "39a03fb3-d913-4380-a30d-f983fabd22e1",
+          "status": "draft",
+          "theme": "ivory",
+          "allowDownloads": false,
+          "coverImageId": null,
+          "createdAtUtc": "2026-10-28T21:08:32.028Z",
+          "publishedAt": null
+        }
+      ],
+      "images": [
+        {
+          "id": "e5afb187-6384-4812-b647-eddb430dbe02",
+          "galleryId": "66c091c1-8a4f-47a8-bc57-43cfbebfa0f0",
+          "status": "failed",
+          "mimeType": "image/png",
+          "sizeBytes": 79,
+          "width": null,
+          "height": null,
+          "position": 0,
+          "deleted": false
+        }
+      ],
+      "uploadIntents": [
+        {
+          "id": "b7bf8640-b49e-4d34-8092-9cfd3e6314e5",
+          "galleryId": "66c091c1-8a4f-47a8-bc57-43cfbebfa0f0",
+          "imageId": "e5afb187-6384-4812-b647-eddb430dbe02",
+          "status": "failed",
+          "expectedMime": "image/png",
+          "expectedSize": 79,
+          "createdAtUtc": "2026-10-28T21:08:32.970Z",
+          "expiresAtUtc": "2026-10-28T21:23:32.970Z",
+          "completedAtUtc": null
+        }
+      ],
+      "foreignKeyErrors": 0,
+      "dataModified": false,
+      "safeContinuation": "SOURCE_NOT_EMPTY; FAILED and expired upload intent must be treated as historical immutable failure receipt, not resumed as pending or silently overwritten; choose a separately approved continuation mechanism. Never reset source, invent fresh parallel harness, or retry backup/restore pipeline without new evidence."
+    },
+    "restore": {
+      "uuid": "0141b8f9-3074-4aa4-a184-92a4f7379ecc",
+      "name": "punctum-picture-r4-restore-20261028",
+      "counts": {
+        "client_accounts": 0,
+        "client_galleries": 0,
+        "client_gallery_images": 0,
+        "client_gallery_upload_intents": 0,
+        "client_gallery_favorites": 0
+      },
+      "dataModified": false
+    },
+    "readOnlySqlStatements": 7,
+    "writes": 0,
+    "piiRead": false
+  },
+  "accessQaRelatedPrivateReceipt": "work/resume-access-identity.json (owner email + policy; deliberately separate to avoid spreading PII)",
+  "safety": {
+    "cloudflareMutations": 0,
+    "d1RowsWrittenByTheseReads": 0,
+    "billingActions": 0,
+    "bindingActivations": 0,
+    "imagesTransformRequests": 0,
+    "deployments": 0,
+    "recoveryAttempts": 0,
+    "resourcesDeleted": 0,
+    "secretValuesRead": false
+  },
+  "blockers": [
+    "Cloudflare Images stats HTTP403; no per-account current unique-transform usage/monthly allowance proof",
+    "Workers subscription distinction Free vs Paid not explicitly exposed despite free zones/other plan records",
+    "Dedicated QA source contains an enabled synthetic account, draft gallery, failed image and expired failed intent; original vacant-source recovery precondition false",
+    "No authorization for IMAGES activation or mutation of existing fixtures"
+  ]
+}

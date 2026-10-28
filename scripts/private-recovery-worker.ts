@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { parseJson } from "../worker/client/validation";
 import { captureClientRecovery, restoreClientRecovery, type ClientRecovery } from "./lib/private-recovery";
+import { inspectScopedFixture, seedScopedFixture } from "./lib/r4-scoped-seed";
 
 // Standalone, transient QA entry point. Never imported by worker/index.ts.
 type RecoveryEnv = {
-  ENVIRONMENT: string; QA_RECOVERY_ENABLED: string; SITE_ORIGIN: string; QA_RECOVERY_SECRET: string; QA_RECOVERY_CLIENT_ID: string;
+  ENVIRONMENT: string; QA_RECOVERY_ENABLED: string; SITE_ORIGIN: string; QA_RECOVERY_SECRET: string;
+  QA_RECOVERY_CLIENT_ID?: string; QA_RECOVERY_CLIENT_IDS?: string; QA_RECOVERY_ALLOCATION?: string; QA_RECOVERY_SEED_MODE?: string;
   SOURCE_DB: D1Database; RESTORE_DB: D1Database;
   SOURCE_ORIGINALS: R2Bucket; RESTORE_ORIGINALS: R2Bucket; BACKUPS: R2Bucket;
+  QA_VERSION?: { id: string };
 };
 const inputSchema = z.object({ clientIds: z.array(z.uuid()).min(1).max(2) }).strict();
 function response(status: number, body: unknown) {
@@ -17,21 +20,60 @@ async function digest(bytes: Uint8Array) {
 }
 export async function handleQaRecovery(request: Request, env: RecoveryEnv): Promise<Response> {
   const url = new URL(request.url);
-  if (env.ENVIRONMENT !== "preview" || env.QA_RECOVERY_ENABLED !== "true" || url.pathname !== "/qa/recover") return response(404, { error: "NOT_FOUND" });
-  if (request.method !== "POST") return response(405, { error: "METHOD_NOT_ALLOWED" });
-  if (!env.QA_RECOVERY_SECRET || env.QA_RECOVERY_SECRET.length < 32 || request.headers.get("Authorization") !== "Bearer " + env.QA_RECOVERY_SECRET ||
-      request.headers.get("Origin") !== env.SITE_ORIGIN || url.origin !== env.SITE_ORIGIN ||
-      !/^https:\/\/punctum-picture-albums-qa\.[a-z0-9-]+\.workers\.dev$/.test(env.SITE_ORIGIN))
+  const r4 = env.QA_RECOVERY_ALLOCATION === "r4-20261028";
+  const knownAllocation = !env.QA_RECOVERY_ALLOCATION || r4;
+  const allowedOrigin = r4
+    ? /^https:\/\/punctum-picture-r4-qa-20261028\.[a-z0-9-]+\.workers\.dev$/.test(env.SITE_ORIGIN)
+    : /^https:\/\/punctum-picture-albums-qa\.[a-z0-9-]+\.workers\.dev$/.test(env.SITE_ORIGIN);
+  const seedMode=r4 && env.QA_RECOVERY_SEED_MODE==="true";
+  const seedPath=seedMode && url.pathname==="/qa/seed";
+  const inspectPath=seedMode && url.pathname==="/qa/inspect";
+  if (env.ENVIRONMENT !== "preview" || env.QA_RECOVERY_ENABLED !== "true" || (!seedPath&&!inspectPath&&url.pathname!=="/qa/recover")) return response(404, { error: "NOT_FOUND" });
+  if (request.method!==(inspectPath?"GET":"POST")) return response(405, { error: "METHOD_NOT_ALLOWED" });
+  if (!knownAllocation || !allowedOrigin || !env.QA_RECOVERY_SECRET || env.QA_RECOVERY_SECRET.length < 32 || request.headers.get("Authorization") !== "Bearer " + env.QA_RECOVERY_SECRET ||
+      request.headers.get("Origin") !== env.SITE_ORIGIN || url.origin !== env.SITE_ORIGIN)
     return response(403, { error: "QA_UNAUTHORIZED" });
   try {
+    if(inspectPath) return response(200,await inspectScopedFixture(env));
+    if(seedPath) {
+      const payload=await parseJson(request,z.object({
+        mode:z.literal("r4-scoped-synthetic-backup-fixture-v1"),
+        clients:z.array(z.object({id:z.uuid(),email:z.email(),name:z.string()}).strict()).length(2),
+        galleries:z.array(z.object({id:z.uuid(),clientId:z.uuid(),title:z.string()}).strict()).length(2),
+        images:z.array(z.object({id:z.uuid(),galleryId:z.uuid(),storageKey:z.string(),position:z.number().int(),sizeBytes:z.literal(79),mimeType:z.literal("image/png")}).strict()).length(10),
+        intents:z.array(z.object({id:z.uuid(),galleryId:z.uuid(),imageId:z.uuid(),storageKey:z.string()}).strict()).length(10),
+        favorites:z.array(z.object({clientId:z.uuid(),galleryId:z.uuid(),imageId:z.uuid()}).strict()).length(2),
+        uploadE2E:z.literal(false),
+      }).strict());
+      return response(201,await seedScopedFixture(env,payload));
+    }
     const { clientIds } = await parseJson(request, inputSchema);
-    if (clientIds.length !== 1 || !env.QA_RECOVERY_CLIENT_ID || clientIds[0] !== env.QA_RECOVERY_CLIENT_ID) return response(403, { error: "QA_RUN_SCOPE_REQUIRED" });
+    const allowedIds = r4 ? env.QA_RECOVERY_CLIENT_IDS?.split(",") : [env.QA_RECOVERY_CLIENT_ID];
+    if (!allowedIds || allowedIds.length !== (r4 ? 2 : 1) || clientIds.length !== allowedIds.length ||
+        new Set(allowedIds).size !== allowedIds.length || !clientIds.every((id) => allowedIds.includes(id)))
+      return response(403, { error: "QA_RUN_SCOPE_REQUIRED" });
     const marks = clientIds.map(() => "?").join(",");
     const accounts = (await env.SOURCE_DB.prepare(`SELECT email FROM client_accounts WHERE id IN (${marks})`).bind(...clientIds).all<{ email: string }>()).results;
     if (accounts.length !== clientIds.length || accounts.some((r) => !/^pilot-[a-f0-9-]{36}@example\.invalid$/i.test(r.email))) return response(403, { error: "QA_SYNTHETIC_SCOPE_REQUIRED" });
+    if (r4) {
+      const scoped=seedMode?await inspectScopedFixture(env):null;
+      const sourceCount = await env.SOURCE_DB.prepare("SELECT COUNT(*) AS count FROM client_accounts").first<{ count: number }>();
+      const restoreCount = await env.RESTORE_DB.prepare("SELECT COUNT(*) AS count FROM client_accounts").first<{ count: number }>();
+      const galleryCount = await env.SOURCE_DB.prepare("SELECT COUNT(*) AS count FROM client_galleries").first<{ count: number }>();
+      if (sourceCount?.count !== (seedMode?3:2) || restoreCount?.count !== 0 || galleryCount?.count !== (seedMode?3:2) ||
+          (seedMode&&(scoped?.source.client_gallery_images!==11 || scoped?.source.client_gallery_upload_intents!==11 || scoped?.source.client_gallery_favorites!==2)))
+        return response(409, { error: "QA_R4_DATABASE_SCOPE_CHANGED" });
+      const restoredObjects = await env.RESTORE_ORIGINALS.list({ limit: 1 });
+      const backups = await env.BACKUPS.list({ limit: 1 });
+      const sourceObjects = await env.SOURCE_ORIGINALS.list({ limit: 12 });
+      if (restoredObjects.objects.length || restoredObjects.truncated || backups.objects.length || backups.truncated)
+        return response(409, { error: "QA_R4_STORAGE_NOT_EMPTY" });
+      if (sourceObjects.truncated || sourceObjects.objects.length !== (seedMode?11:10))
+        return response(409, { error: "QA_R4_SOURCE_OBJECT_SCOPE_CHANGED" });
+    }
     if (await env.RESTORE_DB.prepare(`SELECT id FROM client_accounts WHERE id IN (${marks}) LIMIT 1`).bind(...clientIds).first()) return response(409, { error: "QA_DESTINATION_CONFLICT" });
     const size = await env.SOURCE_DB.prepare(`SELECT COUNT(*) AS count,COALESCE(SUM(i.size_bytes),0) AS bytes FROM client_gallery_images i JOIN client_galleries g ON g.id=i.gallery_id WHERE g.client_id IN (${marks})`).bind(...clientIds).first<{ count: number; bytes: number }>();
-    if (!size || size.count > 50 || size.bytes > 2_097_152) return response(413, { error: "QA_RECOVERY_LIMIT" });
+    if (!size || size.count > 50 || size.bytes > 2_097_152 || (r4 && size.count !== 10)) return response(413, { error: "QA_RECOVERY_LIMIT" });
     const snapshot = await captureClientRecovery(env.SOURCE_DB, env.SOURCE_ORIGINALS, clientIds);
     const encoded = new TextEncoder().encode(JSON.stringify({ ...snapshot, objects: snapshot.objects.map((o) => ({ ...o, bytes: Array.from(o.bytes) })) }));
     if (encoded.length > 8_388_608) return response(413, { error: "QA_BACKUP_LIMIT" });
@@ -54,5 +96,9 @@ export async function handleQaRecovery(request: Request, env: RecoveryEnv): Prom
     return response(/exists|conflict/.test(message) ? 409 : 400, { error: "QA_RECOVERY_FAILED" });
   }
 }
-const recoveryWorker = { fetch: handleQaRecovery };
+const recoveryWorker = { async fetch(request: Request, env: RecoveryEnv) {
+  const result = await handleQaRecovery(request, env);
+  if (env.QA_VERSION?.id) result.headers.set("X-QA-Version", env.QA_VERSION.id);
+  return result;
+} };
 export default recoveryWorker;

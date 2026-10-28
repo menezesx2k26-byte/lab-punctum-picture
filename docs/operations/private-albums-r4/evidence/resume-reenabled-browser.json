@@ -1,0 +1,27 @@
+{
+  "atUtc": "2026-10-28T23:12:19.217Z",
+  "stage": "reenabled-real-access-session-and-idor",
+  "me": {
+    "status": 200,
+    "build": "1c9cee934be0b022ecb347ae85ab15fd13414b07",
+    "version": "eb6d11b2-e866-43a6-82b8-d35a8b9914fe",
+    "cache": "private, no-store"
+  },
+  "foreignGallery": {
+    "status": 404
+  },
+  "foreignMedia": {
+    "status": 404,
+    "bytes": 0,
+    "cache": "private, no-store"
+  },
+  "sessionVersion": 5,
+  "cookie": {
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Strict"
+  },
+  "priorDisabledCookieEvidence": "resume-disabled-browser.json",
+  "postReenableOldCookieReplay": "NOT_RUN: automatic same-origin entry replaced old cookie before separate replay",
+  "cookieValuesStored": false
+}

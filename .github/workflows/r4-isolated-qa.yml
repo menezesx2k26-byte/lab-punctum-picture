@@ -1,0 +1,22 @@
+name: R4 isolated QA
+on:
+  push:
+    branches: ["agent/hst-001-hostinger-qa-20261028"]
+    paths: [".github/workflows/r4-isolated-qa.yml", "scripts/r4-resource-preflight.mjs"]
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Read bounded resource capabilities
+        env:
+          CF_TOKEN_1: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_2: ${{ secrets.CLOUDFLARE_API_TOKEN2 }}
+          CF_TOKEN_3: ${{ secrets.CLOUDFLARE_API_TOKEN3 }}
+        run: node scripts/r4-resource-preflight.mjs

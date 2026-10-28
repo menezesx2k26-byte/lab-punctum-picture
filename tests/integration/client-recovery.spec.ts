@@ -133,6 +133,25 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect(restored!.disabled_at).toBeTruthy();
   });
 
+  it("refuses R4 requests without the exact two-client allocation and R4 hostname", async () => {
+    const first = crypto.randomUUID();
+    const second = crypto.randomUUID();
+    const origin = "https://punctum-picture-r4-qa-20261028.example.workers.dev";
+    const qa = { ENVIRONMENT: "preview", QA_RECOVERY_ENABLED: "true", SITE_ORIGIN: origin,
+      QA_RECOVERY_ALLOCATION: "r4-20261028", QA_RECOVERY_CLIENT_IDS: `${first},${second}`,
+      QA_RECOVERY_SECRET: "r4-test-recovery-secret-not-valid-in-production",
+      SOURCE_DB: env.DB, RESTORE_DB: bindings.RESTORE_DB,
+      SOURCE_ORIGINALS: env.ORIGINALS, RESTORE_ORIGINALS: bindings.RESTORE_ORIGINALS, BACKUPS: env.BACKUPS };
+    const request = (ids: string[]) => new Request(origin + "/qa/recover", { method: "POST", headers: {
+      Origin: origin, Authorization: "Bearer " + qa.QA_RECOVERY_SECRET, "Content-Type": "application/json",
+    }, body: JSON.stringify({ clientIds: ids }) });
+    expect((await handleQaRecovery(request([first]), qa)).status).toBe(403);
+    expect((await handleQaRecovery(request([first, first]), qa)).status).toBe(403);
+    expect((await handleQaRecovery(request([first, crypto.randomUUID()]), qa)).status).toBe(403);
+    expect((await handleQaRecovery(request([first, second]), { ...qa, SITE_ORIGIN: "https://punctum-picture-albums-qa.example.workers.dev" })).status).toBe(403);
+    expect((await handleQaRecovery(request([first, second]), { ...qa, QA_RECOVERY_ALLOCATION: "unknown" })).status).toBe(403);
+  });
+
   it("retries after partial R2 failure while leaving destination rows untouched", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);

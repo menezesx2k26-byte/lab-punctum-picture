@@ -306,6 +306,7 @@ async function handleGalleryAdminApi(
           .bind(position, new Date().toISOString(), imageId, id),
       ),
     );
+    await writeAudit(db, auditPrincipal(actor), "client_gallery.images_reordered", "client_gallery", id);
     return privateJson({ ok: true });
   }
   if (action === "publish" && request.method === "POST") {

@@ -294,7 +294,15 @@ export async function requireAdmin(
       issuer,
       audience,
       algorithms: ["RS256"],
+      requiredClaims: ["exp", "iat", "sub", "email", "type"],
     });
+    if (
+      payload.type !== "app" ||
+      typeof payload.sub !== "string" || !payload.sub || payload.sub.length > 256 ||
+      !Number.isInteger(payload.iat) ||
+      payload.iat! > Math.floor(Date.now() / 1000) + 30 ||
+      payload.exp! <= payload.iat!
+    ) throw new Error("JWT administrativo sem identidade e validade completas");
     const email =
       typeof payload.email === "string" ? payload.email.trim().toLowerCase() : null;
     const allowed = allowedAdminEmails(env);
