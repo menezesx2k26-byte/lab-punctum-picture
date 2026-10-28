@@ -2,7 +2,7 @@ name: R4 fresh edge QA
 on:
   push:
     branches: ["agent/hst-001-hostinger-qa-20261028"]
-    paths: [".github/workflows/r4-edge-qa.yml", "scripts/r4-edge-qa.mjs", "scripts/lib/r4-edge-qa.mjs", "scripts/r4-edge-execute.mjs"]
+    paths: [".github/workflows/r4-edge-qa.yml", "scripts/r4-edge-qa.mjs", "scripts/lib/r4-edge-qa.mjs", "scripts/r4-edge-execute.mjs", "scripts/r4-recovery-execute.mjs", "scripts/lib/r4-recovery-qa.mjs", "scripts/r4-recovery-qa.test.mjs"]
 permissions:
   contents: read
 concurrency:
