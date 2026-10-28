@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { createQaServer } from './server.mjs';
+import { createQaServer } from './app.mjs';
 
 test('QA health is live and uncached, exposes only bounded diagnostics and makes no SSR/release claim', async () => {
   const server=createQaServer();
@@ -43,6 +43,7 @@ test('provider importing the entrypoint starts a real HTTP listener within its s
     assert.equal(response.status,200);
     assert.equal(body.nonce,'hosted-import');
     assert.equal(body.service,'punctum-hostinger-qa-probe');
+    assert.equal(body.version,'r4-node-probe-20261028-v2');
     await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
     clearTimeout(deadline);
   `;

@@ -1,24 +1,6 @@
-import { createServer } from 'node:http';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createQaServer } from './app.mjs';
 
-export function createQaServer() {
-  return createServer((request,response)=>{
-    const url=new URL(request.url,'http://qa.invalid');
-    response.setHeader('Content-Type','application/json; charset=utf-8');
-    response.setHeader('Cache-Control','no-store');
-    response.setHeader('X-Content-Type-Options','nosniff');
-    const send=(status,body)=>{response.statusCode=status;response.end(request.method==='HEAD'?undefined:JSON.stringify(body));};
-    if(!['GET','HEAD'].includes(request.method)) return send(405,{error:'METHOD_NOT_ALLOWED'});
-    if(!['/','/health'].includes(url.pathname)) return send(404,{error:'NOT_FOUND'});
-    const nonce=url.searchParams.get('nonce');
-    if(nonce!==null && !/^[a-zA-Z0-9-]{1,64}$/.test(nonce)) return send(400,{error:'INVALID_NONCE'});
-    send(200,{service:'punctum-hostinger-qa-probe',version:'r4-node-probe-20261028-v1',node:process.version,uptimeSeconds:Math.floor(process.uptime()),rssBytes:process.memoryUsage().rss,nonce,ssrValidated:false,production:false});
-  });
-}
-
-if(resolve(process.argv[1]??'')===fileURLToPath(import.meta.url)) {
-  const port=Number(process.env.PORT||3000);
-  if(!Number.isInteger(port)||port<1||port>65535) throw new Error('A valid provider PORT is required');
-  createQaServer().listen(port,'0.0.0.0',()=>console.log('Punctum QA capability probe listening'));
-}
+// Managed hosting imports this entrypoint instead of executing it as argv[1].
+const port=Number(process.env.PORT||3000);
+if(!Number.isInteger(port)||port<1||port>65535) throw new Error('A valid provider PORT is required');
+createQaServer().listen(port,'0.0.0.0',()=>console.log('Punctum QA capability probe listening'));
