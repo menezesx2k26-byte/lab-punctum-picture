@@ -1,50 +1,44 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "feature": "private-client-galleries",
   "round": "R4",
-  "status": "TECHNICAL_DOD_PASS / PRODUCTION_NO_GO",
+  "status": "TECHNICAL_DOD_PASS",
   "decision": "NO_GO_PRODUCTION",
-  "updatedAt": "2026-10-27T22:14:00Z",
+  "statusScope": "Technical code/test DoD verified locally and on GitHub CI; external QA, remote rollback, security independent signoff and human approvals not included in PASS.",
+  "updatedAt": "2026-10-28T00:27:16.128Z",
   "branch": "agent/argon-punctum-r4-dod-20261027-v2",
   "baseBranch": "integration/punctum-private-albums-r4-20261027",
-  "baseCommit": "a242b6eed8b829e51980ee8e61d20bef82c2e938",
-  "productionFlag": {
-    "PRIVATE_GALLERIES_ENABLED": "false",
-    "CLIENT_AUTH_MODE": "access"
-  },
-  "verification": {
-    "typecheck": "PASS",
-    "lint": "PASS",
-    "vitestWorkers": {
-      "status": "PASS",
-      "files": 46,
-      "tests": 191
-    },
-    "vitestCollage": {
-      "status": "PASS",
-      "files": 1,
-      "tests": 7
-    },
-    "nodeTests": {
-      "status": "PASS",
-      "tests": 22
-    },
-    "build": "PASS",
-    "previewScriptSyntax": "PASS",
-    "npmAudit": {
-      "status": "PASS",
-      "vulnerabilities": 0
-    },
-    "realBrowserPlaywright": {
-      "status": "PASS",
-      "viewports": [320, 360, 375, 390, 430, 768, 1024, 1440],
-      "screens": 9,
-      "overflowFailures": 0,
-      "touchTargetFailures": 0,
-      "unlabeledInputFailures": 0
-    }
-  },
+  "headBeforeStateUpdate": "98c1e9b1786a2455b90c4b60158d540f80e340a8",
+  "canonicalGateSystem": "ORIGINAL_SPEC_G01_G24",
+  "canonicalGateDocument": "docs/operations/private-albums-r4/12-release-readiness.md",
+  "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
   "gates": {
+    "G01": "PASS_LOCAL",
+    "G02": "PARTIAL",
+    "G03": "PASS_LOCAL",
+    "G04": "PASS_LOCAL",
+    "G05": "PASS_LOCAL",
+    "G06": "PASS_LOCAL",
+    "G07": "BLOCKED_EXTERNAL",
+    "G08": "PASS_LOCAL",
+    "G09": "PASS_LOCAL",
+    "G10": "PASS_LOCAL",
+    "G11": "PASS_LOCAL",
+    "G12": "PASS_LOCAL",
+    "G13": "PASS_LOCAL",
+    "G14": "PARTIAL",
+    "G15": "PASS_LOCAL",
+    "G16": "PASS_LOCAL",
+    "G17": "BLOCKED_EXTERNAL",
+    "G18": "BLOCKED_EXTERNAL",
+    "G19": "PARTIAL",
+    "G20": "BLOCKED_GOVERNANCE",
+    "G21": "PASS",
+    "G22": "BLOCKED_GOVERNANCE",
+    "G23": "PARTIAL",
+    "G24": "PASS_LOCAL"
+  },
+  "legacyArgonGatesNonCanonical": {
     "G01": "PASS",
     "G02": "PASS",
     "G03": "PASS",
@@ -67,5 +61,132 @@
     "G20": "BLOCKED_GOVERNANCE",
     "G21": "PASS",
     "G22": "BLOCKED_GOVERNANCE"
-  }
+  },
+  "gateNotes": {
+    "G07": "Real Cloudflare Access OTP, authentic identity/JWT/session and D1 revocation still blocked.",
+    "G14": "Chromium responsive test reported in Argon; physical Android Chrome and iOS Safari not run.",
+    "G17": "Workers Free 10 ms CPU limit; account usage/billing and edge CPU unverified.",
+    "G18": "Historical D1 QA both contain five accounts; no remote restore/migration, local recovery tests only.",
+    "G19": "Only targeted prior review and same-implementer followup; independent signoff pending.",
+    "G20": "LGPD controller approval absent; review packet 11-lgpd-decisions.md.",
+    "G21": "CI run 40608661347 PASS on verified code SHA 98c1e9b; this metadata-only commit requires its own CI status check.",
+    "G22": "Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation.",
+    "G23": "Local feature flag and rollback guard tested; D1/R2/Worker QA restore or live rollback not exercised. PARTIAL.",
+    "G24": "Versioned handoff and original gate mapping in PR #20; PersistFlow takeover not proven."
+  },
+  "productionFlag": {
+    "PRIVATE_GALLERIES_ENABLED": "false (versioned, effective remote runtime unverified)",
+    "CLIENT_AUTH_MODE": "access"
+  },
+  "verification": {
+    "localEnvironment": "Existing GitHub Codespace: /workspaces/lab-punctum-picture",
+    "localCodeSha": "af72d43a2865eba5cac1f64ca6af7e1e4076a29f",
+    "npmCi": {
+      "status": "PASS",
+      "packagesAudited": 546,
+      "vulnerabilities": 0
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "vitestWorkers": {
+      "status": "PASS",
+      "files": 46,
+      "tests": 192,
+      "previousTests": 191
+    },
+    "vitestCollage": {
+      "status": "PASS",
+      "files": 1,
+      "tests": 7
+    },
+    "nodeTests": {
+      "status": "PASS",
+      "tests": 22
+    },
+    "build": "PASS_WITH_WARNINGS",
+    "npmAudit": {
+      "status": "PASS",
+      "vulnerabilities": 0
+    },
+    "gitDiffCheck": "PASS",
+    "ciVerified": {
+      "status": "PASS",
+      "sha": "98c1e9b1786a2455b90c4b60158d540f80e340a8",
+      "runId": 40608661347
+    },
+    "browserReportedArgonNotRepeated": {
+      "status": "PASS",
+      "viewports": [
+        320,
+        360,
+        375,
+        390,
+        430,
+        768,
+        1024,
+        1440
+      ],
+      "screens": 9,
+      "overflowFailures": 0,
+      "touchTargetFailures": 0,
+      "unlabeledInputFailures": 0
+    },
+    "securityRegression": {
+      "redCommit": "ac7ef4e86fbad2dc8d124187537afe9c7f91b5d5",
+      "greenCommit": "bdd00f9862886a9922d688535d9bc080d28cc768",
+      "red": "REPRODUCED_FAIL",
+      "green": "PASS_4_TESTS_SYNTHETIC"
+    }
+  },
+  "securityRisks": [
+    "Ten Dependabot alerts remain open in repository default-branch view, despite npm audit zero for PR lockfile (see security-review.md).",
+    "Independent comprehensive security signoff missing.",
+    "Access policies and actual client OTP not homologated.",
+    "Workers Free CPU budget 10ms unverified against effective workload.",
+    "QA D1/R2 recovery drill impossible on occupied historical QA without safe empty resources and owner approval.",
+    "Mobile Safari iOS and Chrome Android physical QA outstanding.",
+    "LGPD studio-controller approval and explicit production authorization missing."
+  ],
+  "externalBlockers": [
+    {
+      "gate": "G07",
+      "owner": "Cloudflare Access administrator and QA identity owner",
+      "action": "Perform secure real OTP/JWT/cookie/revocation and D1 identity audit on isolated QA; do not expose OTP/JWT."
+    },
+    {
+      "gate": "G14",
+      "owner": "QA tester with physical Android and iPhone",
+      "action": "Record results on Android Chrome and iOS Safari without real private client photos."
+    },
+    {
+      "gate": "G17",
+      "owner": "Cloudflare account/billing owner",
+      "action": "Verify Workers Free plan, edge CPU metrics and aggregate R2/D1 usage, without paid provisioning."
+    },
+    {
+      "gate": "G18",
+      "owner": "Cloudflare QA infrastructure owner",
+      "action": "Authorize empty isolated QA pair within free tier; hash-verify restore, quarantine and independent session-secret rotation; preserve historical QA."
+    },
+    {
+      "gate": "G19",
+      "owner": "Independent security reviewer",
+      "action": "Review actual security boundaries and unresolved findings; provide signed approval or blockers."
+    },
+    {
+      "gate": "G20",
+      "owner": "Studio data controller",
+      "action": "Approve/reject documented LGPD choices explicitly."
+    },
+    {
+      "gate": "G22",
+      "owner": "Project owner",
+      "action": "Decide release only after all mandatory gates; separate future merge and deploy authorizations."
+    },
+    {
+      "gate": "G23",
+      "owner": "Infrastructure/operator",
+      "action": "Execute isolated supervised rollback drill after G18; do not overwrite production or historical QA."
+    }
+  ]
 }
