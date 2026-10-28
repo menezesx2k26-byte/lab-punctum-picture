@@ -23,7 +23,7 @@ after(async () => {
   await rm(replayDirectory, { recursive: true, force: true });
 });
 async function send(operation, password, credential, overrides = {}) {
-  const payload = JSON.stringify({ operation, password, ...(credential ? { credential } : {}) });
+  const payload = overrides.payload ?? JSON.stringify({ operation, password, ...(credential ? { credential } : {}) });
   const timestamp = String(overrides.timestamp ?? Date.now());
   const nonce = overrides.nonce ?? randomUUID();
   const signature = createHmac("sha256", overrides.secret ?? secret)
@@ -37,7 +37,7 @@ async function send(operation, password, credential, overrides = {}) {
       "X-Punctum-Nonce": nonce,
       "X-Punctum-Signature": overrides.signature ?? signature,
     },
-    body: payload,
+    body: overrides.sentPayload ?? payload,
   });
   return { status: response.status, json: await response.json() };
 }
@@ -63,6 +63,22 @@ test("rejects absent or incorrect HMAC signature and stale request", async () =>
     body: JSON.stringify({ operation: "hash", password: "password" }),
   });
   assert.equal(unauthenticated.status, 401);
+});
+test("rejects a tampered signed body and future timestamps", async () => {
+  const original = JSON.stringify({ operation: "hash", password: "synthetic-password" });
+  assert.equal((await send("hash", "synthetic-password", undefined, {
+    payload: original, sentPayload: original.replace("synthetic-password", "tampered-password"),
+  })).status, 401);
+  assert.equal((await send("hash", "synthetic-password", undefined, { timestamp: Date.now() + 120_000 })).status, 401);
+});
+test("rejects unknown signed fields and credentials on hash requests", async () => {
+  for (const input of [
+    { operation: "hash", password: "synthetic-password", clientId: "other-client" },
+    { operation: "hash", password: "synthetic-password", credential: {} },
+    { operation: "verify", password: "synthetic-password", credential: {
+      passwordHash: "A".repeat(43), passwordSalt: "A".repeat(22), passwordIterations: 310000, token: "must-not-accept",
+    } },
+  ]) assert.equal((await send("hash", "synthetic-password", undefined, { payload: JSON.stringify(input) })).status, 400);
 });
 test("rejects replay and malformed credential; never returns a session", async () => {
   const nonce = randomUUID();
