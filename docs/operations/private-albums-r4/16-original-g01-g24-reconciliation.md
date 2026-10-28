@@ -1,6 +1,6 @@
 # R4 — Reconciliação vinculante do DoD original G01–G24 e handoff
 
-Data: 2026-10-27. Contrato: matriz original preservada em `12-release-readiness.md`. Base da PR #20: PR #17; **main, produção, Cloudflare D1/R2/Access, billing e migrações remotas intactos nesta continuação**.
+Estado atual: 28/10/2026, relatórios23/24 e execution-state.json. PR24 sobre20 sobre17; apenas recursos QA dedicados foram usados, com fixtures parciais preservadas. Main/produção/Access/billing e aplicações PersistFlow não alterados pelo agente. Registros anteriores abaixo são históricos.
 
 ## Retificação pela fonte primária — 28/10/2026
 
@@ -11,30 +11,30 @@ Os números G01–G22 do relatório `15-argon-execution-2026-10-27.md` são uma 
 
 | Gate original | Definição exata da SPEC §23 | Estado | Evidência e limite |
 |---|---|---|---|
-| G01 | Baseline atualizado — SHAs/inventário | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G02 | Integração sem regressão — diff auditado/testes | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G03 | Cadastro admin — E2E/D1 | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G04 | Galeria e publicação — E2E | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G05 | Upload confiável — bytes/retry | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G06 | JWT Access — testes criptográficos | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G07 | OTP real — evidência real sanitizada | BLOCKED_EXTERNAL | Cloudflare QA Access self_hosted app and 'Owner QA OTP only' policy directly verified, 1h session, one IdP, CLIENT_AUTH_MODE=access and configured secrets. Real OTP/JWT/identity/session revocation and D1 authorization still NOT tested (G07 BLOCKED_EXTERNAL). |
-| G08 | Sessão segura — auth/revogação | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G09 | Isolamento — matriz A/B | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G10 | Mídia privada — zero bytes indevidos | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G11 | Favoritos — persistência E2E | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G12 | Downloads — API/UI | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G13 | Frontend cliente — browser | PASS | Original: client frontend/browser. Current local Chromium libraries, private viewer, favorites, download, keyboard and A/B tests. Does not prove OTP or physical devices. |
-| G14 | Frontend admin — browser | PASS | Original ADMIN/browser: expanded14-check local Chromium E2E passed after CSS chunk correction; Access client/gallery/upload/progress/cover/edit/publish at8 widths. Synthetic local auth only. |
-| G15 | Acessibilidade — matriz assistiva | BLOCKED_EXTERNAL | Original: assistive accessibility matrix. Keyboard/focus/reduced motion locally exercised; 200% zoom, contrast and physical TalkBack/VoiceOver matrix incomplete. SEO is supplementary. |
-| G16 | Não regressão pública — testes main | PASS | Testes locais determinísticos e relatório 23; nenhuma homologação de produção implícita. |
-| G17 | CPU/custos — fontes/medição | FAIL | FAIL on real isolated QA da23806: baseline CPU telemetry p50/p95/p99=50/90/137ms (53 samples); candidate 57/111/204ms (48). Baseline 10/64 HTTP503, candidate 17/64; 0 version mismatches. Workflow success means measurement completed, not gate PASS. No cause assigned to bridge or 503 without evidence. |
-| G18 | Backup/restauração — D1/R2 byte a byte | NOT_RUN | Dedicated new QA pair from prior run40756797747 now exists; prior claim no isolated pair is stale. Remote recovery being implemented independently; no restoration PASS yet. |
-| G19 | Segurança independente — sem P0/P1 | BLOCKED_EXTERNAL | Targeted static review and local test regressions complete, including shared-password audit principal; individual verified admin identity and formal independent sign-off missing. Issue #21 remains for G19/G07. |
-| G20 | LGPD — aprovação estúdio | BLOCKED_EXTERNAL | Technical export now includes retained metadata in sanitized allowlist and reads one D1 transaction batch, with tests; studio controller's retention, third-party-data review, delivery method and approval absent. Issue #22 remains. |
-| G21 | PR integração — CI/revisão | PASS | Exact PR-head checkout and visual screenshot retention fixed RED588e499/GREEN53c13c6; CI40762657123 success on da23806. Later commits still require their own CI. |
-| G22 | Release — autorização específica | BLOCKED_EXTERNAL | Explicit release authorization absent. No main merge, prod deploy, migration, policy changes or activation. |
-| G23 | Rollback — procedimento testado | NOT_RUN | Real isolated Worker baseline rollback and candidate return passed at run40762650132. D1/R2 recovery/session portion remains unverified. |
-| G24 | Handoff — relatório verificável | PASS | Reports18-21, original24gates, immutable sanitized Cloudflare/Hostinger/SSH evidence and PR #24 track progress; Drive handoff refreshed after this continuation. No PersistFlow takeover or Hostinger activation claimed. New machine-verifiable local CI/E2E evidence is attached to run 40758459104; latestR4Continuation details generated prior to this docs-only commit. |
+| G01 | Baseline atualizado — SHAs/inventário | PASS | Original SPEC and handoff fully read and hash-verified; PR17/20/24, remote HEAD, worktrees and main-only diff audited. Existing work preserved. |
+| G02 | Integração sem regressão — diff auditado/testes | PASS | CI exact-head checkout fixed; deterministic tests, lint, typecheck, build and Chromium on stacked PR. No merge into main authorized. |
+| G03 | Cadastro admin — E2E/D1 | PASS | Local Chromium creates Access client without password; D1 verifies persisted data. Synthetic QA identity; no real OTP claim. |
+| G04 | Galeria e publicação — E2E | PASS | Local browser creates, edits and publishes gallery, cover/theme/intro verified in D1; public approved UI preserved. |
+| G05 | Upload confiável — bytes/retry | FAIL | Local bytes/retry/progress tests pass, but real isolated recovery upload returned400 INVALID_IMAGE because QA lacked IMAGES. New503 guard preserves upload instead of falsely corrupting it. Remote upload not homologated. |
+| G06 | JWT Access — testes criptográficos | PASS | Cryptographic issuer/audience/signature/claim tests pass; admin exp/iat/sub/email/type hardened with RED-GREEN. Real Access token remains G07. |
+| G07 | OTP real — evidência real sanitizada | BLOCKED_EXTERNAL | Needs authorized human OTP on historical isolated Access QA plus real JWT/session/revocation evidence; never print OTP/cookie/JWT. Synthetic signed fixtures do not pass this gate. |
+| G08 | Sessão segura — auth/revogação | PASS | Local client logout/version revocation, disabled account and admin credential revision tests pass; real identity revocation depends G07. |
+| G09 | Isolamento — matriz A/B | PASS | Local A/B galleries/API/media/download/favorites isolation, including pending navigation and foreign IDs. Remote restored-session checks blocked. |
+| G10 | Mídia privada — zero bytes indevidos | PASS | Local unauthorized media returns zero bytes; private originals not public optimizer/media. Dedicated remote buckets have public endpoints disabled; real OTP boundary pending. |
+| G11 | Favoritos — persistência E2E | PASS | Local browser favorite persisted across reload with D1 verification and A/B tests. |
+| G12 | Downloads — API/UI | PASS | Local API/UI downloads checked byte/hash and foreign gallery denial; no real private photos used. |
+| G13 | Frontend cliente — browser | PASS | 14-check real Chromium against local production bundle: libraries/viewer/lightbox/Escape/focus/loading/errors/empty and A/B navigation. Mobile viewports are emulation. |
+| G14 | Frontend admin — browser | PASS | Admin browser creation/upload/progress/edit/publish at8 widths. CSS chunk404 fixed and clipped action labels at320px reproduced/fixed; screenshots retained. |
+| G15 | Acessibilidade — matriz assistiva | BLOCKED_EXTERNAL | Local keyboard/focus/reduced-motion coverage exists; assistive/contrast/200%-zoom matrix and physical Android Chrome/iOS Safari remain incomplete; adb found no device. |
+| G16 | Não regressão pública — testes main | PASS | Public home/Studio/Colagem preserved; production bundle and SSR import checks, Colagem7tests and browser flows pass. Main-only diff is CI permission-probe receipt, no public app code. |
+| G17 | CPU/custos — fontes/medição | FAIL | Real isolated run40768574085 on d02e774: baseline CPU31/58/104ms n65; candidate30/62/114ms n63; HTTP0/64 each, zero version mismatch. Still above Free10ms reference; not a billed invoice or CPU proof for subsequent HEAD. |
+| G18 | Backup/restauração — D1/R2 byte a byte | BLOCKED_EXTERNAL | Remote fixture setup attempted, failed before backup/restore on absent Images binding. Source1synthetic client and restore0 preserved, no deletion. Need verified Images transformation allowance and explicit continuation of owned fixtures; historical5-client databases untouched. |
+| G19 | Segurança independente — sem P0/P1 | BLOCKED_EXTERNAL | Auxiliary distinct CoS review found/fixed admin JWT claims and missing audit events; not formal authorized independent sign-off. Real administrative individual identity and runtime Access review pending. |
+| G20 | LGPD — aprovação estúdio | BLOCKED_EXTERNAL | Controller decisions prepared for purpose/legal basis, retention/deletion, third parties, backups/export/delivery. No legal or controller approval invented. |
+| G21 | PR integração — CI/revisão | PASS | CI40772288364 SUCCESS exact96b71ea;218Workers/53files,7Colagem,45Node,14Chromium checks; artifact12853401485 readback clean checkout/SHA/5PNGs. PR24 draft; formal G19 independent approval remains separate. |
+| G22 | Release — autorização específica | BLOCKED_EXTERNAL | No explicit production release authorization. No main merge/deploy/real-client activation/migration/production Access or billing changes. |
+| G23 | Rollback — procedimento testado | BLOCKED_EXTERNAL | Real dedicated Worker baseline rollback and return to candidate PASS. Finally restored d02e774 flagfalse versionc9f54971-adcf-4e2b-aa5d-b356caf7b830 after private QA failure. Remote D1/R2/session rollback not executed. |
+| G24 | Handoff — relatório verificável | PASS | Repository state/24gates, Engram private episode create/append/get and PersistFlow generation1 checkpoint3 inspection verified; no takeover/automatic continuation. Drive Sgtmenezes consolidated handoff uploaded and metadata/content/hash readback verified; receipt versioned. |
 
 ### Tratamento obrigatório de G23 (rollback)
 1. Rollback lógico imediato: **flag `PRIVATE_GALLERIES_ENABLED=false`**, por alteração/release somente após aprovação específica; a configuração de código atual está desligada. Não confundir flag versionada com estado efetivo remoto (não lido aqui).

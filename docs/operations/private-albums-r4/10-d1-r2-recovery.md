@@ -21,3 +21,8 @@ Evidência local: `tests/integration/client-recovery.spec.ts` usa duas instânci
 **Bloqueio remoto confirmado:** consulta somente leitura encontrou 5 contas no D1 QA de origem e 5 no D1 QA de restauração. O preflight agora recusa D1s ocupados e os dois buckets de originais ocupados antes de migration, deploy ou rotação de secrets. Não cria recursos automaticamente. BACKUPS precisa ser privado, mas pode conter backups anteriores; sua gravação é append-only com chave aleatória e condição de ausência. Nenhum dado histórico foi limpo. É necessário um par de recursos QA vazio e autorizado, com custo/franquia confirmados, para executar o piloto. Não executar sobre o par histórico.
 
 A listagem REST R2 é adaptada a partir de `result` e `result_info.is_truncated`, com `per_page=1`; envelopes D1 incompletos ou falhos bloqueiam o preflight. Ver [referência oficial](https://developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects/methods/list/). Não há retry automático de uma recuperação remota com resultado ambíguo; registrar etapa e inspecionar os recursos antes de retomar.
+
+
+## Atualização final — 28/10/2026
+
+Remote attempt40768574085 failed while seeding first synthetic upload (missing IMAGES). Source1client, restore0, buckets retained, flagfalse candidate versionc9f54971-adcf-4e2b-aa5d-b356caf7b830 restored. No backup/restore/session proof; G18/G23 blocked. Do not rerun empty-source harness, overwrite historical5-client DBs or delete fixtures. See report23.

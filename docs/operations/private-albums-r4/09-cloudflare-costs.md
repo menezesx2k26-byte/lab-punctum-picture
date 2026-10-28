@@ -16,3 +16,8 @@ A estimativa de impacto depende de tamanho e número de fotos, acessos, volume d
 O relatório 23 e o artefato `r4-edge-current-40762650132.json` registram acesso real às subscriptions e uso agregado: Workers 4.313 requests/dia; D1 384.010 linhas lidas/1.877 escritas; R2 limite superior observado 404.091.927 bytes e 1.554 operações, contadas conservadoramente nas duas classes. Janela do mês/dia e fontes estão no JSON. Isso substitui a afirmação histórica de que nenhuma métrica podia ser lida, mas não é garantia futura nem fatura. Access configurado em Teams Free; ocupação de assentos ainda não homologada.
 
 **G17 FAIL**, e não apenas bloqueado: candidato real `da23806` teve CPU p50/p95/p99=57/111/204 ms em 48 eventos e 17 HTTP503/64 requests. O pipeline de coleta terminou verde, o produto não passou o gate. Nenhum upgrade, plano pago adicional, contratação ou offload de senha/fotografia foi executado. A correção de CPU requer evidência adicional dentro da arquitetura autorizada; não há justificativa para ativar Password Bridge como workaround.
+
+
+## Atualização final — 28/10/2026
+
+Current measured run40768574085/d02e774: CPU candidate30/62/114ms,63events,HTTP0/64; G17 FAIL. Newer HEAD not remotely CPU-measured. Images transform allowance/plan and Access occupancy unverified; no paid activation. Quotas and units in evidence/r4-edge-current-40768574085.json.

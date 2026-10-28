@@ -1,21 +1,41 @@
-# Handoff R4 — trabalho em andamento
+# Punctum Picture R4 — handoff consolidado, 28/10/2026
 
-Branch de integração baseada em `a77654281a80be3c9e8857f4aef2744a942a991b` e PR #13 em `a735103c13af206980dbc60e9b6491a21eaf96b8`. Ler baseline, inventário, relatório de integração, revisão de segurança e readiness nesta pasta. Nunca transportar PASS histórico para novo HEAD.
+**NO_GO produção; DoD técnico parcial.**
 
-Próximas ações: concluir verificação integral local e CI do commit; revisar correções de segurança; verificar QA isolado e executar OTP via interação segura, sem coletar código no chat; repetir restauração D1/R2 byte a byte; concluir matriz A/B e navegador/dispositivos; obter decisão LGPD e aprovação específica antes de qualquer merge ou liberação. Produção não foi tocada por esta execução. Flag efetiva não verificada. Não apagar objetos, alterar política Access ou acionar deploy sem autorização.
+[PR24](https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/24), draft sobre PR20/PR17. Branch remota `agent/hst-001-hostinger-qa-20261028`; local `agent/r4-final-qa/20261028`. Código `96b71ea3992d155753f610cd4627d1b71cbaf371`. [CI40772288364](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364) **completed/success no SHA exato**: 218 Workers/53 arquivos, 7 Colagem, 45 Node (14 Password Bridge), 14 checks Chromium; typecheck/lint/audit0/build PASS. Artefato12853401485 relido: SHA correto, checkout limpo, cinco PNGs e zero erros inesperados. Commits documentais posteriores e CI correspondente ficam na PR. Não atribuir CPU antiga a HEAD novo.
 
-Verificação local posterior às correções: typecheck, lint, build, 176 testes Vitest, 7 testes Vitest da Colagem, 22 testes Node e audit sem vulnerabilidades conhecidas passaram. Build emitiu avisos; CI remota e homologações externas permanecem distintas. A revisão independente identificou e reavaliou três cenários específicos descritos em security-review.md, não uma auditoria exaustiva.
+## Concluído e validado
 
-CI GitHub [40465566814](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40465566814): PASS no commit remoto `7525adb0732102ea7aed1a7a2f58c55a2cb6943c`, cuja árvore corresponde à árvore de código testada localmente `67a6d7e7334425a255e0d25bb3b2c8e8d89e48c9`. Alterações documentais posteriores exigem verificar a CI do novo HEAD. PR #17 permanece draft e não autoriza merge.
+SPEC original lida/hash verificado: `2989e0ba18982658570dc699842393b3f980c9a5312237af33ab02292d10ecfb`; handoff fonte `5c27126672577e16f2406162936e91a03475246759c27ef9e895f5eeec5ce3f0`. G13 cliente, G14 admin e G15 acessibilidade corrigidos pela seção23 original, preservando os 24 gates. HEAD, PRs, worktrees, CI, dependências, migrações, configurações e recursos auditados sem sobrescrever trabalho concorrente.
 
-PersistFlow: inspeção do run histórico `punctum-auth-homologation-20261024` retornou erro interno nesta execução; continuidade automática não foi comprovada. Checkpoint versionado nesta PR; não declarar takeover ativo.
+Correções RED–GREEN: CI HEAD/PNGs (`588e499/53c13c6`); adoção exata QA e contagem rede/versão (`8cec2cd/da23806`); claims admin JWT (`3331ccc/f9f8b96`); auditoria reorder/upload (`a1fba42/22664cf`); chunk CSS404 (`ad6b78a/df273bb`); labels mobile (`94c452d/53830ca`); envelope R2 vazio real (`88fa8e8/070a137`); upload503 preserva estado sem IMAGES (`5dcc5f7/96b71ea`). Nenhum assert removido para CI verde.
 
-Consulta Cloudflare somente leitura: Worker QA aponta atualmente ao banco e bucket de restauração do piloto anterior; bancos QA de origem e restauração são distintos do banco principal. Os três buckets QA consultados tinham r2.dev desligado e nenhum domínio customizado. Não executar o script histórico de preview sobre esse estado: ele faz UPSERT de todas as linhas e PUT de objetos no destino existente. Details em 00-baseline.md e 10-d1-r2-recovery.md. Billing Read retornou 403; custo real indeterminado. Veja 09-cloudflare-costs.md.
+Browser real contra bundle de produção local, workerd e D1/R2 sintéticos A/B: bibliotecas, galerias, mídia privada, favoritos/reload, downloads bytes/hash, lightbox/foco/Escape, negações, navegação pendente/404/erro, Studio/Colagem, cadastro/admin/galeria/upload/progresso/capa/publicação. Oito larguras: 320/360/375/390/430/768/1024/1440. Viewport não é aparelho físico; fixture assinada não é OTP real. Acervo público completo R2 não foi reproduzido nas capturas locais.
 
-## Continuação de recuperação — 27/10/2026
+## Desempenho e recuperação remotos
 
-A recuperação global/UPSERT antiga foi substituída por biblioteca com escopo explícito e etapa Worker standalone de QA, sem endpoint no bundle público. Inclui backup privado relido/verificado, R2 condicional, D1 em batch, contas restauradas em quarentena e rotação obrigatória de segredo antes de reabertura. Um incremento de versão sozinho pode reviver cookies pós-backup; não confiar nisso. Testes agora incluem duas contas, dez fotos, isolamento A/B e falha parcial/retry.
+[Run40768574085](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40768574085) terminou failure/FAILED_CLOSED_PRIVATE_UPLOAD em `d02e774dc0d0aa59cacf0c6bcfda729dba00e75f`. Home baseline CPU31/58/104ms (n65); candidato30/62/114ms (n63); zero erros em64 requisições por versão e zero divergências. Latência cliente candidato1699/1777/1844ms. **G17 FAIL** frente à referência Free10ms. Telemetria CPU, GraphQL em microssegundos, latência e V8 local são medidas/amostras distintas; não são fatura. Password Bridge continua fora do caminho crítico.
 
-Rodada local final: 187 testes em 44 arquivos, 7 de Colagem e 22 Node passaram; typecheck, lint e build passaram. Houve timeout inicial do teste legado de PBKDF2 (>20s), reproduzido isoladamente; orçamento desse teste ajustado para 60s mantendo iterações e asserções. O histórico do timeout está preservado. Nenhum remoto foi executado: consulta somente leitura encontrou 5 contas em cada D1 QA. O preflight bloqueia esses recursos ocupados antes de migration/deploy/secrets; não criar ou limpar recursos sem resolver custo/isolamento.
+Reutilizados recursos do run40756797747; zero novas criações/migrations nesta missão. D1 origem `2e7710f3-dc92-4aeb-976a-5f15d8c5262c` ficou com um cliente sintético; destino `0141b8f9-3074-4aa4-a184-92a4f7379ecc` com zero. Buckets `punctum-r4-qa-{originals,restored,backups}-20261028` preservados, sem limpeza. Galeria `66c091c1-8a4f-47a8-bc57-43cfbebfa0f0`, intenção `b7bf8640-b49e-4d34-8092-9cfd3e6314e5`. Upload falhou400 por IMAGES ausente antes de backup/restore. Código agora503 sem corromper intenção; preflight bloqueia novas fixtures sem binding/allowance demonstrados. **Não repetir o fluxo que exige origem vazia nem apagar registros.** Verificar ownership, consumo Images e continuidade dessa tentativa. Bancos históricos com cinco clientes intactos. QA Worker `punctum-picture-r4-qa-20261028` voltou à flagfalse sem R2, versão `c9f54971-adcf-4e2b-aa5d-b356caf7b830`. Worker rollback PASS; dados/sessões G18/G23 não homologados.
 
-Browser local: Playwright CLI disponível, mas download de Chromium retornou HTML inválido no lugar de ZIP. Não houve QA visual ou OTP real. PersistFlow foi inspecionado novamente e retornou erro interno, sem continuidade automática comprovada. Readiness permanece NO-GO; próxima execução segura: par QA vazio autorizado e sem custo incremental comprovado, depois piloto/OTP/dispositivos e aprovação LGPD. Ver relatório 14 para o detalhe da rodada.
+Preflight observou4683 Workers requests/dia, D1 619584 linhas lidas/1877 escritas, R2 máximo404091927bytes e1563 operações contadas conservadoramente contra ambas classes; dez D1. Plano Free/base0 não assegura custo futuro, Images ou ocupação Access. Nenhum upgrade ou gasto adicional contratado.
+
+## Hostinger e dependências
+
+Novo QA `aliceblue-locust-999458.hostingersite.com`, nodejs/setup completed. Health503 HTML duas vezes; Node e identidade do probe não confirmados. **Proprietário confirmou substituição intencional do antigo sandbox PHP.** Novo Node é o destino QA pretendido. PersistFlow Node da outra conta preservado. Zero writes/restarts/deploys Hostinger pelo agente. Obter status/erro de build/start no hPanel se a API não expuser. Probe ZIP sem dependências não prova SSR/D1/R2/CPU/custo.
+
+G05 upload remoto, G07 OTP/JWT/revogação real, G15 assistiva/aparelhos, G17 CPU/custos, G18 restauração, G19 revisor formal, G20 controlador LGPD, G22 release específica e G23 rollback dados/sessões impedem DoD operacional. Minuta LGPD cobre finalidade/base, retenção/eliminação, terceiros, exportação/entrega e backups/logs; nenhuma aprovação inventada.
+
+Engram privado `conv_lP9LHRJ-nnMZnGPpUbavW`: criação/append/get confirmados. PersistFlow run `punctum-r4-final-qa-20261028-cc33d21e`, geração1/checkpoint2 inspecionado às21:34:56.045Z; checkpointOnly=true, takeover=false, automaticContinuation=false. Refresh e recibo Drive ficam no estado/PR. G24 só passa depois do readback desta publicação.
+
+## Retomada segura
+
+Ler HEAD atual, `execution-state.json`, relatórios23/24 e `evidence/ci-code-96b71ea.json` antes de executar. Continuar dependências independentes sem promover gates por inferência. Nenhum merge main, deploy produção, dados reais, Access produção, upgrade, destruição ou modificação da aplicação PersistFlow autorizado. Estado específico do projeto persiste no repo; nenhum novo fato transversal exigiu ingestão na memória de conta.
+
+
+Matriz completa no execution-state.json e relatórios12/16.
+
+
+## Recibos de persistência confirmados
+
+Engram privado `conv_lP9LHRJ-nnMZnGPpUbavW`, duas mensagens e get/readback. PersistFlow `punctum-r4-final-qa-20261028-cc33d21e`, geração1/checkpoint3 às2026-10-28T21:37:16.505Z, inspeção confirmada; automaticContinuation=false/takeover=false. Correções de CI verde e substituição PHP intencional foram acrescentadas aos registros. Recibo: `evidence/final-persistence-receipt.json`. Drive Sgtmenezes: https://drive.google.com/file/d/1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes/view?usp=drivesdk; bytes/hash/conteúdo relidos. Recibo: `evidence/final-drive-receipt.json`. G24 PASS com escopo documental, sem promover outros gates.

@@ -1,0 +1,88 @@
+{
+  "kind": "punctum-r4-final-persistence-receipt",
+  "date": "2026-10-28",
+  "sourceFiles": [
+    "outputs/PUNCTUM_R4_HANDOFF_2026-10-28.md",
+    "work/mission-checkpoint.json"
+  ],
+  "sourceReadback": true,
+  "decision": "NO_GO_PRODUCTION",
+  "code": {
+    "head": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+    "ciRunId": 40772288364,
+    "ciStatus": "COMPLETED_SUCCESS",
+    "ciSuccessClaimed": true,
+    "ciVerifiedExactSha": true,
+    "ciVerificationProvenance": "parent verified readback",
+    "finalDocumentationCommitCreated": false,
+    "tests": {
+      "workersPassed": 218,
+      "workersFiles": 53,
+      "colagemPassed": 7,
+      "nodePassed": 45,
+      "bridgeWithinNode": 14,
+      "chromiumPassed": 14,
+      "localTypecheckExitCode": 0
+    },
+    "artifact": {
+      "id": 12853401485,
+      "readbackVerified": true,
+      "cleanCheckout": true,
+      "pngCount": 5,
+      "unexpectedErrors": 0
+    }
+  },
+  "engram": {
+    "conversationId": "conv_lP9LHRJ-nnMZnGPpUbavW",
+    "messageId": "msg_b4e1Vm8SmVrH0l_NPmf6x",
+    "originalMessageId": "msg_xBq__hHYzjPlKWlJeNDDO",
+    "visibility": "private",
+    "messageCount": 2,
+    "getConversationVerified": true,
+    "technicalHashAndNumericRunIdsRedactedOnReadback": true,
+    "exactCodeHeadAndCiRunIdRecordedInPersistFlowAndReceipt": true
+  },
+  "persistFlow": {
+    "runId": "punctum-r4-final-qa-20261028-cc33d21e",
+    "generation": 1,
+    "checkpointCount": 3,
+    "latestCheckpointAt": "2026-10-28T21:37:16.505Z",
+    "inspectVerified": true,
+    "status": "ACTIVE",
+    "successor": null,
+    "checkpointOnly": true,
+    "takeover": false,
+    "automaticContinuation": false
+  },
+  "verifiedLimitations": {
+    "cpuGate": "G17_FAIL",
+    "remoteRestorePerformed": false,
+    "remoteRestoreReason": "IMAGES binding missing; upload failed before backup",
+    "hostingerNewProbe": "HTTP 503 twice",
+    "hostingerReplacementConfirmed": true,
+    "hostingerReplacementIntentionalHumanConfirmed": true,
+    "hostingerNewQaHealthResolved": false,
+    "blockedGates": [
+      "G05",
+      "G07",
+      "G15",
+      "G17",
+      "G18",
+      "G19",
+      "G20",
+      "G22",
+      "G23"
+    ],
+    "formalG19Approved": false,
+    "lgpdApproved": false,
+    "productionReleaseApproved": false
+  },
+  "scope": {
+    "applicationChanges": false,
+    "configChanges": false,
+    "infrastructureChanges": false,
+    "secretsStored": false,
+    "driveUploadPerformedByThisWorker": false,
+    "automaticContinuation": false
+  }
+}

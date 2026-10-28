@@ -1,6 +1,6 @@
 # R4 — homologação final incremental, 28/10/2026
 
-**Em execução; produção NO_GO.** PR #24 sobre #20 sobre #17. Ponto de partida realmente conferido: `4229aa4320cadb20c881c257a76fe23c966e5831`. Checkout original limpo preservado; implementação em worktree próprio `agent/r4-final-qa/20261028`. Push normal à branch da PR, sem force, após conferir ancestralidade do HEAD remoto. Nenhum merge main, deploy de produção, alteração de Access/billing ou aplicação PersistFlow autorizado/executado.
+**DoD técnico parcial; produção NO_GO.** PR #24 sobre #20 sobre #17. Ponto de partida realmente conferido: `4229aa4320cadb20c881c257a76fe23c966e5831`. Checkout original limpo preservado; implementação em worktree próprio `agent/r4-final-qa/20261028`. Push normal à branch da PR, sem force, após conferir ancestralidade do HEAD remoto. Nenhum merge main, deploy de produção, alteração de Access/billing ou aplicação PersistFlow autorizado/executado.
 
 ## Fonte primária e correção da matriz
 
@@ -66,3 +66,32 @@ Revisor CoS distinto realizou avaliação auxiliar e reproduções locais. Não 
 Handoff Drive final, Engram e criação/checkpoint/inspeção PersistFlow ainda serão confirmados por readback. API de checkpoint não autoriza modificar a aplicação PersistFlow. Nenhum takeover automático será declarado apenas porque um serviço responde health.
 
 **Próxima decisão segura:** concluir os checks do novo SHA, executar apenas recuperação estritamente isolada que passe os próprios preflights, atualizar os 24 gates e persistir handoff final. Produção permanece NO_GO por CPU/erros reais, OTP, revisão formal, LGPD, dispositivos e release.
+
+
+## Consolidação posterior — execução remota, correções e bloqueios
+
+O ensaio [40767207339](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40767207339) mediu3272df6 (CPU candidato26/38/82ms,56eventos,0/64erros) e parou antes de writes de recuperação: a API R2 omitira `result_info` para listagem vazia. Reproduzido RED88fa8e8, corrigido GREEN070a137 em adapter exclusivo R4 que aceita somente o envelope vazio observado; parser estrito histórico e asserts de paginação permanecem. Consulta somente leitura40768031299 confirmou esse schema. Guard tests PASS.
+
+O último ensaio real [40768574085](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40768574085), **d02e774dc0d0aa59cacf0c6bcfda729dba00e75f**, terminou **failure / FAILED_CLOSED_PRIVATE_UPLOAD**. A home teve64requisições por versão,0erros e0divergências. CPU da telemetria baseline **31/58/104ms**,65amostras; candidato **30/62/114ms**,63amostras. Latência cliente candidato **1699/1777/1844ms**. Parede/GraphQL e eventos têm suas próprias amostras/unidades no arquivo `evidence/r4-edge-current-40768574085.json`; não são CPU faturada nem evidência para código posterior. Oscilação entre ensaios impede atribuir melhora geral ou causa ao bridge. **G17 FAIL**. Preflight observou4683Workers requests/dia, D1 619584lidas/1877escritas, R2 máximo404091927bytes/1563operações conservadoras por classe;10D1. Assinatura Free/base0 não prova franquia futura nem entitlement Images/ocupação Access.
+
+A recuperação conseguiu criar somente1cliente sintético, galeria e intenção; completude do PNG retornou400 INVALID_IMAGE. A configuração funcional isolada remove IMAGES para não ativar transformações sem quota verificada; o uploader chamou a validação sem binding e classificou erro de serviço como imagem inválida. RED5dcc5f7 reproduziu em intenção ISO válida; GREEN96b71ea retorna503 IMAGE_VALIDATION_UNAVAILABLE antes de alterar imagem/intenção. **18testes Workers focados/3arquivos e12Node passaram**. Preflight adicional bloqueia novas fixtures sem binding e allowance demonstrados. Nenhuma validação de imagem foi desabilitada para passar QA. [Documentação Images](https://developers.cloudflare.com/images/optimization/binding/): info é gratuita, transformação/output tem franquia própria; não habilitada sem consumo/entitlement efetivos verificados.
+
+**Backup/restore não foram executados.** Origem2e7710f3-dc92-4aeb-976a-5f15d8c5262c agora tem1cliente; destino0141b8f9-3074-4aa4-a184-92a4f7379ecc tem0, relidos após falha. Três buckets preservados, sem limpeza; objeto sintético pode permanecer. Galeria66c091c1-8a4f-47a8-bc57-43cfbebfa0f0, intenção b7bf8640-b49e-4d34-8092-9cfd3e6314e5 identificam a tentativa. Não repetir fluxo que exige origem vazia nem apagar fixtures para torná-lo verde. Próxima execução deve validar ownership/estado e continuidade desses registros, Images/custo e autorização antes de restaurar. `finally` confirmou candidato flagfalse, sem R2 bindings, versão **c9f54971-adcf-4e2b-aa5d-b356caf7b830**. Rollback Worker PASS; **G18/G23 integrais bloqueados**. Bancos históricos5clientes preservados.
+
+A revisão visual demonstrou labels de ações truncados em320px, embora o contêiner não transbordasse. RED94c452d / GREEN53830ca ajustou flex mínimo apenas nos botões do editor em mobile, sem redesign. E2E14checks passa incluindo labels visíveis em8larguras; screenshots reais mantidos.
+
+Hostinger: Node novo identificado após onboarding humano, mas `/health`503duas vezes e PHP anterior ausente na mesma conta. Não há app saudável ou isolamento comprovado do sandbox antigo. Nenhum write do agente, reinício/deploy/alteração PersistFlow. Relatório24 contém a diferença e dependência do operador. Probe ZIP não é SSR e não homologa CPU/D1/R2.
+
+A CI [40768584773](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40768584773) foi **success no SHA d02e774** (217Workers/52arquivos,7Colagem,14Chromium). Nova CI **40772288364** verifica96b71ea; resultado final e artefato são registrados separadamente após readback. Não transportar PASS para HEAD sem confirmação. O default branch continua com10alertas Dependabot; auditoria do lockfile da PR0vulnerabilidades, são árvores distintas.
+
+PersistFlow: criação, checkpoint e inspeção efetivamente confirmados no run `punctum-r4-final-qa-20261028-cc33d21e`, geração1/checkpoint1 às20:41:38.915Z, via Gabriel_MCP_Remote; statusACTIVE, successor=null, takeover=false, automaticContinuation=false. Isso é estado durável de checkpoint, sem controlador automático homologado nem mudança na aplicação. Handoff final Drive/Engram e refresh do checkpoint terão recibo próprio.
+
+**Decisão: NO_GO produção e DoD técnico parcial.** Gates5,7,15,17,18,19,20,22,23 e fechamento documental24 têm limites explícitos no estado. Prosseguir nas dependências externas individualmente; nenhuma delas promove outra por inferência. Não há autorização para merge/deploy/álbuns reais/migração/Access produção/destruição/custo adicional.
+
+
+Readback CI40772288364: **SUCCESS exact96b71ea3992d155753f610cd4627d1b71cbaf371**,218Workers/53arquivos,7Colagem,45Node(incluindo14Bridge),14Chromium. Artefato12853401485 lido: SHAcorreto/checkoutlimpo,5PNGs,0consoleerrors/0pageerrors/0servererrors;1negação404esperada. Typecheck/lint/audit0/buildPASS. Evidência vidence/ci-code-96b71ea.json. Proprietário confirmou substituição intencional do PHP Hostinger; diferença de inventário esclarecida,health503segue bloqueio.
+
+
+## Recibos de persistência confirmados
+
+Engram privado `conv_lP9LHRJ-nnMZnGPpUbavW`, duas mensagens e get/readback. PersistFlow `punctum-r4-final-qa-20261028-cc33d21e`, geração1/checkpoint3 às2026-10-28T21:37:16.505Z, inspeção confirmada; automaticContinuation=false/takeover=false. Correções de CI verde e substituição PHP intencional foram acrescentadas aos registros. Recibo: `evidence/final-persistence-receipt.json`. Drive Sgtmenezes: https://drive.google.com/file/d/1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes/view?usp=drivesdk; bytes/hash/conteúdo relidos. Recibo: `evidence/final-drive-receipt.json`. G24 PASS com escopo documental, sem promover outros gates.

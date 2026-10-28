@@ -113,3 +113,8 @@ Os parágrafos anteriores são históricos. Nesta missão houve somente alteraç
 | Backup → restauração | Snapshot relacional, SHA-256/R2 onlyIf, INSERT-only, quarentena e segredo novo | Biblioteca testada; harness isolado revisado em worktree e sujeito a preflight | G18/G23 só avançam com relatório real, nunca pela existência do código |
 
 Hipótese sem causalidade demonstrada: HTTP 503 da home pode envolver limites do runtime, mas não foi capturado Error 1102. CPU real do candidato em 48 eventos foi 57/111/204 ms (p50/p95/p99); G17 FAIL e NO_GO. Isso não é medição PBKDF2/Password Bridge. Nenhum achado de ausência de vazamento local substitui uma auditoria integral real. A atribuição individual e as decisões LGPD continuam pendentes de pessoas autorizadas.
+
+
+## Atualização final — 28/10/2026
+
+Missing IMAGES now returns503 without corrupting uploaded/pending state (RED5dcc5f7/GREEN96b71ea); real QA400 reproduced earlier, no remote restore attempted. Auxiliary review is not authorized G19 approval. Real OTP/admin identity/revocation still require runtime evidence.
