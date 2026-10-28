@@ -4,6 +4,14 @@ import * as qa from './lib/r4-edge-qa.mjs';
 import { assertFreshQaBudget, assertFreshPerformanceBudget, isolatedQaConfig, R4_QA, assertResumeQaInventory, summarizeQaSamples } from './lib/r4-edge-qa.mjs';
 const budget = { databaseCount:8, workerRequestsToday:10, r2:{ maximumStorageBytes:1_000, classARequests:10, classBRequests:100 }, subscriptions:[{id:'free'},{id:'teams_free'},{id:'r2_paid'}], namesInUse:[] };
 
+test('performance provenance records the actual configured build refs, never a stale baseline literal',()=>{
+ const refs={baselineSha:'16c86d1110f34e1fb871bc9e5906ead5a6344f7a',candidateSha:'1d30b97558af76b039dc60e80156dea5b4c2c434'};
+ assert.equal(qa.qaBuildSourceSha('baseline',refs),refs.baselineSha);
+ assert.equal(qa.qaBuildSourceSha('candidate',refs),refs.candidateSha);
+ assert.throws(()=>qa.qaBuildSourceSha('baseline',{candidateSha:refs.candidateSha}));
+ assert.throws(()=>qa.qaBuildSourceSha('foreign',refs));
+});
+
 test('read-only performance continuation accepts only the exact preserved failed fixture and initialized public state',()=>{
  const counts={accounts:1,galleries:1,images:1,intents:1,favorites:0,pointers:1};
  const rows=[{clientId:'39a03fb3-d913-4380-a30d-f983fabd22e1',galleryId:'66c091c1-8a4f-47a8-bc57-43cfbebfa0f0',imageId:'e5afb187-6384-4812-b647-eddb430dbe02',intentId:'b7bf8640-b49e-4d34-8092-9cfd3e6314e5',imageStatus:'failed',intentStatus:'failed'}];
