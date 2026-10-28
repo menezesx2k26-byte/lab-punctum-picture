@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { R4_QA, R4_RESUME_DATABASES, isolatedQaConfig } from './lib/r4-edge-qa.mjs';
 import { assertPrivateBucketPrivacy, d1QueryRows, r2RestListing } from './lib/private-preview.mjs';
-import { assertR4RecoveryPreflight, assertR4RecoveryVacant, assertR4RecoveryScope, r4RecoveryWorkerConfig, signR4QaAdminCookie, signR4QaClientCookie } from './lib/r4-recovery-qa.mjs';
+import { assertR4RecoveryPreflight, assertR4RecoveryVacant, assertR4RecoveryScope, assertR4FlagDisabledCandidateConfig, withR4QaRestoration, r4RecoveryWorkerConfig, signR4QaAdminCookie, signR4QaClientCookie } from './lib/r4-recovery-qa.mjs';
 
 const account = '257bca437616da74ece1ce4bbaf0bd89';
 const tables = ['client_accounts','client_galleries','client_gallery_images','client_gallery_upload_intents','client_gallery_favorites'];
@@ -32,7 +32,7 @@ export async function runR4RecoveryQa(report, api) {
   const checkpoint = async () => writeFile('outputs/r4-edge-qa-report.json',JSON.stringify(report,null,2));
   const wrangler = (args,input) => {
     const result=spawnSync(process.execPath,[resolve('node_modules/wrangler/bin/wrangler.js'),...args],{
-      encoding:'utf8',input,maxBuffer:8*1024*1024,env:{...process.env,WRANGLER_SEND_METRICS:'false'}
+      encoding:'utf8',input,maxBuffer:8*1024*1024,timeout:60000,env:{...process.env,WRANGLER_SEND_METRICS:'false'}
     });
     if(result.status!==0) throw new Error('R4 QA Wrangler '+args[0]+' failed; inspect masked Actions logs');
     report.writes++;
@@ -65,16 +65,24 @@ export async function runR4RecoveryQa(report, api) {
     const adminRows=await query(id,'SELECT COUNT(*) AS count FROM admin_credentials WHERE id=1');
     assert.equal(adminRows[0]?.count,0,'Current QA admin HMAC must use the env credential revision');
   }
-  report.recovery={status:'PREFLIGHT_VACANT',synthetic:true,accessProviderTested:false,originalSourceRun:'40756797747',sourceId:source,restoreId:restore};
+  report.recovery={status:'PREFLIGHT_VACANT',synthetic:true,accessProviderTested:false,originalSourceRun:'40756797747',sourceId:source,restoreId:restore,
+    remainingResources:{source:{databaseId:source},restore:{databaseId:restore},worker:R4_QA.worker,
+      buckets:[R4_QA.originals,R4_QA.restored,R4_QA.backups],preserved:true,deleted:false,
+      inventory:'IDs/names verified in preflight; post-run D1 counts pending'}};
   await checkpoint();
 
   // This Worker has ONLY the fresh QA D1/R2 bindings; no inherited site routes or external services.
   const built=JSON.parse(await readFile(resolve('dist/server/wrangler.json'),'utf8'));
+  // Prepared by the earlier measured candidate deployment, strictly flag-disabled.
+  const candidatePath=resolve('dist/server/r4-qa.wrangler.json');
+  const candidateConfig=JSON.parse(await readFile(candidatePath,'utf8'));
+  assertR4FlagDisabledCandidateConfig(candidateConfig,origin);
   const appConfig=isolatedQaConfig(built,{
     databaseId:source,createdDatabaseIds:[source,restore],origin,privateEnabled:true,performanceOnly:false
   });
   const appPath=resolve('dist/server/r4-functional-qa.wrangler.json');
   await writeFile(appPath,JSON.stringify(appConfig));
+  await withR4QaRestoration(report,async()=>{
   report.recovery.status='SOURCE_APP_DEPLOYING'; await checkpoint();
   wrangler(['deploy','--config',appPath]);
   const adminSecret=randomBytes(32).toString('base64url');
@@ -93,14 +101,9 @@ export async function runR4RecoveryQa(report, api) {
     if(response.status!==expected) throw new Error('QA '+method+' '+path+' HTTP '+response.status+', expected '+expected);
     return response;
   };
-  let reachable=false;
-  for(let i=0;i<20;i++) {
-    const response=await fetch(origin+'/admin/api/clientes',{headers:{Cookie:adminCookie},redirect:'manual',signal:AbortSignal.timeout(20000)});
-    if(response.status===200){reachable=true;break;}
-    if(response.status!==401 && response.status!==403 && response.status!==404 && response.status!==503) throw new Error('QA admin probe HTTP '+response.status);
-    await pause(1000);
-  }
-  assert.ok(reachable,'QA admin session did not propagate');
+  // No private API failure is retried or mistaken for harmless SSR noise.
+  const probe=await fetch(origin+'/admin/api/clientes',{headers:{Cookie:adminCookie},redirect:'manual',signal:AbortSignal.timeout(20000)});
+  assert.equal(probe.status,200,'QA private admin probe failed (not a public SSR failure)');
   const fixtures=[];
   for(let customer=0;customer<2;customer++) {
     const email='pilot-'+randomUUID()+'@example.invalid';
@@ -162,7 +165,7 @@ export async function runR4RecoveryQa(report, api) {
   // An ambiguous HTTP response is terminal; never auto-replay a possibly committed restoration.
   const response=await fetch(origin+'/qa/recover',{method:'POST',redirect:'manual',
     headers:{Origin:origin,Authorization:'Bearer '+recoverySecret,'Content-Type':'application/json'},
-    body:JSON.stringify({clientIds:ids}),signal:AbortSignal.timeout(120000)});
+    body:JSON.stringify({clientIds:ids}),signal:AbortSignal.timeout(60000)});
   assert.equal(response.status,200,'Recovery failed or ambiguous: inspect D1/R2 state before any retry');
   const result=await response.json();
   assert.equal(result.backupVerified,true);
@@ -201,4 +204,34 @@ export async function runR4RecoveryQa(report, api) {
     accessProviderTested:false,realOtpVerified:false,productionTouched:false};
   report.functionalQa='QA_SYNTHETIC_RECOVERY_VERIFIED';report.accessOtp='NOT_RUN';
   await checkpoint();
+  },async()=>{
+    // Always return the exact candidate, with private feature flag false and no R2 bindings.
+    // Neither D1 nor any bucket/object is deleted or reset. This is NOT a data rollback.
+    report.recovery.candidateRestoration='RESTORING_FLAG_DISABLED';
+    await checkpoint();
+    assertR4FlagDisabledCandidateConfig(JSON.parse(await readFile(candidatePath,'utf8')),origin);
+    wrangler(['deploy','--config',candidatePath]);
+    const deployments=await requireApi(base+'/workers/scripts/'+R4_QA.worker+'/deployments');
+    const current=deployments?.deployments?.[0];
+    assert.ok(current?.versions?.length===1 && typeof current.versions[0].version_id==='string','Single deployed candidate version required');
+    const currentId=current.versions[0].version_id;
+    let versionObserved=false;
+    for(let i=0;i<12;i++) {
+      const response=await fetch(origin+'/robots.txt',{redirect:'manual',signal:AbortSignal.timeout(15000)});
+      await response.arrayBuffer();
+      if(response.headers.get('X-QA-Version')===currentId){versionObserved=true;break;}
+      await pause(1000);
+    }
+    assert.ok(versionObserved,'Flag-disabled candidate version did not propagate');
+    const existing={};
+    for(const [role,id] of [['source',source],['restore',restore]]) {
+      const accounts=await query(id,'SELECT COUNT(*) AS count FROM client_accounts');
+      existing[role]={databaseId:id,clientAccounts:accounts[0]?.count};
+    }
+    report.recovery.remainingResources={
+      ...existing,worker:R4_QA.worker,candidateVersionId:currentId,
+      buckets:[R4_QA.originals,R4_QA.restored,R4_QA.backups],
+      preserved:true,deleted:false,inventory:'D1 client counts re-read; R2 buckets retained without cleanup',
+    };
+  },checkpoint);
 }
