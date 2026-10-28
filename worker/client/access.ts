@@ -5,6 +5,7 @@ import { getClientByEmail } from "./repository";
 import { privateResponse } from "./response";
 import { requiredEnvString, requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
+import { clientAccessNavigation } from "./access-navigation";
 
 const signingKeys = new Map<string, JWTVerifyGetKey>();
 export function accessConfiguration(env: Env) {
@@ -95,12 +96,6 @@ export async function handleClientAccessEntry(
     );
   const token = await createClientSession(account, env);
   return privateResponse(
-    new Response(null, {
-      status: 303,
-      headers: {
-        Location: "/albuns",
-        "Set-Cookie": clientSessionCookie(token),
-      },
-    }),
+    clientAccessNavigation(clientSessionCookie(token),request.headers.get("Accept")?.includes("text/html")??false),
   );
 }
