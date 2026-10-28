@@ -95,3 +95,17 @@ Readback CI40772288364: **SUCCESS exact96b71ea3992d155753f610cd4627d1b71cbaf371*
 ## Recibos de persistência confirmados
 
 Engram privado `conv_lP9LHRJ-nnMZnGPpUbavW`, duas mensagens e get/readback. PersistFlow `punctum-r4-final-qa-20261028-cc33d21e`, geração1/checkpoint3 às2026-10-28T21:37:16.505Z, inspeção confirmada; automaticContinuation=false/takeover=false. Correções de CI verde e substituição PHP intencional foram acrescentadas aos registros. Recibo: `evidence/final-persistence-receipt.json`. Drive Sgtmenezes: https://drive.google.com/file/d/1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes/view?usp=drivesdk; bytes/hash/conteúdo relidos. Recibo: `evidence/final-drive-receipt.json`. G24 PASS com escopo documental, sem promover outros gates.
+
+
+## Hostinger v2 — erro reproduzido, corrigido e HTTPS homologado
+
+O proprietário forneceu o log real: `App did not call listen() within 3 seconds`, com orientação do provedor sobre guards de execução direta. O probe v1 tinha o equivalente ESM: comparava argv[1] com o próprio arquivo e não chamava listen quando importado pelo loader. RED `3fc7fb2` reproduziu a importação em processo filho:1PASS/1FAIL, `Hosted import never called listen()`. GREEN `6e994691e469f9830b9a7d44b83f1fb7f09a5d17` separa factory em app.mjs e entrypoint server.mjs com listen incondicional;2testes PASS, incluindo socket HTTP real antes do deadline3s. Build/syntax check e lint focado passaram. Nenhuma dependência nova.
+
+ZIP v2:2369bytes, SHA256 `c388255e81ff4407800bc90a544442cc250abfc033266441b560bca29170db7e`, quatro arquivos raiz README/package/app/server conferidos byte a byte com a fonte. Usuário fez o reenvio no QA existente e informou “Implantado”. Agente executou somente dois GETs de verificação em21:48:10UTC: **HTTP200 ambos, service punctum-hostinger-qa-probe, version r4-node-probe-20261028-v2, Node v24.22.1, nonce exato, Cache-Control no-store, nosniff**. Uptime49s e RSS64159744bytes, que é memória do processo do probe, não RAM/CPU livre do plano. Latências117.95/26.13ms, não CPU faturável nem benchmark SSR. `ssrValidated=false`, `production=false`.
+
+**Capacidade Node/HTTPS do novo QA comprovada.** SSR Punctum/Vinext, D1/R2, reinício gerenciado, carga, limites/headroom e custo incremental não comprovados. G17/G18/G23 e demais gates permanecem como na matriz; health200 não os promove. PersistFlow Node da outra conta preservado; substituição PHP confirmada intencional pelo proprietário. Evidência `evidence/hostinger-v2-live-2026-10-28.json`.
+
+
+### Fechamento do adendo v2
+
+CI40774699509 **completed/success exact6e994691e469f9830b9a7d44b83f1fb7f09a5d17**:218Workers/53arquivos,7Colagem,46Node,14Chromium; typecheck/lint/audit0/buildPASS. Artefato12853928040 relido SHA correto/checkoutlimpo/cincoPNGs/zeroerrosinesperados. Evidência `evidence/ci-code-6e99469.json`. Adendo Drive https://drive.google.com/file/d/1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p/view?usp=drivesdk criado emSgtmenezes e raw SHA256 7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2 verificado. Engram3mensagens/get; PersistFlowgeração1/checkpoint4 às21:51:54.566Z inspecionado, sem takeover/continuidadeautomática. Recibos `evidence/hostinger-v2-{drive,persistence}-receipt.json`. G24PASS documental; demaisgatesnão promovidos. CI do commit documental final deve ser conferida na PR; não criar autorreferência impossível no próprioarquivo.

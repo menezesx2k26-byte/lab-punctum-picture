@@ -5,10 +5,10 @@
   "status": "TECHNICAL_DOD_PARTIAL",
   "decision": "NO_GO_PRODUCTION",
   "statusScope": "NO_GO: deterministic local/CI evidence is separate from real OTP, remote recovery, accessibility/devices, costs and owner/controller approvals. Current evidence is authoritative; older verification records are historical.",
-  "updatedAt": "2026-10-28T21:42:38.561690+00:00",
+  "updatedAt": "2026-10-28T21:52:24.240876+00:00",
   "branch": "agent/hst-001-hostinger-qa-20261028",
   "baseBranch": "agent/argon-punctum-r4-dod-20261027-v2",
-  "headBeforeStateUpdate": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+  "headBeforeStateUpdate": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
   "canonicalGateSystem": "ORIGINAL_SPEC_R4_SECTION_23_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",
@@ -83,10 +83,10 @@
     "G18": "Remote fixture setup attempted, failed before backup/restore on absent Images binding. Source1synthetic client and restore0 preserved, no deletion. Need verified Images transformation allowance and explicit continuation of owned fixtures; historical5-client databases untouched.",
     "G19": "Auxiliary distinct CoS review found/fixed admin JWT claims and missing audit events; not formal authorized independent sign-off. Real administrative individual identity and runtime Access review pending.",
     "G20": "Controller decisions prepared for purpose/legal basis, retention/deletion, third parties, backups/export/delivery. No legal or controller approval invented.",
-    "G21": "CI40772288364 SUCCESS exact96b71ea;218Workers/53files,7Colagem,45Node,14Chromium checks; artifact12853401485 readback clean checkout/SHA/5PNGs. PR24 draft; formal G19 independent approval remains separate.",
+    "G21": "CI40774699509 SUCCESS exact6e99469:218Workers/53files,7Colagem,46Node(incl14Bridge),14Chromium; artifact12853928040 readback clean SHA/checkout/5PNGs. PR24 draft; formalG19 independent signoff separate.",
     "G22": "No explicit production release authorization. No main merge/deploy/real-client activation/migration/production Access or billing changes.",
     "G23": "Real dedicated Worker baseline rollback and return to candidate PASS. Finally restored d02e774 flagfalse versionc9f54971-adcf-4e2b-aa5d-b356caf7b830 after private QA failure. Remote D1/R2/session rollback not executed.",
-    "G24": "Repository state/24gates, Engram private episode create/append/get and PersistFlow generation1 checkpoint3 inspection verified; no takeover/automatic continuation. Drive Sgtmenezes consolidated handoff uploaded and metadata/content/hash readback verified; receipt versioned."
+    "G24": "Repo/24gates and Drive Sgtmenezes handoff+Hostinger v2 adendo metadata/raw bytes/hash verified. Engram private3messages/get verified; PersistFlow generation1 checkpoint4 inspected21:51:54.566Z; automaticContinuation=false/takeover=false. Receipts versioned."
   },
   "productionFlag": {
     "PRIVATE_GALLERIES_ENABLED": "false in versioned configuration; production runtime not changed or newly homologated",
@@ -104,7 +104,7 @@
     "No explicit production release authorization. No main merge/deploy/real-client activation/migration/production Access or billing changes.",
     "Real dedicated Worker baseline rollback and return to candidate PASS. Finally restored d02e774 flagfalse versionc9f54971-adcf-4e2b-aa5d-b356caf7b830 after private QA failure. Remote D1/R2/session rollback not executed.",
     "Default-branch Dependabot reports10alerts; npm audit for PR lockfile0. Different trees, no false claim all default-branch alerts fixed.",
-    "Hostinger new Node QA returns503; prior PHP sandbox intentionally replaced, confirmed directly by human. No agent Hostinger writes or PersistFlow changes."
+    "Hostinger probe v2 Node/HTTPS verified, but public Punctum SSR, D1/R2 integration, quotas/cost and managed restart are not homologated."
   ],
   "externalBlockers": [
     {
@@ -326,18 +326,18 @@
     "integrationBranch": "agent/r4-final-qa/20261028",
     "prBranch": "agent/hst-001-hostinger-qa-20261028",
     "ci": {
-      "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-      "runId": 40772288364,
+      "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+      "runId": 40774699509,
       "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-      "artifactId": 12853401485,
+      "artifactId": 12853928040,
       "workers": 218,
       "files": 53,
       "collage": 7,
-      "node": 45,
+      "node": 46,
       "chromiumChecks": 14,
       "artifactReadback": true,
       "checkoutDirtyAtRun": false,
-      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
     },
     "edgeRunId": 40768574085,
     "edgeStatus": "FAILED_CLOSED_PRIVATE_UPLOAD",
@@ -370,16 +370,15 @@
     "persistFlow": {
       "runId": "punctum-r4-final-qa-20261028-cc33d21e",
       "generation": 1,
-      "checkpointCount": 3,
-      "latestCheckpointAt": "2026-10-28T21:37:16.505Z",
+      "checkpointCount": 4,
+      "latestCheckpointAt": "2026-10-28T21:51:54.566Z",
       "inspectVerified": true,
-      "status": "ACTIVE",
       "successor": null,
       "checkpointOnly": true,
       "takeover": false,
       "automaticContinuation": false
     },
-    "codeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+    "codeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
     "focusedGreen": {
       "workers": 18,
       "files": 3,
@@ -412,16 +411,76 @@
       "newNodeOrigin": "https://aliceblue-locust-999458.hostingersite.com",
       "setup": "completed",
       "healthHttp": [
-        503,
-        503
+        200,
+        200
       ],
-      "probeIdentityVerified": false,
+      "probeIdentityVerified": true,
       "priorPhpSandboxStillListed": false,
       "replacementConfirmed": true,
       "agentWrites": 0,
       "zeroIncrementalCostVerified": false,
       "report": "24-hostinger-current-qa-2026-10-28.md",
-      "priorPhpReplacement": "INTENTIONAL_CONFIRMED_BY_HUMAN_2026-10-28"
+      "priorPhpReplacement": "INTENTIONAL_CONFIRMED_BY_HUMAN",
+      "status": "NODE_HTTPS_PROBE_V2_VERIFIED",
+      "nodeVersion": "v24.22.1",
+      "version": "r4-node-probe-20261028-v2",
+      "ssrValidated": false,
+      "remoteRestartVerified": false,
+      "entrypointRegression": {
+        "red": "3fc7fb2",
+        "green": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+        "providerLog": "App did not call listen() within3seconds",
+        "cause": "Direct-execution guard skipped listen when hosted loader imported entrypoint; reproduced locally",
+        "localTests": 2,
+        "remoteProof": {
+          "observedAt": "2026-10-28T21:48:10.429974+00:00",
+          "origin": "https://aliceblue-locust-999458.hostingersite.com",
+          "expectedVersion": "r4-node-probe-20261028-v2",
+          "requests": [
+            {
+              "atUtc": "2026-10-28T21:48:10.430018+00:00",
+              "status": 200,
+              "cacheControl": "no-store",
+              "nosniff": "nosniff",
+              "contentType": "application/json; charset=utf-8",
+              "body": {
+                "service": "punctum-hostinger-qa-probe",
+                "version": "r4-node-probe-20261028-v2",
+                "node": "v24.22.1",
+                "uptimeSeconds": 49,
+                "rssBytes": 64159744,
+                "ssrValidated": false,
+                "production": false
+              },
+              "nonceEcho": true,
+              "verified": true,
+              "latencyMs": 117.95
+            },
+            {
+              "atUtc": "2026-10-28T21:48:10.548757+00:00",
+              "status": 200,
+              "cacheControl": "no-store",
+              "nosniff": "nosniff",
+              "contentType": "application/json; charset=utf-8",
+              "body": {
+                "service": "punctum-hostinger-qa-probe",
+                "version": "r4-node-probe-20261028-v2",
+                "node": "v24.22.1",
+                "uptimeSeconds": 49,
+                "rssBytes": 64159744,
+                "ssrValidated": false,
+                "production": false
+              },
+              "nonceEcho": true,
+              "verified": true,
+              "latencyMs": 26.13
+            }
+          ],
+          "scope": "Two HTTPS health requests only; no load/restart/SSR/D1/R2 or billing proof",
+          "productionTouched": false,
+          "verified": true
+        }
+      }
     },
     "physicalDevices": "NOT_RUN_NO_ATTACHED_ADB_DEVICE",
     "externalPersistence": {
@@ -495,7 +554,174 @@
           "persistFlowTouched": false
         },
         "notes": "Only the exact local final handoff bytes were uploaded as a new private Markdown file; no original file modification."
+      },
+      "hostingerV2Drive": {
+        "schemaVersion": 1,
+        "status": "CREATED_AND_RAW_READBACK_VERIFIED",
+        "timestampUtc": "2026-10-28T21:51:30.2277583Z",
+        "source": {
+          "path": "C:\\Users\\Pichau\\Documents\\Codex\\2026-10-28\\miss-o-aut-noma-punctum-picture\\outputs\\PUNCTUM_R4_ADENDO_HOSTINGER_V2.md",
+          "bytes": 2426,
+          "sha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+          "encoding": "UTF-8 without BOM",
+          "lineEndings": "CRLF"
+        },
+        "drive": {
+          "fileId": "1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p",
+          "title": "PUNCTUM_R4_ADENDO_HOSTINGER_V2.md",
+          "owner": "sgtmenezes2002@gmail.com",
+          "ownerVerifiedFromProvider": true,
+          "linkId": "link_6ab88b515eec8191b6f52705be9c37f6",
+          "url": "https://drive.google.com/file/d/1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p/view?usp=drivesdk",
+          "mimeType": "text/markdown",
+          "createdTime": "2026-10-28T21:51:29.668Z",
+          "trashed": false,
+          "bytes": 2426,
+          "sha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+          "md5FromProvider": "dce110d3e17042d4e169380358954fee"
+        },
+        "verification": {
+          "metadataReadbackVerified": true,
+          "rawContentDownloaded": true,
+          "readbackVerified": true,
+          "byteLengthMatched": true,
+          "sha256Matched": true,
+          "md5Matched": true,
+          "localBytes": 2426,
+          "downloadedBytes": 2426,
+          "localSha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+          "downloadedSha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+          "method": "Drive raw fetch on designated Sgtmenezes account, exact bytes SHA256+MD5 checked in independent container against local Windows SHA256 and Google Drive provider metadata"
+        },
+        "actions": {
+          "newFileCreated": true,
+          "originalHandoffOverwritten": false,
+          "originalHandoffFileId": "1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes",
+          "permissionsChanged": false,
+          "billingChanged": false,
+          "productionTouched": false,
+          "hostingerTouched": false,
+          "persistFlowTouched": false,
+          "codeTouched": false
+        },
+        "note": "This is a separate immutable Hostinger V2 addendum. Does not assert SSR, D1/R2, free-tier limits, cost qualification or managed restart."
+      },
+      "hostingerV2Persistence": {
+        "kind": "punctum-r4-hostinger-v2-late-persistence-receipt",
+        "date": "2026-10-28",
+        "source": "work/hostinger-v2-live.json",
+        "sourceRead": true,
+        "decision": "NO_GO_PRODUCTION",
+        "hostinger": {
+          "previous503RootCause": "Missing Node listen() within 3 seconds",
+          "redCommit": "3fc7fb2",
+          "greenCommit": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+          "fix": "Unconditional listen() in entrypoint",
+          "focusedTestsPassed": 2,
+          "humanReuploaded": true,
+          "observedAt": "2026-10-28T21:48:10.429974+00:00",
+          "requestCount": 2,
+          "requests": [
+            {
+              "atUtc": "2026-10-28T21:48:10.430018+00:00",
+              "httpStatus": 200,
+              "latencyMs": 117.95
+            },
+            {
+              "atUtc": "2026-10-28T21:48:10.548757+00:00",
+              "httpStatus": 200,
+              "latencyMs": 26.13
+            }
+          ],
+          "httpsGetProbeVerified": true,
+          "probeVersion": "r4-node-probe-20261028-v2",
+          "nodeVersion": "v24.22.1",
+          "nonceEcho": true,
+          "cacheControl": "no-store",
+          "nosniff": true,
+          "ssrValidated": false,
+          "costValidated": false,
+          "quotaValidated": false,
+          "restartValidated": false,
+          "productionTouched": false
+        },
+        "codeCI": {
+          "runId": 40774699509,
+          "status": "COMPLETED_SUCCESS",
+          "verifiedExactSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+          "workersPassed": 218,
+          "workersFiles": 53,
+          "colagemPassed": 7,
+          "nodePassed": 46,
+          "bridgeWithinNode": 14,
+          "chromiumPassed": 14,
+          "artifactId": 12853928040,
+          "artifactReadbackVerified": true,
+          "cleanCheckout": true,
+          "pngCount": 5,
+          "unexpectedErrors": 0,
+          "finalDocumentationCommitCreated": false,
+          "futureDocumentationCIClaimed": false
+        },
+        "engram": {
+          "conversationId": "conv_lP9LHRJ-nnMZnGPpUbavW",
+          "latestMessageId": "msg_FOIDHeNrFIyXq3Eesg-Rk",
+          "visibility": "private",
+          "messageCount": 3,
+          "getConversationReadbackVerified": true,
+          "hashAndNumericIdsRedactedOnEngramReadback": true
+        },
+        "persistFlow": {
+          "runId": "punctum-r4-final-qa-20261028-cc33d21e",
+          "generation": 1,
+          "checkpointCount": 4,
+          "latestCheckpointAt": "2026-10-28T21:51:54.566Z",
+          "inspectVerified": true,
+          "successor": null,
+          "checkpointOnly": true,
+          "takeover": false,
+          "automaticContinuation": false
+        },
+        "drive": {
+          "originalHandoffFileId": "1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes",
+          "originalReadbackVerifiedByParent": true,
+          "addendumOwner": "worker1",
+          "addendumCompletionClaimed": false
+        },
+        "unchangedBlockedGates": [
+          "G05",
+          "G07",
+          "G15",
+          "G17",
+          "G18",
+          "G19",
+          "G20",
+          "G22",
+          "G23"
+        ],
+        "scope": {
+          "research": false,
+          "codeChanges": false,
+          "configurationChanges": false,
+          "infrastructureChanges": false,
+          "secretStored": false,
+          "releaseApproved": false
+        }
       }
+    },
+    "historicalCodeCi96b71ea": {
+      "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+      "runId": 40772288364,
+      "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
+      "artifactId": 12853401485,
+      "workers": 218,
+      "files": 53,
+      "collage": 7,
+      "node": 45,
+      "chromiumChecks": 14,
+      "artifactReadback": true,
+      "checkoutDirtyAtRun": false,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
     }
   },
   "gateLedger": {
@@ -510,20 +736,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -545,20 +771,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -580,20 +806,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -615,20 +841,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -650,20 +876,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -685,20 +911,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -720,20 +946,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -755,20 +981,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -790,20 +1016,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -825,20 +1051,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -860,20 +1086,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -895,20 +1121,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -930,20 +1156,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -965,20 +1191,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1000,20 +1226,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1035,20 +1261,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1070,20 +1296,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1105,20 +1331,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1140,20 +1366,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1175,20 +1401,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1206,28 +1432,28 @@
       "evidenceScope": "LOCAL_SYNTHETIC_AND_EXACT_CI",
       "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
       "approvalRequired": false,
-      "changes": "CI40772288364 SUCCESS exact96b71ea;218Workers/53files,7Colagem,45Node,14Chromium checks; artifact12853401485 readback clean checkout/SHA/5PNGs. PR24 draft; formal G19 independent approval remains separate.",
+      "changes": "CI40774699509 SUCCESS exact6e99469:218Workers/53files,7Colagem,46Node(incl14Bridge),14Chromium; artifact12853928040 readback clean SHA/checkout/5PNGs. PR24 draft; formalG19 independent signoff separate.",
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
-      "tests": "CI40772288364 SUCCESS exact96b71ea;218Workers/53files,7Colagem,45Node,14Chromium checks; artifact12853401485 readback clean checkout/SHA/5PNGs. PR24 draft; formal G19 independent approval remains separate.",
+      "tests": "CI40774699509 SUCCESS exact6e99469:218Workers/53files,7Colagem,46Node(incl14Bridge),14Chromium; artifact12853928040 readback clean SHA/checkout/5PNGs. PR24 draft; formalG19 independent signoff separate.",
       "constraints": "QA only; no production, paid upgrade, destructive cleanup, historical data writes or PersistFlow application changes.",
       "residualRisk": "CI40772288364 SUCCESS exact96b71ea;218Workers/53files,7Colagem,45Node,14Chromium checks; artifact12853401485 readback clean checkout/SHA/5PNGs. PR24 draft; formal G19 independent approval remains separate.",
       "nextSafeAction": "Preserve validated evidence; revalidate only after relevant changes.",
@@ -1245,20 +1471,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1280,20 +1506,20 @@
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
@@ -1311,28 +1537,28 @@
       "evidenceScope": "VERIFIED_REPO_DRIVE_ENGRAM_PERSISTFLOW",
       "report": "docs/operations/private-albums-r4/23-r4-final-homologation-2026-10-28.md",
       "approvalRequired": false,
-      "changes": "Repository state/24gates, Engram private episode create/append/get and PersistFlow generation1 checkpoint3 inspection verified; no takeover/automatic continuation. Drive Sgtmenezes consolidated handoff uploaded and metadata/content/hash readback verified; receipt versioned.",
+      "changes": "Repo/24gates and Drive Sgtmenezes handoff+Hostinger v2 adendo metadata/raw bytes/hash verified. Engram private3messages/get verified; PersistFlow generation1 checkpoint4 inspected21:51:54.566Z; automaticContinuation=false/takeover=false. Receipts versioned.",
       "evidence": [
         {
           "report": "23-r4-final-homologation-2026-10-28.md",
-          "runtimeSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+          "runtimeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
           "ci": {
-            "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
-            "runId": 40772288364,
+            "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+            "runId": 40774699509,
             "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
-            "artifactId": 12853401485,
+            "artifactId": 12853928040,
             "workers": 218,
             "files": 53,
             "collage": 7,
-            "node": 45,
+            "node": 46,
             "chromiumChecks": 14,
             "artifactReadback": true,
             "checkoutDirtyAtRun": false,
-            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40772288364"
+            "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
           }
         }
       ],
-      "tests": "Repository state/24gates, Engram private episode create/append/get and PersistFlow generation1 checkpoint3 inspection verified; no takeover/automatic continuation. Drive Sgtmenezes consolidated handoff uploaded and metadata/content/hash readback verified; receipt versioned.",
+      "tests": "Repo/24gates and Drive Sgtmenezes handoff+Hostinger v2 adendo metadata/raw bytes/hash verified. Engram private3messages/get verified; PersistFlow generation1 checkpoint4 inspected21:51:54.566Z; automaticContinuation=false/takeover=false. Receipts versioned.",
       "constraints": "QA only; no production, paid upgrade, destructive cleanup, historical data writes or PersistFlow application changes.",
       "residualRisk": "Repository state/24gates, Engram private episode create/append/get and PersistFlow generation1 checkpoint3 inspection verified; no takeover/automatic continuation. Drive Sgtmenezes consolidated handoff uploaded and metadata/content/hash readback verified; receipt versioned.",
       "nextSafeAction": "Preserve verified receipts; final PR records exact documentation HEAD CI.",

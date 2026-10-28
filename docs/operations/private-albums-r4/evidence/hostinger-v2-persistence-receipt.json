@@ -1,0 +1,84 @@
+{
+  "kind": "punctum-r4-hostinger-v2-late-persistence-receipt",
+  "date": "2026-10-28",
+  "source": "work/hostinger-v2-live.json",
+  "sourceRead": true,
+  "decision": "NO_GO_PRODUCTION",
+  "hostinger": {
+    "previous503RootCause": "Missing Node listen() within 3 seconds",
+    "redCommit": "3fc7fb2",
+    "greenCommit": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+    "fix": "Unconditional listen() in entrypoint",
+    "focusedTestsPassed": 2,
+    "humanReuploaded": true,
+    "observedAt": "2026-10-28T21:48:10.429974+00:00",
+    "requestCount": 2,
+    "requests": [
+      {"atUtc": "2026-10-28T21:48:10.430018+00:00", "httpStatus": 200, "latencyMs": 117.95},
+      {"atUtc": "2026-10-28T21:48:10.548757+00:00", "httpStatus": 200, "latencyMs": 26.13}
+    ],
+    "httpsGetProbeVerified": true,
+    "probeVersion": "r4-node-probe-20261028-v2",
+    "nodeVersion": "v24.22.1",
+    "nonceEcho": true,
+    "cacheControl": "no-store",
+    "nosniff": true,
+    "ssrValidated": false,
+    "costValidated": false,
+    "quotaValidated": false,
+    "restartValidated": false,
+    "productionTouched": false
+  },
+  "codeCI": {
+    "runId": 40774699509,
+    "status": "COMPLETED_SUCCESS",
+    "verifiedExactSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+    "workersPassed": 218,
+    "workersFiles": 53,
+    "colagemPassed": 7,
+    "nodePassed": 46,
+    "bridgeWithinNode": 14,
+    "chromiumPassed": 14,
+    "artifactId": 12853928040,
+    "artifactReadbackVerified": true,
+    "cleanCheckout": true,
+    "pngCount": 5,
+    "unexpectedErrors": 0,
+    "finalDocumentationCommitCreated": false,
+    "futureDocumentationCIClaimed": false
+  },
+  "engram": {
+    "conversationId": "conv_lP9LHRJ-nnMZnGPpUbavW",
+    "latestMessageId": "msg_FOIDHeNrFIyXq3Eesg-Rk",
+    "visibility": "private",
+    "messageCount": 3,
+    "getConversationReadbackVerified": true,
+    "hashAndNumericIdsRedactedOnEngramReadback": true
+  },
+  "persistFlow": {
+    "runId": "punctum-r4-final-qa-20261028-cc33d21e",
+    "generation": 1,
+    "checkpointCount": 4,
+    "latestCheckpointAt": "2026-10-28T21:51:54.566Z",
+    "inspectVerified": true,
+    "successor": null,
+    "checkpointOnly": true,
+    "takeover": false,
+    "automaticContinuation": false
+  },
+  "drive": {
+    "originalHandoffFileId": "1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes",
+    "originalReadbackVerifiedByParent": true,
+    "addendumOwner": "worker1",
+    "addendumCompletionClaimed": false
+  },
+  "unchangedBlockedGates": ["G05", "G07", "G15", "G17", "G18", "G19", "G20", "G22", "G23"],
+  "scope": {
+    "research": false,
+    "codeChanges": false,
+    "configurationChanges": false,
+    "infrastructureChanges": false,
+    "secretStored": false,
+    "releaseApproved": false
+  }
+}
