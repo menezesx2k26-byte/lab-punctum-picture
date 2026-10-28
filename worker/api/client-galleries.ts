@@ -68,13 +68,14 @@ export async function handleClientGalleriesApi(
     if (!(await getReadyGalleryImage(db, galleryId, imageId)))
       throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
     if (request.method === "PUT") {
-      await db
+      const saved = await db
         .prepare(
           `INSERT INTO client_gallery_favorites (client_id,gallery_id,image_id,created_at)
         SELECT c.id,g.id,i.id,? FROM client_accounts c JOIN client_galleries g ON g.client_id=c.id
         JOIN client_gallery_images i ON i.gallery_id=g.id WHERE c.id=? AND c.disabled_at IS NULL
         AND c.session_version=? AND c.must_change_password=0 AND g.id=? AND g.status='published' AND i.id=? AND i.status='ready' AND i.deleted_at IS NULL
-        ON CONFLICT DO NOTHING`,
+        ON CONFLICT(client_id,gallery_id,image_id) DO UPDATE SET image_id=excluded.image_id
+        RETURNING image_id AS imageId`,
         )
         .bind(
           new Date().toISOString(),
@@ -83,7 +84,13 @@ export async function handleClientGalleriesApi(
           galleryId,
           imageId,
         )
-        .run();
+        .first<{ imageId: string }>();
+      if (!saved) {
+        // Revocation/publication may change after the authorization reads.
+        // A skipped conditional write must never be reported as a saved favorite.
+        await requireClient(request, env, db);
+        throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+      }
     } else
       await db
         .prepare(
