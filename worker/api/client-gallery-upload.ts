@@ -7,7 +7,7 @@ import {
 import { base64Url } from "../client/passwords";
 import { requireClientSessionSecret } from "../client/secret";
 import { privateJson } from "../client/response";
-import { assertAllowedOrigin, requireAdmin } from "../utils/auth";
+import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
 import { requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { parseJson } from "../client/validation";
@@ -322,7 +322,7 @@ export async function handleClientGalleryUploadApi(
     if (!image) throw new AppError(409, "UPLOAD_CLOSED", "Este envio expirou.");
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.image_ready",
       "client_gallery",
       galleryId,

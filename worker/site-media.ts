@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { writeAudit } from "./utils/audit";
-import { assertAllowedOrigin, requireAdmin } from "./utils/auth";
+import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "./utils/auth";
 import { envNumber, requireDb, requireOriginals } from "./utils/env";
 import { AppError } from "./utils/errors";
 import { assertRateLimit } from "./utils/rate-limit";
@@ -95,7 +95,7 @@ async function createIntent(
     now,
   ).run();
 
-  await writeAudit(db, identity.email, "site_media.intent_created", "site_media", id, {
+  await writeAudit(db, auditPrincipal(identity), "site_media.intent_created", "site_media", id, {
     role: "hero",
     sizeBytes: input.sizeBytes,
   });
@@ -207,7 +207,7 @@ async function completeUpload(
   await db.prepare(
     "UPDATE site_media SET status = 'ready', width = ?, height = ?, updated_at = ? WHERE id = ?",
   ).bind(width, height, now, id).run();
-  await writeAudit(db, identity.email, "site_media.completed", "site_media", id, { width, height });
+  await writeAudit(db, auditPrincipal(identity), "site_media.completed", "site_media", id, { width, height });
   return json({ media: serializeMedia(await readMedia(db, id)) }, { admin: true });
 }
 

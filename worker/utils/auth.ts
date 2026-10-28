@@ -1,5 +1,5 @@
 import { assertSeparateAccessAudiences } from "../client/audience";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { AppError } from "./errors";
 import { envString, requiredEnvString } from "./env";
 
@@ -9,7 +9,16 @@ const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
 export type AdminIdentity = {
   email: string;
   roles: ["admin"];
+  /** The email on a shared-password login is self-declared, not verified identity. */
+  authSource?: "shared-password";
 };
+
+/** Audit attribution must not impersonate an individual through a shared secret. */
+export function auditPrincipal(identity: Pick<AdminIdentity, "email" | "authSource">): string {
+  return identity.authSource === "shared-password"
+    ? "shared-password@punctum.invalid"
+    : identity.email;
+}
 
 export function normalizeTeamDomain(value: string): string {
   const withoutProtocol = value.replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -63,9 +72,16 @@ function fromBase64Url(value: string): Uint8Array {
 
 async function hmacKey(env: Env): Promise<CryptoKey> {
   const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
+  // Bind password-auth cookies to the current credential revision. A password
+  // rotation changes this signing key and invalidates previously copied cookies.
+  // Never place the stored credential hash or salt in the cookie payload.
+  const stored = env.DB ? await storedCredential(env.DB) : null;
+  const credentialRevision = stored
+    ? "d1:" + stored.passwordHash
+    : "env:" + requiredEnvString(env, "ADMIN_PASSWORD_HASH");
   return crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(secret + "\u0000" + credentialRevision),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"],
@@ -100,7 +116,7 @@ async function verifyPasswordSession(
     const email = payload.email.toLowerCase();
     if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
     if (!allowedAdminEmails(env).includes(email)) return null;
-    return { email, roles: ["admin"] };
+    return { email, roles: ["admin"], authSource: "shared-password" };
   } catch {
     return null;
   }
@@ -250,7 +266,11 @@ export async function verifyAdminPassword(
   return difference === 0;
 }
 
-export async function requireAdmin(request: Request, env: Env): Promise<AdminIdentity> {
+export async function requireAdmin(
+  request: Request,
+  env: Env,
+  jwksOverride?: JWTVerifyGetKey,
+): Promise<AdminIdentity> {
   if (isLocalRequest(request, env)) {
     return { email: "maria.helena@local.dev", roles: ["admin"] };
   }
@@ -267,7 +287,7 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminIde
   const teamDomain = normalizeTeamDomain(requiredEnvString(env, "CLOUDFLARE_TEAM_DOMAIN"));
   const audience = requiredEnvString(env, "CLOUDFLARE_ACCESS_AUD");
   const issuer = `https://${teamDomain}`;
-  const jwks = createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
+  const jwks = jwksOverride ?? createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
 
   try {
     const { payload } = await jwtVerify(assertion, jwks, {
@@ -275,9 +295,11 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminIde
       audience,
       algorithms: ["RS256"],
     });
-    const email = typeof payload.email === "string" ? payload.email : null;
-    if (!email) {
-      throw new Error("JWT sem e-mail");
+    const email =
+      typeof payload.email === "string" ? payload.email.trim().toLowerCase() : null;
+    const allowed = allowedAdminEmails(env);
+    if (!email || !allowed.includes(email)) {
+      throw new Error("JWT sem e-mail administrativo permitido");
     }
     return { email, roles: ["admin"] };
   } catch {

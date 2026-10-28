@@ -14,7 +14,7 @@ import {
   saveDraftSiteConfig,
 } from "../../shared/site-config-storage";
 import { writeAudit } from "../utils/audit";
-import { AdminIdentity, assertAllowedOrigin, requireAdmin } from "../utils/auth";
+import { AdminIdentity, assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
 import {
   envNumber,
   envString,
@@ -107,7 +107,7 @@ async function auditAndRespond(
   response: Response,
   data?: unknown,
 ): Promise<Response> {
-  await writeAudit(db, identity.email, action, entityType, entityId, data);
+  await writeAudit(db, auditPrincipal(identity), action, entityType, entityId, data);
   return response;
 }
 
@@ -289,7 +289,7 @@ async function updateAlbum(
   }
 
   const album = await getAlbumOrThrow(db, id);
-  await writeAudit(db, identity.email, "album.updated", "album", id, input);
+  await writeAudit(db, auditPrincipal(identity), "album.updated", "album", id, input);
   return json({ album: albumJson(album) }, { admin: true });
 }
 
@@ -355,7 +355,7 @@ async function publishAlbum(
     )
     .bind(publishedAt, new Date().toISOString(), id)
     .run();
-  await writeAudit(db, identity.email, "album.published", "album", id, checks);
+  await writeAudit(db, auditPrincipal(identity), "album.published", "album", id, checks);
   return json({ albumId: id, status: "published", publishedAt, checks }, { admin: true });
 }
 
@@ -405,7 +405,7 @@ async function reorderImages(
         .bind(position, new Date().toISOString(), imageId, albumId),
     ),
   );
-  await writeAudit(db, identity.email, "album.images_reordered", "album", albumId, input);
+  await writeAudit(db, auditPrincipal(identity), "album.images_reordered", "album", albumId, input);
   return json({ albumId, updated: input.imageIds.length }, { admin: true });
 }
 
@@ -604,13 +604,13 @@ async function createUploadIntent(
         input.filename,
         input.mimeType,
         input.sizeBytes,
-        identity.email,
+        auditPrincipal(identity),
         expiresAt,
         now.toISOString(),
       ),
   ]);
 
-  await writeAudit(db, identity.email, "upload.intent_created", "image", imageId, {
+  await writeAudit(db, auditPrincipal(identity), "upload.intent_created", "image", imageId, {
     intentId,
     albumId: input.albumId,
     sizeBytes: input.sizeBytes,
@@ -739,7 +739,7 @@ async function completeUpload(
       )
       .bind(now, intentId),
   ]);
-  await writeAudit(db, identity.email, "upload.completed", "image", intent.imageId, {
+  await writeAudit(db, auditPrincipal(identity), "upload.completed", "image", intent.imageId, {
     intentId,
     etag: input.etag ?? head.etag,
   });
@@ -985,7 +985,7 @@ async function updateStudio(
       db,
       input.siteConfig,
       input.revision,
-      identity.email,
+      auditPrincipal(identity),
     );
     return getStudio(db);
   } catch (error) {
@@ -1000,7 +1000,7 @@ async function publishStudio(
 ): Promise<Response> {
   const input = await parseJson(request, studioRevisionSchema);
   try {
-    await publishDraftSiteConfig(db, input.revision, identity.email);
+    await publishDraftSiteConfig(db, input.revision, auditPrincipal(identity));
     return getStudio(db);
   } catch (error) {
     return studioMutationError(error, db);
@@ -1016,7 +1016,7 @@ async function publishVisualOnly(
   try {
     const result = await publishVisualPresetPreservingDraft(
       db, input.presetId, input.expectedPublishedVersionId,
-      input.expectedDraftRevision, identity.email,
+      input.expectedDraftRevision, auditPrincipal(identity),
     );
     return json({ ...result, presetId: input.presetId, draftPreserved: true }, { admin: true });
   } catch (error) {
@@ -1031,7 +1031,7 @@ async function discardStudio(
 ): Promise<Response> {
   const input = await parseJson(request, studioRevisionSchema);
   try {
-    await discardDraftSiteConfig(db, input.revision, identity.email);
+    await discardDraftSiteConfig(db, input.revision, auditPrincipal(identity));
     return getStudio(db);
   } catch (error) {
     return studioMutationError(error, db);
@@ -1049,7 +1049,7 @@ async function restoreStudioVersion(
       db,
       input.versionId,
       input.revision,
-      identity.email,
+      auditPrincipal(identity),
     );
     return getStudio(db);
   } catch (error) {
@@ -1112,7 +1112,7 @@ async function updateSettings(
       .bind(...values)
       .run();
   }
-  await writeAudit(db, identity.email, "settings.updated", "site_settings", "1", input);
+  await writeAudit(db, auditPrincipal(identity), "settings.updated", "site_settings", "1", input);
   return getSettings(db);
 }
 

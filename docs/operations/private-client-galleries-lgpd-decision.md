@@ -98,3 +98,12 @@ da aprovação de prazo, base legal, salvaguardas de backup e teste de restaura�
 **Decisão de liberação:** `NO-GO` até todos os campos obrigatórios terem
 decisão registrada e os testes de recuperação/exclusão serem executados. Esta
 minuta não altera dados, secrets, planos, migrations nem produção.
+
+## 6. Implementação Técnica de Portabilidade/Acesso (Argon R4 — 2026-10-27)
+
+- Endpoint administrativo dedicado: `GET /admin/api/clientes/:clientId/lgpd-export` (`worker/client/lgpd.ts` + `worker/api/client-admin.ts`).
+- Garantias verificadas por testes (`tests/unit/client-lgpd.spec.ts` e `tests/integration/client-security-matrix.spec.ts`):
+  - Retorna JSON estruturado (`schemaVersion: 1`) contendo somente `titular`, `galleries` do titular, `images` (`status = "ready"` sem `storage_key`) e `favorites` do titular.
+  - Exclui e valida ausência de `password_hash`, `password_salt`, `password_iterations`, `session_version`, `must_change_password`, `storage_key`, `temporaryPassword`, cookies, tokens, segredos, dumps brutos e registros de outros titulares.
+  - Registra evento auditável `client.lgpd_exported` em `audit_log`.
+- A ativação em produção permanece condicionada ao aceite formal do responsável pelo estúdio (`G20: BLOCKED_GOVERNANCE`).

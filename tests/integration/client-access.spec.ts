@@ -169,6 +169,30 @@ describe("private client Access Free alternative", () => {
     expect(out?.headers.get("Set-Cookie")).toContain("Max-Age=0");
   });
 
+  it("revokes an Access client session at D1 on logout even if its old cookie is replayed", async () => {
+    const id = await seedClient();
+    const testEnv = accessEnv();
+    const token = await createClientSession({ id, sessionVersion: 1 }, testEnv);
+    const cookie = "punctum_client_session=" + token;
+    const me = privateRequest("/api/client/me", "GET", undefined, cookie);
+    expect((await requireClient(me, testEnv, env.DB)).id).toBe(id);
+
+    const logout = await handleClientSessionApi(
+      privateRequest("/api/client/session", "DELETE", undefined, cookie),
+      new URL("http://localhost:8787/api/client/session"),
+      testEnv,
+    );
+    expect(logout?.status).toBe(200);
+    expect(logout?.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    await expect(requireClient(me, testEnv, env.DB)).rejects.toMatchObject({
+      status: 401,
+      code: "CLIENT_UNAUTHORIZED",
+    });
+    expect(await env.DB.prepare(
+      "SELECT session_version AS version FROM client_accounts WHERE id=?",
+    ).bind(id).first()).toEqual({ version: 2 });
+  });
+
   it("shows a private recoverable browser error without a misleading password form", async () => {
     const entry = new URL("http://localhost:8787/albuns/entrar");
     const response = await handlePrivateGalleryRoutes(new Request(entry, {

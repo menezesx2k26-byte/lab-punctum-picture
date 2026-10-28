@@ -23,11 +23,16 @@
 .pga textarea {
   width: 100%;
   min-width: 0;
+  min-height: 44px;
   font-size: 16px;
 }
 .pga button,
-.pga .button {
+.pga .button,
+.pga a {
   min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 .pga .pga-wide {
   grid-column: 1/-1;
@@ -36,6 +41,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
 }
 .pga .pga-checkbox input {
   width: 20px;

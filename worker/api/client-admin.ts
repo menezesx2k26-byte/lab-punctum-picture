@@ -16,13 +16,14 @@ import {
 import { generateTemporaryPassword } from "../client/passwords";
 import { hashClientPasswordWithProvider } from "../client/password-provider";
 import { privateJson } from "../client/response";
-import { assertAllowedOrigin, requireAdmin } from "../utils/auth";
+import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
 import { writeAudit } from "../utils/audit";
 import { requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { assertRateLimit } from "../utils/rate-limit";
 import { parseJson } from "../client/validation";
 import { clientAuthMode } from "../client/auth-mode";
+import { loadSanitizedTitularExport } from "../client/lgpd";
 
 const accountColumns =
   "id,name,email,disabled_at AS disabledAt,must_change_password AS mustChangePassword,created_at AS createdAt";
@@ -40,7 +41,7 @@ export async function handleClientAdminApi(
   const mode = clientAuthMode(env);
   await assertRateLimit(request, db, "client-admin", 200, 60);
   const match = url.pathname.match(
-    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password))?)?$/,
+    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password|lgpd-export))?)?$/,
   );
   if (!match) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   const id = match[1];
@@ -107,7 +108,7 @@ export async function handleClientAdminApi(
     }
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client.created",
       "client_account",
       clientId,
@@ -127,7 +128,18 @@ export async function handleClientAdminApi(
     .first();
   if (!existing)
     throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
-  if (match[2] && request.method === "POST") {
+  if (match[2] === "lgpd-export" && request.method === "GET") {
+    const exported = await loadSanitizedTitularExport(db, id);
+    await writeAudit(
+      db,
+      auditPrincipal(actor),
+      "client.lgpd_exported",
+      "client_account",
+      id,
+    );
+    return privateJson(exported);
+  }
+  if (match[2] === "reset-password" && request.method === "POST") {
     if (mode === "access") {
       await db
         .prepare(
@@ -137,7 +149,7 @@ export async function handleClientAdminApi(
         )
         .bind(new Date().toISOString(), id)
         .run();
-      await writeAudit(db, actor.email, "client.access_reauthorized", "client_account", id);
+      await writeAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id);
       return privateJson({ ok: true, authMode: mode });
     }
     const temporaryPassword = generateTemporaryPassword();
@@ -157,7 +169,7 @@ export async function handleClientAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client.password_reset",
       "client_account",
       id,
@@ -181,7 +193,7 @@ export async function handleClientAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       input.disabled ? "client.disabled" : "client.enabled",
       "client_account",
       id,
@@ -233,7 +245,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.created",
       "client_gallery",
       galleryId,
@@ -261,7 +273,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.cover_changed",
       "client_gallery",
       id,
@@ -316,7 +328,7 @@ async function handleGalleryAdminApi(
       );
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.published",
       "client_gallery",
       id,
@@ -337,7 +349,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery." + action,
       "client_gallery",
       id,
@@ -391,7 +403,7 @@ async function handleGalleryAdminApi(
       .run();
     await writeAudit(
       db,
-      actor.email,
+      auditPrincipal(actor),
       "client_gallery.updated",
       "client_gallery",
       id,

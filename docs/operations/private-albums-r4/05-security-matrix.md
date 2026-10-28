@@ -17,3 +17,12 @@ Execução local no conteúdo da árvore `67a6d7e7334425a255e0d25bb3b2c8e8d89e48
 | Matriz completa A1/A2/B1, zero bytes em todas as negações e ciclos reais de sessão | NOT_RUN | completar na infraestrutura QA isolada |
 
 A lista não comprova que todos os requisitos da SPEC passaram. Ver também `security-review.md` e `12-release-readiness.md`.
+
+## Atualização incremental Argon R4 (2026-10-27)
+
+- **Zero bytes e zero metadados sensíveis em todas as negações de mídia (`GET`, `HEAD` e `/_vinext/image`)**:
+  - Endurecido `worker/client/router.ts` para garantir `new Response(null, { status })` com `Cache-Control: private, no-store` e `X-Robots-Tag: noindex, nofollow, noarchive` em todas as negações de rotas de mídia privada (`/api/client/galleries/:galleryId/images/:imageId/:variant`, `/admin/api/albuns-privados/:galleryId/images/:imageId/:variant`) e requisições `HEAD`.
+  - Endurecida a normalização iterativa de `/_vinext/image` (`new URL(decodeURIComponent(path), url).pathname`) para bloquear path traversal com dupla codificação (`/public/%252e%252e/api/client/galleries/...`) e prefixos de storage R2 (`/client-galleries/...`, `/private-galleries/...`) com `404` e `0` bytes.
+- **Fronteira B1 em Cloudflare Access (`worker/utils/auth.ts`)**:
+  - `requireAdmin` normaliza `payload.email` para minúsculas e exige pertinência explícita a `ADMIN_ALLOWED_EMAILS` também no caminho `cf-access-jwt-assertion`, impedindo escalada de privilégio caso uma identidade não administrativa apresente JWT do domínio Access.
+- **Prova automatizada**: `tests/integration/client-security-matrix.spec.ts` (`PASS` local em Miniflare/D1/R2; validação de app Access e bucket R2 remotos permanece `BLOCKED_EXTERNAL` sob política R$ 0 e sem escrita remota).
