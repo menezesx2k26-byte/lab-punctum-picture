@@ -21,7 +21,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply punctum-picture --remote",
     "db:seed": "wrangler d1 execute punctum-picture --local --file migrations/0002_seed_settings.sql",
     "backup:d1": "wrangler d1 export punctum-picture --remote --output ./backups/database.sql",
-    "restore:d1": "wrangler d1 execute punctum-picture --remote --file ./backups/database.sql"
+    "restore:d1": "wrangler d1 execute punctum-picture --remote --file ./backups/database.sql",
+    "test:e2e": "node scripts/e2e/punctum-browser.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -53,6 +54,7 @@
     "eslint": "9.39.4",
     "eslint-config-next": "16.4.3",
     "magic-string": "^0.30.17",
+    "playwright": "1.58.2",
     "react-server-dom-webpack": "19.2.8",
     "typescript": "5.9.3",
     "vinext": "0.0.50",

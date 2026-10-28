@@ -8,6 +8,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -15,6 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
@@ -22,4 +24,14 @@ jobs:
       - run: node --test scripts/collage-css.test.mjs
       - run: node --test scripts/publish-colagem-production.test.mjs
       - run: node --test services/punctum-password-bridge/server.test.mjs
+      - run: node --test scripts/r4-edge-qa.test.mjs
       - run: npm run build
+      - run: node --test scripts/ssr-route-imports.test.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-browser-evidence
+          path: outputs/browser-e2e/report.json
+          retention-days: 14
