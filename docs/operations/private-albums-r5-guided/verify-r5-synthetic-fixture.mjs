@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "r5-red-synthetic-fixture.json"), "utf8"));
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-8[0-9a-f]{12}$/;
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function verify(f) {
   const p=f.proofsA, r=f.review.items, c=f.cases;
   const predicates = {
