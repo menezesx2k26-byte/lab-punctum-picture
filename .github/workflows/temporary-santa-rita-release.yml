@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      TARGET_SHA: 235d290835de7ac89d61eec580603375c3a80ff3
+      TARGET_SHA: 9c94100c83653d6405c12b4e03263b7984080733
       CLOUDFLARE_ACCOUNT_ID: 257bca437616da74ece1ce4bbaf0bd89
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       SOURCE_READ_TOKEN: ${{ secrets.TEMP_PRIVATE_READ_TOKEN }}
@@ -66,7 +66,7 @@ jobs:
       - name: Verify 100% production traffic and safe smoke
         working-directory: ${{ runner.temp }}/santa-source
         env:
-          EXPECTED_SHA: 235d290835de7ac89d61eec580603375c3a80ff3
+          EXPECTED_SHA: 9c94100c83653d6405c12b4e03263b7984080733
         run: |
           set -euo pipefail
           node scripts/verify-release.mjs > "$RUNNER_TEMP/release-evidence.json"
@@ -84,6 +84,12 @@ jobs:
           test "${css_asset##*v=}" = "$(sha256sum "$RUNNER_TEMP/admin.css" | cut -c1-12)"
           grep -Fq 'booking-focus-select' "$RUNNER_TEMP/admin.js"
           grep -Fq 'booking-activation-inline' "$RUNNER_TEMP/admin.js"
+          grep -Fq 'openEditorialForSelectedBooking' "$RUNNER_TEMP/admin.js"
+          grep -Fq 'id="editorial-management"' "$RUNNER_TEMP/admin.html"
+          grep -Fq 'data-view="excursions">Viagens e vendas' "$RUNNER_TEMP/admin.html"
+          if grep -Fq 'data-view="bookings"' "$RUNNER_TEMP/admin.html"; then
+            echo 'Separate bookings navigation still present'; exit 1
+          fi
           status=$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' https://excursoessantarita.com.br/api/admin/session)
           test "$status" = 401
       - name: Retain sanitized release evidence
