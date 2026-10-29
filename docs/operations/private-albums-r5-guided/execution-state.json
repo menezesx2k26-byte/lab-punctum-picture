@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "daf4895455a998b8aca4f85f201c02385d783e6a",
+  "preparationBranchLastObservedBeforeThisCommit": "4f77a53fc8218ab78199b724c740f99db9336d5b",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -116,6 +116,12 @@
       "readbackVerified": true,
       "gitBlobSha": "3c7553758c854390b381c532939d7967fc91ca5b",
       "commitSha": "daf4895455a998b8aca4f85f201c02385d783e6a"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/12-static-reconciliation-identity-cost-checkpoint-20261028.md",
+      "readbackVerified": true,
+      "gitBlobSha": "b8215867ee071dbbf0efeedd7356d8bd0b2ab878",
+      "commitSha": "4f77a53fc8218ab78199b724c740f99db9336d5b"
     }
   ],
   "ci": {
@@ -773,7 +779,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/09-operational-continuation-checkpoint.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/12-static-reconciliation-identity-cost-checkpoint-20261028.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -842,6 +848,8 @@
       ],
       "r4HistoricalCandidateSha": "1d30b97",
       "r4HistoricRunId": 40779241089
-    }
+    },
+    "checkpointCommit": "4f77a53fc8218ab78199b724c740f99db9336d5b",
+    "checkpointBlob": "b8215867ee071dbbf0efeedd7356d8bd0b2ab878"
   }
 }
