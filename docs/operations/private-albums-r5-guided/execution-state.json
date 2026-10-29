@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "af166ace2ccf208ad2b75c192b098e560c29c943",
+  "preparationBranchLastObservedBeforeThisCommit": "222920bf833a574d7e99a9ffba6fcebaa7742ecd",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -231,8 +231,16 @@
     },
     {
       "path": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
-      "gitBlobSha": "27357b130d9108c06c696629d54b4391f29061da",
-      "commitSha": "dcb9e706b74562783cee94db7fba28778a617cc5",
+      "gitBlobSha": "2524f469d46d100f6955f9f0d2871da8c39dec09",
+      "commitSha": "222920bf833a574d7e99a9ffba6fcebaa7742ecd",
+      "readbackVerified": true,
+      "previousBlobSha": "27357b130d9108c06c696629d54b4391f29061da",
+      "previousCommitSha": "dcb9e706b74562783cee94db7fba28778a617cc5"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-worker-sql-boundaries.py",
+      "gitBlobSha": "c3c44901751a81f217c37b5e5f0a7b4d87b012de",
+      "commitSha": "57cd6451bd7ee45cf419bdb509b0980fb13f6757",
       "readbackVerified": true
     }
   ],
@@ -409,7 +417,8 @@
         "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
         "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
         "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
-        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -518,7 +527,8 @@
         "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
         "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
         "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
-        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -736,7 +746,8 @@
         "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
         "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -855,7 +866,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "NO_GO. Formal approval of exact SPEC+plan blobs first; then fresh owner/process/lock/status check and new isolated implementation worktree. R5 Tasks 00-12 RED→GREEN→REFACTOR→REVIEW→COMMIT→CHECKPOINT. New RED cover eligibility TOCTOU and publication+individual audit transactional atomicity. Reuse existing R4 baseline, no unnecessary reruns.",
+  "nextAction": "NO_GO: approval of exact SPEC db25502f... and plan 41e06e5... still UNPROVEN. A complete separate owned Git clone now exists, R4 baseline 223 Vitest/14 Chrome workerd E2E passed; Python 14/14 R4 SQL source-sequencing probe is independently rerunnable with source pins. PP00 remains BLOCKED_EXTERNAL until human approval and separately authorized implementation worktree. No new R5 product code/PR/deploy/billing; after authorization, PP01/PP04 RED for cover TOCTOU and atomic publication/audit in D1 local + real Worker, alongside CAS/outbox/watermark/private media.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -997,8 +1008,8 @@
       "r4HistoricalCandidateSha": "1d30b97",
       "r4HistoricRunId": 40779241089
     },
-    "checkpointCommit": "dcb9e706b74562783cee94db7fba28778a617cc5",
-    "checkpointBlob": "27357b130d9108c06c696629d54b4391f29061da",
+    "checkpointCommit": "222920bf833a574d7e99a9ffba6fcebaa7742ecd",
+    "checkpointBlob": "2524f469d46d100f6955f9f0d2871da8c39dec09",
     "legacySchemaExactProbe": {
       "sourceHead": "2b08b3458070ea730fafdc4ca7187cf13a07d42a",
       "migrationFile": "migrations/0009_private_client_galleries.sql",
@@ -1323,19 +1334,40 @@
         "pythonAfterHead": "bc3cc06cb8a77f6469eb89487938c6a31f67f181"
       },
       "workerSqlSequencing": {
-        "kind": "exact source SQL in isolated SQLite only",
+        "kind": "EXACT_R4_SQL_REPRODUCED_IN_REAL_CHECKOUT_USING_SQLITE_NOT_WORKER_OR_D1",
+        "sourceMigrationGitBlob": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
+        "pinnedSources": {
+          "migrations/0001_init.sql": "2e14fe142c6532981a702be2d6effc9cc81626ea",
+          "worker/api/client-admin.ts": "56e78e4b055ee8f66b7f642bf871ef5ad0b71dd4",
+          "worker/client/repository.ts": "74e11bf42ca07b775e5663d21fffc169a7534f48",
+          "worker/utils/audit.ts": "d469e32627eab8764c0438395b646c2e3bd491c9"
+        },
+        "sourcePinsVerifiedInCheckout": true,
+        "scriptPath": "docs/operations/private-albums-r5-guided/verify-worker-sql-boundaries.py",
+        "scriptGitBlobSha": "c3c44901751a81f217c37b5e5f0a7b4d87b012de",
+        "scriptSha256": "D2BE2BF823BE5241F417875C6D1ACECF529970DEF444953511DD004614C53D77",
+        "command": "python docs/operations/private-albums-r5-guided/verify-worker-sql-boundaries.py",
+        "environment": "isolated owned Windows clone, Python 3.14.3, SQLite 3.50.4",
+        "exitCode": 0,
         "matched": 14,
         "total": 14,
-        "exit": 0,
-        "migrationGitBlob": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
-        "sourceWorkerAdminBlob": "56e78e4b055ee8f66b7f642bf871ef5ad0b71dd4",
-        "sourceAuditBlob": "d469e32627eab8764c0438395b646c2e3bd491c9",
-        "coverRaceObserved": true,
-        "publishWithoutAuditOnInjectedFailureObserved": true,
-        "workerRuntimeTested": false,
-        "d1RuntimeTested": false,
-        "scriptSha256": "cb9588d35e852c4e209207cab2605a12bc8c31f6ed034167478af7c7746be6d8",
-        "logSha256": "a2d5515881f94cbfaa7b9660f733add54c3329a27e253cfd9b94afa5921a0b8f"
+        "failed": 0,
+        "logPath": "Documents/ChatGPT/.punctum-r5-local-logs-20261029-30149863/worker-sql-pinned-14.log",
+        "logSha256": "9E3E9B31D4B2D41ADA53C7B24572A47D14180934BD63B1FD818E33ABEF101ABD",
+        "gitStatusAfterExecution": "CLEAN",
+        "r4SourceSqlProperties": [
+          "cover validated in prior SELECT but modified in separate unguarded UPDATE after concurrent photo deletion",
+          "publication commits independently from its subsequent audit insert, leaving published state on injected audit failure"
+        ],
+        "counterfactualModelResults": [
+          "guarded UPDATE with EXISTS prevents stale cover",
+          "explicit SQLite transaction+rollback prevents publish without audit"
+        ],
+        "workerRuntimeTestsRun": 0,
+        "d1RuntimeTestsRun": 0,
+        "httpTestsRun": 0,
+        "r5FeatureTestsRun": 0,
+        "report": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
       },
       "report": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
     }
