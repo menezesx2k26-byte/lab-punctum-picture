@@ -1,0 +1,637 @@
+{
+  "schemaVersion": 1,
+  "round": "R5",
+  "feature": "guided-selection-private-editorial-delivery",
+  "sourceRepository": "menezesx2k26-byte/lab-punctum-picture",
+  "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
+  "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
+  "preparationBranch": "agent/punctum-r5-preparation-20261028",
+  "preparationBranchLastObservedBeforeThisCommit": "04cf1ffe068f0c13767af6ee053f22d2350b6c6d",
+  "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
+  "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
+  "readiness": "NO_GO",
+  "approval": {
+    "spec": "UNPROVEN",
+    "plan": "UNPROVEN",
+    "evidence": "PR25 reviews=0, human comments=0, event approvals=0; outside GitHub unknown",
+    "implementationAllowed": false,
+    "productionReleaseAllowed": false
+  },
+  "testedSha": null,
+  "localWorktree": {
+    "created": false,
+    "verified": false,
+    "status": "BLOCKED_EXTERNAL",
+    "reason": "No reliable authenticated terminal for the shared Windows Git clone; existing worktree status/untracked changes/AGENTS local not inspected",
+    "safeRunbook": "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md"
+  },
+  "commitPolicy": "Gate acceptance commit must be recorded only after real tests; documentation commits are preparation evidence, not implementation acceptance.",
+  "preparationEvidence": [
+    {
+      "path": "docs/operations/private-albums-r5-guided/00-preparation-baseline.md",
+      "readbackVerified": true,
+      "gitBlobSha": "18f92c4ee4159ca7b15d1838d70367edcb7971a7",
+      "commitSha": "4ce938cbf27e9be5754d7a8ca6560ca52b21b880"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
+      "readbackVerified": true,
+      "gitBlobSha": "5d29011cad571952b8b3b974b9bdce92873169a2",
+      "commitSha": "3558e61567282426e3602014aa892908b2d4581b"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
+      "readbackVerified": true,
+      "gitBlobSha": "1dd07e5d29df356e6a188b31edd97d5f000e3fd1",
+      "commitSha": "b4fa8bb60a60f1710ac2edbf7ec206a2b2529fd6"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
+      "readbackVerified": true,
+      "gitBlobSha": "1d3cd926993ece8be35e78d101dc40bece764299",
+      "commitSha": "8bc587c6be84cbcf2366baaa40b8909c3151367b"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
+      "readbackVerified": true,
+      "gitBlobSha": "50234d7100d3c662a5e298a2711ace72ed8fb763",
+      "commitSha": "28684a89bbefe247346647d7058782c80e18109b"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
+      "readbackVerified": true,
+      "gitBlobSha": "12c82912c859f6ad0b2dfe8c9854deccbd4b29c3",
+      "commitSha": "04cf1ffe068f0c13767af6ee053f22d2350b6c6d"
+    }
+  ],
+  "ci": {
+    "sourceDocumentationHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
+    "sourceDocumentationRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40799815353",
+    "sourceDocumentationConclusion": "success",
+    "preparationBranchCiRun": null,
+    "preparationBranchCiStatus": "NOT_RUN"
+  },
+  "r4Independent": {
+    "status": "NO_GO_PRODUCTION",
+    "gates": {
+      "G05": "FAIL",
+      "G17": "FAIL",
+      "G15": "BLOCKED_EXTERNAL",
+      "G19": "BLOCKED_EXTERNAL",
+      "G20": "BLOCKED_EXTERNAL",
+      "G22": "BLOCKED_EXTERNAL",
+      "G23": "BLOCKED_EXTERNAL"
+    },
+    "source": "docs/operations/private-albums-r4/execution-state.json",
+    "notPromotedByR5": true
+  },
+  "reviews": {
+    "security": {
+      "status": "NOT_RUN",
+      "independentSignoff": false
+    },
+    "frontendAccessibility": {
+      "status": "NOT_RUN",
+      "independentSignoff": false
+    },
+    "costs": {
+      "status": "NOT_RUN",
+      "independentSignoff": false
+    }
+  },
+  "cost": {
+    "measured": false,
+    "incrementalSpendObserved": null,
+    "cloudflareEntitlementsVerified": false,
+    "limitationsOnlyFromOfficialDocs": true,
+    "proofOfZeroFutureCost": false,
+    "report": "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md"
+  },
+  "productDiff": {
+    "modified": false,
+    "evidence": "GitHub compare document branch vs preparation: only docs/operations/private-albums-r5-guided additions; local checkout not accessed"
+  },
+  "gates": {
+    "PP00": {
+      "gate": "PP00",
+      "task": "00",
+      "status": "BLOCKED_EXTERNAL",
+      "dependencies": [
+        "human_spec_plan_approval",
+        "local_worktree_ownership",
+        "baseline_ci"
+      ],
+      "acceptance": "HEAD/main/PR24/PR25, ownership, worktree, baseline tests",
+      "testCommands": [
+        {
+          "command": "node --version",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm ci",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run typecheck",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run lint",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm test",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run build",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run test:e2e",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/00-preparation-baseline.md",
+        "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven",
+        "local_worktree_not_verified"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Verificar aprovação formal e abrir terminal local seguro; criar worktree, executar baseline e registrar outputs."
+    },
+    "PP01": {
+      "gate": "PP01",
+      "task": "01",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP00"
+      ],
+      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/unit/client-workflow.spec.ts tests/integration/client-workflow.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run typecheck",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Após PP00, registrar RED e executar migração somente em D1 local sintético."
+    },
+    "PP02": {
+      "gate": "PP02",
+      "task": "02",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP01",
+        "images_entitlement",
+        "cpu_capacity"
+      ],
+      "acceptance": "Watermark real, prova reduzida, R2 privado e GET/HEAD A/B zero bytes",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/integration/client-workflow-media.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
+        "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Após aprovação, spike local derivadas e aferir quotas; registrar BLOCKED_COST se inviável."
+    },
+    "PP03": {
+      "gate": "PP03",
+      "task": "03",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP01",
+        "PP02"
+      ],
+      "acceptance": "Seleção exact/max/free, confirmação CAS, recibo e Maria-only reopen; favoritos independentes",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/unit/client-workflow.spec.ts tests/integration/client-workflow.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Criar RED de seleção, replay e cross-tenant na worktree isolada."
+    },
+    "PP04": {
+      "gate": "PP04",
+      "task": "04",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP01",
+        "PP02",
+        "PP03"
+      ],
+      "acceptance": "Finais imutáveis, 25/30 parcial, snapshot atômico e última revisão cliente",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/integration/client-workflow-admin.spec.ts tests/integration/client-workflow-media.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Testar CAS, versão imutável e publicação 25/30 depois de PP03."
+    },
+    "PP05": {
+      "gate": "PP05",
+      "task": "05-06",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP04"
+      ],
+      "acceptance": "Compositor seis tipos, reuso/crops, cliente acessível 8 larguras",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/unit/client-composer.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run test:e2e",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
+        "docs/operations/private-albums-r5-guided/01-executable-matrix.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Preparar RED UI/admin e Playwright com 30 fotos sintéticas após autorização."
+    },
+    "PP06": {
+      "gate": "PP06",
+      "task": "07-08",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP04",
+        "PP05"
+      ],
+      "acceptance": "Pedidos por foto/geral, mensagens e decisões 4/5, revoke pré-publicação",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/integration/client-workflow-security.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run test:e2e",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Fazer RED de IDOR, XSS, estados e reedição somente após gates anteriores."
+    },
+    "PP07": {
+      "gate": "PP07",
+      "task": "09-10",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP04",
+        "PP06",
+        "free_email_transport"
+      ],
+      "acceptance": "Mídia expirada GET/HEAD zero bytes, renovação Maria, outbox e envio REAL",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/unit/client-notification.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm test -- tests/integration/client-workflow-security.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
+        "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Validar clock/expiração; entrega email depende de provedor autorizado, receipt e custo."
+    },
+    "PP08": {
+      "gate": "PP08",
+      "task": "11",
+      "status": "NOT_RUN",
+      "dependencies": [
+        "PP04",
+        "PP05",
+        "PP07",
+        "physical_android_qa",
+        "cpu_capacity"
+      ],
+      "acceptance": "Batch manifest finais elegíveis, byte/hash, memória/CPU e Android físico",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/unit/client-batch-download.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run test:e2e",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
+        "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Comparar streaming client/admin/Worker com medições; não habilitar sem margem."
+    },
+    "PP09": {
+      "gate": "PP09",
+      "task": "12",
+      "status": "BLOCKED_EXTERNAL",
+      "dependencies": [
+        "PP01",
+        "PP02",
+        "PP03",
+        "PP04",
+        "PP05",
+        "PP06",
+        "PP07",
+        "PP08",
+        "security_formal_review",
+        "lgpd_owner_signoff",
+        "rollback_qa"
+      ],
+      "acceptance": "Parecer formal independente, LGPD, recovery e rollback QA isolado",
+      "testCommands": [
+        {
+          "command": "npm test -- tests/integration/client-workflow-security.spec.ts",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run test:e2e",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
+        "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven",
+        "security_review",
+        "lgpd",
+        "rollback"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Obter revisores reais autorizados, política LGPD e testes rollback em QA."
+    },
+    "PP10": {
+      "gate": "PP10",
+      "task": "12",
+      "status": "BLOCKED_EXTERNAL",
+      "dependencies": [
+        "PP00",
+        "PP01",
+        "PP02",
+        "PP03",
+        "PP04",
+        "PP05",
+        "PP06",
+        "PP07",
+        "PP08",
+        "PP09",
+        "r4_gates",
+        "physical_android_ios_qa",
+        "human_release_approval"
+      ],
+      "acceptance": "CI exata, 2 clientes + Maria, dispositivos físicos, quota/custo e todos gates R4/R5",
+      "testCommands": [
+        {
+          "command": "npm ci",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm audit --omit=dev",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run typecheck",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run lint",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm test",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run build",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        },
+        {
+          "command": "npm run test:e2e",
+          "result": "NOT_RUN",
+          "exitCode": null,
+          "assertions": null,
+          "testedSha": null
+        }
+      ],
+      "artifacts": [
+        "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
+        "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
+        "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md"
+      ],
+      "acceptanceCommitSha": null,
+      "ciRunUrl": null,
+      "actualTestEvidence": [],
+      "blockers": [
+        "product_implementation_approval_unproven",
+        "r4_gates",
+        "physical_qa",
+        "costs",
+        "release"
+      ],
+      "costStatus": "NOT_MEASURED",
+      "nextAction": "Não promover com mocks/CI documental. Produção exige aprovação específica."
+    }
+  },
+  "globalBlockers": [
+    "formal_human_approval_spec_and_plan",
+    "local_workspace_ownership",
+    "r4_g05_g17_fail",
+    "r4_g15_g19_g20_g22_g23_external",
+    "email_provider_real_receipt",
+    "workers_r2_images_cost_entitlement",
+    "android_ios_physical_accessibility",
+    "formal_security_review",
+    "lgpd_policy_and_rollback",
+    "release_authorization"
+  ],
+  "nextAction": "Verify formal approval against exact document blob SHAs. Independently inventory local Git worktrees/AGENTS, create worktree safely, run baseline; do not implement without approval.",
+  "sourceDocumentBlobs": {
+    "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
+    "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
+    "goal": "466df95785221c7a85bf2f3d91a59b2c76d4d413"
+  }
+}
