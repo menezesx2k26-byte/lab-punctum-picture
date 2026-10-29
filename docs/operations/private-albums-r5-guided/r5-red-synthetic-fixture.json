@@ -367,11 +367,15 @@
       "principal": "clientA",
       "method": "GET",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/images/a1000000-0000-4000-8000-000000000001/proof",
-      "expectedStatus": 503,
+      "expectedStatus": null,
       "zeroBytes": true,
-      "invariant": "no processed derivative: fail closed (exact status pending implementation contract)",
+      "invariant": "no processed derivative: fail closed 0 bytes; status not fixed until API contract is ratified",
       "gate": "PP02",
-      "execution": "NOT_RUN"
+      "execution": "NOT_RUN",
+      "expectedStatuses": [
+        404,
+        503
+      ]
     },
     {
       "id": "RED-MEDIA-06",
@@ -389,11 +393,12 @@
       "principal": "clientA",
       "method": "POST",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/selection/confirm",
-      "expectedStatus": 409,
+      "expectedStatus": 200,
       "zeroBytes": null,
-      "invariant": "already confirmed: replay no new revision; if same idempotency key return same receipt",
+      "invariant": "same idempotency key replay returns SAME immutable receipt; different changed request blocked 409",
       "gate": "PP03",
-      "execution": "NOT_RUN"
+      "execution": "NOT_RUN",
+      "scenarioState": "already-confirmed-same-idempotency-key"
     },
     {
       "id": "RED-SELECT-02",
@@ -521,22 +526,30 @@
       "principal": "clientA",
       "method": "GET",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/images/a1000000-0000-4000-8000-000000000001/proof",
-      "expectedStatus": 404,
+      "expectedStatus": null,
       "zeroBytes": true,
-      "invariant": "clock at expiry instant or later zero bytes; status may be 403/404 by contract",
+      "invariant": "clock at or after expiry: no bytes and private/no-store, not 410 media; catalog metadata may be 410",
       "gate": "PP07",
-      "execution": "NOT_RUN"
+      "execution": "NOT_RUN",
+      "expectedStatuses": [
+        403,
+        404
+      ]
     },
     {
       "id": "RED-EXPIRY-02",
       "principal": "clientA",
       "method": "HEAD",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/images/a1000000-0000-4000-8000-000000000001/proof",
-      "expectedStatus": 404,
+      "expectedStatus": null,
       "zeroBytes": true,
-      "invariant": "expiry HEAD no metadata side channel",
+      "invariant": "HEAD expiry no bytes, no ETag, no sensitive headers; same authorization as GET",
       "gate": "PP07",
-      "execution": "NOT_RUN"
+      "execution": "NOT_RUN",
+      "expectedStatuses": [
+        403,
+        404
+      ]
     },
     {
       "id": "RED-EXPIRY-03",
@@ -554,11 +567,12 @@
       "principal": "maria",
       "method": "POST",
       "path": "/admin/api/albuns-privados/a0000000-0000-4000-8000-000000000001/delivery/publish",
-      "expectedStatus": 503,
+      "expectedStatus": 200,
       "zeroBytes": null,
-      "invariant": "synthetic no-provider case: do not claim outbound email; publication/outbox semantics tested separately",
+      "invariant": "when email provider unavailable, successful D1 publication remains committed; outbox records pending/failed, NOT sent; no false delivered status",
       "gate": "PP07",
-      "execution": "NOT_RUN"
+      "execution": "NOT_RUN",
+      "scenarioState": "forced-post-commit-email-outage"
     },
     {
       "id": "RED-FAILED-CAS-01",
@@ -576,11 +590,15 @@
       "principal": "clientA",
       "method": "GET",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/download-batch-manifest",
-      "expectedStatus": 503,
+      "expectedStatus": null,
       "zeroBytes": null,
-      "invariant": "missing/corrupt R2 version => no manifest claiming successful ZIP",
+      "invariant": "missing/corrupt final R2: never claim successful batch or serve incomplete ZIP; exact status pending contract",
       "gate": "PP08",
-      "execution": "NOT_RUN"
+      "execution": "NOT_RUN",
+      "expectedStatuses": [
+        409,
+        503
+      ]
     }
   ],
   "uiAcceptance": {
@@ -626,7 +644,8 @@
     "Expected statuses 503/404 in some cases are provisional design expectations, resolve with SPEC error contract and reviewer before implementation.",
     "RED-EXPIRY cases use clock injection >= gallery expiry; positive cases require clock before expiry, per-case isolated fixtures.",
     "RED-SELECT cases must run against separate fixture epochs because Maria reopen changes state.",
-    "RED-NOTIFY is a separate forced-service-error scenario, not a generic assumption that publication itself must fail when SMTP unavailable: outbox is post-commit.",
-    "No fixture image has a real watermark, no persisted object, no actual media URL or token."
+    "RED-NOTIFY specifically expects publication to COMMIT while transport remains pending/failed; email is post-commit. An earlier draft incorrectly conflated provider unavailability with a failed publication; corrected before acceptance.",
+    "No fixture image has a real watermark, no persisted object, no actual media URL or token.",
+    "expectedStatus:null with expectedStatuses indicates an intentionally unratified HTTP variant; only invariants are binding before contract review."
   ]
 }
