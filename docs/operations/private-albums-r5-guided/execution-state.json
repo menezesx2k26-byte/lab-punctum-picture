@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "0a6a694369121da9d398079b94c569fce9d68d87",
+  "preparationBranchLastObservedBeforeThisCommit": "af166ace2ccf208ad2b75c192b098e560c29c943",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -22,7 +22,7 @@
     "created": false,
     "verified": false,
     "status": "BLOCKED_EXTERNAL",
-    "reason": "Desktop Windows cmd launch returned null and no independent terminal visible; old PowerShell windows unowned; Linux auxiliary git ls-remote unable to resolve github.com",
+    "reason": "New owned independent Git CLONE exists and current baseline R4 passed; it is not an authorized R5 implementation worktree. Formal SPEC+plan approval remains UNPROVEN.",
     "safeRunbook": "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md"
   },
   "commitPolicy": "Gate acceptance commit must be recorded only after real tests; documentation commits are preparation evidence, not implementation acceptance.",
@@ -36,10 +36,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
       "readbackVerified": true,
-      "gitBlobSha": "ec8f07b3bb606fceeb1d39a53446df552f27c5f1",
-      "commitSha": "a37f8945d2b4664353ca06d88046e4764f118869",
-      "previousBlobSha": "b5e2cc20fb88ee0a691fa90a4f9975aed7be744e",
-      "previousCommitSha": "c17453b291c8b8909169093c3d5d970799f10d60"
+      "gitBlobSha": "ce368678a39eb5a30348b8d60b75568f60f88fa5",
+      "commitSha": "ab814bb352629a5fb0e838c493efdda5db0db455",
+      "previousBlobSha": "ec8f07b3bb606fceeb1d39a53446df552f27c5f1",
+      "previousCommitSha": "a37f8945d2b4664353ca06d88046e4764f118869"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
@@ -62,8 +62,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
       "readbackVerified": true,
-      "gitBlobSha": "12c82912c859f6ad0b2dfe8c9854deccbd4b29c3",
-      "commitSha": "04cf1ffe068f0c13767af6ee053f22d2350b6c6d"
+      "gitBlobSha": "91aafc1a1b7d3037c258140b8c173c7153620360",
+      "commitSha": "af166ace2ccf208ad2b75c192b098e560c29c943",
+      "previousBlobSha": "12c82912c859f6ad0b2dfe8c9854deccbd4b29c3",
+      "previousCommitSha": "04cf1ffe068f0c13767af6ee053f22d2350b6c6d"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/06-durable-handoff-checkpoint.md",
@@ -80,8 +82,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/verify-r4-static-contracts.mjs",
       "readbackVerified": true,
-      "gitBlobSha": "ac4064fc5f1e3ce456bf3870522d8af93c477ddf",
-      "commitSha": "61b7f894fa8111b724bc46cc843569e86d8a8135"
+      "gitBlobSha": "effb67b87649d6e600ace8d17ae485ce136b71e8",
+      "commitSha": "c94f841c670018452f9eb3b9d7ac8b73bea7c534",
+      "previousBlobSha": "ac4064fc5f1e3ce456bf3870522d8af93c477ddf",
+      "previousCommitSha": "61b7f894fa8111b724bc46cc843569e86d8a8135"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
@@ -110,8 +114,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/verify-r5-synthetic-fixture.mjs",
       "readbackVerified": true,
-      "gitBlobSha": "077dddd3a5b8108dea1d0e8734e6f6949a230b49",
-      "commitSha": "6c82c606db3df76ccd894b66e50e2224928aa388"
+      "gitBlobSha": "42faef9c977e903f3e65543db7ecfdbb014a6157",
+      "commitSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b",
+      "previousBlobSha": "077dddd3a5b8108dea1d0e8734e6f6949a230b49",
+      "previousCommitSha": "6c82c606db3df76ccd894b66e50e2224928aa388"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
@@ -127,9 +133,11 @@
     },
     {
       "path": "docs/operations/private-albums-r5-guided/verify-0009-favorites-isolation.py",
-      "gitBlobSha": "a58a7061ffaa1695635a1ce207210a83f5b5a65c",
-      "commitSha": "212eacf8e4e46910160b9936c1d50b492a58bbc8",
-      "readbackVerified": true
+      "gitBlobSha": "9e201fac90c25db30a597016c05f5ac1672e7b19",
+      "commitSha": "a68a29902e3037affcaa8690cbc26a90dd5b3716",
+      "readbackVerified": true,
+      "previousBlobSha": "a58a7061ffaa1695635a1ce207210a83f5b5a65c",
+      "previousCommitSha": "212eacf8e4e46910160b9936c1d50b492a58bbc8"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md",
@@ -151,15 +159,19 @@
     },
     {
       "path": "docs/operations/private-albums-r5-guided/verify-fk-reference-model.py",
-      "gitBlobSha": "d4e60b179f35e96cbdf0fed7f4dc3ee40ea06ea7",
-      "commitSha": "7320e25204c54a084d28af2e38be4d1ee53a102b",
-      "readbackVerified": true
+      "gitBlobSha": "fcb5be964f2feb43fbfac77a5febff52092543ba",
+      "commitSha": "c3e967d96c9bf19bfeca8763cd9e236ee2542ed8",
+      "readbackVerified": true,
+      "previousBlobSha": "d4e60b179f35e96cbdf0fed7f4dc3ee40ea06ea7",
+      "previousCommitSha": "7320e25204c54a084d28af2e38be4d1ee53a102b"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/verify-0009-lifecycle.py",
-      "gitBlobSha": "395447f49332e79bdcfc7bd65540e3e289fff1a3",
-      "commitSha": "a2572135344a7390a2471e5515f3ffe0fd607616",
-      "readbackVerified": true
+      "gitBlobSha": "2ba87e9c154357b2ae8e6a5d53b57d9f3747ceaa",
+      "commitSha": "a868f17a962371f61e08fe3e9f90fdba649b4f43",
+      "readbackVerified": true,
+      "previousBlobSha": "395447f49332e79bdcfc7bd65540e3e289fff1a3",
+      "previousCommitSha": "a2572135344a7390a2471e5515f3ffe0fd607616"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
@@ -181,9 +193,11 @@
     },
     {
       "path": "docs/operations/private-albums-r5-guided/verify-publish-transaction-contract.py",
-      "gitBlobSha": "1f5f604f22339e0ef4fb3e2f4bfa861c749fd4cf",
-      "commitSha": "56ca29b4ca188d5419c2fa4d215e34a757ca5439",
-      "readbackVerified": true
+      "gitBlobSha": "003efce72696f76798edd6fb64e091c19622abf3",
+      "commitSha": "bc3cc06cb8a77f6469eb89487938c6a31f67f181",
+      "readbackVerified": true,
+      "previousBlobSha": "1f5f604f22339e0ef4fb3e2f4bfa861c749fd4cf",
+      "previousCommitSha": "56ca29b4ca188d5419c2fa4d215e34a757ca5439"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
@@ -213,6 +227,12 @@
       "path": "docs/operations/private-albums-r5-guided/20-failpoint-saga-durable-checkpoint-20261029.md",
       "gitBlobSha": "6b607e5db524af5a94ed37bfedc4da3a1a91ef96",
       "commitSha": "0a6a694369121da9d398079b94c569fce9d68d87",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
+      "gitBlobSha": "27357b130d9108c06c696629d54b4391f29061da",
+      "commitSha": "dcb9e706b74562783cee94db7fba28778a617cc5",
       "readbackVerified": true
     }
   ],
@@ -277,68 +297,86 @@
       "testCommands": [
         {
           "command": "node --version",
-          "result": "NOT_RUN",
-          "exitCode": null,
+          "result": "OBSERVED_NODE_24_19_0",
+          "exitCode": 0,
           "assertions": null,
           "testedSha": null
         },
         {
-          "command": "npm ci",
-          "result": "NOT_RUN",
-          "exitCode": null,
+          "command": "npm ci --no-audit --no-fund",
+          "result": "COMPLETED_540_PACKAGES",
+          "exitCode": 0,
           "assertions": null,
           "testedSha": null
         },
         {
           "command": "npm run typecheck",
-          "result": "NOT_RUN",
-          "exitCode": null,
+          "result": "PASS_EXISTING_R4_BASELINE",
+          "exitCode": 0,
           "assertions": null,
-          "testedSha": null
+          "testedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b"
         },
         {
           "command": "npm run lint",
-          "result": "NOT_RUN",
-          "exitCode": null,
+          "result": "PASS_EXISTING_R4_BASELINE",
+          "exitCode": 0,
           "assertions": null,
-          "testedSha": null
+          "testedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b"
         },
         {
-          "command": "npm test",
-          "result": "NOT_RUN",
-          "exitCode": null,
-          "assertions": null,
-          "testedSha": null
+          "command": "npm run test",
+          "result": "PASS_EXISTING_R4_BASELINE",
+          "exitCode": 0,
+          "assertions": 223,
+          "testedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b"
         },
         {
           "command": "npm run build",
-          "result": "NOT_RUN",
-          "exitCode": null,
+          "result": "PASS_EXISTING_R4_BASELINE",
+          "exitCode": 0,
           "assertions": null,
-          "testedSha": null
+          "testedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b"
         },
         {
           "command": "npm run test:e2e",
-          "result": "NOT_RUN",
-          "exitCode": null,
+          "result": "FAILED_BUNDLED_CHROMIUM_UNAVAILABLE",
+          "exitCode": 1,
           "assertions": null,
-          "testedSha": null
+          "testedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b"
+        },
+        {
+          "command": "CHROMIUM_EXECUTABLE=<installed Chrome> PUNCTUM_E2E_OUTPUT=<external logs> npm run test:e2e",
+          "result": "PASS_LOCAL_EXISTING_R4_BASELINE",
+          "exitCode": 0,
+          "assertions": 14,
+          "testedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b"
         }
       ],
       "artifacts": [
         "docs/operations/private-albums-r5-guided/00-preparation-baseline.md",
         "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
-        "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md"
+        "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
-      "actualTestEvidence": [],
+      "actualTestEvidence": [
+        {
+          "kind": "REAL_EXISTING_R4_BASELINE_NOT_R5_FEATURE_ACCEPTANCE",
+          "sourceSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b",
+          "vitestPassed": 223,
+          "vitestFiles": 54,
+          "e2eLocalChecks": 14,
+          "e2eReportSha256": "70A95B77494865B1CB8D6A58E8211548CF6C52658DEE4EEA1A819D41A3AE3713",
+          "artifact": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
+        }
+      ],
       "blockers": [
         "product_implementation_approval_unproven",
         "local_worktree_not_verified"
       ],
       "costStatus": "NOT_MEASURED",
-      "nextAction": "Verificar aprovação formal e abrir terminal local seguro; criar worktree, executar baseline e registrar outputs."
+      "nextAction": "OWNED independent R5 clone and R4 regression baseline confirmed; formal SPEC and plan approval unproven. Create implementation worktree only after approval, fresh ownership/locks/status preflight; PP00 remains BLOCKED_EXTERNAL."
     },
     "PP01": {
       "gate": "PP01",
@@ -817,7 +855,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "NO_GO. Obtain formal human approval linked to exact SPEC and plan Git blobs; obtain owned complete repo checkout, inventory AGENTS, main/PR24/25, locks/processes/status/worktrees, then create independent worktree. Execute Node/Python pinned checkers, npm ci/typecheck/lint/Vitest/Playwright/build with logs SHA; after PP00, RED tests on 0010 D1 local+R2 synthetic for nine failpoints, replay, CAS zero rows, orphan two-scan, expiry, confirmed selection, pixel watermark, verified admin identity and costs, continue Tasks 00-12 with independent reviews and no production actions.",
+  "nextAction": "NO_GO. Formal approval of exact SPEC+plan blobs first; then fresh owner/process/lock/status check and new isolated implementation worktree. R5 Tasks 00-12 RED→GREEN→REFACTOR→REVIEW→COMMIT→CHECKPOINT. New RED cover eligibility TOCTOU and publication+individual audit transactional atomicity. Reuse existing R4 baseline, no unnecessary reruns.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -889,7 +927,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/20-failpoint-saga-durable-checkpoint-20261029.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -959,8 +997,8 @@
       "r4HistoricalCandidateSha": "1d30b97",
       "r4HistoricRunId": 40779241089
     },
-    "checkpointCommit": "0a6a694369121da9d398079b94c569fce9d68d87",
-    "checkpointBlob": "6b607e5db524af5a94ed37bfedc4da3a1a91ef96",
+    "checkpointCommit": "dcb9e706b74562783cee94db7fba28778a617cc5",
+    "checkpointBlob": "27357b130d9108c06c696629d54b4391f29061da",
     "legacySchemaExactProbe": {
       "sourceHead": "2b08b3458070ea730fafdc4ca7187cf13a07d42a",
       "migrationFile": "migrations/0009_private_client_galleries.sql",
@@ -1205,6 +1243,101 @@
       "windowsUnknownOwnedWindowsUntouched": true,
       "newWorktreeCreated": false,
       "vitestPlaywrightBuildStatus": "NOT_RUN"
+    },
+    "ownedCloneBaseline20261029": {
+      "originalR4": {
+        "head": "b417405c0406daf286b192a8151cf45c4a50f89c",
+        "branch": "codex/punctum-r4-cpu-20261028",
+        "statusClean": true,
+        "gitLocks": 0,
+        "unownedProcessesUntouched": true
+      },
+      "r5Clone": {
+        "relativePath": "Documents/ChatGPT/.punctum-r5-isolated-20261029-30149863",
+        "initialHead": "30a22fdf314e1703a7d9808c10d35a1a34718c4a",
+        "created": true,
+        "cloneExit": 0,
+        "separateFromR4": true,
+        "statusClean": true,
+        "gitLocks": 0,
+        "foundAGENTS": 0
+      },
+      "environment": {
+        "node": "24.19.0",
+        "npm": "11.7.0",
+        "python": "3.14.3",
+        "sqlite": "3.50.4"
+      },
+      "existingAppTestedSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b",
+      "notFunctionalR5Tests": true,
+      "npmCi": {
+        "addedPackages": 540,
+        "sha256": "8B1C3921C52F6B555B6F0DC0D694D72F8E7282C984D24A752D9CC7650A790933",
+        "warning": "allow-scripts for workerd/esbuild"
+      },
+      "typecheck": {
+        "exit": 0,
+        "logSha256": "C5D4F3CE3055896969A9EDC8CBEB7CABDBA644CBD9CC0AE4FA001247BBA3FCFE"
+      },
+      "lint": {
+        "exit": 0,
+        "logSha256": "5CCEE86BF1831089DC7734166FC288FD4916920134B002C2B22C8427E7BB5962"
+      },
+      "vitest": {
+        "exit": 0,
+        "passed": 223,
+        "total": 223,
+        "filesPassed": 54,
+        "logSha256": "8F2389E162BBFD41CD5C0150E3AF9A033AA726D5C8BAF68736EA00A6450A9A5B"
+      },
+      "build": {
+        "exit": 0,
+        "logSha256": "C1C7E0696D1B2DC027807A3829349AEA547353F7052CB158E767F6B0BA57884A"
+      },
+      "e2e": {
+        "initialStatus": "FAILED_MISSING_BUNDLED_CHROMIUM",
+        "browser": "Chrome 155.0.8059.84 preinstalled",
+        "retryStatus": "PASS_LOCAL",
+        "retryExit": 0,
+        "checks": 14,
+        "sourceSha": "0b6a07f93820033b9aee2e90bd167c8dfb3fea3b",
+        "realCloudflareTouched": false,
+        "realProductionTouched": false,
+        "reportSha256": "70A95B77494865B1CB8D6A58E8211548CF6C52658DEE4EEA1A819D41A3AE3713",
+        "logSha256": "7038610DCD73806CCB930221FC3A842DA497A310D09A401F7F485F8C1DE47C8A"
+      },
+      "checkerCorrections": {
+        "sourceCheckerBefore": "17/18 exit1 CRLF",
+        "after": "17/17 negative control true",
+        "fixtureBefore": "16/17 exit1 invalid UUID regex",
+        "pythonBefore": "4/5 failed due Windows CRLF pin",
+        "pythonAfter": "5/5 exit0",
+        "pythonCounts": [
+          6,
+          10,
+          19,
+          62,
+          161
+        ],
+        "casRounds": 30,
+        "pythonAfterHead": "bc3cc06cb8a77f6469eb89487938c6a31f67f181"
+      },
+      "workerSqlSequencing": {
+        "kind": "exact source SQL in isolated SQLite only",
+        "matched": 14,
+        "total": 14,
+        "exit": 0,
+        "migrationGitBlob": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
+        "sourceWorkerAdminBlob": "56e78e4b055ee8f66b7f642bf871ef5ad0b71dd4",
+        "sourceAuditBlob": "d469e32627eab8764c0438395b646c2e3bd491c9",
+        "coverRaceObserved": true,
+        "publishWithoutAuditOnInjectedFailureObserved": true,
+        "workerRuntimeTested": false,
+        "d1RuntimeTested": false,
+        "scriptSha256": "cb9588d35e852c4e209207cab2605a12bc8c31f6ed034167478af7c7746be6d8",
+        "logSha256": "a2d5515881f94cbfaa7b9660f733add54c3329a27e253cfd9b94afa5921a0b8f"
+      },
+      "report": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
     }
   }
 }
