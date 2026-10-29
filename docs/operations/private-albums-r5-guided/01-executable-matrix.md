@@ -53,6 +53,22 @@ Após a contraprova `0009` de 6/6, ensaios **novos e executados** em SQLite mem�
 
 São regras de aceite propostas **compatíveis com a SPEC** sujeitas à revisão humana, não implementação ou promoção de gate. `D1.batch` reverte quando alguma instrução **falha**, e não necessariamente quando `UPDATE` afeta zero linhas: https://developers.cloudflare.com/d1/worker-api/d1-database/.
 
+## Novo RED de recuperação por etapa de publicação — PP01/04/07/09 (ainda NOT_RUN)
+
+Novo ensaio **somente modelo sintético**, relatório 19-failpoint-crash-recovery-and-d1-free-budget-20261029.md e verificador verify-synthetic-failpoint-saga.py: **161/161 checks esperados, exit 0, nove failpoints**, reabertura SQLite file-backed em cada um e idade de órfão com duas verificações; nenhum Worker/D1/R2 realmente executado. Não substituir os RED existentes nem promover gates.
+
+| Task/gate | Cenário novo futuro em Worker+D1 local+R2 autorizado | Aceite verificável |
+|---|---|---|
+| 01/04 PP01/PP04 | Interrupção antes/depois do PUT, HEAD, INSERT revision, CAS, receipt, outbox, COMMIT e HTTP response | Antes do COMMIT, ponteiro/snapshot antigos e outbox ausente; depois, único snapshot e recibo duráveis; retry com chave+hash+principal idênticos sem duplicar; chave igual com payload diferente responde 409 |
+| 01/04 PP01/PP04 | CAS stale 0 rows em D1.batch, incluindo crash após UPDATE | Falhar batch com rollback real e 0 receipt/outbox; 0 rows sozinho **não** é exceção; histórico anterior retido |
+| 02/04 PP02/PP04 | R2 conditional PUT (sem overwrite), objeto ausente/corrompido, derivada não marcada e candidate não aceita | Validar SHA/bytes/pixels watermark realmente rasterizada; fail-closed GET/HEAD/Range; nunca fallback para original |
+| 03/04 PP03/PP04 | Cliente B, prova não confirmada, candidata rejeitada, URL antiga, expiração na fronteira exata | Zero bytes/opaco para recurso alheio, expirado e versão revogada; confirmação imutável; versão nova vinculada à prova |
+| 07/09/10 PP06/PP07 | Provider de email falha depois de commit, reinício do Worker, outbox retry limitado e auth admin compartilhada | Publicação permanece, aviso pending/failed; sent só com comprovante externo; autoria editorial individual comprovada sem e-mail autodeclarado |
+| 04/09/11 PP04/PP07/PP08 | GC lê objeto órfão 24h depois; uma hora após faz segunda leitura; corrida de upload/snapshot histórico | Nunca excluir sem lease/status de upload, segunda checagem de referências históricas/LGPD e autorização; testar simulação de rollback e de orphan após falha D1; sem auto-delete antes da prova |
+| 00/10/12 PP00/PP07/PP09/PP10 | D1 Free esgota 5 milhões rows read/dia ou 100 mil rows written/dia | Job de outbox e GC entra em backoff e mantém portal fail-closed, sem loop ilimitado; métricas reais/estudo de custo, nunca BLOCKED_COST inferido |
+
+As quotas D1 Free são **limites documentados, não medições da conta**. Enforcement em 01/09/2026, reset diário 00:00 UTC: https://developers.cloudflare.com/d1/platform/pricing/ e https://developers.cloudflare.com/changelog/post/2026-09-01-d1-free-tier-limit-enforcement/. Testes físicos UX de Maria/cliente, 25/30, ajustes 4/5, 320–1440px, teclado, 200% zoom e recuperação de erro continuam NOT_RUN e não são cobertos por este modelo.
+
 ## Contratos de dados, API e invariantes
 - IDs canônicos: `proofImageId`, `finalVersionId`, `expectedRevision`, `requestId`, `itemId`; evitar sinônimos. `SelectionMode = exact|max|free`.
 - D1: `client_gallery_workflows`, `client_proof_derivatives`, `client_selection_revisions`, `client_selection_items`, `client_final_asset_versions`, `client_delivery_drafts`, `client_delivery_revisions`, `client_album_requests`, `client_request_items`, `client_request_messages`, `client_workflow_events`, `client_notification_outbox`. Migração prevista `0010_guided_selection_delivery.sql`; NÃO alterar `0009`.
