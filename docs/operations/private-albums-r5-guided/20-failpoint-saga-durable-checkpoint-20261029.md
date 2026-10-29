@@ -1,0 +1,32 @@
+# R5 — checkpoint durável: nove interrupções, recuperação de objeto e D1 Free
+
+**Proveniência:** repo menezesx2k26-byte/lab-punctum-picture, branch agent/punctum-r5-preparation-20261028; checkpoint inicial 30149863e6abc9d724e849faa7ba622f7093761d, confirmado remote same (ahead 0/behind 0). Main aac2d448d9f54e9215c278892ab3a4a7f26237a4; PR #24 draft 50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd; PR #25 draft f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f. Nenhum agente Windows de ownership desconhecido acionado. Nenhum CI na branch de preparação nem AGENTS.md **versionado** (estado local desconhecido). Não alterar R4 ou produto.
+
+## Avanço realmente executado
+
+- No Linux auxiliar separado, Python 3.13.5/SQLite 3.46.1, **161/161 verificações correspondentes, exit 0**, usando só SQLite local e filesystem temporário, 9 pontos de falha, 9 conexões fechadas/reabertas, retries, expiração na fronteira, negação do cliente B, autorização sintética editorial, candidato não aprovado, blob corrompido fail-closed e elegibilidade de órfãos com duas leituras e delay. **Nenhuma chamada D1/R2/Email real**. Não reexecutar sem mudança os resultados antigos (18,17,26,6,10,19,62/30).
+- Script docs/operations/private-albums-r5-guided/verify-synthetic-failpoint-saga.py: Git blob e312284f55b692188c5189a11b032b2498ed49c7; SHA256 d0621214d63e934afe27f629750ce2c41b08ca6340dbdd101dd0ef61ed8cb68c; source remote lida de volta byte a byte conforme Git blob local. Commit final do script 8ad7c106b29a34c7791c9618e952fe40d843c1c1. Log /mnt/data/punctum-r5-sandbox/isolated-faults/failpoint-report.json SHA256 9cd7696c563a92da3b5e5888c6e3152ea3e23d289834375df5bece3dac2ab916. Executado: python /mnt/data/punctum-r5-sandbox/isolated-faults/verify-failpoints.py > /mnt/data/punctum-r5-sandbox/isolated-faults/failpoint-report.json; exit 0. O script versionado é byte-identical à cópia executada.
+- Relatório técnico docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md: Git blob eb3e919338015668651a9f1e806e5db7576edd30, commit 6aaf5f51d3c3a381c15d4c1d5221a000a2bbd5ff; contém passos, riscos, falhas, fontes oficiais, limites, critérios RED e origens R4. Matriz docs/operations/private-albums-r5-guided/01-executable-matrix.md: blob ec8f07b3bb606fceeb1d39a53446df552f27c5f1, commit a37f8945d2b4664353ca06d88046e4764f118869; acrescenta somente RED de recuperação.
+- Fecho operacional: não há checkout completo Punctum em /mnt/data (sem .git ou package.json); GitHub connector fornece arquivos texto, não arquivo binário de checkout. A janela Windows existente não tem ownership comprovado e permanece intocada; sem reattempt de DNS/launch repetidamente falho. Não criamos worktree, instalamos pacotes nem alteramos credenciais. Vitest, Playwright, npm ci/build, D1 local/Workers/R2, imagens reais, A11y/Android, email e revisores externos estão NOT_RUN.
+
+## Descobertas relevantes, não homologação
+
+1. **Sagas D1/R2:** antes do COMMIT, a publicação nova deve permanecer invisível, mas pode existir objeto R2 staged. Depois do COMMIT, ponteiro/receipt/outbox persistem e reexecução idempotente retorna o receipt existente. O filesystem simulado e o SQLite comprovam o comportamento do **modelo**, não a atomicidade entre os serviços reais.
+2. **Pós-commit email:** falha do provedor não desfaz snapshot. Outbox pending/failed, somente marcar sent após recibo de transporte; retry de baixo custo e sem duplicação.
+3. **Acesso à mídia:** cliente B, candidata rejeitada, seleção não confirmada e solicitação depois de accessExpiresAt exigem zero bytes e resposta opaca. Corrupt/missing final deve falhar fechado, nunca exibir original cru como fallback. A watermark rasterizada e links HEAD/Range ainda precisam de teste real.
+4. **GC:** elegibilidade só após período de segurança e segunda verificação; continuar sem delete automático, conferir leases, objetos staged, references em **todo** histórico e política LGPD. Dados reais e custos R2 não medidos.
+5. **Auth editorial:** string com principal sintético individual é apenas fixture; o código R4 de senha compartilhada não prova identidade de Maria, requer Cloudflare Access subject/issuer/audience verificados ou solução individual formalmente aprovada.
+6. **Novo risco financeiro vigente:** Cloudflare D1 Free possui 5 milhões rows read/dia e 100 mil rows written/dia; após 01/09/2026 enforcement acima do limite bloqueia consultas até 00:00 UTC. Precisa de budget de backoff para outbox/GC. Fonte: https://developers.cloudflare.com/d1/platform/pricing/ e https://developers.cloudflare.com/changelog/post/2026-09-01-d1-free-tier-limit-enforcement/. **Nada medido na conta Punctum**; não atribuir custo zero ou BLOCKED_COST sem prova.
+
+## Gates e proibição vigente
+
+PP00 BLOCKED_EXTERNAL; PP01–PP08 NOT_RUN; PP09 BLOCKED_EXTERNAL; PP10 BLOCKED_EXTERNAL. R4: G05/G17 FAIL, G15/G19/G20/G22/G23 BLOCKED_EXTERNAL. readiness NO_GO, testedSha null, implementationAllowed false, worktree.created false, nenhum acceptanceCommit. Sem merge, deploy, migration prod, PR de implementação, contratação, billing, ativação ou alteração de R4.
+
+## Condições precisas da próxima execução
+
+1. Comprovar aprovação humana formal da SPEC blob db25502f25eed89131bac16e3a3172248f716ec1 e plano blob 41e06e5fdd353eaff9a5f43357fbcbce741b2770, com responsável/data/link.
+2. Obter checkout completo confiável com owner; inventariar antes de criar worktree: AGENTS root/parent/subpastas, HEAD/current main e PR24/25, diff/status, branch, git worktree --porcelain, processos e locks. Nunca reutilizar sessão Windows alheia.
+3. Na worktree R5 isolada, executar baseline e verificadores (Node, Python, npm ci, lint, typecheck, Vitest, Playwright, build, CI real por SHA), armazenar logs, exit code, testedSha. Validar 0010 apenas em D1 **local** com duas contas sintéticas, CAS stale que aborta batch, idempotência payload/actor, snapshots históricos, audit individual, R2 immutable/Images watermark/expiração/bytes, failpoints reais e rollback.
+4. Continuar Tasks 00–12 conforme matriz e SPEC: RED → GREEN → REFACTOR → REVIEW → COMMIT → CHECKPOINT, três revisões independentes (segurança, frontend/a11y e custo), Maria/cliente QA física e DoD por gate. PR draft de implementação somente depois de aprovação e baseline seguro, NUNCA GO_PRODUCTION automático.
+
+**Veredito NO_GO.** Confirmar este arquivo, ledger e HEAD remoto final por leitura de volta antes de retomar.
