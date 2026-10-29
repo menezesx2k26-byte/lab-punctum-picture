@@ -7,10 +7,11 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 P=Path(sys.argv[1]) if len(sys.argv)>1 else Path(__file__).resolve().parent
 PINS={"0009.sql":"0636a83626db74d30a0fbefa15086c6a251401ca4dc6283e426f7d30265a65e8","relational-fk-reference-model.sql":"87634c1efeeb390947cee2a209d519d2c63d39366cd9739ecb660785c351aea8","reference-publish-guards.sql":"9699dfa86bcfb694af33f631447fb6070b7343b1ee4aa7dc654a8a949874bd63"}
+INPUTS={name:(P/name if (P/name).is_file() else Path(__file__).resolve().parents[3]/'migrations/0009_private_client_galleries.sql') if name=='0009.sql' else P/name for name in PINS}
 for name,pin in PINS.items():
-    actual=hashlib.sha256((P/name).read_bytes()).hexdigest()
+    actual=hashlib.sha256(INPUTS[name].read_bytes()).hexdigest()
     if actual!=pin: raise RuntimeError(f"Source drift {name}: {actual} != {pin}")
-SCHEMA='\n'.join((P/name).read_text() for name in PINS)
+SCHEMA='\n'.join(INPUTS[name].read_text() for name in PINS)
 checks=[]
 def mark(name,observed,expected,notes=""):
     checks.append(dict(id=name,observed=observed,expected=expected,matched=observed==expected,notes=notes))
