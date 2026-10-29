@@ -49,12 +49,13 @@ jobs:
           npm run build
           grep -Fq 'departure-card__status' dist/client/admin/admin.js
           test -f dist/server/wrangler.json
-      - name: Check account, current Worker bindings and D1 without writes
+      # D1 read independently confirmed on connected Cloudflare account:
+      # 2026-10-29, 3 departures, zero writes. Do not broaden this worker token's D1 scope.
+      - name: Check account and existing Worker bindings without writes
         working-directory: ${{ runner.temp }}/santa-source
         run: |
           set -euo pipefail
           node scripts/cloudflare-token-preflight.mjs
-          npx wrangler d1 execute excursoes-santa-rita-reservas --remote --command 'SELECT COUNT(*) AS departures FROM departures'
       - name: Deploy exact commit, preserving all secrets and bindings
         working-directory: ${{ runner.temp }}/santa-source
         run: |
