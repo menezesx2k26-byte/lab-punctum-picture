@@ -15,8 +15,8 @@ def verify_blob(raw):
     return hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
 
 def run(legacy=LEGACY, model=MODEL):
-    ddl = pathlib.Path(legacy).read_bytes()
-    ref = pathlib.Path(model).read_bytes()
+    ddl = pathlib.Path(legacy).read_bytes().replace(b'\r\n', b'\n')
+    ref = pathlib.Path(model).read_bytes().replace(b'\r\n', b'\n')
     assert verify_blob(ddl) == PIN_LEGACY, '0009 blob drift'
     assert hashlib.sha256(ref).hexdigest() == PIN_MODEL_SHA256, 'model drift'
     def fresh():
