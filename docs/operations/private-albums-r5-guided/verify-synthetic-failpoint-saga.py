@@ -102,8 +102,12 @@ class Environment:
         return {'current':g[0],'revision':g[1],'published':self.db.execute("SELECT count(*) FROM published WHERE gallery='GA'").fetchone()[0], 'receipts':self.db.execute('SELECT count(*) FROM receipt').fetchone()[0], 'outbox':self.db.execute('SELECT count(*) FROM outbox').fetchone()[0], 'audit':self.db.execute('SELECT count(*) FROM audit').fetchone()[0]}
     def candidates_for_reap(self,now:int,births:dict[str,int],grace=86400):
         referenced={r[0] for r in self.db.execute("SELECT object_key FROM published").fetchall()}
-        # Orphan object not referenced by ANY historical revision must pass grace and two scans.
-        return sorted(f.name for f in self.objects.iterdir() if f.name not in referenced and now-births.get(f.name,now)<=(10**9) and now-births.get(f.name,now)>=grace)
+        # Eligibility is read-only: never delete on a single scan. Check all historical revisions.
+        return sorted(f.name for f in self.objects.iterdir() if f.name not in referenced and now-births.get(f.name,now)>=grace)
+    def candidates_confirmed_second_scan(self,now:int,births:dict[str,int],first_seen_time:int,first_scan:list[str],delay=3600):
+        # Model-only second scan after minimum dwell; production needs a lease/in-flight upload check.
+        if now-first_seen_time<delay:return []
+        return sorted(set(first_scan) & set(self.candidates_for_reap(now,births)))
     @classmethod
     def reopen(cls, root:Path):
         # Simulated restart: close connection, reopen the file-backed database and object directory.
@@ -178,6 +182,10 @@ with tempfile.TemporaryDirectory(prefix='punctum-r5-failpoints-') as scratch:
     births={staged:0,sha(OLD):0,sha(PAYLOAD):0}
     mark('orphan_not_reaped_before_grace',gc.candidates_for_reap(86399,births),[])
     mark('orphan_eligible_after_grace',gc.candidates_for_reap(86400,births),[staged])
+    first_scan=gc.candidates_for_reap(86400,births)
+    mark('orphan_not_confirmed_in_same_scan',gc.candidates_confirmed_second_scan(86400,births,86400,first_scan),[])
+    mark('orphan_not_confirmed_before_second_scan_delay',gc.candidates_confirmed_second_scan(89999,births,86400,first_scan),[])
+    mark('orphan_confirmed_after_second_scan_delay',gc.candidates_confirmed_second_scan(90000,births,86400,first_scan),[staged])
     gc.publish(PRINCIPAL,'key-1')
     mark('historical_object_excluded_from_gc',sha(OLD) in gc.candidates_for_reap(172800,births),False)
     mark('published_object_excluded_from_gc',sha(PAYLOAD) in gc.candidates_for_reap(172800,births),False)
