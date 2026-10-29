@@ -112,6 +112,20 @@ mark('OBJ03_R2_first_SQL_later_failure_creates_orphan',('private:ORPHAN' in obje
 mark('OBJ04_no_automatic_delete_after_failed_commit',('private:ORPHAN' in objects),True)
 d.close()
 
+# Deliberate negative controls: protecting only the current pointer does NOT protect history.
+d=db_new()
+d.execute("INSERT INTO r5_ref_delivery_revisions VALUES('DX','GA','RA',2)")
+d.execute("INSERT INTO r5_ref_delivery_items VALUES('GA','DX','RA','IX','F2')")
+d.execute("UPDATE r5_ref_workflows SET published_revision_id='DX',revision=revision+1 WHERE gallery_id='GA' AND revision=0")
+mark('GAP01_old_snapshot_item_can_be_deleted_after_new_publish',d.execute("DELETE FROM r5_ref_delivery_items WHERE gallery_id='GA' AND delivery_revision_id='DA'").rowcount,1)
+mark('GAP02_old_snapshot_metadata_can_mutate_after_new_publish',d.execute("UPDATE r5_ref_delivery_revisions SET revision_no=3 WHERE id='DA'").rowcount,1)
+cols=[x[1] for x in d.execute("PRAGMA table_info(r5_guard_publish_receipt)")]
+mark('GAP03_reference_receipt_has_no_payload_fingerprint','payload_sha256' in cols,False)
+d.execute("INSERT INTO r5_guard_outbox VALUES('GA','DX','event-unverified','pending')")
+mark('GAP04_outbox_status_not_bound_to_transport_proof',d.execute("UPDATE r5_guard_outbox SET status='sent' WHERE event_id='event-unverified'").rowcount,1)
+mark('GAP05_history_did_not_retain_prior_delivery_item',d.execute("SELECT count(*) FROM r5_ref_delivery_items WHERE delivery_revision_id='DA'").fetchone()[0],0)
+d.close()
+
 # Two independent SQLite file connections actually race on the same CAS, unlike the in-memory cases.
 race=[]
 with tempfile.TemporaryDirectory(prefix='r5_sqlite_cas_') as tmp:
