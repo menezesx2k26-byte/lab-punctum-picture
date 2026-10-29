@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "86bbc395f57c1bceb65a34fb5ed5d6b157a08b1b",
+  "preparationBranchLastObservedBeforeThisCommit": "81d45b0da4e7ea855d208c50782ea6dafe135942",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -36,10 +36,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
       "readbackVerified": true,
-      "gitBlobSha": "539fe1fdb0a54529815c2332c4195571190d0c40",
-      "commitSha": "e9eff427673371f4a5ebe3b758a31d0b96ec5c0f",
-      "previousBlobSha": "eac022e480e36873f5c7744c11df169b533546a0",
-      "previousCommitSha": "a3f45ba56c710e073b74e2c23b89f5e80c1e5f16"
+      "gitBlobSha": "b5e2cc20fb88ee0a691fa90a4f9975aed7be744e",
+      "commitSha": "c17453b291c8b8909169093c3d5d970799f10d60",
+      "previousBlobSha": "539fe1fdb0a54529815c2332c4195571190d0c40",
+      "previousCommitSha": "e9eff427673371f4a5ebe3b758a31d0b96ec5c0f"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
@@ -171,6 +171,30 @@
       "path": "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
       "gitBlobSha": "58ea080cf4f1a78a15599bb11d8dbd2966b2fc42",
       "commitSha": "86bbc395f57c1bceb65a34fb5ed5d6b157a08b1b",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/reference-publish-guards.sql",
+      "gitBlobSha": "51e5cc0fa8e35bf836fe5623fdb8f73f45187d42",
+      "commitSha": "8fd052f8a83b495f0f5701c9b4a26c6311a9c791",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-publish-transaction-contract.py",
+      "gitBlobSha": "1f5f604f22339e0ef4fb3e2f4bfa861c749fd4cf",
+      "commitSha": "56ca29b4ca188d5419c2fa4d215e34a757ca5439",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+      "gitBlobSha": "00b46527781887239da5f3c0d14127c89e8b1cd3",
+      "commitSha": "9d9a8d5c04989b26f61e0093c615a340f656c07b",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/18-cas-idempotency-and-history-checkpoint-20261028.md",
+      "gitBlobSha": "7ad7aac2be689287df8139de0dab98b43037ccae",
+      "commitSha": "81d45b0da4e7ea855d208c50782ea6dafe135942",
       "readbackVerified": true
     }
   ],
@@ -305,7 +329,7 @@
       "dependencies": [
         "PP00"
       ],
-      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão; conforme contraprova 0009: vínculos client↔gallery, gallery↔image/final/revision e cover↔image devem rejeitar cross-tenant em 0010+D1 local, com rollback e verificação de FK (NÃO executado).; ensaio 0009 de lifecycle 10/10 expôs orphan hard/soft cover e commit de vínculo cruzado; modelo docs FK 19/19 indica necessidade de RESTRICT, mesmo-album, confirmação state=confirmed e rejeição de UPDATE de final publicado; validar 0010+Cloudflare D1 local apenas pós-aprovação (NOT_RUN).",
+      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão; conforme contraprova 0009: vínculos client↔gallery, gallery↔image/final/revision e cover↔image devem rejeitar cross-tenant em 0010+D1 local, com rollback e verificação de FK (NÃO executado).; ensaio 0009 de lifecycle 10/10 expôs orphan hard/soft cover e commit de vínculo cruzado; modelo docs FK 19/19 indica necessidade de RESTRICT, mesmo-album, confirmação state=confirmed e rejeição de UPDATE de final publicado; validar 0010+Cloudflare D1 local apenas pós-aprovação (NOT_RUN).; RED futuro: CAS stale rowcount=0 DEVE abortar receipt+outbox atomicamente em D1; teste de batch com erro SQL; same-key payload diferente 409; histórico de snapshots retenção append-only (modelo SQLite 62/62 não é teste D1)",
       "testCommands": [
         {
           "command": "npm test -- tests/unit/client-workflow.spec.ts tests/integration/client-workflow.spec.ts",
@@ -327,7 +351,8 @@
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md",
         "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
-        "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md"
+        "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -395,7 +420,8 @@
         "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json"
+        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -415,7 +441,7 @@
         "PP02",
         "PP03"
       ],
-      "acceptance": "Finais imutáveis, 25/30 parcial, snapshot atômico e última revisão cliente; provar no D1 local que finalVersionId de seleção aberta é inelegível, object key/hash de final publicado são imutáveis mesmo por SQL direto e ponteiro público só muda por CAS/idempotência; FKs sozinhas não cobrem esses invariantes.",
+      "acceptance": "Finais imutáveis, 25/30 parcial, snapshot atômico e última revisão cliente; provar no D1 local que finalVersionId de seleção aberta é inelegível, object key/hash de final publicado são imutáveis mesmo por SQL direto e ponteiro público só muda por CAS/idempotência; FKs sozinhas não cobrem esses invariantes.; RED futuro: snapshot antigo continua imutável após troca de published_revision_id; impedir INSERT/UPDATE/DELETE em todo histórico; CAS + receipt + outbox atomicamente, R2 verificado antes commit; retry idempotente sem falsa publicação",
       "testCommands": [
         {
           "command": "npm test -- tests/integration/client-workflow-admin.spec.ts tests/integration/client-workflow-media.spec.ts",
@@ -431,7 +457,8 @@
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
         "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
         "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
-        "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md"
+        "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -530,7 +557,7 @@
         "PP06",
         "free_email_transport"
       ],
-      "acceptance": "Mídia expirada GET/HEAD zero bytes, renovação Maria, outbox e envio REAL",
+      "acceptance": "Mídia expirada GET/HEAD zero bytes, renovação Maria, outbox e envio REAL; outbox status sent exige evidência real do transporte autorizado, não apenas UPDATE SQL; falhas pós-commit preservam entrega e status pending/failed auditável",
       "testCommands": [
         {
           "command": "npm test -- tests/unit/client-notification.spec.ts",
@@ -551,7 +578,8 @@
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json"
+        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -594,7 +622,8 @@
         "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
         "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json"
+        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -762,7 +791,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "Do not implement without approval. On new owned executable checkout: inventory local instructions/ownership/processes/locks/worktrees/changes and existing R4, then run pinned Python SQL probes, R5 18 predicates/fixture, npm ci/typecheck/lint/Vitest/Playwright/build, capture SHA/logs. After approval of SPEC+plan exact Git blobs and PP00, implement 0010 with RED tests for cover deletion, unconfirmed selections, immutable final key and composite tenant/revision FKs in D1 local; review independent security/a11y/costs. Preserve R4 gates and NO_GO.",
+  "nextAction": "NO_GO. Only after formal approvals of exact SPEC/plan blobs, obtain trusted owned checkout, inventory AGENTS/HEAD/main/PRs/status/locks/processes/worktrees before new R5 worktree, execute baseline Vitest/Playwright/build and pinned verifiers. Then RED 0010+D1 local for stale CAS aborting batch outbox/receipt, historical append-only immutable snapshots after new publication, idempotency payload fingerprint conflict, verified R2 objects/orphan reconciliation, role/owner/expiry/watermark and real Maria/client UX. Review security/a11y/cost independently; no implementation PR/deploy/billing/production before authorization and gates.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -834,7 +863,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/18-cas-idempotency-and-history-checkpoint-20261028.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -904,8 +933,8 @@
       "r4HistoricalCandidateSha": "1d30b97",
       "r4HistoricRunId": 40779241089
     },
-    "checkpointCommit": "4f77a53fc8218ab78199b724c740f99db9336d5b",
-    "checkpointBlob": "b8215867ee071dbbf0efeedd7356d8bd0b2ab878",
+    "checkpointCommit": "81d45b0da4e7ea855d208c50782ea6dafe135942",
+    "checkpointBlob": "7ad7aac2be689287df8139de0dab98b43037ccae",
     "legacySchemaExactProbe": {
       "sourceHead": "2b08b3458070ea730fafdc4ca7187cf13a07d42a",
       "migrationFile": "migrations/0009_private_client_galleries.sql",
@@ -1028,6 +1057,64 @@
       "batch": "https://developers.cloudflare.com/d1/worker-api/d1-database/",
       "migration": "https://developers.cloudflare.com/d1/reference/migrations/",
       "conclusion": "D1 FK enforced by default, DB.batch atomic on failed statement per docs, cannot infer Worker manual BEGIN semantics from auxiliary SQLite"
+    },
+    "newCASAndHistoryReference": {
+      "sourceHead": "f3c17efcdd9636bd5d2502e711d375980c1a6927",
+      "schemaSourceGitBlobSha": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
+      "referenceModelGitBlobSha": "dd985e33c74f75a483014385b45b918e5652c6cb",
+      "guardSqlPath": "docs/operations/private-albums-r5-guided/reference-publish-guards.sql",
+      "guardSqlGitBlobSha": "51e5cc0fa8e35bf836fe5623fdb8f73f45187d42",
+      "guardSqlSha256": "9699dfa86bcfb694af33f631447fb6070b7343b1ee4aa7dc654a8a949874bd63",
+      "runnerPath": "docs/operations/private-albums-r5-guided/verify-publish-transaction-contract.py",
+      "runnerGitBlobSha": "1f5f604f22339e0ef4fb3e2f4bfa861c749fd4cf",
+      "runnerSha256": "d7d5049df38f48c7c0c04d4c35b21e942703baebd737e0aae61755ce0ad767c8",
+      "testCommand": "python /mnt/data/punctum-r5-sandbox/verify-publish-transaction-contract.py /mnt/data/punctum-r5-sandbox",
+      "exitCode": 0,
+      "matchedAssertions": 62,
+      "totalAssertions": 62,
+      "raceRounds": 30,
+      "raceConnections": 2,
+      "raceAllOneWinner": true,
+      "outputSha256": "e716b05535f86075468a9d0195504768594fe33c51dc01555135a50197e8e2bd",
+      "defaultCheckoutShapedInvocation": {
+        "result": "62/62",
+        "exitCode": 0,
+        "logSha256": "e716b05535f86075468a9d0195504768594fe33c51dc01555135a50197e8e2bd",
+        "realPunctumCheckout": false
+      },
+      "intermediateHarnessFailure": {
+        "first": "37/38 exit 1, PK collision in negative case masked FK; corrected before final",
+        "next": "52/52,57/57 then 62/62, all exit 0"
+      },
+      "newCounterexamples": [
+        "Only current published pointer protected => previously published snapshot row and item can be mutated/deleted after pointer rotates",
+        "Idempotency receipt lacking payload fingerprint cannot distinguish changed request with reused key",
+        "Outbox sent status can be set without provider accepted-delivery proof",
+        "CAS zero rows is not SQL exception; subsequent receipt/outbox writes can still commit in a batch/transaction unless explicit abort",
+        "Simulated R2-first upload + failed DB commit creates orphan requiring safe reconciliation"
+      ],
+      "limits": {
+        "cloudflareD1RuntimeTests": 0,
+        "actualR2ReadsWrites": 0,
+        "actualImageWatermark": 0,
+        "workerAuthTests": 0,
+        "frontendBrowserTests": 0,
+        "independentReviews": 0,
+        "costMeasurements": 0
+      },
+      "evidence": "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+      "notAnImplementationAcceptance": true
+    },
+    "isolatedExecutableSourceAcquisition": {
+      "strategy": "pinned exact legacy migration and documentation-only SQL obtained via GitHub connector; recreated minimal sandbox and mock-checkout directory, no Windows processes accessed",
+      "realCheckoutAvailable": false,
+      "gitTreeReconciled": true,
+      "treeEntryCount": 1242,
+      "agentsInRemoteTree": 0,
+      "localAGENTSAndOwnership": "UNKNOWN",
+      "testableWithoutCheckout": "Python stdlib SQLite synthetic reference only",
+      "fullNodeModulesAndAppSourceAvailable": false,
+      "previousDNSFailureNotRetried": true
     }
   }
 }
