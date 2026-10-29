@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "81d45b0da4e7ea855d208c50782ea6dafe135942",
+  "preparationBranchLastObservedBeforeThisCommit": "0a6a694369121da9d398079b94c569fce9d68d87",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -36,10 +36,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
       "readbackVerified": true,
-      "gitBlobSha": "b5e2cc20fb88ee0a691fa90a4f9975aed7be744e",
-      "commitSha": "c17453b291c8b8909169093c3d5d970799f10d60",
-      "previousBlobSha": "539fe1fdb0a54529815c2332c4195571190d0c40",
-      "previousCommitSha": "e9eff427673371f4a5ebe3b758a31d0b96ec5c0f"
+      "gitBlobSha": "ec8f07b3bb606fceeb1d39a53446df552f27c5f1",
+      "commitSha": "a37f8945d2b4664353ca06d88046e4764f118869",
+      "previousBlobSha": "b5e2cc20fb88ee0a691fa90a4f9975aed7be744e",
+      "previousCommitSha": "c17453b291c8b8909169093c3d5d970799f10d60"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
@@ -195,6 +195,24 @@
       "path": "docs/operations/private-albums-r5-guided/18-cas-idempotency-and-history-checkpoint-20261028.md",
       "gitBlobSha": "7ad7aac2be689287df8139de0dab98b43037ccae",
       "commitSha": "81d45b0da4e7ea855d208c50782ea6dafe135942",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-synthetic-failpoint-saga.py",
+      "gitBlobSha": "e312284f55b692188c5189a11b032b2498ed49c7",
+      "commitSha": "8ad7c106b29a34c7791c9618e952fe40d843c1c1",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
+      "gitBlobSha": "eb3e919338015668651a9f1e806e5db7576edd30",
+      "commitSha": "6aaf5f51d3c3a381c15d4c1d5221a000a2bbd5ff",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/20-failpoint-saga-durable-checkpoint-20261029.md",
+      "gitBlobSha": "6b607e5db524af5a94ed37bfedc4da3a1a91ef96",
+      "commitSha": "0a6a694369121da9d398079b94c569fce9d68d87",
       "readbackVerified": true
     }
   ],
@@ -352,7 +370,8 @@
         "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md",
         "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
         "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
-        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -387,7 +406,8 @@
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json"
+        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -421,7 +441,8 @@
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
         "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
-        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -458,7 +479,8 @@
         "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
         "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
         "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
-        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -579,7 +601,8 @@
         "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
         "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
-        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -623,7 +646,8 @@
         "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
         "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
-        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md"
+        "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -673,7 +697,8 @@
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
         "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
-        "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md"
+        "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -763,7 +788,8 @@
         "docs/operations/private-albums-r5-guided/04-cost-capacity-and-validation-runbook.md",
         "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
         "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
-        "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md"
+        "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -791,7 +817,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "NO_GO. Only after formal approvals of exact SPEC/plan blobs, obtain trusted owned checkout, inventory AGENTS/HEAD/main/PRs/status/locks/processes/worktrees before new R5 worktree, execute baseline Vitest/Playwright/build and pinned verifiers. Then RED 0010+D1 local for stale CAS aborting batch outbox/receipt, historical append-only immutable snapshots after new publication, idempotency payload fingerprint conflict, verified R2 objects/orphan reconciliation, role/owner/expiry/watermark and real Maria/client UX. Review security/a11y/cost independently; no implementation PR/deploy/billing/production before authorization and gates.",
+  "nextAction": "NO_GO. Obtain formal human approval linked to exact SPEC and plan Git blobs; obtain owned complete repo checkout, inventory AGENTS, main/PR24/25, locks/processes/status/worktrees, then create independent worktree. Execute Node/Python pinned checkers, npm ci/typecheck/lint/Vitest/Playwright/build with logs SHA; after PP00, RED tests on 0010 D1 local+R2 synthetic for nine failpoints, replay, CAS zero rows, orphan two-scan, expiry, confirmed selection, pixel watermark, verified admin identity and costs, continue Tasks 00-12 with independent reviews and no production actions.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -863,7 +889,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/18-cas-idempotency-and-history-checkpoint-20261028.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/20-failpoint-saga-durable-checkpoint-20261029.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -933,8 +959,8 @@
       "r4HistoricalCandidateSha": "1d30b97",
       "r4HistoricRunId": 40779241089
     },
-    "checkpointCommit": "81d45b0da4e7ea855d208c50782ea6dafe135942",
-    "checkpointBlob": "7ad7aac2be689287df8139de0dab98b43037ccae",
+    "checkpointCommit": "0a6a694369121da9d398079b94c569fce9d68d87",
+    "checkpointBlob": "6b607e5db524af5a94ed37bfedc4da3a1a91ef96",
     "legacySchemaExactProbe": {
       "sourceHead": "2b08b3458070ea730fafdc4ca7187cf13a07d42a",
       "migrationFile": "migrations/0009_private_client_galleries.sql",
@@ -1115,6 +1141,70 @@
       "testableWithoutCheckout": "Python stdlib SQLite synthetic reference only",
       "fullNodeModulesAndAppSourceAvailable": false,
       "previousDNSFailureNotRetried": true
+    },
+    "newFailpointRecovery": {
+      "sourceHead": "30149863e6abc9d724e849faa7ba622f7093761d",
+      "status": "SYNTHETIC_MODEL_PASSED_NOT_CLOUDFLARE_R5_TEST",
+      "environment": "Linux auxiliary Python 3.13.5 sqlite3 3.46.1, owned tempfile SQLite file & fake filesystem R2; no product checkout",
+      "scriptPath": "docs/operations/private-albums-r5-guided/verify-synthetic-failpoint-saga.py",
+      "scriptGitBlobSha": "e312284f55b692188c5189a11b032b2498ed49c7",
+      "scriptSha256": "d0621214d63e934afe27f629750ce2c41b08ca6340dbdd101dd0ef61ed8cb68c",
+      "command": "python /mnt/data/punctum-r5-sandbox/isolated-faults/verify-failpoints.py > /mnt/data/punctum-r5-sandbox/isolated-faults/failpoint-report.json",
+      "exitCode": 0,
+      "assertions": 161,
+      "matched": 161,
+      "failed": 0,
+      "logPath": "/mnt/data/punctum-r5-sandbox/isolated-faults/failpoint-report.json",
+      "logSha256": "9cd7696c563a92da3b5e5888c6e3152ea3e23d289834375df5bece3dac2ab916",
+      "nineFailpoints": [
+        "before_put",
+        "after_put",
+        "after_head",
+        "after_revision_insert",
+        "after_cas",
+        "after_receipt",
+        "after_outbox",
+        "after_commit",
+        "after_email_failure"
+      ],
+      "sqliteConnectionReopens": 9,
+      "postCrashRetryIdempotent": true,
+      "crossClientDenialSimulated": true,
+      "expiryBoundarySimulated": true,
+      "selectionAndCandidateDenialsSimulated": true,
+      "corruptObjectFailClosedSimulated": true,
+      "orphanTwoScanEligibility": true,
+      "realCalls": {
+        "worker": 0,
+        "d1": 0,
+        "r2": 0,
+        "images": 0,
+        "email": 0
+      },
+      "lastReport": "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
+      "notATestOfApplication": true
+    },
+    "currentD1FreeRowsQuota": {
+      "source": "https://developers.cloudflare.com/d1/platform/pricing/",
+      "enforcedSince": "2026-09-01",
+      "rowsReadPerDay": 5000000,
+      "rowsWrittenPerDay": 100000,
+      "resetsAt": "00:00 UTC",
+      "sourceChangeLog": "https://developers.cloudflare.com/changelog/post/2026-09-01-d1-free-tier-limit-enforcement/",
+      "accountUsageMeasured": false,
+      "risk": "outbox/GC retry storm can exhaust daily D1 read/write budget and block unrelated reads; require backoff, circuit breaker, telemetry and fail-closed"
+    },
+    "newCheckoutSearch": {
+      "githubTreeEntries": 1246,
+      "githubTreeTruncated": false,
+      "agentsVersionedFound": 0,
+      "linuxHasPunctumDotGit": false,
+      "linuxHasPunctumPackageJson": false,
+      "githubConnectorOnlyTextAndBlobs": true,
+      "authenticatedBinaryArchiveAvailable": false,
+      "windowsUnknownOwnedWindowsUntouched": true,
+      "newWorktreeCreated": false,
+      "vitestPlaywrightBuildStatus": "NOT_RUN"
     }
   }
 }
