@@ -416,9 +416,9 @@
       "principal": "clientA",
       "method": "POST",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/selection/reopen",
-      "expectedStatus": 403,
+      "expectedStatus": 404,
       "zeroBytes": null,
-      "invariant": "only Maria can reopen",
+      "invariant": "client cannot reopen confirmed selection; undefined client reopen path denied (admin action only)",
       "gate": "PP03",
       "execution": "NOT_RUN"
     },
@@ -493,9 +493,9 @@
       "principal": "clientA",
       "method": "GET",
       "path": "/api/client/galleries/a0000000-0000-4000-8000-000000000001/review/a7000000-0000-4000-8000-000000000005",
-      "expectedStatus": 200,
+      "expectedStatus": 404,
       "zeroBytes": null,
-      "invariant": "own pending request may show metadata but rejected candidate bytes denied",
+      "invariant": "rejected candidate review endpoint must not expose candidate metadata or preview; pending eligible candidate has separate positive test",
       "gate": "PP06",
       "execution": "NOT_RUN"
     },
@@ -506,7 +506,7 @@
       "path": "/admin/api/albuns-privados/a0000000-0000-4000-8000-000000000001/delivery/publish",
       "expectedStatus": 409,
       "zeroBytes": null,
-      "invariant": "rejected fifth candidate must never become visible; earlier revision preserved",
+      "invariant": "attempt to publish draft explicitly referencing rejected fifth candidate returns 409; no silent filter, no changed pointer, earlier revision preserved",
       "gate": "PP04",
       "execution": "NOT_RUN"
     },
@@ -646,6 +646,7 @@
     "RED-SELECT cases must run against separate fixture epochs because Maria reopen changes state.",
     "RED-NOTIFY specifically expects publication to COMMIT while transport remains pending/failed; email is post-commit. An earlier draft incorrectly conflated provider unavailability with a failed publication; corrected before acceptance.",
     "No fixture image has a real watermark, no persisted object, no actual media URL or token.",
-    "expectedStatus:null with expectedStatuses indicates an intentionally unratified HTTP variant; only invariants are binding before contract review."
+    "expectedStatus:null with expectedStatuses indicates an intentionally unratified HTTP variant; only invariants are binding before contract review.",
+    "RED-DELIVERY-04 corrected: rejected candidate is not eligible for the client's review; positive pending-candidate preview must use a distinct state-isolated fixture."
   ]
 }
