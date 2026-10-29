@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "c7494ee0c357875ce067fd40cfc2f71ba5662853",
+  "preparationBranchLastObservedBeforeThisCommit": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -86,6 +86,12 @@
       "readbackVerified": true,
       "gitBlobSha": "7db732b8a0828e70216d1ed2fe9ae5d6afe60e6f",
       "commitSha": "c7494ee0c357875ce067fd40cfc2f71ba5662853"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/09-operational-continuation-checkpoint.md",
+      "readbackVerified": true,
+      "gitBlobSha": "6822f5ae3942e3311f085af5192c45a59668bddc",
+      "commitSha": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10"
     }
   ],
   "ci": {
@@ -711,6 +717,11 @@
       "sourcePr25Sha": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
-    "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME"
+    "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/09-operational-continuation-checkpoint.md",
+    "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
+    "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
+    "lastComparedAhead": 4,
+    "lastComparedDiffOnlyR5Docs": true
   }
 }
