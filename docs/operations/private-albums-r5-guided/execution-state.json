@@ -6,14 +6,14 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "222920bf833a574d7e99a9ffba6fcebaa7742ecd",
+  "preparationBranchLastObservedBeforeThisCommit": "e34d053a4a86272c0f7071ed6c9579e5c672d0ac",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
   "approval": {
     "spec": "UNPROVEN",
     "plan": "UNPROVEN",
-    "evidence": "PR25 reviews=0, human comments=0, event approvals=0; outside GitHub unknown",
+    "evidence": "2026-10-29 checked canonical Git blob pins, draft PR #24/#25 metadata/discussion/reviews (both zero reviews); PR #25 only bot note 'draft not reviewed', PR #24 owner's authorization explicitly scopes R4; GitHub issues search by each exact R5 SHA and 'R5 aprovado' empty; connected Google Drive two accounts targeted search no explicit approval of both blobs; previous conversation retrieval no explicit linked formal approval. Records outside checked scope unknown. No implementation authorization.",
     "implementationAllowed": false,
     "productionReleaseAllowed": false
   },
@@ -36,10 +36,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
       "readbackVerified": true,
-      "gitBlobSha": "ce368678a39eb5a30348b8d60b75568f60f88fa5",
-      "commitSha": "ab814bb352629a5fb0e838c493efdda5db0db455",
-      "previousBlobSha": "ec8f07b3bb606fceeb1d39a53446df552f27c5f1",
-      "previousCommitSha": "a37f8945d2b4664353ca06d88046e4764f118869"
+      "gitBlobSha": "1b25da8806f0b2ccd0605b3a7059307b97dbeced",
+      "commitSha": "e34d053a4a86272c0f7071ed6c9579e5c672d0ac",
+      "previousBlobSha": "ce368678a39eb5a30348b8d60b75568f60f88fa5",
+      "previousCommitSha": "ab814bb352629a5fb0e838c493efdda5db0db455"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
@@ -242,6 +242,18 @@
       "gitBlobSha": "c3c44901751a81f217c37b5e5f0a7b4d87b012de",
       "commitSha": "57cd6451bd7ee45cf419bdb509b0980fb13f6757",
       "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md",
+      "gitBlobSha": "de6377bebf48a9547da4d0d452e5c9189d5c6de0",
+      "commitSha": "59805586f577b354424ecb4a1618b0821cac3a59",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-local-workerd-d1-r2-boundaries.mjs",
+      "gitBlobSha": "56b3352ce8ac5e55f996298ca4c3f41ed244f7b2",
+      "commitSha": "24f40af64cbc1345fa99cec17d60b36b6a625ab1",
+      "readbackVerified": true
     }
   ],
   "ci": {
@@ -364,7 +376,8 @@
         "docs/operations/private-albums-r5-guided/00-preparation-baseline.md",
         "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
         "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
-        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
+        "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -384,7 +397,7 @@
         "local_worktree_not_verified"
       ],
       "costStatus": "NOT_MEASURED",
-      "nextAction": "OWNED independent R5 clone and R4 regression baseline confirmed; formal SPEC and plan approval unproven. Create implementation worktree only after approval, fresh ownership/locks/status preflight; PP00 remains BLOCKED_EXTERNAL."
+      "nextAction": "Formal acceptance from authorized human explicitly referencing BOTH SPEC blob db25502f25eed89131bac16e3a3172248f716ec1 and plan blob 41e06e5fdd353eaff9a5f43357fbcbce741b2770 (approver/timestamp/source) is still absent. Reinspect clone ownership/status/processes/locks before creating separate authorized implementation worktree; existing independent clone + R4 baseline confirmed."
     },
     "PP01": {
       "gate": "PP01",
@@ -418,7 +431,8 @@
         "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
         "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
         "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
-        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
+        "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -427,7 +441,7 @@
         "product_implementation_approval_unproven"
       ],
       "costStatus": "NOT_MEASURED",
-      "nextAction": "Após PP00, registrar RED e executar migração somente em D1 local sintético."
+      "nextAction": "After PP00 formal approval, run red D1 0009+0010 integration with true Worker for stale CAS changes=0, DB.batch rollback guard, idempotency actor+payload hash, cross-client FK constraints, receipt/outbox and historical snapshots. Local minimal workerd D1/R2 17/17 proves runtime semantics only."
     },
     "PP02": {
       "gate": "PP02",
@@ -528,7 +542,8 @@
         "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
         "docs/operations/private-albums-r5-guided/17-transactional-cas-history-red-20261028.md",
         "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
-        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
+        "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -747,7 +762,8 @@
         "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
         "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
-        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
+        "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
+        "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -838,7 +854,8 @@
         "docs/operations/private-albums-r5-guided/05-local-worktree-and-review-handoff.md",
         "docs/operations/private-albums-r5-guided/08-operational-static-findings-20261028.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md"
+        "docs/operations/private-albums-r5-guided/19-failpoint-crash-recovery-and-d1-free-budget-20261029.md",
+        "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -866,7 +883,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "NO_GO: approval of exact SPEC db25502f... and plan 41e06e5... still UNPROVEN. A complete separate owned Git clone now exists, R4 baseline 223 Vitest/14 Chrome workerd E2E passed; Python 14/14 R4 SQL source-sequencing probe is independently rerunnable with source pins. PP00 remains BLOCKED_EXTERNAL until human approval and separately authorized implementation worktree. No new R5 product code/PR/deploy/billing; after authorization, PP01/PP04 RED for cover TOCTOU and atomic publication/audit in D1 local + real Worker, alongside CAS/outbox/watermark/private media.",
+  "nextAction": "NO_GO. Formal human approvals for both exact SPEC/plan blobs UNPROVEN. Owned independent clone and prior real R4 baseline are available, and new minimal local workerd D1/R2 17/17 passes (NOT R5 feature implementation). No product code, migrations, PR implementation, merge, deploy, billing or clients. On approval: revalidate local ownership/processes/locks/HEAD, approved isolated worktree, Tasks 00-12 using RED→GREEN→REFACTOR→REVIEW→COMMIT→CHECKPOINT, independent security/a11y/cost reviews, R5 real QA and tracked CI.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -938,7 +955,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -1008,8 +1025,8 @@
       "r4HistoricalCandidateSha": "1d30b97",
       "r4HistoricRunId": 40779241089
     },
-    "checkpointCommit": "222920bf833a574d7e99a9ffba6fcebaa7742ecd",
-    "checkpointBlob": "2524f469d46d100f6955f9f0d2871da8c39dec09",
+    "checkpointCommit": "59805586f577b354424ecb4a1618b0821cac3a59",
+    "checkpointBlob": "de6377bebf48a9547da4d0d452e5c9189d5c6de0",
     "legacySchemaExactProbe": {
       "sourceHead": "2b08b3458070ea730fafdc4ca7187cf13a07d42a",
       "migrationFile": "migrations/0009_private_client_galleries.sql",
@@ -1370,6 +1387,44 @@
         "report": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
       },
       "report": "docs/operations/private-albums-r5-guided/21-owned-checkout-runtime-baseline-and-portability-20261029.md"
+    },
+    "localWorkerdD1R2Integration20261029": {
+      "sourceHeadAtStart": "4d81d6d73e2e57e2b62e11afaf98fcc014a3e1c4",
+      "sourceFile": "docs/operations/private-albums-r5-guided/verify-local-workerd-d1-r2-boundaries.mjs",
+      "sourceGitBlob": "56b3352ce8ac5e55f996298ca4c3f41ed244f7b2",
+      "sourceReadbackVerified": true,
+      "matchedRealCloneGitBlob": true,
+      "command": "node docs/operations/private-albums-r5-guided/verify-local-workerd-d1-r2-boundaries.mjs",
+      "environment": "Windows owned independent clone; Node 24.19.0; installed Miniflare/workerd via existing project node_modules, temp minimal synthetic Worker, temp isolated D1 and R2",
+      "exitCode": 0,
+      "passed": 17,
+      "total": 17,
+      "failed": 0,
+      "logPath": "Documents/ChatGPT/.punctum-r5-local-logs-20261029-30149863/d1-workerd-versioned.log",
+      "logSha256": "C8CFF55A94FF9C6AF07047AB81BECA017D9335A61AD587BE8B578057E3D88984",
+      "checks": [
+        "D1.batch commits after zero-row CAS absent explicit SQL error",
+        "D1.batch rolls back on SQL constraint failure",
+        "SQL changes() guard converts zero-row CAS to batch rollback",
+        "valid CAS+guard commits revision and event",
+        "two concurrent D1 local CAS operations one winner",
+        "local R2 staged object survives D1 transaction failure"
+      ],
+      "localD1ApiExecuted": true,
+      "localR2BindingExecuted": true,
+      "actualApplicationWorkerLoaded": false,
+      "actualMigration0010Loaded": false,
+      "actualR5FeatureTested": false,
+      "realCloudflareAccountRequests": 0,
+      "productionTouched": false,
+      "productCodeModified": false,
+      "initialHarnessAttempts": [
+        "Miniflare v4 unsupported constructor options",
+        "inline JavaScript quoting syntax error"
+      ],
+      "firstWorkingMinimalProbe": "7/7 expected",
+      "versionedProbe": "17/17 expected",
+      "report": "docs/operations/private-albums-r5-guided/22-d1-workerd-runtime-and-human-approval-gate-20261029.md"
     }
   }
 }
