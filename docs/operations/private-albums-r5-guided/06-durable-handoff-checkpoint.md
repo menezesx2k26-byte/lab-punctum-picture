@@ -29,7 +29,7 @@ Os arquivos abaixo foram **criados** pela conexão GitHub na branch R5 e tiveram
 
 Este próprio handoff será incluído em commit posterior à lista acima, evitando auto referência circular. Para achar seu SHA final, consultar a API GitHub ou `git rev-parse HEAD` na branch e `git ls-tree` depois da publicação, registrar a resposta no próximo checkpoint. **Não presumir verificação antecipada do próprio arquivo.**
 
-A comparação remota antes do handoff mostrou sete commits adiante de PR25, zero atrás, com modificações restritas a `docs/operations/private-albums-r5-guided/`; nenhum arquivo de código produto alterado. Conferir novamente o diff após o commit deste arquivo.
+A comparação remota antes do handoff mostrou oito commits adiante de PR25, zero atrás, com modificações restritas a `docs/operations/private-albums-r5-guided/`; nenhum arquivo de código produto alterado. Conferir novamente o diff após o commit deste arquivo.
 
 ## 3. Evidências executadas de fato
 
