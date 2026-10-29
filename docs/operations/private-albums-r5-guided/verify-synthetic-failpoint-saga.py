@@ -104,6 +104,16 @@ class Environment:
         referenced={r[0] for r in self.db.execute("SELECT object_key FROM published").fetchall()}
         # Orphan object not referenced by ANY historical revision must pass grace and two scans.
         return sorted(f.name for f in self.objects.iterdir() if f.name not in referenced and now-births.get(f.name,now)<=(10**9) and now-births.get(f.name,now)>=grace)
+    @classmethod
+    def reopen(cls, root:Path):
+        # Simulated restart: close connection, reopen the file-backed database and object directory.
+        instance=cls.__new__(cls)
+        instance.root=root
+        instance.objects=root/'objects'
+        instance.db_path=root/'db.sqlite'
+        instance.db=sqlite3.connect(instance.db_path,isolation_level=None)
+        instance.db.execute('PRAGMA foreign_keys=ON')
+        return instance
     def close(self):self.db.close()
 
 def sha(v:bytes)->str:return hashlib.sha256(v).hexdigest()
@@ -118,6 +128,11 @@ with tempfile.TemporaryDirectory(prefix='punctum-r5-failpoints-') as scratch:
         try:env.publish(PRINCIPAL,'key-1',stop=failure)
         except Crash:pass
         state=env.snapshot()
+        env.close()
+        env=Environment.reopen(root)
+        after_reopen=env.snapshot()
+        mark(f'{failure}:reopened_pointer',after_reopen['current'],state['current'])
+        mark(f'{failure}:reopened_receipt_count',after_reopen['receipts'],state['receipts'])
         committed=failure in ('after_commit','after_email_failure')
         mark(f'{failure}:pointer',state['current'],'REV-key-1' if committed else 'REV0')
         mark(f'{failure}:revision_count',state['revision'],1 if committed else 0)
