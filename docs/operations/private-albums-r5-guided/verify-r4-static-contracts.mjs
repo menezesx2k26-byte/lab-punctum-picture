@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const source = (path) => readFileSync(resolve(root, path), "utf8");
+const source = (path) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
 const map = Object.fromEntries([
   "worker/client/router.ts",
   "worker/media/private-gallery.ts",
