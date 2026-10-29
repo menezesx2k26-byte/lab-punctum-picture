@@ -112,6 +112,34 @@ mark('OBJ03_R2_first_SQL_later_failure_creates_orphan',('private:ORPHAN' in obje
 mark('OBJ04_no_automatic_delete_after_failed_commit',('private:ORPHAN' in objects),True)
 d.close()
 
+# A failed CAS (0 rows) is not a SQL exception. A batch may still commit events.
+d=db_new()
+d.execute("UPDATE r5_ref_workflows SET revision=1 WHERE gallery_id='GA'")
+d.execute('BEGIN IMMEDIATE')
+stale_rows=d.execute("UPDATE r5_ref_workflows SET revision=revision+1 WHERE gallery_id='GA' AND revision=0").rowcount
+d.execute("INSERT INTO r5_guard_publish_receipt VALUES('GA','stale-key','DA','t')")
+d.execute("INSERT INTO r5_guard_outbox VALUES('GA','DA','stale-event','pending')")
+d.execute('COMMIT')
+mark('GAP06_stale_CAS_has_zero_rows_not_SQL_error',stale_rows,0)
+mark('GAP07_stale_CAS_receipt_still_commits_when_unchecked',d.execute("SELECT count(*) FROM r5_guard_publish_receipt").fetchone()[0],1)
+mark('GAP08_stale_CAS_outbox_still_commits_when_unchecked',d.execute("SELECT count(*) FROM r5_guard_outbox").fetchone()[0],1)
+d.close()
+# A reference CHECK can turn stale changes() into an SQL error. D1 support must be tested.
+d=db_new()
+d.execute("CREATE TABLE r5_test_cas_assertion(ok INTEGER NOT NULL CHECK(ok=1))")
+d.execute("UPDATE r5_ref_workflows SET revision=1 WHERE gallery_id='GA'")
+d.execute('BEGIN IMMEDIATE')
+d.execute("UPDATE r5_ref_workflows SET revision=revision+1 WHERE gallery_id='GA' AND revision=0")
+try:
+    d.execute("INSERT INTO r5_test_cas_assertion VALUES(changes())")
+    cas_guard='NO_ERROR'
+except sqlite3.IntegrityError:
+    d.execute('ROLLBACK')
+    cas_guard='CONSTRAINT_ROLLBACK'
+mark('CAS05_guarded_stale_sql_statement_rolls_back',cas_guard,'CONSTRAINT_ROLLBACK')
+mark('CAS06_no_partial_receipt_after_guarded_rollback',d.execute("SELECT count(*) FROM r5_guard_publish_receipt").fetchone()[0],0)
+d.close()
+
 # Deliberate negative controls: protecting only the current pointer does NOT protect history.
 d=db_new()
 d.execute("INSERT INTO r5_ref_delivery_revisions VALUES('DX','GA','RA',2)")
