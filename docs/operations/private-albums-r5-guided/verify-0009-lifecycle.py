@@ -7,7 +7,7 @@ import hashlib, json, pathlib, sqlite3, sys
 
 EXPECTED_BLOB='5281fc9b99ed85bf6e7751ad7eb11f8b5482df23'
 path=pathlib.Path(sys.argv[1]) if len(sys.argv)>1 else pathlib.Path(__file__).resolve().parents[3]/'migrations/0009_private_client_galleries.sql'
-raw=path.read_bytes()
+raw=path.read_bytes().replace(b'\r\n', b'\n')
 blob=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
 if blob!=EXPECTED_BLOB: raise SystemExit(f'MIGRATION_BLOB_MISMATCH {blob}')
 
