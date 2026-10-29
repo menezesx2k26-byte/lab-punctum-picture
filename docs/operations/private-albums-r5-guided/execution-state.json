@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "4f77a53fc8218ab78199b724c740f99db9336d5b",
+  "preparationBranchLastObservedBeforeThisCommit": "c4f297a82a94d1b3bd6997b426454fe9eba94320",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -36,8 +36,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
       "readbackVerified": true,
-      "gitBlobSha": "5d29011cad571952b8b3b974b9bdce92873169a2",
-      "commitSha": "3558e61567282426e3602014aa892908b2d4581b"
+      "gitBlobSha": "eac022e480e36873f5c7744c11df169b533546a0",
+      "commitSha": "a3f45ba56c710e073b74e2c23b89f5e80c1e5f16",
+      "previousBlobSha": "5d29011cad571952b8b3b974b9bdce92873169a2",
+      "previousCommitSha": "3558e61567282426e3602014aa892908b2d4581b"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
@@ -122,6 +124,24 @@
       "readbackVerified": true,
       "gitBlobSha": "b8215867ee071dbbf0efeedd7356d8bd0b2ab878",
       "commitSha": "4f77a53fc8218ab78199b724c740f99db9336d5b"
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-0009-favorites-isolation.py",
+      "gitBlobSha": "a58a7061ffaa1695635a1ce207210a83f5b5a65c",
+      "commitSha": "212eacf8e4e46910160b9936c1d50b492a58bbc8",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md",
+      "gitBlobSha": "1b35e472bed89caf31a054db2a6f7b117e0b9a57",
+      "commitSha": "2c84b57ca84ffe19f70ce0f2d9d813049a4ac568",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/14-sqlite-isolation-continuation-checkpoint-20261028.md",
+      "gitBlobSha": "b26fca95412d8d203e6d399bdd9bd45a66f1194b",
+      "commitSha": "c4f297a82a94d1b3bd6997b426454fe9eba94320",
+      "readbackVerified": true
     }
   ],
   "ci": {
@@ -255,7 +275,7 @@
       "dependencies": [
         "PP00"
       ],
-      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão",
+      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão; conforme contraprova 0009: vínculos client↔gallery, gallery↔image/final/revision e cover↔image devem rejeitar cross-tenant em 0010+D1 local, com rollback e verificação de FK (NÃO executado).",
       "testCommands": [
         {
           "command": "npm test -- tests/unit/client-workflow.spec.ts tests/integration/client-workflow.spec.ts",
@@ -274,7 +294,8 @@
       ],
       "artifacts": [
         "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
-        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md"
+        "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
+        "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -707,7 +728,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "Keep R5 NO_GO. Once formally approved exact SPEC+plan and verified owned Windows terminal, inventory AGENTS/locks/branches/worktrees/diffs before creating isolated worktree, run Node static/fixture checks and full existing suites with SHA/exit logs; proceed TDD Tasks 00-12 with independent security/a11y/cost reviews and R4 gates separate. Until then read-only prep only.",
+  "nextAction": "Approval remains UNPROVEN. Do not implement. Obtain verified owned checkout and enumerate Windows AGENTS/processes/locks/worktrees/status; only after human approval of exact SPEC+plan run isolated 0009+0010 D1 RED against cross-tenant ownership and cover constraints, then full Task 00-12 TDD + independent reviews and current CI/physical/CPU/cost evidence.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -779,7 +800,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/12-static-reconciliation-identity-cost-checkpoint-20261028.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/14-sqlite-isolation-continuation-checkpoint-20261028.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -850,6 +871,65 @@
       "r4HistoricRunId": 40779241089
     },
     "checkpointCommit": "4f77a53fc8218ab78199b724c740f99db9336d5b",
-    "checkpointBlob": "b8215867ee071dbbf0efeedd7356d8bd0b2ab878"
+    "checkpointBlob": "b8215867ee071dbbf0efeedd7356d8bd0b2ab878",
+    "legacySchemaExactProbe": {
+      "sourceHead": "2b08b3458070ea730fafdc4ca7187cf13a07d42a",
+      "migrationFile": "migrations/0009_private_client_galleries.sql",
+      "migrationGitBlobSha": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
+      "migrationSha256": "0636a83626db74d30a0fbefa15086c6a251401ca4dc6283e426f7d30265a65e8",
+      "runtime": "Python 3.13 / sqlite3 SQLite 3.46.1 on Linux auxiliary, in-memory database; no Cloudflare D1",
+      "command": "python /tmp/verify_0009_favorites_isolation.py --migration /tmp/punctum_0009_private_galleries.sql",
+      "successfulRunExitCode": 0,
+      "assertions": 6,
+      "matched": 6,
+      "foreignKeysEnabled": true,
+      "foreignKeyCheckViolations": 0,
+      "evidenceScript": "docs/operations/private-albums-r5-guided/verify-0009-favorites-isolation.py",
+      "evidenceScriptGitBlobSha": "a58a7061ffaa1695635a1ce207210a83f5b5a65c",
+      "evidenceScriptSha256": "48d8392980e94cba0430db2ccaeae07b36397ec4bb0c11f6a2aef3e1e94d9483",
+      "evidenceReport": "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md",
+      "positiveCases": 2,
+      "foreignKeyDeniedCases": 2,
+      "expectedLegacyConstraintGapCases": 2,
+      "crossTenantFavoriteAcceptedByLegacySql": true,
+      "crossGalleryCoverAcceptedByLegacySql": true,
+      "status": "LEGACY_SCHEMA_CONSTRAINT_REPRODUCED_NOT_R5_GATE_PASS",
+      "functionalWorkerTestsExecuted": 0,
+      "cloudflareD1TestsExecuted": 0,
+      "pp01ImplementationTestStatus": "NOT_RUN",
+      "initialHarnessPathError": "First helper invocation in /tmp returned exit 1 because default Path.parents[3] evaluated before argparse; fixed and rerun with exit 0; no product failure"
+    },
+    "auditPrincipalPureEvaluation": {
+      "sourceGitBlobSha": "9a976bf131b73f6bd3eedec2dde5c4f5d557ec20",
+      "kind": "V8 evaluation of exact auditPrincipal return expression extracted from GitHub source, not authenticated runtime",
+      "syntheticSharedPasswordEmails": [
+        "operator-a@example.invalid",
+        "operator-b@example.invalid"
+      ],
+      "sharedPrincipalResult": "shared-password@punctum.invalid",
+      "thirdIdentityResult": "verified-a@example.invalid",
+      "sameSharedIdentityForTwoSyntheticOperators": true,
+      "status": "SOURCE_FUNCTION_REPRODUCED_NO_HUMAN_ATTRIBUTION"
+    },
+    "safeTerminalReassessment": {
+      "newMethod": "container-backed Linux auxiliary console; no Windows terminal used",
+      "gitLsRemoteExitCode": 128,
+      "gitLsRemoteStderr": "Could not resolve host: github.com",
+      "getentGithubExitCode": 2,
+      "localGitCheckoutFound": false,
+      "canExecuteStdlibSQLiteProbe": true,
+      "canExecuteRepoTests": false,
+      "windowsExistingSessionsTouched": false,
+      "windowsAgentsLocksProcessesWorktreesOwnership": "UNKNOWN_NOT_INSPECTED"
+    },
+    "newD1FreeLimits": {
+      "source": "https://developers.cloudflare.com/d1/platform/limits/",
+      "maxDatabaseMB": 500,
+      "accountStorageGB": 5,
+      "maxBoundParametersPerStatement": 100,
+      "maxStringBlobOrRowBytes": 2000000,
+      "sourceDocumentationNotAccountMeasurement": true,
+      "impact": "Future 0010 manifest and blocks snapshot must measure row size, bound variables, query budget and transactional rollback"
+    }
   }
 }
