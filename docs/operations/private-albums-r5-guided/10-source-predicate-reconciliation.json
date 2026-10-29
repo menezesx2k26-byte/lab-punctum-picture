@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "kind": "STATIC_CODE_ASSERTION_EXECUTION_EVIDENCE",
+  "originCheckpoint": "51ece15e1e15cc14151a7f10b2dec93777b07d8c",
+  "sourceTreeGitHead": "51ece15e1e15cc14151a7f10b2dec93777b07d8c",
+  "checkerPath": "docs/operations/private-albums-r5-guided/verify-r4-static-contracts.mjs",
+  "checkerGitBlobSha": "ac4064fc5f1e3ce456bf3870522d8af93c477ddf",
+  "executedIn": "JavaScript V8 functions tool; fetched GitHub blobs by exact sourceGitHead",
+  "reproductionMethod": "Fetch each source by exact SHA and blob; extract const check = [...] from checker, evaluate same 18 predicate functions with s(path) and has(path,string), report MATCH/MISMATCH; no application runtime",
+  "sourceFiles": {
+    "worker/client/router.ts": "a097a2854a2fac6b24114ebe4ef8d8f54362625f",
+    "worker/media/private-gallery.ts": "f10cf952bf710acee6f510da10bc12113dd7be8d",
+    "worker/client/repository.ts": "74e11bf42ca07b775e5663d21fffc169a7534f48",
+    "worker/api/client-admin.ts": "56e78e4b055ee8f66b7f642bf871ef5ad0b71dd4",
+    "worker/api/client-galleries.ts": "214957db0ec6acfe57a2a5309e390b1045a88e93",
+    "worker/api/client-gallery-upload.ts": "19d08186de68469c280be041f82ecaa4eb36a733",
+    "worker/client/response.ts": "7f1d3f68b6e21baa31217a238c5033468454f8aa",
+    "shared/client-galleries.ts": "b98dad5182ce669b3a2d8da06fe028fa0530793b",
+    "app/albuns/components/PrivateGallery.tsx": "3c5da2f84007336930989674a27a0d27ca8270ed",
+    "app/albuns/components/PhotoViewer.tsx": "4c542ad07af6a3b2f00ba889164663950c3afc1c",
+    "app/albuns/components/responses.ts": "969da35af7357dbd7cebc899a320fbafcd2ed246",
+    "migrations/0009_private_client_galleries.sql": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
+    "tests/integration/client-security-matrix.spec.ts": "3dd9be363721fa6621c4b214e783e8d3a9933100"
+  },
+  "checkIds": [
+    {
+      "id": "r4-flag",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-auth-dispatch",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-owner-sql",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-zero-byte-test-source",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-media-ownership",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-cache-denial",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-origin-checks",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-raw-download",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-no-watermark-in-transform",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-publish-no-selection",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-schema-no-selection",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-ui-original-download",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-dialog-focus-escape",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-dialog-aria-count",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-response-unknown-fallback",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-upload-buffering",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-image-validation-fail-closed",
+      "result": "MATCH"
+    },
+    {
+      "id": "r4-image-preview-fail-closed",
+      "result": "MATCH"
+    }
+  ],
+  "matched": 18,
+  "mismatched": 0,
+  "negativeControl": {
+    "technique": "Replace 'private, no-store' in worker/client/response.ts only inside copied in-memory source map with 'private, cache-public'",
+    "expectedMismatchIds": [
+      "r4-cache-denial"
+    ],
+    "actualMismatchIds": [
+      "r4-cache-denial"
+    ],
+    "productionFilesMutated": false
+  },
+  "notExecuted": [
+    "npm ci",
+    "node verify-r4-static-contracts.mjs on Windows worktree",
+    "npm run typecheck",
+    "npm run lint",
+    "npm test",
+    "npx vitest run --config vitest.collage.config.ts",
+    "npm run build",
+    "npm run test:e2e",
+    "Cloudflare D1/R2/Images integration",
+    "physical mobile/a11y QA",
+    "independent security/frontend/cost reviewers"
+  ],
+  "interpretation": "MATCH is source-text predicate agreement, not behavioral PASS. The earlier 18/18 was textual and is now independently reconciled against full 13 source blobs and with a negative control. No gate status changed.",
+  "executionProof": "Assistant-side V8 predicates executed during this conversation; GitHub readback and negative control output checked. No raw stdout file or signed external CI artifact exists."
+}
