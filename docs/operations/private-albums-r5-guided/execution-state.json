@@ -6,7 +6,7 @@
   "sourceBranch": "agent/punctum-guided-spec-plan-20261028",
   "sourceHead": "f4163b00b25f96933ab96ab6cf7b1ad1271e3d1f",
   "preparationBranch": "agent/punctum-r5-preparation-20261028",
-  "preparationBranchLastObservedBeforeThisCommit": "c4f297a82a94d1b3bd6997b426454fe9eba94320",
+  "preparationBranchLastObservedBeforeThisCommit": "86bbc395f57c1bceb65a34fb5ed5d6b157a08b1b",
   "mainObservedSha": "aac2d448d9f54e9215c278892ab3a4a7f26237a4",
   "r4PrHeadObservedSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
   "readiness": "NO_GO",
@@ -36,10 +36,10 @@
     {
       "path": "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
       "readbackVerified": true,
-      "gitBlobSha": "eac022e480e36873f5c7744c11df169b533546a0",
-      "commitSha": "a3f45ba56c710e073b74e2c23b89f5e80c1e5f16",
-      "previousBlobSha": "5d29011cad571952b8b3b974b9bdce92873169a2",
-      "previousCommitSha": "3558e61567282426e3602014aa892908b2d4581b"
+      "gitBlobSha": "539fe1fdb0a54529815c2332c4195571190d0c40",
+      "commitSha": "e9eff427673371f4a5ebe3b758a31d0b96ec5c0f",
+      "previousBlobSha": "eac022e480e36873f5c7744c11df169b533546a0",
+      "previousCommitSha": "a3f45ba56c710e073b74e2c23b89f5e80c1e5f16"
     },
     {
       "path": "docs/operations/private-albums-r5-guided/02-private-journeys-security-cost-review.md",
@@ -141,6 +141,36 @@
       "path": "docs/operations/private-albums-r5-guided/14-sqlite-isolation-continuation-checkpoint-20261028.md",
       "gitBlobSha": "b26fca95412d8d203e6d399bdd9bd45a66f1194b",
       "commitSha": "c4f297a82a94d1b3bd6997b426454fe9eba94320",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/relational-fk-reference-model.sql",
+      "gitBlobSha": "dd985e33c74f75a483014385b45b918e5652c6cb",
+      "commitSha": "ccf65e44614310d6f1c002b732ca24d52959798f",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-fk-reference-model.py",
+      "gitBlobSha": "d4e60b179f35e96cbdf0fed7f4dc3ee40ea06ea7",
+      "commitSha": "7320e25204c54a084d28af2e38be4d1ee53a102b",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/verify-0009-lifecycle.py",
+      "gitBlobSha": "395447f49332e79bdcfc7bd65540e3e289fff1a3",
+      "commitSha": "a2572135344a7390a2471e5515f3ffe0fd607616",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
+      "gitBlobSha": "52ab8eee18340a6546b087253379afd218013016",
+      "commitSha": "24343c4b388104082472a934442152aa69801178",
+      "readbackVerified": true
+    },
+    {
+      "path": "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
+      "gitBlobSha": "58ea080cf4f1a78a15599bb11d8dbd2966b2fc42",
+      "commitSha": "86bbc395f57c1bceb65a34fb5ed5d6b157a08b1b",
       "readbackVerified": true
     }
   ],
@@ -275,7 +305,7 @@
       "dependencies": [
         "PP00"
       ],
-      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão; conforme contraprova 0009: vínculos client↔gallery, gallery↔image/final/revision e cover↔image devem rejeitar cross-tenant em 0010+D1 local, com rollback e verificação de FK (NÃO executado).",
+      "acceptance": "Migration 0010 aditiva D1; FK/CAS/Zod sem regressão; conforme contraprova 0009: vínculos client↔gallery, gallery↔image/final/revision e cover↔image devem rejeitar cross-tenant em 0010+D1 local, com rollback e verificação de FK (NÃO executado).; ensaio 0009 de lifecycle 10/10 expôs orphan hard/soft cover e commit de vínculo cruzado; modelo docs FK 19/19 indica necessidade de RESTRICT, mesmo-album, confirmação state=confirmed e rejeição de UPDATE de final publicado; validar 0010+Cloudflare D1 local apenas pós-aprovação (NOT_RUN).",
       "testCommands": [
         {
           "command": "npm test -- tests/unit/client-workflow.spec.ts tests/integration/client-workflow.spec.ts",
@@ -295,7 +325,9 @@
       "artifacts": [
         "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
-        "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md"
+        "docs/operations/private-albums-r5-guided/13-exact-0009-sqlite-tenant-integrity-evidence.md",
+        "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
+        "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -383,7 +415,7 @@
         "PP02",
         "PP03"
       ],
-      "acceptance": "Finais imutáveis, 25/30 parcial, snapshot atômico e última revisão cliente",
+      "acceptance": "Finais imutáveis, 25/30 parcial, snapshot atômico e última revisão cliente; provar no D1 local que finalVersionId de seleção aberta é inelegível, object key/hash de final publicado são imutáveis mesmo por SQL direto e ponteiro público só muda por CAS/idempotência; FKs sozinhas não cobrem esses invariantes.",
       "testCommands": [
         {
           "command": "npm test -- tests/integration/client-workflow-admin.spec.ts tests/integration/client-workflow-media.spec.ts",
@@ -397,7 +429,9 @@
         "docs/operations/private-albums-r5-guided/01-executable-matrix.md",
         "docs/operations/private-albums-r5-guided/03-api-auth-contracts.md",
         "docs/operations/private-albums-r5-guided/11-auth-media-cost-and-red-review-20261028.md",
-        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json"
+        "docs/operations/private-albums-r5-guided/r5-red-synthetic-fixture.json",
+        "docs/operations/private-albums-r5-guided/15-legacy-lifecycle-and-composite-fk-reference-evidence.md",
+        "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md"
       ],
       "acceptanceCommitSha": null,
       "ciRunUrl": null,
@@ -728,7 +762,7 @@
     "lgpd_policy_and_rollback",
     "release_authorization"
   ],
-  "nextAction": "Approval remains UNPROVEN. Do not implement. Obtain verified owned checkout and enumerate Windows AGENTS/processes/locks/worktrees/status; only after human approval of exact SPEC+plan run isolated 0009+0010 D1 RED against cross-tenant ownership and cover constraints, then full Task 00-12 TDD + independent reviews and current CI/physical/CPU/cost evidence.",
+  "nextAction": "Do not implement without approval. On new owned executable checkout: inventory local instructions/ownership/processes/locks/worktrees/changes and existing R4, then run pinned Python SQL probes, R5 18 predicates/fixture, npm ci/typecheck/lint/Vitest/Playwright/build, capture SHA/logs. After approval of SPEC+plan exact Git blobs and PP00, implement 0010 with RED tests for cover deletion, unconfirmed selections, immutable final key and composite tenant/revision FKs in D1 local; review independent security/a11y/costs. Preserve R4 gates and NO_GO.",
   "sourceDocumentBlobs": {
     "spec": "db25502f25eed89131bac16e3a3172248f716ec1",
     "plan": "41e06e5fdd353eaff9a5f43357fbcbce741b2770",
@@ -800,7 +834,7 @@
       "comment": "R5 branch workflow is not triggered on ordinary docs-only push; no implementation CI"
     },
     "riskStatus": "STATIC_GAPS_IDENTIFIED_NOT_VALIDATED_RUNTIME",
-    "latestCheckpoint": "docs/operations/private-albums-r5-guided/14-sqlite-isolation-continuation-checkpoint-20261028.md",
+    "latestCheckpoint": "docs/operations/private-albums-r5-guided/16-relational-lifecycle-checkpoint-20261028.md",
     "lastComparedHead": "0deb34e0cd7e3938d1cdc55a0638dab6dd7f9d10",
     "lastComparedBase": "98a76262cfe1e6b794287e5e18e29822ebeb300e",
     "lastComparedAhead": 4,
@@ -930,6 +964,70 @@
       "maxStringBlobOrRowBytes": 2000000,
       "sourceDocumentationNotAccountMeasurement": true,
       "impact": "Future 0010 manifest and blocks snapshot must measure row size, bound variables, query budget and transactional rollback"
+    },
+    "newRelationalCycleProbe": {
+      "sourceHead": "6467bf7bfc1d06454dc97217250ef4e14daa81ec",
+      "migrationGitBlobSha": "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23",
+      "migrationSha256": "0636a83626db74d30a0fbefa15086c6a251401ca4dc6283e426f7d30265a65e8",
+      "environment": {
+        "python": "3.13.5",
+        "sqlite": "3.46.1",
+        "location": "isolated Linux auxiliary container /tmp, SQLite in-memory",
+        "cloudflareD1": false,
+        "repoCheckout": false
+      },
+      "legacyLifecycle": {
+        "command": "python /tmp/punctum-r5-evidence/verify_0009_lifecycle_remote.py /tmp/punctum-r5-evidence/0009.sql",
+        "exitCode": 0,
+        "matched": 10,
+        "total": 10,
+        "gitBlobOfPublishedExecutable": "395447f49332e79bdcfc7bd65540e3e289fff1a3",
+        "file": "docs/operations/private-albums-r5-guided/verify-0009-lifecycle.py",
+        "behavioralCounterexamples": [
+          "hard delete cover-only image leaves orphan cover id",
+          "soft deleted cover leaves published gallery",
+          "cross gallery image reparent possible when used only as cover",
+          "cross tenant favorite and cover transaction can commit while FK check empty"
+        ]
+      },
+      "referenceModel": {
+        "command": "python /tmp/punctum-r5-evidence/verify_fk_reference.py /tmp/punctum-r5-evidence/0009.sql /tmp/punctum-r5-evidence/relational-reference.sql",
+        "exitCode": 0,
+        "matched": 19,
+        "total": 19,
+        "sqlFile": "docs/operations/private-albums-r5-guided/relational-fk-reference-model.sql",
+        "sqlSha256": "87634c1efeeb390947cee2a209d519d2c63d39366cd9739ecb660785c351aea8",
+        "sqlGitBlob": "dd985e33c74f75a483014385b45b918e5652c6cb",
+        "runnerFile": "docs/operations/private-albums-r5-guided/verify-fk-reference-model.py",
+        "runnerGitBlob": "d4e60b179f35e96cbdf0fed7f4dc3ee40ea06ea7",
+        "expectedAllowedGaps": [
+          "FK permits adding final to selection marked open",
+          "FK permits updating published final private object key"
+        ],
+        "notMigration0010": true
+      },
+      "nonPassingIntermediateHarness": {
+        "referenceFirstRun": {
+          "matched": 15,
+          "total": 16,
+          "exitCode": 1,
+          "reason": "PK duplicate in N05 preempted desired FK; new independent valid proof fixed fixture"
+        },
+        "compactRunnerFirstRun": {
+          "exitCode": 1,
+          "reason": "temporary /tmp path parent indexing; fixed default path and rerun with args"
+        }
+      },
+      "productTestsExecuted": 0,
+      "cloudflareD1TestsExecuted": 0,
+      "ciRun": null,
+      "notes": "Not a product PASS; only local SQLite semantics, no actual 0010 migration or browser/Worker tests"
+    },
+    "d1DocumentationCurrent": {
+      "fk": "https://developers.cloudflare.com/d1/sql-api/foreign-keys/",
+      "batch": "https://developers.cloudflare.com/d1/worker-api/d1-database/",
+      "migration": "https://developers.cloudflare.com/d1/reference/migrations/",
+      "conclusion": "D1 FK enforced by default, DB.batch atomic on failed statement per docs, cannot infer Worker manual BEGIN semantics from auxiliary SQLite"
     }
   }
 }
