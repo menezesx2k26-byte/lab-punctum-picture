@@ -14,7 +14,7 @@ EXPECTED_GIT_BLOB = "5281fc9b99ed85bf6e7751ad7eb11f8b5482df23"
 
 
 def execute(migration: Path) -> dict:
-    sql_bytes = migration.read_bytes()
+    sql_bytes = migration.read_bytes().replace(b"\r\n", b"\n")
     git_blob = hashlib.sha1(b"blob " + str(len(sql_bytes)).encode() + b"\0" + sql_bytes).hexdigest()
     if git_blob != EXPECTED_GIT_BLOB:
         raise RuntimeError(f"Migration blob drift: expected {EXPECTED_GIT_BLOB}, got {git_blob}")
