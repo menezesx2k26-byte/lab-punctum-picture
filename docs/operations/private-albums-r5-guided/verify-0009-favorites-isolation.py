@@ -51,7 +51,18 @@ def execute(migration: Path) -> dict:
         insert("mismatched_image_gallery", "B", "GA", "IB"),
         insert("unknown_account", "C", "GA", "IA"),
     ]
-    expected = [True, True, False, False]
+    def set_cover(label: str, image: str) -> dict:
+        try:
+            db.execute("UPDATE client_galleries SET cover_image_id=? WHERE id=?", (image, "GA"))
+            return {"name": label, "accepted": True}
+        except sqlite3.IntegrityError as exc:
+            return {"name": label, "accepted": False, "error": str(exc)}
+
+    cases.extend([
+        set_cover("owner_A_cover_own_image", "IA"),
+        set_cover("cross_gallery_cover_A_image_B", "IB"),
+    ])
+    expected = [True, True, False, False, True, True]
     fk_violations = db.execute("PRAGMA foreign_key_check").fetchall()
     success = [x["accepted"] for x in cases] == expected and not fk_violations
     return {
@@ -62,9 +73,10 @@ def execute(migration: Path) -> dict:
         "foreignKeysEnabled": bool(db.execute("PRAGMA foreign_keys").fetchone()[0]),
         "cases": cases,
         "checksMatched": sum(x["accepted"] == y for x, y in zip(cases, expected)),
-        "checksTotal": 4,
+        "checksTotal": len(expected),
         "foreignKeyViolations": fk_violations,
         "expectedLegacyCrossTenantFavoriteAccepted": cases[1]["accepted"],
+        "expectedLegacyCrossGalleryCoverAccepted": cases[5]["accepted"],
         "result": "REPRODUCED_EXPECTED_LEGACY_SCHEMA_GAP" if success else "UNEXPECTED_SCHEMA_BEHAVIOR",
         "productTestsRun": 0,
     }
