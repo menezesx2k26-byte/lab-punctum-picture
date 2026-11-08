@@ -1,4 +1,5 @@
 import { envNumber, requireDb } from "../utils/env";
+import { privateGalleryStorageKey } from "./gallery-storage-key";
 export const PRIVATE_BACKUP_TABLES = [
   "client_accounts",
   "client_galleries",
@@ -26,29 +27,62 @@ export async function cleanupPrivateGalleryUploads(env: Env): Promise<void> {
   const intents = (
     await db
       .prepare(
-        `SELECT id,image_id AS imageId,storage_key AS storageKey FROM client_gallery_upload_intents
-    WHERE status IN ('pending','uploaded','failed','expired') AND completed_at IS NULL AND expires_at<? AND created_at<? LIMIT 500`,
+        `SELECT i.id,i.gallery_id AS galleryId,i.image_id AS imageId,
+          i.expected_mime AS expectedMime,i.expected_size AS expectedSize,
+          i.storage_key AS storageKey
+        FROM client_gallery_upload_intents i
+        JOIN client_gallery_images m ON m.gallery_id=i.gallery_id AND m.id=i.image_id
+        WHERE i.status IN ('pending','uploaded','failed','expired')
+          AND i.completed_at IS NULL AND i.expires_at<? AND i.created_at<?
+          AND m.status!='ready'
+          AND i.storage_key=m.storage_key
+          AND i.expected_mime=m.mime_type AND i.expected_size=m.size_bytes
+          AND i.storage_key=('client-galleries/' || i.gallery_id || '/' || i.image_id ||
+            CASE i.expected_mime WHEN 'image/png' THEN '.png'
+              WHEN 'image/webp' THEN '.webp'
+              WHEN 'image/jpeg' THEN '.jpg' END)
+        LIMIT 500`,
       )
       .bind(now, cutoff)
-      .all<{ id: string; imageId: string; storageKey: string }>()
+      .all<{ id: string; galleryId: string; imageId: string;
+        expectedMime: string; expectedSize: number; storageKey: string }>()
   ).results;
   for (const intent of intents) {
+    const expectedKey = privateGalleryStorageKey(
+      intent.galleryId, intent.imageId, intent.expectedMime,
+    );
+    if (!expectedKey || intent.storageKey !== expectedKey) continue;
     const claimed = await db
       .prepare(
-        `UPDATE client_gallery_upload_intents SET status='expired' WHERE id=? AND completed_at IS NULL AND status IN ('pending','uploaded','failed','expired')
-      AND NOT EXISTS(SELECT 1 FROM client_gallery_images WHERE id=? AND status='ready') RETURNING id`,
+        `UPDATE client_gallery_upload_intents SET status='expired'
+         WHERE id=? AND gallery_id=? AND image_id=? AND storage_key=?
+           AND expected_mime=? AND expected_size=?
+           AND completed_at IS NULL AND expires_at<? AND created_at<?
+           AND status IN ('pending','uploaded','failed','expired')
+           AND EXISTS(SELECT 1 FROM client_gallery_images
+             WHERE gallery_id=? AND id=? AND storage_key=?
+               AND mime_type=? AND size_bytes=? AND status!='ready')
+         RETURNING id`,
       )
-      .bind(intent.id, intent.imageId)
+      .bind(intent.id, intent.galleryId, intent.imageId, expectedKey,
+        intent.expectedMime, intent.expectedSize, now, cutoff, intent.galleryId,
+        intent.imageId, expectedKey, intent.expectedMime, intent.expectedSize)
       .first();
     if (!claimed) continue;
-    await db
+    const imageTransition = await db
       .prepare(
-        "UPDATE client_gallery_images SET status='failed',updated_at=? WHERE id=? AND status!='ready'",
+        `UPDATE client_gallery_images SET status='failed',updated_at=?
+         WHERE gallery_id=? AND id=? AND storage_key=? AND mime_type=?
+           AND size_bytes=? AND status!='ready'`,
       )
-      .bind(now, intent.imageId)
+      .bind(now, intent.galleryId, intent.imageId, expectedKey,
+        intent.expectedMime, intent.expectedSize)
       .run();
-    if (intent.storageKey.startsWith("client-galleries/"))
-      await env.ORIGINALS.delete(intent.storageKey);
+    // A restore may have promoted or changed the image after the intent
+    // claim. Without the matched D1 transition, never delete the R2 object
+    // or mark cleanup completed. Expired intents are still eligible to retry.
+    if (imageTransition.meta.changes !== 1) continue;
+    await env.ORIGINALS.delete(expectedKey);
     await db
       .prepare(
         "UPDATE client_gallery_upload_intents SET completed_at=? WHERE id=? AND status='expired'",

@@ -1,6 +1,7 @@
 import { clientImageIntentSchema, CLIENT_MAX_UPLOAD_BYTES } from "../../shared/client-galleries";
 import { validateGalleryRaster, isGalleryRasterTransientError } from "../client/gallery-raster.mjs";
 import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
+import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import {
   getGallery,
   serializeImage,
@@ -126,7 +127,9 @@ export async function handleClientGalleryUploadApi(
     const id = crypto.randomUUID();
     const imageId = crypto.randomUUID();
     const now = new Date().toISOString();
-    const storageKey = `client-galleries/${galleryId}/${imageId}.${input.mimeType === "image/png" ? "png" : input.mimeType === "image/webp" ? "webp" : "jpg"}`;
+    const storageKey = privateGalleryStorageKey(galleryId, imageId, input.mimeType);
+    if (!storageKey)
+      throw new AppError(400, "UPLOAD_TYPE", "Identidade ou tipo de foto inválido.");
     const intent: IntentRow = {
       id,
       galleryId,
@@ -218,9 +221,7 @@ export async function handleClientGalleryUploadApi(
   ).bind(galleryId, intent.imageId).first<{
     storageKey:string; mimeType:string; sizeBytes:number; status:string; deletedAt:string|null;
   }>();
-  const extension = intent.expectedMime === "image/png" ? "png" :
-    intent.expectedMime === "image/webp" ? "webp" : "jpg";
-  const expectedKey = `client-galleries/${galleryId}/${intent.imageId}.${extension}`;
+  const expectedKey = privateGalleryStorageKey(galleryId, intent.imageId, intent.expectedMime);
   if (!linkedImage || linkedImage.deletedAt !== null ||
       intent.storageKey !== expectedKey || linkedImage.storageKey !== expectedKey ||
       linkedImage.mimeType !== intent.expectedMime ||

@@ -424,6 +424,35 @@ describe("isolated private uploads", () => {
 describe("private media authorization", () => {
   beforeAll(bootstrapPrivateDb);
 
+  it("rejects restored ready image keys belonging to another photo or wrong MIME before touching R2 or Images", async () => {
+    const gallery = await seedGallery(await seedClient(), "published");
+    const imageId = await seedReadyImage(gallery);
+    const siblingId = await seedReadyImage(gallery);
+    const siblingKey = `client-galleries/${gallery}/${siblingId}.png`;
+    // Simulate a contradictory restore while respecting the D1 UNIQUE storage_key constraint.
+    await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+      .bind(`client-galleries/${gallery}/quarantine-${siblingId}.png`, siblingId).run();
+    const noBucket = {
+      get: () => { throw new Error("Mismatched key must not read R2"); },
+      head: () => { throw new Error("Mismatched key must not read R2"); },
+    };
+    const noImages = { input: () => { throw new Error("Mismatched key must not reach Images"); } };
+    const isolated = { ...env, ORIGINALS: noBucket, IMAGES: noImages } as unknown as Env;
+    for (const badKey of [siblingKey, `client-galleries/${gallery}/${imageId}.jpg`]) {
+      await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+        .bind(badKey, imageId).run();
+      for (const preset of ["thumb", "gallery", "download"] as const) {
+        for (const head of [false, true]) {
+          const path = `/admin/api/albuns-privados/${gallery}/images/${imageId}/${preset}`;
+          await expect(servePrivateGalleryImage(
+            privateRequest(path, head ? "HEAD" : "GET"), isolated,
+            gallery, imageId, preset, "admin", head,
+          )).rejects.toMatchObject({ status: 404, code: "NOT_FOUND" });
+        }
+      }
+    }
+  });
+
   it("never feeds oversized legacy or inconsistent R2 originals into Images previews", async () => {
     const gallery = await seedGallery(await seedClient());
     const imageId = await seedReadyImage(gallery);

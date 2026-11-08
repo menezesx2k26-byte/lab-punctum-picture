@@ -276,6 +276,43 @@
     "costIncrement": "R$ 0,00",
     "productionDecision": "NO_GO_PRODUCTION"
   },
+  "currentCycle20261108G": {
+    "date": "2026-11-08",
+    "baselineRemoteSha": "13e8e89af2d842d26aaf240b3c847981b072cb69",
+    "baselineRemoteTree": "2b45f400619fec5545b540ca02999aa9eaf3a1ac",
+    "baselineRemoteCi": "42533343668 completed/success on exact F SHA",
+    "branch": "fix/punctum-albums-r4-completion-20261107",
+    "pr": 32,
+    "report": "docs/operations/private-albums-r4/44-restore-safe-r2-cleanup-canonical-media-2026-11-08.md",
+    "changes": [
+      "G05/G09/G18: cleanup requires identical gallery, image, canonical R2 key, MIME and byte size across intent and image rows; rejects restored foreign or same-gallery key before R2 deletion",
+      "G09/G10: media GET/HEAD for all presets validates exact canonical identity before R2/Images, not gallery prefix alone",
+      "G18: cleanup verifies D1 image status transition changed exactly one row before deleting R2, preserving ready images during concurrent restoration",
+      "G05: upload creation and continuation share the same immutable key derivation helper with private media/cleanup"
+    ],
+    "redEvidence": [
+      "Restored intent of A deleted ready original B: expected R2 object not null, received null",
+      "Restored ready image with same-gallery noncanonical key reached R2 get/head instead of failing 404",
+      "Concurrent D1 promotion to ready after cleanup claim still deleted R2: expected object not null, received null"
+    ],
+    "focusedGreen": "PASS 21/21 in 2 Vitest integration suites after concurrent restore guard",
+    "finalFullVitest": "PASS 250/250 in 57/57 files after final concurrency guard",
+    "otherLocalValidation": "PASS Node 14/14, SSR 1/1, typecheck, lint, Vinext 5-stage build, npm audit 0 vulnerabilities and Chromium local end-to-end; still requires exact-SHA CI",
+    "validationScope": "Local synthetic Workers Vitest D1/R2; latest exact SHA and CI must be independently read back after publication",
+    "finalRemoteSha": null,
+    "finalRemoteTree": null,
+    "finalCi": "PENDING_NEW_SHA_READBACK",
+    "g05RequiredOriginalBytes": 26214400,
+    "g05CurrentSafeBytes": 20000000,
+    "g05Status": "FAIL_25_MIB_NOT_IMPLEMENTED_OR_HOMOLOGATED",
+    "g17Status": "FAIL_WORKERS_FREE_COLD_MISS_CPU_NOT_MEASURED",
+    "g23Status": "BLOCKED_EXTERNAL_D1_401_BILLING_403_NO_ROLLBACK",
+    "humanGates": "G15/G19/G20/G22 BLOCKED_EXTERNAL",
+    "productionWrites": 0,
+    "remoteQaWrites": 0,
+    "costIncrementAuthorized": "R$ 0,00",
+    "productionDecision": "NO_GO_PRODUCTION"
+  },
   "canonicalGateSystem": "ORIGINAL_SPEC_R4_SECTION_23_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",

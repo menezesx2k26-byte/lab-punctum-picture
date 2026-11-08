@@ -7,6 +7,7 @@ import {
 } from "../client/repository";
 import { privateResponse } from "../client/response";
 import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
+import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import { requireAdmin } from "../utils/auth";
 import { requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
@@ -41,7 +42,8 @@ export async function servePrivateGalleryImage(
   }
   if (!gallery) throw missing();
   const image = await getReadyGalleryImage(db, galleryId, imageId);
-  if (!image || !image.storageKey.startsWith(`client-galleries/${galleryId}/`))
+  if (!image || image.storageKey !==
+      privateGalleryStorageKey(galleryId, imageId, image.mimeType))
     throw missing();
   if (preset === "download" && audience === "client" && !gallery.allowDownloads)
     throw new AppError(
