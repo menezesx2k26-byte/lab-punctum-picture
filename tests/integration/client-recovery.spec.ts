@@ -47,16 +47,22 @@ describe("scoped private recovery with real local D1/R2", () => {
       await env.ORIGINALS.put(`client-galleries/${gallery}/${next}.png`, bytes, { httpMetadata: { contentType: "image/png" } });
       await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?").bind(bytes.length, next).run();
     }
+    const digest = "f1581abaa0673dad1cdb190a5234ee14eff769d3836de4f70ecb17cdd4ccfa76";
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE gallery_id=?")
+      .bind(digest, gallery).run();
     await env.DB.prepare("INSERT INTO client_gallery_favorites VALUES (?,?,?,datetime('now'))").bind(a, gallery, photo).run();
     const sourceCookie = await createClientSession({ id: a, sessionVersion: 1 }, env);
     const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [a]);
     expect(snapshot.tables.client_accounts.map((c) => c.id)).toEqual([a]);
     expect(snapshot.tables.client_galleries.map((g) => g.id)).toEqual([gallery]);
+    expect(snapshot.tables.client_gallery_images.map((image) => image.original_sha256)).toEqual(Array(10).fill(digest));
     const publicBefore = await bindings.RESTORE_DB.prepare("SELECT * FROM site_settings").all();
     const result = await restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
     expect(result.rows).toBe(13);
     expect(result.objects).toBe(10);
     expect(result.hashes).toEqual(Array(10).fill("f1581abaa0673dad1cdb190a5234ee14eff769d3836de4f70ecb17cdd4ccfa76"));
+    expect((await bindings.RESTORE_DB.prepare("SELECT original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(photo).first<{ original_sha256: string }>())?.original_sha256).toBe(digest);
     expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(b).first()).toBeNull();
     expect(await bindings.RESTORE_DB.prepare("SELECT * FROM site_settings").all()).toMatchObject({ results: publicBefore.results });
@@ -85,6 +91,29 @@ describe("scoped private recovery with real local D1/R2", () => {
     await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)).rejects.toThrow("conflict");
     expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer())).toEqual(new Uint8Array([2]));
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
+  });
+  it("rejects a forged source digest and inconsistent backup attestations before restore writes", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    const bytes = new Uint8Array([1]);
+    const actual = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+      .map((part) => part.toString(16).padStart(2, "0")).join("");
+    await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: actual } });
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind("a".repeat(64), photo).run();
+    await expect(captureClientRecovery(env.DB, env.ORIGINALS, [id])).rejects.toThrow("digest mismatch");
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind(actual, photo).run();
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const tampered = structuredClone(snapshot);
+    tampered.tables.client_gallery_images[0].original_sha256 = "b".repeat(64);
+    await expect(restoreClientRecovery(tampered, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)).rejects.toThrow("digest mismatch");
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
+    const metadataTampered = structuredClone(snapshot);
+    metadataTampered.objects[0].customMetadata.sha256 = "c".repeat(64);
+    await expect(restoreClientRecovery(metadataTampered, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)).rejects.toThrow("digest mismatch");
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
   });
   it("rejects incoherent covers, size and MIME before writing any restored object", async () => {
     const id = await seedClient();

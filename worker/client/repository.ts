@@ -31,6 +31,7 @@ export type GalleryImageRow = {
   originalFilename: string;
   mimeType: string;
   sizeBytes: number;
+  originalSha256: string | null;
   width: number | null;
   height: number | null;
   altText: string;
@@ -45,6 +46,7 @@ const GALLERY_COLUMNS = `g.id,g.client_id AS clientId,g.title,g.introduction,g.t
   g.cover_image_id AS coverImageId,g.allow_downloads AS allowDownloads,g.status`;
 const IMAGE_COLUMNS = `id,gallery_id AS galleryId,storage_key AS storageKey,
   original_filename AS originalFilename,mime_type AS mimeType,size_bytes AS sizeBytes,
+  original_sha256 AS originalSha256,
   width,height,alt_text AS altText,position,status,deleted_at AS deletedAt`;
 export async function getActiveClient(
   db: D1Database,

@@ -34,6 +34,11 @@ function assertScope(snapshot: ClientRecovery) {
     const image = snapshot.tables.client_gallery_images.find((r) => r.storage_key === object.key)!;
     if (object.bytes.length !== image.size_bytes || object.httpMetadata.contentType !== image.mime_type)
       throw new Error("Recovery object metadata mismatch");
+    // Backups may contain pre-migration rows with NULL digests. For attested
+    // rows, never restore inconsistent D1/R2 evidence as if it were verified.
+    if ((image.original_sha256 != null && image.original_sha256 !== object.sha256) ||
+        (object.customMetadata?.sha256 != null && object.customMetadata.sha256 !== object.sha256))
+      throw new Error("Recovery digest mismatch");
   }
   const keys = new Set(snapshot.objects.map((o) => o.key));
   if (keys.size !== snapshot.objects.length || snapshot.tables.client_gallery_images.some((r) => r.status === "ready" && !keys.has(String(r.storage_key))))
@@ -58,7 +63,11 @@ export async function captureClientRecovery(db: D1Database, bucket: R2Bucket, cl
     }
     const bytes = new Uint8Array(await object.arrayBuffer());
     if (bytes.length !== image.size_bytes) throw new Error("Recovery object size mismatch");
-    snapshot.objects.push({ key, bytes, sha256: await hash(bytes), httpMetadata: object.httpMetadata ?? {}, customMetadata: object.customMetadata ?? {} });
+    const sha256 = await hash(bytes);
+    if ((image.original_sha256 != null && image.original_sha256 !== sha256) ||
+        (object.customMetadata?.sha256 != null && object.customMetadata.sha256 !== sha256))
+      throw new Error("Recovery digest mismatch");
+    snapshot.objects.push({ key, bytes, sha256, httpMetadata: object.httpMetadata ?? {}, customMetadata: object.customMetadata ?? {} });
   }
   assertScope(snapshot);
   return snapshot;

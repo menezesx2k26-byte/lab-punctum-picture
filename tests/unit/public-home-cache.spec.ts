@@ -71,6 +71,7 @@ describe("public home isolated cache boundary", () => {
       ["POST", "/admin/api/albums/one/publish"],
       ["PATCH", "/admin/api/albums/one"],
       ["POST", "/admin/api/uploads/intent/complete"],
+      ["POST", "/admin/api/site-media/hero/complete"],
       ["POST", "/admin/api/categories"],
     ];
     for (const [method, path] of yes) {

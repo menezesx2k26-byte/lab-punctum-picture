@@ -58,4 +58,14 @@ test('distinguishes transient Images errors from invalid raster content for safe
   const transport=validImages();
   transport.info=async()=>{throw new Error('binding temporarily unreachable')};
   await assert.rejects(()=>validateGalleryRaster(transport,stream()),error=>isGalleryRasterTransientError(error));
+  // Images Free may throttle after transformation allowance is exhausted:
+  // a temporarily unavailable transform must never destroy an R2 original.
+  for(const status of [429,403,503]){
+    const throttled=validImages();
+    throttled.input=()=>({transform:()=>({output:()=>({response:async()=>new Response('quota unavailable',{status})})})});
+    await assert.rejects(()=>validateGalleryRaster(throttled,stream()),error=>isGalleryRasterTransientError(error));
+  }
+  const exceeded=validImages();
+  exceeded.input=()=>({transform:()=>({output:()=>({response:async()=>new Response('9422: transformation quota exceeded',{status:400})})})});
+  await assert.rejects(()=>validateGalleryRaster(exceeded,stream()),error=>isGalleryRasterTransientError(error));
 });

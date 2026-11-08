@@ -1,5 +1,6 @@
 import { clientImageIntentSchema } from "../../shared/client-galleries";
 import { validateGalleryRaster, isGalleryRasterTransientError } from "../client/gallery-raster.mjs";
+import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
 import {
   getGallery,
   serializeImage,
@@ -24,6 +25,7 @@ type IntentRow = {
   storageKey: string;
   status: string;
   expiresAt: string;
+  sha256: string | null;
 };
 async function signature(intent: IntentRow, env: Env) {
   const key = await crypto.subtle.importKey(
@@ -136,6 +138,7 @@ export async function handleClientGalleryUploadApi(
       storageKey,
       status: "pending",
       expiresAt: new Date(Date.now() + 900_000).toISOString(),
+      sha256: null,
     };
     const token = await signature(intent, env);
     await db.batch([
@@ -192,7 +195,7 @@ export async function handleClientGalleryUploadApi(
   const intent = await db
     .prepare(
       `SELECT id,gallery_id AS galleryId,image_id AS imageId,expected_mime AS expectedMime,expected_size AS expectedSize,
-    storage_key AS storageKey,status,expires_at AS expiresAt FROM client_gallery_upload_intents WHERE id=? AND gallery_id=?`,
+    storage_key AS storageKey,status,expires_at AS expiresAt,sha256 FROM client_gallery_upload_intents WHERE id=? AND gallery_id=?`,
     )
     .bind(match[3] ?? "", galleryId)
     .first<IntentRow>();
@@ -228,9 +231,13 @@ export async function handleClientGalleryUploadApi(
         "INVALID_IMAGE",
         "Envie uma imagem JPG, PNG ou WebP válida.",
       );
+    const digest = await privateOriginalSha256(bytes);
+    if (intent.sha256 && intent.sha256 !== digest)
+      throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
     const object = intent.status === "pending" ? await bucket.put(intent.storageKey, bytes, {
       onlyIf: { etagDoesNotMatch: "*" },
       httpMetadata: { contentType: intent.expectedMime },
+      customMetadata: { sha256: digest },
     }) : null;
     if (!object) {
       // A previous put may have succeeded before its D1 transition failed.
@@ -242,19 +249,32 @@ export async function handleClientGalleryUploadApi(
       const saved = new Uint8Array(await existing.arrayBuffer());
       if (saved.length !== bytes.length || saved.some((byte, i) => byte !== bytes[i]))
         throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
+      if (!hasMatchingOriginalDigest(digest, digest, existing.customMetadata?.sha256))
+        throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde ao original armazenado.");
     }
     const updated = await db
       .prepare(
-        "UPDATE client_gallery_upload_intents SET status='uploaded' WHERE id=? AND status='pending' AND expires_at>? RETURNING id",
+        "UPDATE client_gallery_upload_intents SET status='uploaded',sha256=? WHERE id=? AND status='pending' AND expires_at>? RETURNING id",
       )
-      .bind(intent.id, new Date().toISOString())
+      .bind(digest, intent.id, new Date().toISOString())
       .first();
     if (!updated) {
       const current = await db.prepare(
-        "SELECT status FROM client_gallery_upload_intents WHERE id=? AND status='uploaded' AND expires_at>?",
-      ).bind(intent.id, new Date().toISOString()).first();
-      if (!current)
+        "SELECT status,sha256 FROM client_gallery_upload_intents WHERE id=? AND status='uploaded' AND expires_at>?",
+      ).bind(intent.id, new Date().toISOString()).first<{ status:string; sha256:string|null }>();
+      if (!current || (current.sha256 !== null && current.sha256 !== digest))
         throw new AppError(409, "UPLOAD_CLOSED", "Este envio expirou ou já foi concluído.");
+      if (current.sha256 === null) {
+        const resumed = await db.prepare(
+          "UPDATE client_gallery_upload_intents SET sha256=? WHERE id=? AND status='uploaded' AND sha256 IS NULL",
+        ).bind(digest, intent.id).run();
+        if (resumed.meta.changes !== 1) {
+          const reread = await db.prepare("SELECT sha256 FROM client_gallery_upload_intents WHERE id=?")
+            .bind(intent.id).first<{sha256:string|null}>();
+          if (reread?.sha256 !== digest)
+            throw new AppError(409, "UPLOAD_MISMATCH", "O registro do envio não confere.");
+        }
+      }
     }
     return privateJson({ ok: true });
   }
@@ -281,10 +301,18 @@ export async function handleClientGalleryUploadApi(
         "UPLOAD_INCOMPLETE",
         "Não foi possível conferir o envio da foto.",
       );
+    // Verify the exact persisted bytes, not only R2's size, MIME or ETag.
+    // Keep old intents nullable rather than invent historical checksums.
+    const source = new Uint8Array(await object.arrayBuffer());
+    if (source.byteLength !== intent.expectedSize)
+      throw new AppError(409, "UPLOAD_MISMATCH", "O tamanho do original armazenado não confere.");
+    const digest = await privateOriginalSha256(source);
+    if (!hasMatchingOriginalDigest(intent.sha256, digest, object.customMetadata?.sha256))
+      throw new AppError(409, "UPLOAD_MISMATCH", "A integridade do original armazenado não confere.");
     let width: number;
     let height: number;
     try {
-      const raster = await validateGalleryRaster(env.IMAGES, object.body);
+      const raster = await validateGalleryRaster(env.IMAGES, new Response(source).body!);
       width = raster.width;
       height = raster.height;
     } catch (error) {
@@ -316,16 +344,17 @@ export async function handleClientGalleryUploadApi(
     await db.batch([
       db
         .prepare(
-          `UPDATE client_gallery_images SET status='ready',width=?,height=?,updated_at=? WHERE id=? AND status='pending'
-        AND EXISTS(SELECT 1 FROM client_gallery_upload_intents WHERE id=? AND status='uploaded' AND expires_at>?)`,
+        `UPDATE client_gallery_images SET status='ready',original_sha256=?,width=?,height=?,updated_at=? WHERE id=? AND status='pending'
+        AND EXISTS(SELECT 1 FROM client_gallery_upload_intents WHERE id=? AND status='uploaded' AND expires_at>?
+          AND (sha256 IS NULL OR sha256=?))`,
         )
-        .bind(width, height, now, intent.imageId, intent.id, now),
+        .bind(digest, width, height, now, intent.imageId, intent.id, now, digest),
       db
         .prepare(
-          `UPDATE client_gallery_upload_intents SET status='completed',completed_at=? WHERE id=? AND status='uploaded'
-        AND EXISTS(SELECT 1 FROM client_gallery_images WHERE id=? AND status='ready')`,
+        `UPDATE client_gallery_upload_intents SET status='completed',completed_at=?,sha256=COALESCE(sha256,?) WHERE id=? AND status='uploaded'
+        AND (sha256 IS NULL OR sha256=?) AND EXISTS(SELECT 1 FROM client_gallery_images WHERE id=? AND status='ready' AND original_sha256=?)`,
         )
-        .bind(now, intent.id, intent.imageId),
+        .bind(now, digest, intent.id, digest, intent.imageId, digest),
     ]);
     const image = await getReadyGalleryImage(db, galleryId, intent.imageId);
     if (!image) throw new AppError(409, "UPLOAD_CLOSED", "Este envio expirou.");

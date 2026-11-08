@@ -45,9 +45,17 @@ export async function validateGalleryRaster(images,input) {
       throw new Error('Invalid raster encoding', {cause:error});
     throw new GalleryRasterTransientError(error);
   }
-  if (response.status >= 500)
-    throw new GalleryRasterTransientError(new Error(`Images response ${response.status}`));
-  if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().startsWith('image/png'))
+  if (!response.ok) {
+    // Quota, authorization and rate-limit responses are service failures,
+    // not proof that the persisted original is an invalid image.
+    // 9422 is the Images Free unique-transformation limit.
+    const operationalStatus = ![400,415,422].includes(response.status);
+    if (operationalStatus || (response.status === 400 &&
+        (await response.text()).includes('9422')))
+      throw new GalleryRasterTransientError(new Error(`Images response ${response.status}`));
+    throw new Error('Image transformation failed');
+  }
+  if (!response.headers.get('Content-Type')?.toLowerCase().startsWith('image/png'))
     throw new Error('Image transformation failed');
   const bytes = new Uint8Array(await response.arrayBuffer());
   if(bytes.length < 8 || [137,80,78,71,13,10,26,10].some((value,i)=>bytes[i]!==value))

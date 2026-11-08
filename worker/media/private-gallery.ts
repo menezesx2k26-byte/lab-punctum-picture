@@ -5,6 +5,7 @@ import {
   getReadyGalleryImage,
 } from "../client/repository";
 import { privateResponse } from "../client/response";
+import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
 import { requireAdmin } from "../utils/auth";
 import { requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
@@ -55,7 +56,24 @@ export async function servePrivateGalleryImage(
         "IMAGE_SERVICE_UNAVAILABLE",
         "A prévia desta foto está temporariamente indisponível.",
       );
-    if (!(await bucket.head(image.storageKey))) throw missing();
+    const head = await bucket.head(image.storageKey);
+    if (!head) throw missing();
+    if (image.originalSha256) {
+      if (head.size !== image.sizeBytes ||
+          head.httpMetadata?.contentType !== image.mimeType ||
+          (head.customMetadata?.sha256 && head.customMetadata.sha256 !== image.originalSha256))
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      // R2 customMetadata is not an independent attestation: a replaced object
+      // can carry the original digest unchanged. Verify bytes even on HEAD,
+      // and never return an apparent success for a corrupt stored original.
+      const original = await bucket.get(image.storageKey);
+      if (!original || original.size !== image.sizeBytes ||
+          original.httpMetadata?.contentType !== image.mimeType ||
+          !hasMatchingOriginalDigest(image.originalSha256,
+            await privateOriginalSha256(new Uint8Array(await original.arrayBuffer())),
+            original.customMetadata?.sha256))
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+    }
     const headers =
       preset === "download"
         ? {
@@ -70,9 +88,24 @@ export async function servePrivateGalleryImage(
   }
   const object = await bucket.get(image.storageKey);
   if (!object) throw missing();
+  // Integrity is anchored in D1 when a verified private upload completed.
+  // A changed R2 object must not be streamed as a valid original or derivative.
+  // Historical rows without a digest remain readable, pending separate backfill.
+  let original: ReadableStream<Uint8Array> = object.body;
+  if (image.originalSha256) {
+    if (object.size !== image.sizeBytes ||
+        object.httpMetadata?.contentType !== image.mimeType)
+      throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+    const bytes = new Uint8Array(await object.arrayBuffer());
+    if (bytes.byteLength !== image.sizeBytes ||
+        !hasMatchingOriginalDigest(image.originalSha256, await privateOriginalSha256(bytes),
+          object.customMetadata?.sha256))
+      throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+    original = new Response(bytes).body!;
+  }
   if (preset === "download")
     return privateResponse(
-      new Response(object.body, {
+      new Response(original, {
         headers: {
           "Content-Type": image.mimeType,
           "Content-Disposition": `attachment; filename="foto-${image.id}.${image.mimeType === "image/png" ? "png" : image.mimeType === "image/webp" ? "webp" : "jpg"}"`,
@@ -90,7 +123,7 @@ export async function servePrivateGalleryImage(
   let transformed: Response;
   try {
     transformed = (
-      await env.IMAGES.input(object.body)
+      await env.IMAGES.input(original)
         .transform({
           width: size.width,
           height: size.height,

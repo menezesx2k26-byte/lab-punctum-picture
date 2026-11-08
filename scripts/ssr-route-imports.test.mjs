@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { globSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
@@ -17,7 +18,8 @@ test("home SSR loads its own references; Studio loads only when requested", asyn
     d1Databases: { DB: "punctum-ssr-route-test" },
     r2Buckets: { ORIGINALS: "punctum-ssr-route-originals", BACKUPS: "punctum-ssr-route-backups" },
     assets: { directory: resolve(dist, "client"), binding: "ASSETS", routerConfig: { has_user_worker: true } },
-    bindings: { ENVIRONMENT: "local", PRIVATE_GALLERIES_ENABLED: "false", CLIENT_AUTH_MODE: "access", SITE_ORIGIN: "http://localhost", PUBLIC_SITE_URL: "http://localhost" },
+    bindings: { ENVIRONMENT: "local", PRIVATE_GALLERIES_ENABLED: "false", CLIENT_AUTH_MODE: "access", SITE_ORIGIN: "http://localhost", PUBLIC_SITE_URL: "http://localhost",
+      PUBLIC_HOME_SNAPSHOT_ENABLED: "true", PUBLIC_HOME_SNAPSHOT_BUILD_ID: "punctum-ssr-test-build" },
     host: "127.0.0.1", port: 0, inspectorPort: 0,
   }));
   let socket;
@@ -51,6 +53,43 @@ test("home SSR loads its own references; Studio loads only when requested", asyn
     assert.match(html, /__VINEXT_RSC_DONE__/);
     const adminModules = () => [...evaluated].filter(url => /\/(?:StudioManager|AlbumEditor|PrivateGalleryEditor|AccountsManager|SettingsManager|cloud-upload)-/.test(url));
     assert.deepEqual(adminModules(), [], "public home must not eagerly evaluate admin/upload modules");
+    // Unlike a raw fetch, a real navigation advertises Accept: text/html.
+    // Force a cold cache MISS and show the already-rendered D1 body bypasses SSR.
+    const marker = "<!-- PUNCTUM_VERIFIED_STATIC_SNAPSHOT -->";
+    const staticHtml = html.replace("</body>", marker + "</body>");
+    assert.notEqual(staticHtml, html);
+    const digest = createHash("sha256").update(staticHtml).digest("hex");
+    const staged = await db.prepare(
+      "UPDATE public_home_snapshot SET html=?,html_sha256=?,build_id=?,snapshot_epoch=epoch WHERE id=1"
+    ).bind(staticHtml, digest, "punctum-ssr-test-build").run();
+    assert.equal(staged.meta.changes, 1);
+    const navigateHome = () => worker.fetch("http://localhost/", { headers: { Accept: "text/html" } });
+    const fastResponse = await navigateHome();
+    assert.equal(fastResponse.status, 200);
+    assert.ok((await fastResponse.text()).includes(marker), "eligible public home should bypass live SSR");
+    // Local mode intentionally accepts admin requests; use a cross-origin
+    // mutation to verify the CSRF guard runs before snapshot invalidation.
+    const invalidPublish = await worker.fetch("http://localhost/admin/api/studio/publish", {
+      method: "POST", headers: { Origin: "https://untrusted.invalid", "Content-Type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(invalidPublish.ok, false);
+    const retained = await db.prepare("SELECT epoch,html FROM public_home_snapshot WHERE id=1").first();
+    assert.equal(retained.epoch, 0);
+    assert.equal(retained.html, staticHtml);
+    // Once local admin and Origin guards pass, even a rejected payload must
+    // invalidate the old epoch before it could reach an editorial write.
+    const authorizedInvalidPublish = await worker.fetch("http://localhost/admin/api/studio/publish", {
+      method: "POST", headers: { Origin: "http://localhost", "Content-Type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(authorizedInvalidPublish.ok, false);
+    const invalidated = await db.prepare("SELECT epoch,html FROM public_home_snapshot WHERE id=1").first();
+    assert.equal(invalidated.epoch, 1);
+    assert.equal(invalidated.html, null);
+    const freshResponse = await navigateHome();
+    assert.equal(freshResponse.status, 200);
+    assert.doesNotMatch(await freshResponse.text(), /PUNCTUM_VERIFIED_STATIC_SNAPSHOT/);
     const studio = await worker.fetch("http://localhost/admin/studio");
     const studioHtml = await studio.text();
     assert.equal(studio.status, 200);

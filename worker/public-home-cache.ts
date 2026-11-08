@@ -55,6 +55,7 @@ export function isPublicHomeMutationRequest(request: Request): boolean {
   if (path === "/admin/api/albums" || path === "/admin/api/categories") return true;
   if (/^\/admin\/api\/(?:albums|categories|images)\/[^/]+(?:\/(?:publish|archive|reorder|cover))?$/.test(path)) return true;
   if (/^\/admin\/api\/uploads\/[^/]+\/complete$/.test(path)) return request.method === "POST";
+  if (/^\/admin\/api\/site-media\/[^/]+\/complete$/.test(path)) return request.method === "POST";
   return false;
 }
 

@@ -22,6 +22,8 @@ export function recoveryInsert(table, source) {
     row.disabled_at = new Date().toISOString();
   }
   const columns = Object.keys(row);
-  if (!columns.length || columns.some((c) => !/^[a-z_]+$/.test(c))) throw new Error("Invalid recovery column");
+  // SQLite identifiers may contain digits after the initial character
+  // (e.g. original_sha256); keep strict unquoted identifier validation.
+  if (!columns.length || columns.some((c) => !/^[a-z_][a-z0-9_]*$/.test(c))) throw new Error("Invalid recovery column");
   return { sql: `INSERT INTO ${table} (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")})`, params: columns.map((c) => row[c]) };
 }
