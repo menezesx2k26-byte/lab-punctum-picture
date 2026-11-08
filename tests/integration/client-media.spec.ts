@@ -248,6 +248,51 @@ describe("isolated private uploads", () => {
       .bind(value.imageId).first()).toEqual({status:"pending",original_sha256:null});
   });
 
+  it("requires an authenticated byte-for-byte retry for pre-migration uploaded intents without SHA", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=NULL WHERE id=?")
+      .bind(value.intentId).run();
+    const completePath = `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`;
+    const unverified = await exports.default.fetch(privateRequest(completePath, "POST"));
+    expect(unverified.status).toBe(409);
+    expect(await env.DB.prepare("SELECT status,original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first()).toEqual({status:"pending", original_sha256:null});
+    expect((await env.ORIGINALS.head(key))?.size).toBe(PNG.length);
+    // A signed retry re-attests the actual bytes without overwriting the R2 object.
+    expect((await upload(value)).status).toBe(200);
+    expect((await exports.default.fetch(privateRequest(completePath, "POST"))).status).toBe(200);
+    expect((await env.DB.prepare("SELECT original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{original_sha256:string}>())?.original_sha256).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("rejects truncated and oversized streamed bodies without writing R2 or finishing D1", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    async function sendChunks(parts: Uint8Array[]) {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) { for (const bytes of parts) controller.enqueue(bytes); controller.close(); },
+      });
+      return exports.default.fetch(new Request(value.uploadUrl, {
+        method:"PUT", headers:{ ...value.requiredHeaders,
+          Origin:"http://localhost:8787", "Content-Length":String(PNG.length) },
+        body, duplex:"half",
+      } as RequestInit));
+    }
+    expect((await sendChunks([PNG.slice(0,PNG.length-1)])).status).toBe(400);
+    expect((await sendChunks([PNG, new Uint8Array([1])])).status).toBe(400);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    expect(await env.ORIGINALS.head(key)).toBeNull();
+    expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first()).toEqual({status:"pending"});
+    expect((await sendChunks([PNG.slice(0,9),PNG.slice(9,31),PNG.slice(31)])).status).toBe(200);
+    expect((await env.ORIGINALS.head(key))?.size).toBe(PNG.length);
+  });
+
   it("accepts concurrent identical retries without changing stored bytes", async () => {
     const gallery = await seedGallery(await seedClient(), "draft");
     const value = (await (await intent(gallery)).json()) as Intent;

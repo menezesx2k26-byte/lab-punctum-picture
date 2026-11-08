@@ -31,9 +31,11 @@ it("reports missing image validation as a service failure without falsely markin
   const intent = crypto.randomUUID();
   const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?").bind(image).first<{key:string}>())!.key;
   const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
-  await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" } });
+  const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+    .map(part => part.toString(16).padStart(2,"0")).join("");
+  await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" }, customMetadata:{sha256:digest} });
   await env.DB.prepare("UPDATE client_gallery_images SET status='pending',size_bytes=? WHERE id=?").bind(bytes.length,image).run();
-  await env.DB.prepare("INSERT INTO client_gallery_upload_intents (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at) VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'))").bind(intent,gallery,image,bytes.length,key,new Date(Date.now()+3_600_000).toISOString()).run();
+  await env.DB.prepare("INSERT INTO client_gallery_upload_intents (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256) VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'),?)").bind(intent,gallery,image,bytes.length,key,new Date(Date.now()+3_600_000).toISOString(),digest).run();
   const request = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/${intent}/complete`, "POST");
   await expect(handleClientGalleryUploadApi(request,new URL(request.url),{...env,IMAGES:undefined} as unknown as Env)).rejects.toMatchObject({status:503,code:"IMAGE_VALIDATION_UNAVAILABLE"});
   expect((await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?").bind(intent).first())?.status).toBe("uploaded");
@@ -46,10 +48,12 @@ it("keeps an uploaded original recoverable when Images responds 503 during compl
   const intent = crypto.randomUUID();
   const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?").bind(image).first<{key:string}>())!.key;
   const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),c=>c.charCodeAt(0));
-  await env.ORIGINALS.put(key,bytes,{httpMetadata:{contentType:"image/png"}});
+  const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+    .map(part => part.toString(16).padStart(2,"0")).join("");
+  await env.ORIGINALS.put(key,bytes,{httpMetadata:{contentType:"image/png"},customMetadata:{sha256:digest}});
   await env.DB.prepare("UPDATE client_gallery_images SET status='pending',size_bytes=? WHERE id=?").bind(bytes.length,image).run();
-  await env.DB.prepare("INSERT INTO client_gallery_upload_intents (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at) VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'))")
-    .bind(intent,gallery,image,bytes.length,key,new Date(Date.now()+3_600_000).toISOString()).run();
+  await env.DB.prepare("INSERT INTO client_gallery_upload_intents (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256) VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'),?)")
+    .bind(intent,gallery,image,bytes.length,key,new Date(Date.now()+3_600_000).toISOString(),digest).run();
   const request=privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/${intent}/complete`,"POST");
   const brokenImages={
     info: async()=>({width:2,height:2}),

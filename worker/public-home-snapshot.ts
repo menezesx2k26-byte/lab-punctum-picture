@@ -28,7 +28,7 @@ function validPublicSsrHtml(html: string): boolean {
     /<\/html\s*>/i.test(html) &&
     html.includes("Punctum Picture") &&
     html.includes("__VINEXT_RSC_DONE__") &&
-    !/(?:Set-Cookie\s*:|CF-Access-Jwt-Assertion|punctum_client_session|punctum_admin_session)/i.test(html);
+    !/(?:Set-Cookie\s*:|CF-Access-Jwt-Assertion|punctum_client_session|punctum_admin_session|client-galleries\/|\/api\/client\/galleries\/|\/admin\/api\/albuns-privados\/|\/qa\/recover\b)/i.test(html);
 }
 
 async function sha256(text: string): Promise<string> {

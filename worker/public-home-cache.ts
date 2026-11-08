@@ -22,9 +22,17 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
   // Vinext emits this exact framework default on anonymous HTML too.
   // Replace it only inside this narrowly constrained public homepage entrypoint.
   const frameworkDefault = /^no-store,\s*must-revalidate$/i.test(current.trim());
+  // Cache keys cannot safely represent arbitrary variants (language, origin,
+  // identity, user-agent). Only the known Vinext negotiation variants and
+  // transport encoding are eligible for the anonymous public home.
+  const allowedVary = new Set(["rsc", "accept", "next-router-state-tree",
+    "next-router-prefetch", "accept-encoding"]);
+  const unaccountedVary = (headers.get("Vary") ?? "").split(",")
+    .map(part => part.trim().toLowerCase()).filter(Boolean)
+    .some(part => !allowedVary.has(part));
   const sensitive = headers.has("Set-Cookie") || headers.has("WWW-Authenticate") ||
     (!frameworkDefault && /\b(?:private|no-store|no-cache)\b/i.test(current)) ||
-    (headers.get("Vary") ?? "").split(",").some(part => ["*", "cookie", "authorization"].includes(part.trim().toLowerCase()));
+    unaccountedVary;
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
     headers.get("Content-Type")?.toLowerCase().startsWith("text/html") && !sensitive;
   // Browser always revalidates, while the named Cloudflare cache holds public HTML

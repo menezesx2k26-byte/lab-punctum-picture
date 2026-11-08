@@ -54,6 +54,14 @@ describe("public home isolated cache boundary", () => {
       });
       expect(publicHomeCacheResponse(req(), response).headers.get("Cache-Control")).toBe("private, no-store");
     }
+    for (const vary of ["Accept-Language", "Origin", "User-Agent", "X-Client-Identity", "*"]) {
+      const variant = new Response("<html>personalized variant</html>", {
+        headers:{"Content-Type":"text/html", "Cache-Control":"no-store, must-revalidate", Vary:vary}
+      });
+      const isolated = publicHomeCacheResponse(req(),variant);
+      expect(isolated.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(isolated.headers.has("Cloudflare-CDN-Cache-Control")).toBe(false);
+    }
   });
   it("rejects any unauthorized attempt to call the cached entrypoint", () => {
     const bad=req("/api/client/me");

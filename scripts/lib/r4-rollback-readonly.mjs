@@ -33,10 +33,11 @@ export function summarizeRollbackPreflight(data) {
     buckets.filter(bucket => bucket.name === name).length === 1);
   const expectedWorker = scripts.filter(script => script.id === R4_ROLLBACK_QA.worker).length === 1;
   const flag = bindings.find(binding => binding.name === "PRIVATE_GALLERIES_ENABLED" && binding.type === "plain_text")?.text ?? null;
-  const knownBoundD1 = bindings.some(binding => binding.name === "DB" && binding.type === "d1" &&
-    R4_ROLLBACK_QA.databases.some(db => db.id === binding.id));
+  const knownBoundD1 = bindings.filter(binding => binding.name === "DB").length === 1 &&
+    bindings.some(binding => binding.name === "DB" && binding.type === "d1" &&
+      binding.id === R4_ROLLBACK_QA.databases[0].id);
   const inventoryVerified = free && expectedD1 && expectedBuckets && expectedWorker &&
-    knownBoundD1 && flag !== null && ids.length > 0;
+    knownBoundD1 && flag === "false" && ids.length > 0;
   const blockers = [
     "D1/R2 writable and truly segregated target not verified; historical QA fixtures remain immutable",
     "Exact prior Worker version/config/assets/Access fingerprints and reopening not homologated",
@@ -59,5 +60,32 @@ export function summarizeRollbackPreflight(data) {
     blockers,
     writes:0,
     secretValuesStored:false,
+  };
+}
+
+/** Diagnose API permissions without serializing provider error bodies or token
+ * details. A 401 against D1 alongside successful Worker GETs does not prove
+ * that all credentials are invalid, only that this resource is unauthorized.
+ */
+export function summarizeQaReadOnlyProbes(probes) {
+  const sections = ["subscriptions", "scripts", "databases", "buckets", "settings", "deployments"];
+  const diagnostics = {};
+  const incomplete = [];
+  for (const section of sections) {
+    const result = probes?.[section];
+    if (result?.success === true && result?.http === 200) continue;
+    incomplete.push(section);
+    if (result?.http === 401) diagnostics[section] = "HTTP_401_AUTH_OR_RESOURCE_PERMISSION_UNVERIFIED";
+    else if (result?.http === 403) diagnostics[section] = "HTTP_403_SCOPE_OR_ACCOUNT_ACCESS_REQUIRED";
+    else if (result?.http === "NETWORK_ERROR") diagnostics[section] = "NETWORK_READ_ONLY_PROBE_FAILED";
+    else diagnostics[section] = "READ_ONLY_RESOURCE_UNVERIFIED";
+  }
+  return {
+    complete: incomplete.length === 0,
+    status: incomplete.length ? "BLOCKED_READ_ONLY_SCOPES_UNVERIFIED" : "READ_ONLY_RESPONSES_COMPLETE",
+    incomplete,
+    diagnostics,
+    rollbackAuthorized: false,
+    writes: 0,
   };
 }

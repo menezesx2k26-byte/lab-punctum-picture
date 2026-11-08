@@ -31,6 +31,7 @@ jobs:
       - run: node --test scripts/r4-images-preflight.test.mjs scripts/r4-images-probe-worker.test.mjs
       - run: node --test scripts/r4-product-raster-validation.test.mjs
       - run: node --test scripts/r4-cpu-readonly.test.mjs
+      - run: node --test scripts/r4-cpu-historical-readonly.test.mjs scripts/r4-rollback-readonly.test.mjs
       - run: node --test scripts/r4-access-runtime.test.mjs
       - run: node --test scripts/r4-recovery-qa.test.mjs
       - run: node --test scripts/r4-scoped-local.test.mjs

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { summarizeRollbackPreflight, R4_ROLLBACK_QA } from "./lib/r4-rollback-readonly.mjs";
+import { summarizeRollbackPreflight, summarizeQaReadOnlyProbes, R4_ROLLBACK_QA } from "./lib/r4-rollback-readonly.mjs";
 
 const fixture = () => ({
   subscriptions: [{ rate_plan: { id: "free" } }],
@@ -28,11 +28,28 @@ test("missing or ambiguous resource readback fails closed, not PASS", () => {
     { databases: [] }, { scripts:[] }, { buckets:{buckets:[]} },
     { subscriptions:[{ rate_plan:{ id:"workers_paid" } }] },
     { settings:null }, { deployments:null },
+    { settings:{bindings:[{ name:"DB", type:"d1", id:R4_ROLLBACK_QA.databases[1].id },
+      { name:"PRIVATE_GALLERIES_ENABLED",type:"plain_text",text:"false" }] } },
+    { settings:{bindings:[{ name:"DB", type:"d1", id:R4_ROLLBACK_QA.databases[0].id },
+      { name:"PRIVATE_GALLERIES_ENABLED",type:"plain_text",text:"true" }] } },
   ]) {
     const result = summarizeRollbackPreflight({...fixture(),...patch});
     assert.equal(result.inventoryVerified, false);
     assert.equal(result.rollbackAuthorized, false);
   }
+});
+test("failed subscription and D1 probes disclose only actionable scope diagnostics, not secrets", () => {
+  const result = summarizeQaReadOnlyProbes({
+    subscriptions:{http:403,success:false}, scripts:{http:200,success:true},
+    databases:{http:401,success:false}, buckets:{http:200,success:true},
+    settings:{http:200,success:true}, deployments:{http:200,success:true},
+  });
+  assert.equal(result.complete,false);
+  assert.equal(result.status,"BLOCKED_READ_ONLY_SCOPES_UNVERIFIED");
+  assert.deepEqual(result.incomplete,["subscriptions","databases"]);
+  assert.equal(result.diagnostics.subscriptions,"HTTP_403_SCOPE_OR_ACCOUNT_ACCESS_REQUIRED");
+  assert.equal(result.diagnostics.databases,"HTTP_401_AUTH_OR_RESOURCE_PERMISSION_UNVERIFIED");
+  assert.ok(!JSON.stringify(result).includes("token"));
 });
 test("sanitized report contains no binding secrets or raw credentials", () => {
   const input = fixture();

@@ -115,6 +115,39 @@ describe("scoped private recovery with real local D1/R2", () => {
     await expect(restoreClientRecovery(metadataTampered, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)).rejects.toThrow("digest mismatch");
     expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
   });
+  it("rejects mismatched uploaded intent SHA evidence during capture and before restore writes", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    const bytes = new Uint8Array([1]);
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+      .map(part => part.toString(16).padStart(2,"0")).join("");
+    await env.ORIGINALS.put(key, bytes, {httpMetadata:{contentType:"image/png"},customMetadata:{sha256:digest}});
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind(digest,photo).run();
+    const intentId = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,completed_at,sha256)
+      VALUES (?,?,?,?,?,?,'completed',datetime('now','+1 hour'),datetime('now'),datetime('now'),?)`)
+      .bind(intentId,gallery,photo,"image/png",1,key,digest).run();
+    const snapshot = await captureClientRecovery(env.DB,env.ORIGINALS,[client]);
+    expect(snapshot.tables.client_gallery_upload_intents[0].sha256).toBe(digest);
+    const corrupted = structuredClone(snapshot);
+    corrupted.tables.client_gallery_upload_intents[0].sha256 = "d".repeat(64);
+    await expect(restoreClientRecovery(corrupted,bindings.RESTORE_DB,bindings.RESTORE_ORIGINALS))
+      .rejects.toThrow("digest mismatch");
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(client).first()).toBeNull();
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=? WHERE id=?")
+      .bind("f".repeat(64),intentId).run();
+    await expect(captureClientRecovery(env.DB,env.ORIGINALS,[client])).rejects.toThrow("digest mismatch");
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=? WHERE id=?")
+      .bind(digest,intentId).run();
+    const restored = await restoreClientRecovery(snapshot,bindings.RESTORE_DB,bindings.RESTORE_ORIGINALS);
+    expect(restored.objects).toBe(1);
+    expect((await bindings.RESTORE_DB.prepare("SELECT sha256 FROM client_gallery_upload_intents WHERE id=?")
+      .bind(intentId).first<{sha256:string}>())?.sha256).toBe(digest);
+  });
   it("rejects incoherent covers, size and MIME before writing any restored object", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);

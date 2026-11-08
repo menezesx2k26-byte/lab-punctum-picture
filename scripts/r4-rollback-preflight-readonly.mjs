@@ -2,7 +2,7 @@
 // This process does not run a rollback, deploy, mutate D1/R2 or read photo bodies.
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
-import { R4_ROLLBACK_QA, summarizeRollbackPreflight } from "./lib/r4-rollback-readonly.mjs";
+import { R4_ROLLBACK_QA, summarizeRollbackPreflight, summarizeQaReadOnlyProbes } from "./lib/r4-rollback-readonly.mjs";
 
 assert.equal(process.env.GITHUB_ACTIONS, "true", "GitHub Actions only");
 const token = process.env.CLOUDFLARE_API_TOKEN;
@@ -53,6 +53,7 @@ if (token) {
   report.probes = Object.fromEntries(Object.entries({
     subscriptions, scripts, databases, buckets, settings, deployments,
   }).map(([name, response]) => [name, { http: response.http, success: response.ok }]));
+  report.accessAssessment = summarizeQaReadOnlyProbes(report.probes);
   if ([subscriptions, scripts, databases, buckets, settings, deployments]
     .every(result => result.ok)) {
     Object.assign(report, summarizeRollbackPreflight({
@@ -68,7 +69,7 @@ if (token) {
     report.status = report.inventoryVerified ? "READ_ONLY_ELIGIBILITY_VERIFIED_ROLLBACK_BLOCKED"
       : "READ_ONLY_INVENTORY_UNVERIFIED";
   } else {
-    report.status = "BLOCKED_INCOMPLETE_READ_ONLY_API";
+    report.status = report.accessAssessment.status;
   }
 }
 report.productionSafeToRelease = false;

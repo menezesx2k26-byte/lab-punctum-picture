@@ -75,28 +75,26 @@ function matchesMime(bytes: Uint8Array, mime: string) {
 async function readBounded(request: Request, size: number) {
   if (!request.body || request.headers.get("content-length") !== String(size))
     throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
-  const chunks: Uint8Array[] = [];
   let total = 0;
+  let bytes: Uint8Array | null = null;
   const reader = request.body.getReader();
   while (true) {
     const item = await reader.read();
     if (item.done) break;
-    total += item.value.byteLength;
-    if (total > size) {
+    if (item.value.byteLength > size - total) {
       await reader.cancel();
       throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
     }
-    chunks.push(item.value);
+    // Allocate only after a first chunk arrives, then copy each chunk once.
+    // This avoids retaining the full chunk list *and* a second full-size copy
+    // during upload, while still enforcing the exact expected byte count.
+    if (!bytes) bytes = new Uint8Array(size);
+    bytes.set(item.value, total);
+    total += item.value.byteLength;
   }
   if (total !== size)
     throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return bytes;
+  return bytes!;
 }
 export async function handleClientGalleryUploadApi(
   request: Request,
@@ -281,6 +279,12 @@ export async function handleClientGalleryUploadApi(
   if (match[4] === "complete" && request.method === "POST") {
     if (intent.status !== "uploaded")
       throw new AppError(409, "UPLOAD_INCOMPLETE", "Conclua o envio da foto.");
+    // A pre-migration uploaded intent lacks an independent attestation of
+    // the bytes initially submitted. Do not certify whatever is now in R2.
+    // An authenticated signed PUT of identical immutable bytes must first
+    // re-attest the object and fill the nullable digest.
+    if (intent.sha256 === null)
+      throw new AppError(409, "UPLOAD_REATTEST_REQUIRED", "Reenvie a mesma foto para confirmar sua integridade.");
     if (!env.IMAGES)
       throw new AppError(503, "IMAGE_VALIDATION_UNAVAILABLE", "A validação de fotos está indisponível. Tente novamente mais tarde.");
     const head = await bucket.head(intent.storageKey);

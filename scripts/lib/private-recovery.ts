@@ -40,6 +40,19 @@ function assertScope(snapshot: ClientRecovery) {
         (object.customMetadata?.sha256 != null && object.customMetadata.sha256 !== object.sha256))
       throw new Error("Recovery digest mismatch");
   }
+  // A backup's upload-intent digest is a separate D1 attestation. Checking
+  // only the image row would let a forged/replayed intent restore inconsistent
+  // authentication and original-byte evidence. NULL is historical, not a
+  // checksum to manufacture during recovery.
+  const objects = new Map(snapshot.objects.map(object => [object.key, object]));
+  for (const intent of snapshot.tables.client_gallery_upload_intents) {
+    if (intent.sha256 === null) continue;
+    const image = images.get(intent.image_id);
+    const object = objects.get(String(intent.storage_key));
+    if (!image || !object || intent.sha256 !== object.sha256 ||
+        (image.original_sha256 !== null && image.original_sha256 !== intent.sha256))
+      throw new Error("Recovery intent digest mismatch");
+  }
   const keys = new Set(snapshot.objects.map((o) => o.key));
   if (keys.size !== snapshot.objects.length || snapshot.tables.client_gallery_images.some((r) => r.status === "ready" && !keys.has(String(r.storage_key))))
     throw new Error("Recovery object missing or duplicated");
