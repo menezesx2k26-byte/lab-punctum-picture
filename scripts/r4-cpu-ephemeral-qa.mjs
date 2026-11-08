@@ -80,7 +80,7 @@ try {
   const config=cpuQaWorkerConfig(name,origin,probeToken);
   await copyFile(resolve('scripts/r4-cpu-guard.mjs'),resolve('dist/server/r4-cpu-guard.mjs'));
   await writeFile(resolve('dist/server/r4-cpu-entry.mjs'),
-    "import app from './index.js';\nimport {cpuProbeFetch} from './r4-cpu-guard.mjs';\nexport default {fetch(req,env,ctx){return cpuProbeFetch(req,env,ctx,app)}};\n");
+    "import app from './index.js';\nimport {cpuProbeFetch} from './r4-cpu-guard.mjs';\nexport {PublicHome} from './index.js';\nexport default {fetch(req,env,ctx){return cpuProbeFetch(req,env,ctx,app)}};\n");
   await writeFile(configPath,JSON.stringify(config));
   allocated=true;
   assert.ok(wrangler(['deploy','--config',configPath]),'Read-only Worker deploy failed');
@@ -103,10 +103,10 @@ try {
     const response=await fetch(origin+'/',{headers:{Accept:'text/html','X-R4-CPU-Probe':probeToken},redirect:'manual',
       signal:AbortSignal.timeout(20000)});
     const body=await response.text();
-    samples.push({status:response.status,latencyMs:Math.round(performance.now()-started),
+    samples.push({status:response.status,cacheStatus:response.headers.get('CF-Cache-Status'),latencyMs:Math.round(performance.now()-started),
       validHtml:body.includes('</html>')});
   }
-  report.http={total:samples.length,success:samples.filter(s=>s.status===200&&s.validHtml).length,
+  report.http={cacheStatuses:samples.reduce((counts,sample)=>({...counts,[sample.cacheStatus??'none']:(counts[sample.cacheStatus??'none']??0)+1}),{}),total:samples.length,success:samples.filter(s=>s.status===200&&s.validHtml).length,
     errors:samples.filter(s=>s.status!==200||!s.validHtml).length,
     latencyMs:summary(samples.map(s=>s.latencyMs))};
   report.measurementWindow={start:new Date(Date.now()-100000).toISOString(),end:new Date().toISOString()};

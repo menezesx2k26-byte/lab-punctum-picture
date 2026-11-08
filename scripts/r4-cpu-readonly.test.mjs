@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cpuQaEligibility,cpuQaWorkerConfig} from './lib/r4-cpu-readonly.mjs';
 import {cpuProbeFetch} from './r4-cpu-guard.mjs';
@@ -54,4 +54,11 @@ test('only authenticated root GET may reach the full app under CPU probe',async(
   const allowed=await cpuProbeFetch(new Request(origin+'/',{headers:{'X-R4-CPU-Probe':env.R4_CPU_PROBE_TOKEN}}),env,{},app);
   assert.equal(allowed.status,200);
   assert.equal(touched,1);
+});
+
+test('Workers Cache is restricted to PublicHome named entrypoint, not the privileged default',()=>{
+  const config=cpuQaWorkerConfig(good.name,'https://'+good.name+'.example.workers.dev','a'.repeat(64));
+  assert.equal(config.vars.PUBLIC_HOME_CACHE_ENABLED,'true');
+  assert.deepEqual(config.exports,{default:{type:'worker',cache:{enabled:false}},PublicHome:{type:'worker',cache:{enabled:true}}});
+  assert.equal(config.compatibility_date,'2026-11-07');
 });

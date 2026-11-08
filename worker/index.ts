@@ -1,3 +1,6 @@
+import { WorkerEntrypoint } from "cloudflare:workers";
+import { isPublicHomeCacheRequest, publicHomeCacheResponse } from "./public-home-cache";
+import { envString } from "./utils/env";
 import {
   DEFAULT_DEVICE_SIZES,
   DEFAULT_IMAGE_SIZES,
@@ -38,7 +41,7 @@ async function routeRequest(
     if (!env.IMAGES) {
       const source = url.searchParams.get("url");
       if (!source || !source.startsWith("/") || source.startsWith("//")) {
-        throw new AppError(400, "INVALID_IMAGE_SOURCE", "A origem da imagem é inválida.");
+        throw new AppError(400, "INVALID_IMAGE_SOURCE", "A origem da imagem Ã© invÃ¡lida.");
       }
 
       const sourceUrl = new URL(source, request.url);
@@ -134,7 +137,7 @@ async function routeRequest(
     url.pathname === "/studio-preview-internal" ||
     url.pathname.startsWith("/studio-preview-internal/")
   ) {
-    throw new AppError(404, "NOT_FOUND", "Página não encontrada.");
+    throw new AppError(404, "NOT_FOUND", "PÃ¡gina nÃ£o encontrada.");
   }
 
   if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
@@ -170,15 +173,36 @@ async function routeRequest(
   return isPrivateGalleryPath(url.pathname) ? privateResponse(response) : withSecurityHeaders(response);
 }
 
+/**
+ * A separately cached WorkerEntrypoint for anonymous public home HTML only.
+ * Default/admin/client entrypoints remain uncached; no client data reaches here.
+ */
+export class PublicHome extends WorkerEntrypoint<Env> {
+  async fetch(request: Request): Promise<Response> {
+    if (!isPublicHomeCacheRequest(request))
+      return publicHomeCacheResponse(request, new Response(null, { status: 404 }));
+    try {
+      const response = await routeRequest(request, this.env, this.ctx);
+      return publicHomeCacheResponse(request, response);
+    } catch (error) {
+      return publicHomeCacheResponse(request, apiError(error));
+    }
+  }
+}
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const requestId = request.headers.get("cf-ray") ?? crypto.randomUUID();
     try {
+      if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && isPublicHomeCacheRequest(request)) {
+        const entrypoint = (ctx as ExecutionContext & { exports?: { PublicHome?: { fetch(req: Request): Promise<Response> } } }).exports?.PublicHome;
+        if (!entrypoint) throw new AppError(503, "PUBLIC_HOME_CACHE_UNAVAILABLE", "Cache de páginas públicas indisponível.");
+        return await entrypoint.fetch(request);
+      }
       return await routeRequest(request, env, ctx);
     } catch (error) {
       if (isPrivateGalleryPath(new URL(request.url).pathname)) return privateResponse(apiError(error,requestId));
       if (error instanceof AppError && error.status === 404 && !new URL(request.url).pathname.startsWith("/api/")) {
-        return new Response("Página não encontrada.", {
+        return new Response("PÃ¡gina nÃ£o encontrada.", {
           status: 404,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         });
