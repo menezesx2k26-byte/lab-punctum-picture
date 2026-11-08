@@ -41,7 +41,9 @@ describe("versioned public-home snapshot for cold cache MISS", () => {
     expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, "<html>partial</html>")).toBe(false);
     expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, HTML.replace("Studio publicado", "Set-Cookie: secret"))).toBe(false);
     for (const secret of ["client-galleries/example/private.jpg", "/api/client/galleries/secret/images/id/download",
-      "/admin/api/albuns-privados/secret", "/qa/recover"]) {
+      "/admin/api/albuns-privados/secret", "/qa/recover",
+      "%2Fapi%2Fclient%2Fgalleries%2Fsecret", "\\u002Fapi\\u002Fclient\\u002Fgalleries",
+      "&#47;api&#47;client&#47;galleries", "\\/admin\\/api\\/albuns-privados\\/secret"]) {
       const dangerous = HTML.replace("Studio publicado", secret);
       expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, dangerous)).toBe(false);
     }

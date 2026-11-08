@@ -10,6 +10,7 @@ import {
 import { handleClientGalleryUploadApi } from "../../worker/api/client-gallery-upload";
 import { handlePrivateGalleryRoutes } from "../../worker/client/router";
 import { createClientSession } from "../../worker/client/auth";
+import { servePrivateGalleryImage } from "../../worker/media/private-gallery";
 
 const PNG = Uint8Array.from(
   atob(
@@ -393,6 +394,49 @@ describe("isolated private uploads", () => {
 
 describe("private media authorization", () => {
   beforeAll(bootstrapPrivateDb);
+
+  it("never feeds oversized legacy or inconsistent R2 originals into Images previews", async () => {
+    const gallery = await seedGallery(await seedClient());
+    const imageId = await seedReadyImage(gallery);
+    const failImages = {
+      info: () => { throw new Error("Images must not inspect oversized original"); },
+      input: () => { throw new Error("Images must not receive oversized original"); },
+    };
+    const failBucket = new Proxy(env.ORIGINALS, {
+      get(target,key) {
+        if (key === "head" || key === "get") return () => { throw new Error("R2 must not be read for oversized DB row"); };
+        const value = Reflect.get(target,key);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=26214400 WHERE id=?")
+      .bind(imageId).run();
+    for (const preset of ["thumb", "gallery"] as const) {
+      for (const head of [false,true]) {
+        const path=`/admin/api/albuns-privados/${gallery}/images/${imageId}/${preset}`;
+        await expect(servePrivateGalleryImage(privateRequest(path,head?"HEAD":"GET"),
+          {...env,ORIGINALS:failBucket,IMAGES:failImages} as unknown as Env,
+          gallery,imageId,preset,"admin",head))
+          .rejects.toMatchObject({status:413,code:"IMAGE_INPUT_LIMIT"});
+      }
+    }
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?")
+      .bind(PNG.length,imageId).run();
+    const mismatchedR2 = {
+      head: async () => ({size:20_000_001, httpMetadata:{contentType:"image/png"}}),
+      get: async () => ({size:20_000_001,httpMetadata:{contentType:"image/png"},
+        body:new Response(PNG).body!,arrayBuffer:async()=>PNG.buffer}),
+    };
+    for(const preset of ["thumb","gallery"] as const) {
+      for(const head of [false,true]) {
+        const path=`/admin/api/albuns-privados/${gallery}/images/${imageId}/${preset}`;
+        await expect(servePrivateGalleryImage(privateRequest(path,head?"HEAD":"GET"),
+          {...env,ORIGINALS:mismatchedR2,IMAGES:failImages} as unknown as Env,
+          gallery,imageId,preset,"admin",head))
+          .rejects.toMatchObject({status:413,code:"IMAGE_INPUT_LIMIT"});
+      }
+    }
+  });
 
   it("uses R2 metadata only for authorized HEAD requests", async () => {
     const owner = await seedClient();

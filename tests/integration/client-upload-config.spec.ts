@@ -87,3 +87,38 @@ it("rejects photos over the 20 MB Images Binding input limit before any D1 reser
   expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM client_gallery_upload_intents WHERE gallery_id=?")
     .bind(gallery).first<{n:number}>())?.n).toBe(0);
 });
+
+it("never reads R2 or calls Images for legacy oversized intents already persisted in D1", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const image = await seedReadyImage(gallery);
+  const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(image).first<{key:string}>())!.key;
+  const id = crypto.randomUUID();
+  const oversized = 26_214_400;
+  await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+    (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256)
+    VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'),?)`)
+    .bind(id,gallery,image,oversized,key,new Date(Date.now()+3600000).toISOString(),"a".repeat(64)).run();
+  const lockedBucket = new Proxy(env.ORIGINALS, {
+    get(target,key) {
+      if (["put","head","get"].includes(String(key)))
+        return () => { throw new Error("oversized original must not reach R2"); };
+      const value=Reflect.get(target,key);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const forbiddenImages = {
+    info: () => { throw new Error("oversized original must not reach Images.info"); },
+    input: () => { throw new Error("oversized original must not reach Images.input"); },
+  };
+  for (const method of ["PUT", "POST"] as const) {
+    const action = method === "PUT" ? "direct" : "complete";
+    const path = `/admin/api/albuns-privados/${gallery}/uploads/${id}/${action}`;
+    const request = privateRequest(path, method);
+    await expect(handleClientGalleryUploadApi(request,new URL(request.url),
+      {...env,ORIGINALS:lockedBucket,IMAGES:forbiddenImages} as unknown as Env))
+      .rejects.toMatchObject({status:413,code:"UPLOAD_IMAGE_LIMIT"});
+  }
+  expect(await env.DB.prepare("SELECT status,sha256 FROM client_gallery_upload_intents WHERE id=?")
+    .bind(id).first()).toEqual({status:"uploaded",sha256:"a".repeat(64)});
+});

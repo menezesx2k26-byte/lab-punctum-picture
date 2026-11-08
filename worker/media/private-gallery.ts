@@ -1,4 +1,5 @@
 import { requireClient } from "../client/auth";
+import { CLIENT_MAX_UPLOAD_BYTES } from "../../shared/client-galleries";
 import {
   getOwnedGallery,
   getGallery,
@@ -48,6 +49,11 @@ export async function servePrivateGalleryImage(
       "DOWNLOAD_DISABLED",
       "O download deste álbum está desativado.",
     );
+  // Historical ready rows can predate today's safe Images Binding limit.
+  // Never feed their originals to Images even when a D1 row or its R2 object
+  // is inconsistent. Downloads remain a separate authorized R2 operation.
+  if (preset !== "download" && image.sizeBytes > CLIENT_MAX_UPLOAD_BYTES)
+    throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   const bucket = requireOriginals(env);
   if (headOnly) {
     if (preset !== "download" && !env.IMAGES)
@@ -58,6 +64,8 @@ export async function servePrivateGalleryImage(
       );
     const head = await bucket.head(image.storageKey);
     if (!head) throw missing();
+    if (preset !== "download" && head.size > CLIENT_MAX_UPLOAD_BYTES)
+      throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
     if (image.originalSha256) {
       if (head.size !== image.sizeBytes ||
           head.httpMetadata?.contentType !== image.mimeType ||
@@ -88,6 +96,8 @@ export async function servePrivateGalleryImage(
   }
   const object = await bucket.get(image.storageKey);
   if (!object) throw missing();
+  if (preset !== "download" && object.size > CLIENT_MAX_UPLOAD_BYTES)
+    throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   // Integrity is anchored in D1 when a verified private upload completed.
   // A changed R2 object must not be streamed as a valid original or derivative.
   // Historical rows without a digest remain readable, pending separate backfill.

@@ -21,6 +21,10 @@ function validBuildId(buildId: string): boolean {
 
 function validPublicSsrHtml(html: string): boolean {
   if (!html || new TextEncoder().encode(html).byteLength > MAX_HTML_BYTES) return false;
+  // Common HTML/JSON/URL escaping cannot turn a known private-media path
+  // into publicly cacheable markup. This is a defense-in-depth gate; the
+  // snapshot producer must still be trusted and independently audited.
+  const normalizedPaths = html.replace(/(?:\\u002f|\\\/|%2f|&#x0*2f;|&#0*47;|&sol;)/gi, "/");
   // A complete SSR document, including the RSC hydration footer, is required.
   // A preview, 404, JSON, login or partial streaming response is not a snapshot.
   return /<!doctype html\s*>/i.test(html) &&
@@ -28,7 +32,7 @@ function validPublicSsrHtml(html: string): boolean {
     /<\/html\s*>/i.test(html) &&
     html.includes("Punctum Picture") &&
     html.includes("__VINEXT_RSC_DONE__") &&
-    !/(?:Set-Cookie\s*:|CF-Access-Jwt-Assertion|punctum_client_session|punctum_admin_session|client-galleries\/|\/api\/client\/galleries\/|\/admin\/api\/albuns-privados\/|\/qa\/recover\b)/i.test(html);
+    !/(?:Set-Cookie\s*:|CF-Access-Jwt-Assertion|punctum_client_session|punctum_admin_session|client-galleries\/|\/api\/client\/galleries\b|\/admin\/api\/albuns-privados\b|\/qa\/recover\b)/i.test(normalizedPaths);
 }
 
 async function sha256(text: string): Promise<string> {

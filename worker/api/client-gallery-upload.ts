@@ -1,4 +1,4 @@
-import { clientImageIntentSchema } from "../../shared/client-galleries";
+import { clientImageIntentSchema, CLIENT_MAX_UPLOAD_BYTES } from "../../shared/client-galleries";
 import { validateGalleryRaster, isGalleryRasterTransientError } from "../client/gallery-raster.mjs";
 import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
 import {
@@ -198,6 +198,16 @@ export async function handleClientGalleryUploadApi(
     .bind(match[3] ?? "", galleryId)
     .first<IntentRow>();
   if (!intent) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+  // Older/externally restored D1 intents may predate the 20 MB operational
+  // Images limit. Guard the persisted size on EVERY continuation path, before
+  // body allocation, R2 reads or Images calls. This does not change the
+  // original 25 MiB product requirement; it fails closed until a validated
+  // 25 MiB architecture is implemented and independently measured.
+  if (!Number.isSafeInteger(intent.expectedSize) || intent.expectedSize < 1 ||
+      intent.expectedSize > CLIENT_MAX_UPLOAD_BYTES)
+    throw new AppError(413, "UPLOAD_IMAGE_LIMIT", "Este envio ultrapassa o limite seguro de validação de fotos.");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(intent.expectedMime))
+    throw new AppError(409, "UPLOAD_TYPE", "O tipo do envio não é suportado.");
   if (
     intent.status === "completed" &&
     match[4] === "complete" &&
