@@ -1,5 +1,5 @@
 import { WorkerEntrypoint } from "cloudflare:workers";
-import { isPublicHomeCacheRequest, publicHomeCacheResponse } from "./public-home-cache";
+import { isPublicHomeCacheRequest, publicHomeCacheResponse, shouldPurgePublicHome, PUBLIC_HOME_CACHE_TAG } from "./public-home-cache";
 import { envString } from "./utils/env";
 import {
   DEFAULT_DEVICE_SIZES,
@@ -178,6 +178,13 @@ async function routeRequest(
  * Default/admin/client entrypoints remain uncached; no client data reaches here.
  */
 export class PublicHome extends WorkerEntrypoint<Env> {
+  async purgeCache(): Promise<boolean> {
+    // Purge must execute from the entrypoint that owns the cached HTML.
+    if (!this.ctx.cache) return false;
+    const result = await this.ctx.cache.purge({ tags: [PUBLIC_HOME_CACHE_TAG] });
+    return result.success === true;
+  }
+
   async fetch(request: Request): Promise<Response> {
     if (!isPublicHomeCacheRequest(request))
       return publicHomeCacheResponse(request, new Response(null, { status: 404 }));
@@ -198,7 +205,21 @@ export default {
         if (!entrypoint) throw new AppError(503, "PUBLIC_HOME_CACHE_UNAVAILABLE", "Cache de páginas públicas indisponível.");
         return await entrypoint.fetch(request);
       }
-      return await routeRequest(request, env, ctx);
+      const response = await routeRequest(request, env, ctx);
+      if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && shouldPurgePublicHome(request, response)) {
+        const entrypoint = (ctx as ExecutionContext & {
+          exports?: { PublicHome?: { purgeCache(): Promise<boolean> } }
+        }).exports?.PublicHome;
+        // An already-committed write must not be retried or disguised as a failed
+        // request just because a best-effort cache purge is unavailable.
+        try {
+          if (!entrypoint || !(await entrypoint.purgeCache()))
+            console.warn("Punctum public home purge unconfirmed after a successful admin change");
+        } catch {
+          console.warn("Punctum public home purge unavailable after a successful admin change");
+        }
+      }
+      return response;
     } catch (error) {
       if (isPrivateGalleryPath(new URL(request.url).pathname)) return privateResponse(apiError(error,requestId));
       if (error instanceof AppError && error.status === 404 && !new URL(request.url).pathname.startsWith("/api/")) {

@@ -27,10 +27,33 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
     (headers.get("Vary") ?? "").split(",").some(part => ["*", "cookie", "authorization"].includes(part.trim().toLowerCase()));
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
     headers.get("Content-Type")?.toLowerCase().startsWith("text/html") && !sensitive;
-  headers.set("Cache-Control", safe ? "public, max-age=60" : "private, no-store");
+  // Browser always revalidates, while the named Cloudflare cache holds public HTML
+  // for 60s. A Studio purge therefore cannot leave a browser-local 60s copy.
+  headers.set("Cache-Control", safe ? "public, max-age=0, must-revalidate" : "private, no-store");
+  if (safe) headers.set("Cloudflare-CDN-Cache-Control", "public, max-age=60");
+  else headers.delete("Cloudflare-CDN-Cache-Control");
+  if (safe) headers.set("Cache-Tag", PUBLIC_HOME_CACHE_TAG);
+  else headers.delete("Cache-Tag");
   // The public site is short-lived to reflect Studio publication changes.
   // No stale-while-revalidate, no arbitrary query key explosion.
   return new Response(response.body, {
     status: response.status, statusText: response.statusText, headers
   });
+}
+
+export const PUBLIC_HOME_CACHE_TAG = "punctum-public-home-v1";
+
+/** A successful publication can affect the cached public homepage.
+ * Draft edits, private albums, payments and contact/inquiry mutations never purge it.
+ */
+export function shouldPurgePublicHome(request: Request, response: Response): boolean {
+  if (!response.ok || !["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return false;
+  const path = new URL(request.url).pathname;
+  if (["/admin/api/studio/publish", "/admin/api/studio/publish-visual",
+    "/admin/api/studio/restore"].includes(path)) return request.method === "POST";
+  if (path === "/admin/api/settings") return request.method === "PATCH";
+  if (path === "/admin/api/albums" || path === "/admin/api/categories") return true;
+  if (/^\/admin\/api\/(?:albums|categories|images)\/[^/]+(?:\/(?:publish|archive|reorder|cover))?$/.test(path)) return true;
+  if (/^\/admin\/api\/uploads\/[^/]+\/complete$/.test(path)) return request.method === "POST";
+  return false;
 }

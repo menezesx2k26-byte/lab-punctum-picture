@@ -74,3 +74,17 @@ test('cache QA does not promote a warm hit when HTML or CPU cold misses are unpr
   assert.equal(rejected.cacheHotPathVerified,false);
   assert.equal(rejected.freeCpuGatePassed,false);
 });
+
+test('scoped synthetic purge is authenticated and cannot mutate private routes',async()=>{
+  const env={R4_CPU_PROBE_TOKEN:'a'.repeat(64)};
+  const origin='https://punctum-r4-cpu-probe-42437156639.example.workers.dev';
+  let purges=0,appCalls=0;
+  const ctx={exports:{PublicHome:{purgeCache:async()=>{purges++;return true}}}};
+  const app={fetch:async()=>{appCalls++;return Response.json({bad:true})}};
+  const denied=await cpuProbeFetch(new Request(origin+'/probe-purge',{method:'POST'}),env,ctx,app);
+  assert.equal(denied.status,404);
+  const accepted=await cpuProbeFetch(new Request(origin+'/probe-purge',{method:'POST',headers:{'X-R4-CPU-Probe':env.R4_CPU_PROBE_TOKEN}}),env,ctx,app);
+  assert.equal(accepted.status,200);
+  assert.equal(purges,1);
+  assert.equal(appCalls,0);
+});

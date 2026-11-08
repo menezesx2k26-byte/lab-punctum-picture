@@ -109,6 +109,34 @@ try {
   report.http={errorSamples:samples.filter(s=>s.status!==200||!s.validHtml).map(s=>({status:s.status,cacheStatus:s.cacheStatus,validHtml:s.validHtml})),cacheStatuses:samples.reduce((counts,sample)=>({...counts,[sample.cacheStatus??'none']:(counts[sample.cacheStatus??'none']??0)+1}),{}),total:samples.length,success:samples.filter(s=>s.status===200&&s.validHtml).length,
     errors:samples.filter(s=>s.status!==200||!s.validHtml).length,
     latencyMs:summary(samples.map(s=>s.latencyMs))};
+  // Prove selective Workers Cache purge in this ephemeral entrypoint only.
+  // The token never enters the report. No historical Worker/DB writes occur.
+  const hasWarmCache=samples.length===36&&samples.every(s=>s.status===200&&s.validHtml)&&
+    samples.filter(s=>s.cacheStatus==='HIT').length>=30;
+  if(!hasWarmCache)throw Error('Warm cache was not verified; cannot test scoped purge');
+  const purgeResponse=await fetch(origin+'/probe-purge',{method:'POST',
+    headers:{'X-R4-CPU-Probe':probeToken},redirect:'manual',signal:AbortSignal.timeout(15000)});
+  const purgeBody=await purgeResponse.json().catch(()=>null);
+  report.cachePurge={scope:'ephemeral-PublicHome-only',status:purgeResponse.status,
+    accepted:purgeResponse.status===200&&purgeBody?.ok===true};
+  assert.ok(report.cachePurge.accepted,'Scoped PublicHome purge was not accepted');
+  const afterPurge=await fetch(origin+'/',{headers:{Accept:'text/html',
+    'X-R4-CPU-Probe':probeToken},redirect:'manual',signal:AbortSignal.timeout(20000)});
+  const afterPurgeHtml=await afterPurge.text();
+  report.cachePurge.afterPurge={status:afterPurge.status,
+    cacheStatus:afterPurge.headers.get('CF-Cache-Status'),html:afterPurgeHtml.includes('</html>')};
+  assert.ok(afterPurge.status===200&&report.cachePurge.afterPurge.html&&
+    ['MISS','EXPIRED'].includes(report.cachePurge.afterPurge.cacheStatus),
+    'Fresh public HTML after purge was not observed');
+  const rewarmed=await fetch(origin+'/',{headers:{Accept:'text/html',
+    'X-R4-CPU-Probe':probeToken},redirect:'manual',signal:AbortSignal.timeout(15000)});
+  const rewarmHtml=await rewarmed.text();
+  report.cachePurge.rewarm={status:rewarmed.status,
+    cacheStatus:rewarmed.headers.get('CF-Cache-Status'),html:rewarmHtml.includes('</html>')};
+  assert.ok(rewarmed.status===200&&report.cachePurge.rewarm.html&&
+    report.cachePurge.rewarm.cacheStatus==='HIT',
+    'Public home was not cached again after scoped purge');
+  report.cachePurge.verified=true;
   report.measurementWindow={start:new Date(Date.now()-100000).toISOString(),end:new Date().toISOString()};
   await new Promise(resolve=>setTimeout(resolve,15000));
   const query='query($accountTag:String!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){workersInvocationsAdaptive(limit:1000,filter:{scriptName:"'+name+'",datetime_geq:$start,datetime_lt:$end}){sum{requests errors} quantiles{cpuTimeP50 cpuTimeP95 cpuTimeP99}}}}}';
