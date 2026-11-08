@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { summarizeImageUsage, summarizeSubscriptions, decideImageQaReadiness, isCloudflareProbeSuccess } from "./lib/r4-images-preflight.mjs";
+import { summarizeImageUsage, summarizeSubscriptions, decideImageQaReadiness, isCloudflareProbeSuccess, decideFreeEphemeralProbe } from "./lib/r4-images-preflight.mjs";
 
 test("subscription inventory cannot imply free Images from missing or partial data", () => {
   assert.equal(summarizeSubscriptions(null).plan, "UNVERIFIED");
@@ -33,4 +33,15 @@ test("Cloudflare GraphQL success is data without REST success=true; GraphQL erro
   assert.equal(isCloudflareProbeSuccess("/graphql",true,{data:null}),false);
   assert.equal(isCloudflareProbeSuccess("/accounts/x/subscriptions",true,{success:true,result:[]}),true);
   assert.equal(isCloudflareProbeSuccess("/accounts/x/subscriptions",true,{data:{viewer:{}}}),false);
+});
+test("a one-image synthetic Worker probe is allowed only on verified Free inventory and an unused worker name",()=>{
+  const good={subscriptions:[{id:"free"},{id:"teams_free"},{id:"r2_paid"}],workerCount:25,
+    scriptName:"punctum-r4-images-probe-42436142155",existingWorkerNames:["other-worker"],accountVerified:true};
+  assert.equal(decideFreeEphemeralProbe(good).mayDeploy,true);
+  for(const invalid of [
+    {...good,subscriptions:null}, {...good,subscriptions:[{id:"free"},{id:"images_paid"}]},
+    {...good,subscriptions:[{id:"workers_paid"}]}, {...good,workerCount:99},
+    {...good,existingWorkerNames:[good.scriptName]}, {...good,accountVerified:false},
+    {...good,scriptName:"punctumpicture.com"}
+  ])assert.equal(decideFreeEphemeralProbe(invalid).mayDeploy,false);
 });

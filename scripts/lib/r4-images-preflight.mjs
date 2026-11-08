@@ -40,3 +40,14 @@ export function isCloudflareProbeSuccess(path,httpOk,body) {
   if (path==="/graphql")return body.data!==null&&typeof body.data==="object"&&(!Array.isArray(body.errors)||body.errors.length===0);
   return body.success===true;
 }
+/** An ephemeral, synthetic-only probe needs no D1, R2 or usage assumption.
+ * Cloudflare's Images Free rejects over-quota transformations without billing.
+ */
+export function decideFreeEphemeralProbe({subscriptions,workerCount,scriptName,existingWorkerNames,accountVerified}) {
+  const plan=summarizeSubscriptions(subscriptions);
+  const mayDeploy=accountVerified===true && plan.plan==="FREE_CANDIDATE" && plan.workerPlan==="free"
+    && Number.isSafeInteger(workerCount) && workerCount>=0 && workerCount<95
+    && typeof scriptName==="string" && /^punctum-r4-images-probe-[0-9]{5,15}$/.test(scriptName)
+    && Array.isArray(existingWorkerNames) && !existingWorkerNames.includes(scriptName);
+  return {mayDeploy,reason:mayDeploy?"FREE_SYNTHETIC_ONLY_NO_PERSISTENT_BINDINGS":"BLOCKED_UNVERIFIED_OR_OCCUPIED"};
+}
