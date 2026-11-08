@@ -1,6 +1,6 @@
 // Read-only, credential-masked CI runner. Never deploys, edits bindings or mutates D1/R2.
 import { mkdir,writeFile } from 'node:fs/promises';
-import { summarizeSubscriptions,summarizeImageUsage,decideImageQaReadiness } from './lib/r4-images-preflight.mjs';
+import { summarizeSubscriptions,summarizeImageUsage,decideImageQaReadiness,isCloudflareProbeSuccess } from './lib/r4-images-preflight.mjs';
 const ACCOUNT='257bca437616da74ece1ce4bbaf0bd89';
 const QA_WORKER='punctum-picture-r4-qa-20261028';
 if(process.env.GITHUB_ACTIONS!=='true')throw new Error('Only credential-masked GitHub Actions may run account probes');
@@ -16,7 +16,7 @@ async function probe(token,path,method='GET',payload) {
       method,headers:{Authorization:'Bearer '+token,...(payload?{'Content-Type':'application/json'}:{})},
       ...(payload?{body:JSON.stringify(payload)}:{}),redirect:'error',signal:AbortSignal.timeout(18000)});
     const json=await response.json().catch(()=>({success:false,errors:[]}));
-    return {status:response.status,success:response.ok&&json.success===true,result:json.result??null,data:json.data??null,
+    return {status:response.status,success:isCloudflareProbeSuccess(path,response.ok,json),result:json.result??null,data:json.data??null,
       errors:safeError(json),graphqlErrors:Array.isArray(json.errors)&&path==='/graphql'?json.errors.length:0};
   }catch(e){return {status:'NETWORK_ERROR',success:false,result:null,data:null,errors:[],graphqlErrors:0};}
 }

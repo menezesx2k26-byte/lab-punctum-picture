@@ -34,3 +34,9 @@ export function decideImageQaReadiness({plan,transformations,workerPlan,source})
   return {mayAttemptSyntheticQa,
     reason:mayAttemptSyntheticQa?"READ_ONLY_FREE_CANDIDATE_NOT_BILLING_PROOF":"BLOCKED_BY_UNVERIFIED_PLAN_OR_CAPACITY"};
 }
+/** REST responses have success=true; GraphQL's successful response has data. */
+export function isCloudflareProbeSuccess(path,httpOk,body) {
+  if (!httpOk || !body || typeof body!=="object")return false;
+  if (path==="/graphql")return body.data!==null&&typeof body.data==="object"&&(!Array.isArray(body.errors)||body.errors.length===0);
+  return body.success===true;
+}

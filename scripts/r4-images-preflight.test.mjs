@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { summarizeImageUsage, summarizeSubscriptions, decideImageQaReadiness } from "./lib/r4-images-preflight.mjs";
+import { summarizeImageUsage, summarizeSubscriptions, decideImageQaReadiness, isCloudflareProbeSuccess } from "./lib/r4-images-preflight.mjs";
 
 test("subscription inventory cannot imply free Images from missing or partial data", () => {
   assert.equal(summarizeSubscriptions(null).plan, "UNVERIFIED");
@@ -26,4 +26,11 @@ test("Images QA decision stays fail-closed with unknown plan, source or headroom
     {...good,transformations:null}, {...good,transformations:4998},
     {...good,workerPlan:"paid"}, {...good,source:"stats-storage"},
   ]) assert.equal(decideImageQaReadiness(invalid).mayAttemptSyntheticQa,false);
+});
+test("Cloudflare GraphQL success is data without REST success=true; GraphQL errors are blocking", () => {
+  assert.equal(isCloudflareProbeSuccess("/graphql",true,{data:{viewer:{accounts:[]}}}),true);
+  assert.equal(isCloudflareProbeSuccess("/graphql",true,{data:{viewer:{accounts:[]}},errors:[{message:"no"}]}),false);
+  assert.equal(isCloudflareProbeSuccess("/graphql",true,{data:null}),false);
+  assert.equal(isCloudflareProbeSuccess("/accounts/x/subscriptions",true,{success:true,result:[]}),true);
+  assert.equal(isCloudflareProbeSuccess("/accounts/x/subscriptions",true,{data:{viewer:{}}}),false);
 });
