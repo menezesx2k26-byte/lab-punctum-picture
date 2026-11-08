@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 export const CLIENT_THEMES = ["noir", "ivory", "warm"] as const;
-export const CLIENT_MAX_UPLOAD_BYTES = 26_214_400;
+// Cloudflare Images Binding .input() accepts at most 20 MB; reject before R2/D1 writes.
+// The original 25 MiB product requirement remains an explicit gap, not a supported upload size.
+export const CLIENT_MAX_UPLOAD_BYTES = 20_000_000;
+export const CLIENT_MAX_UPLOAD_LABEL = (CLIENT_MAX_UPLOAD_BYTES / 1_000_000) + " MB";
 export const CLIENT_MIME_TYPES = [
   "image/jpeg",
   "image/png",

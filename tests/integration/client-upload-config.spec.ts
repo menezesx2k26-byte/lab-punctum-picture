@@ -39,3 +39,20 @@ it("reports missing image validation as a service failure without falsely markin
   expect((await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?").bind(intent).first())?.status).toBe("uploaded");
   expect((await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?").bind(image).first())?.status).toBe("pending");
 });
+
+it("rejects photos over the 20 MB Images Binding input limit before any D1 reservation or R2 put", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  for (const sizeBytes of [20_000_001, 26_214_400]) {
+    const request = privateRequest("/admin/api/albuns-privados/" + gallery + "/uploads/intents", "POST", {
+      filename: "too-large-for-images-binding.png",
+      mimeType: "image/png",
+      sizeBytes,
+    });
+    await expect(handleClientGalleryUploadApi(request, new URL(request.url), env))
+      .rejects.toMatchObject({status:400});
+  }
+  expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM client_gallery_images WHERE gallery_id=?")
+    .bind(gallery).first<{n:number}>())?.n).toBe(0);
+  expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM client_gallery_upload_intents WHERE gallery_id=?")
+    .bind(gallery).first<{n:number}>())?.n).toBe(0);
+});

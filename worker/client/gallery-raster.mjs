@@ -14,7 +14,8 @@ export async function validateGalleryRaster(images,input) {
   const width = info?.width;
   const height = info?.height;
   if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) ||
-      width < 1 || height < 1 || width > 100000 || height > 100000)
+      width < 1 || height < 1 || width > 12000 || height > 12000 ||
+      width * height > 100_000_000)
     throw new Error('Invalid raster dimensions');
   const validation = await images.input(decode)
     .transform({width:1,height:1,fit:'scale-down'})

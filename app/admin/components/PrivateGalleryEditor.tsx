@@ -8,6 +8,7 @@ import type {
 } from "../../../shared/client-galleries";
 import {
   CLIENT_MAX_UPLOAD_BYTES,
+  CLIENT_MAX_UPLOAD_LABEL,
   CLIENT_MIME_TYPES,
 } from "../../../shared/client-galleries";
 import {
@@ -314,7 +315,8 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
     );
     if (invalid) {
       setError(
-        "Escolha somente fotos JPG, PNG ou WebP de até 25 MiB: " +
+        "Escolha somente fotos JPG, PNG ou WebP de até " +
+          CLIENT_MAX_UPLOAD_LABEL + ": " +
           invalid.file.name,
       );
       return;
@@ -472,7 +474,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
               />
             </label>
             <p className="pga-note">
-              JPG, PNG ou WebP · até 25 MiB por foto · até 3 envios simultâneos.
+              JPG, PNG ou WebP · até {CLIENT_MAX_UPLOAD_LABEL} por foto · até 3 envios simultâneos.
             </p>
             {jobs.length > 0 && (
               <ul className="pga-queue" aria-label="Progresso dos envios">

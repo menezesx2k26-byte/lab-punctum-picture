@@ -5,6 +5,7 @@ import {
   clientGalleryUpdateSchema,
   clientImageIntentSchema,
   CLIENT_MAX_UPLOAD_BYTES,
+  CLIENT_MAX_UPLOAD_LABEL,
 } from "../../shared/client-galleries";
 
 describe("private gallery contracts", () => {
@@ -34,15 +35,16 @@ describe("private gallery contracts", () => {
         email: "ANA@EXAMPLE.COM ",
       }).email,
     ).toBe("ana@example.com");
-    expect(CLIENT_MAX_UPLOAD_BYTES).toBe(26_214_400);
+    expect(CLIENT_MAX_UPLOAD_BYTES).toBe(20_000_000);
+    expect(CLIENT_MAX_UPLOAD_LABEL).toBe("20 MB");
     const input = {
       filename: "a.jpg",
       mimeType: "image/jpeg",
-      sizeBytes: 26_214_400,
+      sizeBytes: 20_000_000,
     };
     expect(clientImageIntentSchema.safeParse(input).success).toBe(true);
     expect(
-      clientImageIntentSchema.safeParse({ ...input, sizeBytes: 26_214_401 })
+      clientImageIntentSchema.safeParse({ ...input, sizeBytes: 20_000_001 })
         .success,
     ).toBe(false);
     expect(

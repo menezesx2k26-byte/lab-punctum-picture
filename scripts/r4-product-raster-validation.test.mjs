@@ -28,7 +28,8 @@ test('product raster validator uses two independent stream branches and verifies
 });
 
 test('rejects unsupported info without trying to store an image',async()=>{
-  for(const info of [null,{}, {width:0,height:2},{width:2,height:NaN},{width:2.5,height:2},{width:-1,height:2}]){
+  for(const info of [null,{}, {width:0,height:2},{width:2,height:NaN},{width:2.5,height:2},{width:-1,height:2},
+    {width:12001,height:1},{width:10001,height:10000}]){
     const images=validImages();
     images.info=async()=>info;
     await assert.rejects(()=>validateGalleryRaster(images,stream()));
