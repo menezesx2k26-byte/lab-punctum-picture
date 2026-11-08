@@ -39,7 +39,7 @@ Resultado pretendido: módulos privados testados ponta a ponta, SSR/custos compa
 ## D. FLUXO DE EXECUÇÃO — NUNCA ENCERRAR NO PLANO
 ### Fase P0 — baseline, readback e proteção (G01/G02/G21)
 a. Executar `git fetch origin --prune`, `status`, `rev-parse`, `ls-remote`, `merge-base`, ahead/behind e diff contra main/parent. Confirmar worktree limpa e estado aberto/draft de PR #32 e a cadeia #13/#17/#20/#24.
-b. Ler a SPEC original `23 e ``0, 2, 15, 16, 17, 18, 22, 26`; docs de rollout/QA/segurança; validar que a matriz original tem 24 gates. Preservar snapshot antigo `execution-state.json`, criar novo checkpoint com escopo e provas, não reescrever retrospectivamente resultados.
+b. Ler a SPEC original §23 e seções 0, 2, 15, 16, 17, 18, 22 e 26; docs de rollout/QA/segurança; validar que a matriz original tem 24 gates. Preservar snapshot antigo `execution-state.json`, criar novo checkpoint com escopo e provas, não reescrever retrospectivamente resultados.
 c. Inventariar **somente leitura** conta Cloudflare correta: plano Workers/Images/Access, D1 count/id/quotas, R2 buckets e uso, Workers/rotas, CI secrets disponíveis (somente nomes), billing se permitido; Hostinger QA separado de PersistFlow. Abort remote writes se houver divergência ou risco.
 d. Criar testes/reproduções do bloqueio prioritário e definir posse exclusiva de arquivos se houver workers paralelos. Nenhum worker remoto inicia experimento sem preflight.
 
@@ -108,10 +108,10 @@ O revisor deve ser tecnicamente independente do agente implementador, ter escopo
 - Após cada alteração de código: `npm ci`, `npm audit --audit-level=low`, `npm run typecheck`, `npm run lint`, `npm test`, `npx vitest run --config vitest.collage.config.ts`, Node scripts R4, `npm run build`, SSR imports e Chromium E2E; `git diff --check`. Registrar contagens reais, skips, avisos e duração.
 - CI exata no HEAD da PR #32, verificar SHA de checkout, jobs e conclusão, artefatos de navegador/CPU/Images e paths; **não confundir workflow success com gate PASS**. Revisar diff main e stack, dependabot default branch versus npm audit do lockfile atual.
 - Persistir novos registros no **repo**, PR e Drive Sgtmenezes → Punctum Picture; anexar evidências sanitizadas, links reais, hashes e razões dos bloqueios. Engram por append+get; PersistFlow por checkpoint+inspect, sem declarar takeover/auto-run que não existe.
-- Atualizar ``docs/operations/private-albums-r4/execution-state.json`` com validade temporal e **não apagar histórico**; se mudar o schema, versionar e validar leitura idempotente. Revisão/handoff final com SHA exato e relatório honesto.
+- Atualizar `docs/operations/private-albums-r4/execution-state.json` com validade temporal e **não apagar histórico**; se mudar o schema, versionar e validar leitura idempotente. Revisão/handoff final com SHA exato e relatório honesto.
 
 ## E. MATRIZ DE ACEITE — DoD CANÔNICO G01–G24
-Para cada gate preencher ``STATUS | OWNER | SOURCE SHA | TESTE/COMANDO | AMBIENTE | OUTPUT/ARTIFACT | EVIDÊNCIA LINK | LIMITAÇÕES | NEXT ACTION``. A coluna inicial abaixo refere ao histórico reconciliado; ela **não** substitui prova do HEAD de entrega.
+Para cada gate preencher `STATUS | OWNER | SOURCE SHA | TESTE/COMANDO | AMBIENTE | OUTPUT/ARTIFACT | EVIDÊNCIA LINK | LIMITAÇÕES | NEXT ACTION`. A coluna inicial abaixo refere ao histórico reconciliado; ela **não** substitui prova do HEAD de entrega.
 
 | Gate | Definição original | Entrada | Critério para marcar PASS |
 |---|---|---|---|
@@ -168,6 +168,6 @@ Entregar efetivamente, com readback:
 - Matriz de acessibilidade física; parecer independente; aprovação LGPD da controladora; backup/rollback remoto completo.
 - PR #32 e CI exatas, reviewer, release pack R1/R2/R3, autorização específica antes de qualquer ativação.
 - Handoff reprodutível e checkpoint do projeto no repo, Drive, Engram e PersistFlow, com verificação da escrita.
-- Relatório final no formato ``RESULT / CHANGES / VALIDATION / GATES / BLOCKERS / COST / PRODUCTION / NEXT_SAFE_ACTION``; texto objetivo, sem promessas de trabalho assíncrono.
+- Relatório final no formato `RESULT / CHANGES / VALIDATION / GATES / BLOCKERS / COST / PRODUCTION / NEXT_SAFE_ACTION`; texto objetivo, sem promessas de trabalho assíncrono.
 
-**Instrução de execução final:** faça o trabalho técnico até o máximo estado seguro possível. Se restar qualquer gate bloqueante, comunique exatamente o que está faltando, com responsável e evidência; preserve ``PRIVATE_GALLERIES_ENABLED=false``, PR draft e **NO_GO**, nunca alterando o status para satisfazer artificialmente uma meta.
+**Instrução de execução final:** faça o trabalho técnico até o máximo estado seguro possível. Se restar qualquer gate bloqueante, comunique exatamente o que está faltando, com responsável e evidência; preserve `PRIVATE_GALLERIES_ENABLED=false`, PR draft e **NO_GO**, nunca alterando o status para satisfazer artificialmente uma meta.

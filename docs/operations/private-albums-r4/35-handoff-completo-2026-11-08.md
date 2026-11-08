@@ -158,7 +158,7 @@ Para cada mudança de comportamento: teste RED → correção GREEN → refactor
 5. Preparar/rodar G23 remoto isolado; consolidar matrix A/B, sessões, bytes/hash, backup.
 6. Reunir G15/G19/G20 com responsáveis reais; **não assinar no lugar deles**.
 7. Submeter PR/CI final e handoff. Só considerar R1/R2/R3 com aprovação específica G22 e sem gate crítico aberto.
-8. Fechar a tarefa com relatório ``ESTADO / IMPLEMENTAÇÃO / TESTES / SEGURANÇA / OTP / DADOS / CUSTOS / GATES / BLOQUEIOS / RELEASE / NEXT_SAFE_ACTION``. Decisão fiel se falta gate: **NO_GO**, ainda que todos os testes automatizados tenham passado.
+8. Fechar a tarefa com relatório `ESTADO / IMPLEMENTAÇÃO / TESTES / SEGURANÇA / OTP / DADOS / CUSTOS / GATES / BLOQUEIOS / RELEASE / NEXT_SAFE_ACTION`. Decisão fiel se falta gate: **NO_GO**, ainda que todos os testes automatizados tenham passado.
 
 ## 10. Critérios de parada e anti-fraude
 Interrompa **a operação perigosa**, não todo o trabalho, se houver risco de vazamento privado, origem QA apontando à produção, segredo ausente/comprometido, custo pago, migration destrutiva, JWT sem validação, falha de isolamento, escrita remota sem permissão, risco ao Studio/Colagem ou conflito main. Não repetir a mesma tentativa falha sem fatos novos. **Não** declarar G05 PASS por probe de 1 PNG, G17 PASS por workflow verde/HIT, G15 PASS por emulação, G18 PASS como G23, G19 PASS por revisão do próprio autor, G20 PASS por minuta, G22 PASS por pedido geral de finalizar, G24 PASS por link sem readback.
