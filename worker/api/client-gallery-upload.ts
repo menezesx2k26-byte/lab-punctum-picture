@@ -1,4 +1,5 @@
 import { clientImageIntentSchema } from "../../shared/client-galleries";
+import { validateGalleryRaster } from "../client/gallery-raster.mjs";
 import {
   getGallery,
   serializeImage,
@@ -283,16 +284,9 @@ export async function handleClientGalleryUploadApi(
     let width: number;
     let height: number;
     try {
-      const [metadata, decode] = object.body.tee();
-      const info = await env.IMAGES.info(metadata);
-      if (!("width" in info) || !info.width || !info.height)
-        throw new Error("Invalid raster");
-      const validation = await env.IMAGES.input(decode)
-        .transform({ width: 1, height: 1, fit: "scale-down" })
-        .output({ format: "image/png" });
-      await validation.response().arrayBuffer();
-      width = info.width;
-      height = info.height;
+      const raster = await validateGalleryRaster(env.IMAGES, object.body);
+      width = raster.width;
+      height = raster.height;
     } catch {
       await db.batch([
         db

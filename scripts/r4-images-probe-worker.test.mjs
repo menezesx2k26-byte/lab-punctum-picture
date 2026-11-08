@@ -22,7 +22,7 @@ test("synthetic probe executes exactly one free metadata read and one 1x1 transf
     async info(input){events.push("info");assert.ok(input);return {width:2,height:2};},
     input(input){events.push("input");assert.ok(input);return {
       transform(arg){events.push("transform");assert.deepEqual(arg,{width:1,height:1,fit:"scale-down"});return this;},
-      output(arg){events.push("output");assert.deepEqual(arg,{format:"image/png"});return {response:()=>new Response(new Uint8Array([137,80,78,71]),{headers:{"Content-Type":"image/png"}})};}
+      output(arg){events.push("output");assert.deepEqual(arg,{format:"image/png"});return {response:()=>new Response(Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),c=>c.charCodeAt(0)),{headers:{"Content-Type":"image/png"}})};}
     };}
   };
   const result=await worker.fetch(request("secret"),{R4_QA_PROBE_TOKEN:"secret",IMAGES:images});

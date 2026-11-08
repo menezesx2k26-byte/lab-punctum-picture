@@ -8,6 +8,9 @@ on:
       - "scripts/r4-images-ephemeral-qa.mjs"
       - "scripts/r4-images-probe-worker.mjs"
       - "scripts/r4-images-probe-worker.test.mjs"
+      - "scripts/r4-product-raster-validation.test.mjs"
+      - "worker/client/gallery-raster.mjs"
+      - "worker/api/client-gallery-upload.ts"
       - "scripts/lib/r4-images-preflight.mjs"
       - "scripts/r4-images-preflight.test.mjs"
 
@@ -29,7 +32,7 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-      - run: node --test scripts/r4-images-preflight.test.mjs scripts/r4-images-probe-worker.test.mjs
+      - run: node --test scripts/r4-images-preflight.test.mjs scripts/r4-images-probe-worker.test.mjs scripts/r4-product-raster-validation.test.mjs
       - run: npm ci
       - name: One synthetic Images transformation in isolated free Worker, then delete
         env:

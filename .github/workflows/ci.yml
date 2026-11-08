@@ -29,6 +29,7 @@ jobs:
       - run: node --test services/punctum-hostinger-qa/server.test.mjs
       - run: node --test scripts/r4-edge-qa.test.mjs
       - run: node --test scripts/r4-images-preflight.test.mjs scripts/r4-images-probe-worker.test.mjs
+      - run: node --test scripts/r4-product-raster-validation.test.mjs
       - run: node --test scripts/r4-cpu-readonly.test.mjs
       - run: node --test scripts/r4-access-runtime.test.mjs
       - run: node --test scripts/r4-recovery-qa.test.mjs
