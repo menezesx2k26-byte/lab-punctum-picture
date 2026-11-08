@@ -122,3 +122,46 @@ it("never reads R2 or calls Images for legacy oversized intents already persiste
   expect(await env.DB.prepare("SELECT status,sha256 FROM client_gallery_upload_intents WHERE id=?")
     .bind(id).first()).toEqual({status:"uploaded",sha256:"a".repeat(64)});
 });
+
+it("rejects restored upload intents with mismatched R2 key or image metadata before storage", async () => {
+  const forbiddenR2 = new Proxy(env.ORIGINALS, {
+    get(target,key) {
+      if (["get","put","head","delete"].includes(String(key)))
+        return () => { throw new Error("mismatched intent must never access R2"); };
+      const value=Reflect.get(target,key);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const forbiddenImages = {
+    info: () => { throw new Error("mismatched intent must not reach Images"); },
+    input: () => { throw new Error("mismatched intent must not reach Images"); },
+  };
+  for (const scenario of ["foreign-key", "other-key", "wrong-size", "wrong-mime"]) {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const imageId = await seedReadyImage(gallery);
+    const image = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(imageId).first<{key:string}>())!;
+    const invalid = scenario === "foreign-key"
+      ? { key: `client-galleries/${crypto.randomUUID()}/foreign.png`, size: 1, mime: "image/png" }
+      : scenario === "other-key"
+        ? { key: `client-galleries/${gallery}/${crypto.randomUUID()}.png`, size: 1, mime: "image/png" }
+        : scenario === "wrong-size"
+          ? { key: image.key, size: 2, mime: "image/png" }
+          : { key: image.key, size: 1, mime: "image/jpeg" };
+    const intentId = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256)
+      VALUES (?,?,?,?,?,?,'uploaded',?,datetime('now'),?)`)
+      .bind(intentId,gallery,imageId,invalid.mime,invalid.size,invalid.key,
+        new Date(Date.now()+3_600_000).toISOString(),"a".repeat(64)).run();
+    for (const [method,action] of [["PUT","direct"],["POST","complete"]] as const) {
+      const path=`/admin/api/albuns-privados/${gallery}/uploads/${intentId}/${action}`;
+      const request=privateRequest(path,method);
+      await expect(handleClientGalleryUploadApi(request,new URL(request.url),
+        {...env, ORIGINALS:forbiddenR2, IMAGES:forbiddenImages} as unknown as Env))
+        .rejects.toMatchObject({status:409,code:"UPLOAD_INTENT_MISMATCH"});
+    }
+    expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+      .bind(intentId).first()).toEqual({status:"uploaded"});
+  }
+});

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { summarizeRollbackPreflight, summarizeQaReadOnlyProbes, R4_ROLLBACK_QA } from "./lib/r4-rollback-readonly.mjs";
+import { summarizeRollbackPreflight, summarizeQaReadOnlyProbes, summarizeTokenReadOnlyCheck, R4_ROLLBACK_QA } from "./lib/r4-rollback-readonly.mjs";
 
 const fixture = () => ({
   subscriptions: [{ rate_plan: { id: "free" } }],
@@ -11,7 +11,7 @@ const fixture = () => ({
     { name:"DB", type:"d1", id:R4_ROLLBACK_QA.databases[0].id },
     { name:"PRIVATE_GALLERIES_ENABLED", type:"plain_text", text:"false" },
   ] },
-  deployments: { deployments:[{ id:"deployment-1",versions:[{version_id:"previous-version-id"}] }] },
+  deployments: { deployments:[{ id:"deployment-1",versions:[{version_id:"current-version-id"},{version_id:"previous-version-id"}] }] },
 });
 test("read-only QA inventory is scoped but never authorizes a G23 rollback", () => {
   const result = summarizeRollbackPreflight(fixture());
@@ -19,9 +19,22 @@ test("read-only QA inventory is scoped but never authorizes a G23 rollback", () 
   assert.equal(result.rollbackAuthorized, false);
   assert.equal(result.productionSafeToRelease, false);
   assert.equal(result.accountPlan, "free");
-  assert.deepEqual(result.versionIds, ["previous-version-id"]);
+  assert.deepEqual(result.versionIds, ["current-version-id","previous-version-id"]);
   assert.equal(result.flag, "false");
   assert.ok(result.blockers.some(s => s.includes("D1/R2")));
+});
+test("a single current Worker version never qualifies as a verified rollback predecessor", () => {
+  const single = fixture();
+  single.deployments.deployments[0].versions = [{version_id:"current-version-id"}];
+  const onlyCurrent = summarizeRollbackPreflight(single);
+  assert.equal(onlyCurrent.inventoryVerified, false);
+  assert.equal(onlyCurrent.rollbackAuthorized, false);
+  assert.ok(onlyCurrent.blockers.some(s => /prior.*version|predecessor|version history/i.test(s)));
+
+  const inventory = summarizeRollbackPreflight(fixture());
+  assert.equal(inventory.inventoryVerified,true);
+  assert.equal(inventory.rollbackAuthorized,false);
+  assert.equal(inventory.productionSafeToRelease,false);
 });
 test("missing or ambiguous resource readback fails closed, not PASS", () => {
   for (const patch of [
@@ -57,4 +70,25 @@ test("sanitized report contains no binding secrets or raw credentials", () => {
   const result = summarizeRollbackPreflight(input);
   assert.ok(!JSON.stringify(result).includes("must-not-appear"));
   assert.ok(!JSON.stringify(result).includes("CLIENT_SESSION_SECRET"));
+});
+test("token verification separates active credential from unresolved D1/Billing scopes without leaking token identity", () => {
+  const active = summarizeTokenReadOnlyCheck({ok:true,http:200,value:{
+    id:"sensitive-token-id", status:"active",expires_on:"2040-10-01",secret:"never-log"
+  }});
+  assert.deepEqual(active, {http:200,status:"active",verifiedActive:true});
+  assert.ok(!JSON.stringify(active).includes("sensitive"));
+  assert.ok(!JSON.stringify(active).includes("never-log"));
+  const denied = summarizeQaReadOnlyProbes({
+    subscriptions:{http:403,success:false},scripts:{http:200,success:true},
+    databases:{http:401,success:false},buckets:{http:200,success:true},
+    settings:{http:200,success:true},deployments:{http:200,success:true},
+  }, active);
+  assert.equal(denied.credentialVerifiedActive,true);
+  assert.equal(denied.complete,false);
+  assert.match(denied.diagnostics.databases,/SCOPE_OR_RESOURCE_ACCESS/);
+  assert.match(denied.diagnostics.subscriptions,/BILLING_READ/);
+  assert.equal(summarizeTokenReadOnlyCheck({ok:true,http:200,value:{
+    id:"another-secret",status:"expired"
+  }}).verifiedActive,false);
+  assert.equal(summarizeTokenReadOnlyCheck({ok:false,http:401,value:null}).status,"unverified");
 });

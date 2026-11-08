@@ -208,6 +208,27 @@ export async function handleClientGalleryUploadApi(
     throw new AppError(413, "UPLOAD_IMAGE_LIMIT", "Este envio ultrapassa o limite seguro de validação de fotos.");
   if (!["image/jpeg", "image/png", "image/webp"].includes(intent.expectedMime))
     throw new AppError(409, "UPLOAD_TYPE", "O tipo do envio não é suportado.");
+  // An old/restored intent is not authority to read or put an arbitrary R2
+  // key. Reconcile immutable intent fields with its image row and the exact
+  // gallery-owned key before verifying signatures, reading request bodies or
+  // accessing the private bucket. SQL FKs do not cover these shared fields.
+  const linkedImage = await db.prepare(
+    `SELECT storage_key AS storageKey, mime_type AS mimeType, size_bytes AS sizeBytes,
+       status, deleted_at AS deletedAt FROM client_gallery_images WHERE gallery_id=? AND id=?`,
+  ).bind(galleryId, intent.imageId).first<{
+    storageKey:string; mimeType:string; sizeBytes:number; status:string; deletedAt:string|null;
+  }>();
+  const extension = intent.expectedMime === "image/png" ? "png" :
+    intent.expectedMime === "image/webp" ? "webp" : "jpg";
+  const expectedKey = `client-galleries/${galleryId}/${intent.imageId}.${extension}`;
+  if (!linkedImage || linkedImage.deletedAt !== null ||
+      intent.storageKey !== expectedKey || linkedImage.storageKey !== expectedKey ||
+      linkedImage.mimeType !== intent.expectedMime ||
+      linkedImage.sizeBytes !== intent.expectedSize ||
+      (intent.status === "completed" ? linkedImage.status !== "ready" :
+        linkedImage.status !== "pending"))
+    throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
+      "Os metadados persistidos deste envio não conferem.");
   if (
     intent.status === "completed" &&
     match[4] === "complete" &&

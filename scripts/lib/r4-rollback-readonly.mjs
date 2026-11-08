@@ -25,6 +25,10 @@ export function summarizeRollbackPreflight(data) {
   const ids = [...new Set(deployments.flatMap(row => Array.isArray(row?.versions)
     ? row.versions.map(version => version?.version_id).filter(id => typeof id === "string" && /^[a-zA-Z0-9-]{8,128}$/.test(id))
     : []))];
+  // A deployment list with only one version cannot identify any predecessor
+  // for rollback. This remains a read-only inventory condition, NOT proof that
+  // a second ID is a verified deploy/config/assets restore target.
+  const versionHistoryPresent = ids.length >= 2;
   const subscriptionIds = subscriptions.map(row => row?.rate_plan?.id).filter(Boolean);
   const free = subscriptionIds.includes("free") && !subscriptionIds.some(id => id === "workers_paid");
   const expectedD1 = R4_ROLLBACK_QA.databases.every(expected =>
@@ -37,13 +41,15 @@ export function summarizeRollbackPreflight(data) {
     bindings.some(binding => binding.name === "DB" && binding.type === "d1" &&
       binding.id === R4_ROLLBACK_QA.databases[0].id);
   const inventoryVerified = free && expectedD1 && expectedBuckets && expectedWorker &&
-    knownBoundD1 && flag === "false" && ids.length > 0;
+    knownBoundD1 && flag === "false" && versionHistoryPresent;
   const blockers = [
     "D1/R2 writable and truly segregated target not verified; historical QA fixtures remain immutable",
     "Exact prior Worker version/config/assets/Access fingerprints and reopening not homologated",
     "Remote D1/R2 object SHA-256 relations, sessions and zero-byte denial rollback not executed",
   ];
   if (!inventoryVerified) blockers.unshift("Incomplete or unexpected read-only QA account inventory");
+  if (!versionHistoryPresent)
+    blockers.unshift("No distinct prior Worker version in read-only deployment history");
   return {
     schemaVersion:1,
     scope:"PUNCTUM_R4_HISTORICAL_QA_READ_ONLY",
@@ -53,6 +59,7 @@ export function summarizeRollbackPreflight(data) {
     qaBucketCount:buckets.length,
     flag,
     versionIds:ids,
+    versionHistoryPresent,
     inventoryVerified,
     rollbackAuthorized:false,
     productionSafeToRelease:false,
@@ -67,16 +74,34 @@ export function summarizeRollbackPreflight(data) {
  * details. A 401 against D1 alongside successful Worker GETs does not prove
  * that all credentials are invalid, only that this resource is unauthorized.
  */
-export function summarizeQaReadOnlyProbes(probes) {
+/** Token verification is a separate GET; never persist token ID, raw API
+ * payload, expiration metadata or the bearer value in durable evidence. */
+export function summarizeTokenReadOnlyCheck(probe) {
+  const status = probe?.ok === true && probe?.http === 200 &&
+    ["active","disabled","expired"].includes(probe?.value?.status)
+      ? probe.value.status : "unverified";
+  return {
+    http: typeof probe?.http === "number" ? probe.http : "NETWORK_ERROR",
+    status,
+    verifiedActive: status === "active",
+  };
+}
+
+export function summarizeQaReadOnlyProbes(probes, tokenCheck = null) {
   const sections = ["subscriptions", "scripts", "databases", "buckets", "settings", "deployments"];
   const diagnostics = {};
   const incomplete = [];
+  const active = tokenCheck?.verifiedActive === true;
   for (const section of sections) {
     const result = probes?.[section];
     if (result?.success === true && result?.http === 200) continue;
     incomplete.push(section);
-    if (result?.http === 401) diagnostics[section] = "HTTP_401_AUTH_OR_RESOURCE_PERMISSION_UNVERIFIED";
-    else if (result?.http === 403) diagnostics[section] = "HTTP_403_SCOPE_OR_ACCOUNT_ACCESS_REQUIRED";
+    if (result?.http === 401) diagnostics[section] = active
+      ? "HTTP_401_ACTIVE_TOKEN_SCOPE_OR_RESOURCE_ACCESS_UNVERIFIED"
+      : "HTTP_401_AUTH_OR_RESOURCE_PERMISSION_UNVERIFIED";
+    else if (result?.http === 403) diagnostics[section] = active && section === "subscriptions"
+      ? "HTTP_403_BILLING_READ_OR_ACCOUNT_ROLE_REQUIRED"
+      : "HTTP_403_SCOPE_OR_ACCOUNT_ACCESS_REQUIRED";
     else if (result?.http === "NETWORK_ERROR") diagnostics[section] = "NETWORK_READ_ONLY_PROBE_FAILED";
     else diagnostics[section] = "READ_ONLY_RESOURCE_UNVERIFIED";
   }
@@ -85,6 +110,7 @@ export function summarizeQaReadOnlyProbes(probes) {
     status: incomplete.length ? "BLOCKED_READ_ONLY_SCOPES_UNVERIFIED" : "READ_ONLY_RESPONSES_COMPLETE",
     incomplete,
     diagnostics,
+    credentialVerifiedActive: active,
     rollbackAuthorized: false,
     writes: 0,
   };

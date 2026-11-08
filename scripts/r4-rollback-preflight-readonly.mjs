@@ -2,7 +2,7 @@
 // This process does not run a rollback, deploy, mutate D1/R2 or read photo bodies.
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
-import { R4_ROLLBACK_QA, summarizeRollbackPreflight, summarizeQaReadOnlyProbes } from "./lib/r4-rollback-readonly.mjs";
+import { R4_ROLLBACK_QA, summarizeRollbackPreflight, summarizeQaReadOnlyProbes, summarizeTokenReadOnlyCheck } from "./lib/r4-rollback-readonly.mjs";
 
 assert.equal(process.env.GITHUB_ACTIONS, "true", "GitHub Actions only");
 const token = process.env.CLOUDFLARE_API_TOKEN;
@@ -22,11 +22,10 @@ const report = {
   status: "BLOCKED_NO_CREDENTIALS",
 };
 await mkdir("outputs", { recursive: true });
-async function readApi(path) {
+async function readApi(path, base = "https://api.cloudflare.com/client/v4/accounts/" + R4_ROLLBACK_QA.account) {
   report.operations.get++;
   try {
-    const response = await fetch("https://api.cloudflare.com/client/v4/accounts/" +
-      R4_ROLLBACK_QA.account + path, {
+    const response = await fetch(base + path, {
       headers: { Authorization: "Bearer " + token },
       method: "GET",
       redirect: "error",
@@ -42,20 +41,22 @@ async function readApi(path) {
   }
 }
 if (token) {
-  const [subscriptions, scripts, databases, buckets, settings, deployments] = await Promise.all([
+  const [subscriptions, scripts, databases, buckets, settings, deployments, verify] = await Promise.all([
     readApi("/subscriptions"),
     readApi("/workers/scripts"),
     readApi("/d1/database?per_page=100"),
     readApi("/r2/buckets"),
     readApi("/workers/scripts/" + R4_ROLLBACK_QA.worker + "/settings"),
     readApi("/workers/scripts/" + R4_ROLLBACK_QA.worker + "/deployments"),
+    readApi("/user/tokens/verify", "https://api.cloudflare.com/client/v4"),
   ]);
+  report.tokenCheck = summarizeTokenReadOnlyCheck(verify);
   report.probes = Object.fromEntries(Object.entries({
     subscriptions, scripts, databases, buckets, settings, deployments,
   }).map(([name, response]) => [name, { http: response.http, success: response.ok }]));
-  report.accessAssessment = summarizeQaReadOnlyProbes(report.probes);
+  report.accessAssessment = summarizeQaReadOnlyProbes(report.probes, report.tokenCheck);
   if ([subscriptions, scripts, databases, buckets, settings, deployments]
-    .every(result => result.ok)) {
+    .every(result => result.ok) && report.tokenCheck.verifiedActive) {
     Object.assign(report, summarizeRollbackPreflight({
       subscriptions: subscriptions.value,
       scripts: scripts.value,
@@ -68,6 +69,9 @@ if (token) {
     // worker, seed another customer, restore a D1 database or enable galleries.
     report.status = report.inventoryVerified ? "READ_ONLY_ELIGIBILITY_VERIFIED_ROLLBACK_BLOCKED"
       : "READ_ONLY_INVENTORY_UNVERIFIED";
+  } else if ([subscriptions, scripts, databases, buckets, settings, deployments]
+    .every(result => result.ok)) {
+    report.status = "BLOCKED_TOKEN_VALIDITY_UNVERIFIED";
   } else {
     report.status = report.accessAssessment.status;
   }

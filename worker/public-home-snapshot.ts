@@ -24,7 +24,22 @@ function validPublicSsrHtml(html: string): boolean {
   // Common HTML/JSON/URL escaping cannot turn a known private-media path
   // into publicly cacheable markup. This is a defense-in-depth gate; the
   // snapshot producer must still be trusted and independently audited.
-  const normalizedPaths = html.replace(/(?:\\u002f|\\\/|%2f|&#x0*2f;|&#0*47;|&sol;)/gi, "/");
+  // Snapshot HTML may contain nested URL encoding, JS string escaping or
+  // HTML entities. Decode only separators used by known private markers;
+  // never execute/evaluate HTML. The bounded loop fails closed if an attacker
+  // nests more encodings than we can safely normalize in this CPU budget.
+  let normalizedPaths = html;
+  for (let pass = 0; pass < 8; pass++) {
+    const next = normalizedPaths
+      .replace(/(?:&amp;|&#0*38;|&#x0*26;)/gi, "&")
+      .replace(/%25/gi, "%")
+      .replace(/(?:\\u002f|\\x2f|\\\/|%2f|&#x0*2f;|&#0*47;|&sol;)/gi, "/")
+      .replace(/(?:\\u002d|\\x2d|%2d|&#x0*2d;|&#0*45;)/gi, "-")
+      .replace(/(?:\\u005f|\\x5f|%5f|&#x0*5f;|&#0*95;)/gi, "_");
+    if (next === normalizedPaths) break;
+    normalizedPaths = next;
+    if (pass === 7) return false;
+  }
   // A complete SSR document, including the RSC hydration footer, is required.
   // A preview, 404, JSON, login or partial streaming response is not a snapshot.
   return /<!doctype html\s*>/i.test(html) &&
