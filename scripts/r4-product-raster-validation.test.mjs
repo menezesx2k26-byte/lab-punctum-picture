@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {validateGalleryRaster} from '../worker/client/gallery-raster.mjs';
+import {validateGalleryRaster,isGalleryRasterTransientError} from '../worker/client/gallery-raster.mjs';
 
 const PNG=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
 const stream=()=>new Response(PNG).body;
@@ -46,4 +46,16 @@ test('rejects failed or non-PNG image transformation, not just successful decodi
     images.input=()=>({transform:()=>({output:()=>({response:async()=>transformed})})});
     await assert.rejects(()=>validateGalleryRaster(images,stream()));
   }
+});
+
+test('distinguishes transient Images errors from invalid raster content for safe retry',async()=>{
+  const temporary=validImages();
+  temporary.input=()=>({transform:()=>({output:()=>({response:async()=>new Response('unavailable',{status:503})})})});
+  await assert.rejects(()=>validateGalleryRaster(temporary,stream()),error=>isGalleryRasterTransientError(error));
+  const invalid=validImages();
+  invalid.info=async()=>({width:12001,height:1});
+  await assert.rejects(()=>validateGalleryRaster(invalid,stream()),error=>!isGalleryRasterTransientError(error));
+  const transport=validImages();
+  transport.info=async()=>{throw new Error('binding temporarily unreachable')};
+  await assert.rejects(()=>validateGalleryRaster(transport,stream()),error=>isGalleryRasterTransientError(error));
 });

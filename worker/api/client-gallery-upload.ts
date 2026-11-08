@@ -1,5 +1,5 @@
 import { clientImageIntentSchema } from "../../shared/client-galleries";
-import { validateGalleryRaster } from "../client/gallery-raster.mjs";
+import { validateGalleryRaster, isGalleryRasterTransientError } from "../client/gallery-raster.mjs";
 import {
   getGallery,
   serializeImage,
@@ -287,7 +287,11 @@ export async function handleClientGalleryUploadApi(
       const raster = await validateGalleryRaster(env.IMAGES, object.body);
       width = raster.width;
       height = raster.height;
-    } catch {
+    } catch (error) {
+      // A binding outage must leave the immutable R2 original and uploaded
+      // intent intact so a later completion request can safely resume.
+      if (isGalleryRasterTransientError(error))
+        throw new AppError(503, "IMAGE_VALIDATION_UNAVAILABLE", "A validação de fotos está indisponível. Tente novamente mais tarde.");
       await db.batch([
         db
           .prepare(

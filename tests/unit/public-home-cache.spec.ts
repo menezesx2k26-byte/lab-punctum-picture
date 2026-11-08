@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPublicHomeCacheRequest, publicHomeCacheResponse, shouldPurgePublicHome } from "../../worker/public-home-cache";
+import { isPublicHomeCacheRequest, isPublicHomeMutationRequest, publicHomeCacheResponse, shouldPurgePublicHome } from "../../worker/public-home-cache";
 
 function req(path = "/", init: RequestInit = {}) {
   return new Request("https://punctumpicture.com" + path, { method: "GET", headers: { Accept: "text/html", ...init.headers }, ...init });
@@ -75,11 +75,13 @@ describe("public home isolated cache boundary", () => {
     ];
     for (const [method, path] of yes) {
       const request = req(path, { method });
+      expect(isPublicHomeMutationRequest(request)).toBe(true);
       expect(shouldPurgePublicHome(request, new Response(null, { status: 200 }))).toBe(true);
       expect(shouldPurgePublicHome(request, new Response(null, { status: 403 }))).toBe(false);
     }
     for (const path of ["/admin/api/studio", "/admin/api/studio/discard", "/admin/api/inquiries",
       "/admin/api/albuns-privados", "/api/client/session"]) {
+      expect(isPublicHomeMutationRequest(req(path,{method:"POST"}))).toBe(false);
       expect(shouldPurgePublicHome(req(path,{method:"POST"}),new Response(null,{status:200}))).toBe(false);
     }
     expect(shouldPurgePublicHome(req("/admin/api/studio/publish"),new Response(null,{status:200}))).toBe(false);

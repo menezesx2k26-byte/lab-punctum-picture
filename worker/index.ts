@@ -1,5 +1,6 @@
 import { WorkerEntrypoint } from "cloudflare:workers";
-import { isPublicHomeCacheRequest, publicHomeCacheResponse, shouldPurgePublicHome, PUBLIC_HOME_CACHE_TAG } from "./public-home-cache";
+import { isPublicHomeCacheRequest, isPublicHomeMutationRequest, publicHomeCacheResponse, shouldPurgePublicHome, PUBLIC_HOME_CACHE_TAG } from "./public-home-cache";
+import { invalidatePublicHomeSnapshot, readPublicHomeSnapshot } from "./public-home-snapshot";
 import { envString } from "./utils/env";
 import {
   DEFAULT_DEVICE_SIZES,
@@ -16,7 +17,7 @@ import { serveMedia } from "./media/serve";
 import { handleScheduled } from "./scheduled";
 import { robots, sitemap } from "./seo";
 import { handleSiteMediaApi } from "./site-media";
-import { requireAdmin } from "./utils/auth";
+import { assertAllowedOrigin, requireAdmin } from "./utils/auth";
 import { AppError } from "./utils/errors";
 import { apiError, withSecurityHeaders } from "./utils/response";
 
@@ -169,6 +170,10 @@ async function routeRequest(
     return withSecurityHeaders(previewResponse, { studioPreview: true });
   }
 
+  if (envString(env, "PUBLIC_HOME_SNAPSHOT_ENABLED") === "true" && isPublicHomeCacheRequest(request) && env.DB) {
+    const snapshot = await readPublicHomeSnapshot(env.DB, envString(env, "PUBLIC_HOME_SNAPSHOT_BUILD_ID") ?? "");
+    if (snapshot) return withSecurityHeaders(snapshot);
+  }
   const response = await handler.fetch(request, env, ctx);
   return isPrivateGalleryPath(url.pathname) ? privateResponse(response) : withSecurityHeaders(response);
 }
@@ -199,11 +204,22 @@ export class PublicHome extends WorkerEntrypoint<Env> {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const requestId = request.headers.get("cf-ray") ?? crypto.randomUUID();
+    let snapshotInvalidated = false;
     try {
       if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && isPublicHomeCacheRequest(request)) {
         const entrypoint = (ctx as ExecutionContext & { exports?: { PublicHome?: { fetch(req: Request): Promise<Response> } } }).exports?.PublicHome;
         if (!entrypoint) throw new AppError(503, "PUBLIC_HOME_CACHE_UNAVAILABLE", "Cache de páginas públicas indisponível.");
         return await entrypoint.fetch(request);
+      }
+      if (envString(env, "PUBLIC_HOME_SNAPSHOT_ENABLED") === "true" && isPublicHomeMutationRequest(request)) {
+        // If publication wins a race with snapshot staging, the epoch prevents
+        // an older render from being reintroduced. Verify the same security
+        // boundaries as the admin router before touching the epoch.
+        await requireAdmin(request, env);
+        assertAllowedOrigin(request, env);
+        if (!env.DB) throw new AppError(503, "PUBLIC_HOME_SNAPSHOT_UNAVAILABLE", "Snapshot público indisponível.");
+        await invalidatePublicHomeSnapshot(env.DB);
+        snapshotInvalidated = true;
       }
       const response = await routeRequest(request, env, ctx);
       if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && shouldPurgePublicHome(request, response)) {
@@ -221,6 +237,19 @@ export default {
       }
       return response;
     } catch (error) {
+      if (snapshotInvalidated && envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true") {
+        // Even a failed mutation might have partially committed a public edit.
+        // Do not leave the previous public HTML at the edge in that case.
+        try {
+          const entrypoint = (ctx as ExecutionContext & {
+            exports?: { PublicHome?: { purgeCache(): Promise<boolean> } }
+          }).exports?.PublicHome;
+          if (!entrypoint || !(await entrypoint.purgeCache()))
+            console.warn("Punctum public home purge unconfirmed after failed admin change");
+        } catch {
+          console.warn("Punctum public home purge unavailable after failed admin change");
+        }
+      }
       if (isPrivateGalleryPath(new URL(request.url).pathname)) return privateResponse(apiError(error,requestId));
       if (error instanceof AppError && error.status === 404 && !new URL(request.url).pathname.startsWith("/api/")) {
         return new Response("PÃ¡gina nÃ£o encontrada.", {

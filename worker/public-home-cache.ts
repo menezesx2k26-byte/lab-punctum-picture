@@ -46,8 +46,8 @@ export const PUBLIC_HOME_CACHE_TAG = "punctum-public-home-v1";
 /** A successful publication can affect the cached public homepage.
  * Draft edits, private albums, payments and contact/inquiry mutations never purge it.
  */
-export function shouldPurgePublicHome(request: Request, response: Response): boolean {
-  if (!response.ok || !["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return false;
+export function isPublicHomeMutationRequest(request: Request): boolean {
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return false;
   const path = new URL(request.url).pathname;
   if (["/admin/api/studio/publish", "/admin/api/studio/publish-visual",
     "/admin/api/studio/restore"].includes(path)) return request.method === "POST";
@@ -56,4 +56,8 @@ export function shouldPurgePublicHome(request: Request, response: Response): boo
   if (/^\/admin\/api\/(?:albums|categories|images)\/[^/]+(?:\/(?:publish|archive|reorder|cover))?$/.test(path)) return true;
   if (/^\/admin\/api\/uploads\/[^/]+\/complete$/.test(path)) return request.method === "POST";
   return false;
+}
+
+export function shouldPurgePublicHome(request: Request, response: Response): boolean {
+  return response.ok && isPublicHomeMutationRequest(request);
 }
