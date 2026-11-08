@@ -76,12 +76,16 @@ export function summarizeRollbackPreflight(data) {
  */
 /** Token verification is a separate GET; never persist token ID, raw API
  * payload, expiration metadata or the bearer value in durable evidence. */
-export function summarizeTokenReadOnlyCheck(probe) {
-  const status = probe?.ok === true && probe?.http === 200 &&
-    ["active","disabled","expired"].includes(probe?.value?.status)
-      ? probe.value.status : "unverified";
+export function summarizeTokenReadOnlyCheck(probe, accountScopedProbe = null) {
+  // User-owned and account-owned API tokens can have different verify
+  // endpoints. If the user endpoint is inconclusive, inspect the already-
+  // known account-scoped GET result without ever persisting token IDs.
+  const recognized = result => result?.ok === true && result?.http === 200 &&
+    ["active","disabled","expired"].includes(result?.value?.status);
+  const selected = !recognized(probe) && accountScopedProbe ? accountScopedProbe : probe;
+  const status = recognized(selected) ? selected.value.status : "unverified";
   return {
-    http: typeof probe?.http === "number" ? probe.http : "NETWORK_ERROR",
+    http: typeof selected?.http === "number" ? selected.http : "NETWORK_ERROR",
     status,
     verifiedActive: status === "active",
   };

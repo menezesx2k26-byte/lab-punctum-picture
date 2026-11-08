@@ -92,3 +92,17 @@ test("token verification separates active credential from unresolved D1/Billing 
   }}).verifiedActive,false);
   assert.equal(summarizeTokenReadOnlyCheck({ok:false,http:401,value:null}).status,"unverified");
 });
+test("account-owned token fallback uses the account verification GET after user endpoint 401", () => {
+  const failedUser = {ok:false,http:401,value:{secret:"must-not-leak"}};
+  const accountVerified = {ok:true,http:200,value:{
+    id:"sensitive-account-token-id",status:"active",expires_on:"2040-01-01",
+  }};
+  const result = summarizeTokenReadOnlyCheck(failedUser, accountVerified);
+  assert.deepEqual(result,{http:200,status:"active",verifiedActive:true});
+  assert.ok(!JSON.stringify(result).includes("sensitive"));
+  assert.ok(!JSON.stringify(result).includes("secret"));
+  const deniedBoth = summarizeTokenReadOnlyCheck(failedUser,
+    {ok:false,http:403,value:{id:"sensitive-account-token-id"}});
+  assert.equal(deniedBoth.verifiedActive,false);
+  assert.equal(deniedBoth.status,"unverified");
+});

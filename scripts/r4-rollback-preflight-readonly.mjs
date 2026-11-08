@@ -50,7 +50,13 @@ if (token) {
     readApi("/workers/scripts/" + R4_ROLLBACK_QA.worker + "/deployments"),
     readApi("/user/tokens/verify", "https://api.cloudflare.com/client/v4"),
   ]);
-  report.tokenCheck = summarizeTokenReadOnlyCheck(verify);
+  // User verification may be unavailable for an account-owned token even
+  // when account Workers GETs work. Retry once with the documented
+  // account-scoped verify endpoint, still GET only and no credentials logged.
+  const firstTokenCheck = summarizeTokenReadOnlyCheck(verify);
+  const accountVerify = firstTokenCheck.status === "unverified"
+    ? await readApi("/tokens/verify") : null;
+  report.tokenCheck = summarizeTokenReadOnlyCheck(verify, accountVerify);
   report.probes = Object.fromEntries(Object.entries({
     subscriptions, scripts, databases, buckets, settings, deployments,
   }).map(([name, response]) => [name, { http: response.http, success: response.ok }]));
