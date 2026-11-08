@@ -1,7 +1,7 @@
 // An isolated synthetic-only Images probe. Never import the Punctum application or D1/R2.
 const ORIGINAL=Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),c=>c.charCodeAt(0));
 const headers={"Cache-Control":"no-store","Content-Type":"application/json; charset=utf-8"};
-export default {
+const worker = {
   async fetch(request,env){
     const url=new URL(request.url);
     if(request.method!=="GET"||url.pathname!=="/probe"||
@@ -25,3 +25,4 @@ export default {
     }
   }
 };
+export default worker;

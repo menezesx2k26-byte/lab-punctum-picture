@@ -18,7 +18,7 @@ async function probe(token,path,method='GET',payload) {
     const json=await response.json().catch(()=>({success:false,errors:[]}));
     return {status:response.status,success:isCloudflareProbeSuccess(path,response.ok,json),result:json.result??null,data:json.data??null,
       errors:safeError(json),graphqlErrors:Array.isArray(json.errors)&&path==='/graphql'?json.errors.length:0};
-  }catch(e){return {status:'NETWORK_ERROR',success:false,result:null,data:null,errors:[],graphqlErrors:0};}
+  }catch{return {status:'NETWORK_ERROR',success:false,result:null,data:null,errors:[],graphqlErrors:0};}
 }
 const base='/accounts/'+ACCOUNT;
 let latestCandidate=null;

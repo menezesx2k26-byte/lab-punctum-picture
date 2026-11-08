@@ -33,7 +33,7 @@ const wrangler=async args=>{
   return result.status===0;
 };
 const configPath=resolve('outputs/r4-images-ephemeral-qa.wrangler.json');
-let created=false,allocationAuthorized=false,oldCount=null;
+let allocationAuthorized=false,oldCount=null;
 try{
   const [subs,all,subdomain]=await Promise.all([api('/subscriptions'),api('/workers/scripts'),api('/workers/subdomain')]);
   assert.ok(subs.ok && Array.isArray(subs.value),'Complete subscription inventory required');
@@ -57,7 +57,7 @@ try{
   report.steps.push('Free subscription and absent script verified; no D1/R2 bindings');
   const deployed=await wrangler(['deploy','--config',configPath]);
   if(!deployed)throw new Error('Ephemeral Worker deployment failed');
-  created=true;report.deployments=1;
+  report.deployments=1;
   const settings=await api('/workers/scripts/'+name+'/settings');
   assert.ok(settings.ok&&Array.isArray(settings.value?.bindings),'Worker settings require readback');
   const bindings=settings.value.bindings;
