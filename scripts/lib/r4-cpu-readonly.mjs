@@ -37,3 +37,26 @@ export function cpuQaWorkerConfig(name,origin,token) {
     r2_buckets:[]
   };
 }
+
+/**
+ * A successful benchmark run does not prove Workers Free cold CPU compliance.
+ * Cache HITs skip the named SSR handler, but every cache MISS can still spend
+ * >10ms CPU, and adaptive GraphQL quantiles sample only a subset.
+ */
+export function summarizePublicCacheProbe(samples,cpuAnalytics){
+  const statusDistribution={};const cacheStatuses={};
+  for(const sample of samples){
+    const status=String(sample.status);
+    statusDistribution[status]=(statusDistribution[status]??0)+1;
+    const cache=sample.cacheStatus??'none';
+    cacheStatuses[cache]=(cacheStatuses[cache]??0)+1;
+  }
+  const hitCount=cacheStatuses.HIT??0;
+  const allHtml=samples.length===36&&samples.every(s=>s.status===200&&s.validHtml===true);
+  const cacheHotPathVerified=allHtml&&hitCount>=30&&(cacheStatuses.BYPASS??0)===0;
+  const highCpu=Array.isArray(cpuAnalytics)&&cpuAnalytics.some(s=>
+    typeof s.cpuP99==='number'&&s.cpuP99>10000);
+  return {statusDistribution,cacheStatuses,hitCount,cacheHotPathVerified,
+    freeCpuGatePassed:false,reason:highCpu?'COLD_CPU_ABOVE_FREE_LIMIT':
+      cacheHotPathVerified?'SAMPLED_CPU_NOT_FULL_COLD_PROOF':'CACHE_NOT_VERIFIED'};
+}

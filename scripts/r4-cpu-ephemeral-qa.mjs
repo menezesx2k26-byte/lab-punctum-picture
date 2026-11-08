@@ -5,7 +5,7 @@ import {randomBytes} from 'node:crypto';
 import {mkdir,writeFile,copyFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {cpuQaEligibility,cpuQaWorkerConfig} from './lib/r4-cpu-readonly.mjs';
+import {cpuQaEligibility,cpuQaWorkerConfig,summarizePublicCacheProbe} from './lib/r4-cpu-readonly.mjs';
 
 const ACCOUNT='257bca437616da74ece1ce4bbaf0bd89';
 const SOURCE_ID='2e7710f3-dc92-4aeb-976a-5f15d8c5262c';
@@ -106,7 +106,7 @@ try {
     samples.push({status:response.status,cacheStatus:response.headers.get('CF-Cache-Status'),latencyMs:Math.round(performance.now()-started),
       validHtml:body.includes('</html>')});
   }
-  report.http={cacheStatuses:samples.reduce((counts,sample)=>({...counts,[sample.cacheStatus??'none']:(counts[sample.cacheStatus??'none']??0)+1}),{}),total:samples.length,success:samples.filter(s=>s.status===200&&s.validHtml).length,
+  report.http={errorSamples:samples.filter(s=>s.status!==200||!s.validHtml).map(s=>({status:s.status,cacheStatus:s.cacheStatus,validHtml:s.validHtml})),cacheStatuses:samples.reduce((counts,sample)=>({...counts,[sample.cacheStatus??'none']:(counts[sample.cacheStatus??'none']??0)+1}),{}),total:samples.length,success:samples.filter(s=>s.status===200&&s.validHtml).length,
     errors:samples.filter(s=>s.status!==200||!s.validHtml).length,
     latencyMs:summary(samples.map(s=>s.latencyMs))};
   report.measurementWindow={start:new Date(Date.now()-100000).toISOString(),end:new Date().toISOString()};
@@ -123,10 +123,9 @@ try {
     cpuP95:x.quantiles?.cpuTimeP95??null,cpuP99:x.quantiles?.cpuTimeP99??null})):null;
   report.privateCountsAfter=await qCounts();
   assert.deepEqual(report.privateCountsAfter,before,'Existing synthetic fixture counts changed');
-  report.status=report.http.errors===0&&Array.isArray(report.cpuAnalytics)&&
-    report.cpuAnalytics.length>0&&
-    report.cpuAnalytics.every(x=>x.errors===0&&x.cpuP99!==null&&x.cpuP99<=10000)
-    ? 'CPU_CANDIDATE_CONDITIONAL_PASS':'CPU_NOT_PROVEN';
+  report.cacheAssessment=summarizePublicCacheProbe(samples,report.cpuAnalytics);
+  report.status=report.cacheAssessment.cacheHotPathVerified
+    ? 'PUBLIC_HOME_CACHE_VERIFIED_COLD_CPU_UNQUALIFIED':'CACHE_OR_CPU_NOT_PROVEN';
 }catch(error){
   report.status='BLOCKED_OR_FAILED_CLOSED';report.failure=String(error?.message??'Unknown').slice(0,230);
   process.exitCode=1;

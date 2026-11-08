@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cpuQaEligibility,cpuQaWorkerConfig} from './lib/r4-cpu-readonly.mjs';
+import {cpuQaEligibility,cpuQaWorkerConfig,summarizePublicCacheProbe} from './lib/r4-cpu-readonly.mjs';
 import {cpuProbeFetch} from './r4-cpu-guard.mjs';
 
 const good={subscriptions:[{id:'free'},{id:'r2_paid'}],workers:[{id:'other'}],
@@ -61,4 +61,16 @@ test('Workers Cache is restricted to PublicHome named entrypoint, not the privil
   assert.equal(config.vars.PUBLIC_HOME_CACHE_ENABLED,'true');
   assert.deepEqual(config.exports,{default:{type:'worker',cache:{enabled:false}},PublicHome:{type:'worker',cache:{enabled:true}}});
   assert.equal(config.compatibility_date,'2026-11-07');
+});
+
+test('cache QA does not promote a warm hit when HTML or CPU cold misses are unproven',()=>{
+  const warm=Array.from({length:36},(_,i)=>({status:200,validHtml:true,cacheStatus:i===0?'MISS':'HIT',latencyMs:100}));
+  const result=summarizePublicCacheProbe(warm,[{samples:2,errors:0,cpuP99:80000}]);
+  assert.equal(result.hitCount,35);
+  assert.equal(result.cacheHotPathVerified,true);
+  assert.equal(result.freeCpuGatePassed,false);
+  assert.equal(result.reason,'COLD_CPU_ABOVE_FREE_LIMIT');
+  const rejected=summarizePublicCacheProbe([{status:200,validHtml:true,cacheStatus:'BYPASS'}],[{samples:1,errors:0,cpuP99:450}]);
+  assert.equal(rejected.cacheHotPathVerified,false);
+  assert.equal(rejected.freeCpuGatePassed,false);
 });

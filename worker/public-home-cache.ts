@@ -1,4 +1,4 @@
-﻿/** Strict allowlist for Cloudflare's pre-invocation Workers Cache entrypoint.
+/** Strict allowlist for Cloudflare's pre-invocation Workers Cache entrypoint.
  * This entrypoint must never be used for admin, client, RSC, API or personalized data.
  */
 export function isPublicHomeCacheRequest(request: Request): boolean {
@@ -19,8 +19,11 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
 export function publicHomeCacheResponse(request: Request, response: Response): Response {
   const headers = new Headers(response.headers);
   const current = headers.get("Cache-Control") ?? "";
+  // Vinext emits this exact framework default on anonymous HTML too.
+  // Replace it only inside this narrowly constrained public homepage entrypoint.
+  const frameworkDefault = /^no-store,\s*must-revalidate$/i.test(current.trim());
   const sensitive = headers.has("Set-Cookie") || headers.has("WWW-Authenticate") ||
-    /\b(?:private|no-store|no-cache)\b/i.test(current) ||
+    (!frameworkDefault && /\b(?:private|no-store|no-cache)\b/i.test(current)) ||
     (headers.get("Vary") ?? "").split(",").some(part => ["*", "cookie", "authorization"].includes(part.trim().toLowerCase()));
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
     headers.get("Content-Type")?.toLowerCase().startsWith("text/html") && !sensitive;

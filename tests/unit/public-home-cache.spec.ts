@@ -38,6 +38,20 @@ describe("public home isolated cache boundary", () => {
     }
   });
 
+  it("allows only the known anonymous vinext HTML no-store header to be replaced", () => {
+    const html = new Response("<html>public</html>", {
+      headers: {"Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store, must-revalidate",
+        Vary: "RSC, Accept, Next-Router-State-Tree, Next-Router-Prefetch"}
+    });
+    expect(publicHomeCacheResponse(req(), html).headers.get("Cache-Control")).toBe("public, max-age=60");
+    for (const dangerous of ["no-store", "private", "no-cache", "private, no-store"]) {
+      const response = new Response("<html>secret</html>", {
+        headers: {"Content-Type": "text/html", "Cache-Control": dangerous}
+      });
+      expect(publicHomeCacheResponse(req(), response).headers.get("Cache-Control")).toBe("private, no-store");
+    }
+  });
   it("rejects any unauthorized attempt to call the cached entrypoint", () => {
     const bad=req("/api/client/me");
     const result=publicHomeCacheResponse(bad,new Response("<html>do not cache</html>", {
