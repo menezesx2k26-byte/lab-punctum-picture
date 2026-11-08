@@ -9,9 +9,17 @@ import {
   canSubmitPrivateGallery,
   uploadQueueBatch,
   runPrivateUploadQueue,
+  isSuccessfulPrivateUpload,
 } from "../../app/admin/components/private-gallery-utils";
 
 describe("private client navigation", () => {
+  it("never accepts an HTTP 409 conflict as a successful direct upload", () => {
+    expect(isSuccessfulPrivateUpload(200)).toBe(true);
+    expect(isSuccessfulPrivateUpload(201)).toBe(true);
+    expect(isSuccessfulPrivateUpload(409)).toBe(false);
+    expect(isSuccessfulPrivateUpload(401)).toBe(false);
+    expect(isSuccessfulPrivateUpload(503)).toBe(false);
+  });
   it("uses authenticated media paths and meaningful login errors", () => {
     expect(galleryHref("test-id")).toBe("/albuns/test-id");
     expect(privateImageUrl("gallery", "image", "thumb")).toBe(

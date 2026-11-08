@@ -114,6 +114,14 @@ export async function handleClientGalleryUploadApi(
     throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   if (match[2] === "intents" && request.method === "POST") {
     const input = await parseJson(request, clientImageIntentSchema);
+    // Reject before reserving an image or writing to R2 when this Worker cannot
+    // validate and serve it. The existing completion guard stays fail-closed.
+    if (!env.IMAGES)
+      throw new AppError(
+        503,
+        "IMAGE_VALIDATION_UNAVAILABLE",
+        "A validação de fotos está indisponível. Tente novamente mais tarde.",
+      );
     const id = crypto.randomUUID();
     const imageId = crypto.randomUUID();
     const now = new Date().toISOString();

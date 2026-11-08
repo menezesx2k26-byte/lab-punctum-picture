@@ -4,6 +4,27 @@ import { bootstrapPrivateDb, privateRequest, seedClient, seedGallery, seedReadyI
 import { handleClientGalleryUploadApi } from "../../worker/api/client-gallery-upload";
 
 beforeAll(bootstrapPrivateDb);
+it("refuses new upload intents before creating gallery rows when image validation is unavailable", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const request = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
+    filename: "foto.png",
+    mimeType: "image/png",
+    sizeBytes: 80,
+  });
+  await expect(handleClientGalleryUploadApi(request, new URL(request.url), {
+    ...env,
+    IMAGES: undefined,
+  } as unknown as Env)).rejects.toMatchObject({
+    status: 503,
+    code: "IMAGE_VALIDATION_UNAVAILABLE",
+  });
+  const intents = await env.DB.prepare("SELECT COUNT(*) AS total FROM client_gallery_upload_intents WHERE gallery_id=?")
+    .bind(gallery).first<{total:number}>();
+  const images = await env.DB.prepare("SELECT COUNT(*) AS total FROM client_gallery_images WHERE gallery_id=?")
+    .bind(gallery).first<{total:number}>();
+  expect(intents?.total).toBe(0);
+  expect(images?.total).toBe(0);
+});
 it("reports missing image validation as a service failure without falsely marking a valid upload corrupted", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const image = await seedReadyImage(gallery);

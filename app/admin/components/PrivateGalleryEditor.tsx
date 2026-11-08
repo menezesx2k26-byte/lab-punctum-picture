@@ -19,6 +19,7 @@ import { privateImageUrl } from "../../albuns/components/routes";
 import {
   canSubmitPrivateGallery,
   runPrivateUploadQueue,
+  isSuccessfulPrivateUpload,
   PRIVATE_GALLERY_STATUS,
   type ClientAccountSummary,
 } from "./private-gallery-utils";
@@ -180,7 +181,7 @@ function directUpload(
       reject(new Error("O envio demorou demais. Tente novamente."));
     xhr.timeout = 180000;
     xhr.onload = () => {
-      if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 409)
+      if (isSuccessfulPrivateUpload(xhr.status))
         resolve();
       else {
         let message = "Não foi possível enviar a foto.";
