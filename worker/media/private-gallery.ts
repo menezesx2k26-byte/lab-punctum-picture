@@ -66,10 +66,13 @@ export async function servePrivateGalleryImage(
     if (!head) throw missing();
     if (preset !== "download" && head.size > CLIENT_MAX_UPLOAD_BYTES)
       throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
+    // Even pre-migration ready rows without a D1 digest must never claim
+    // success when R2 size or MIME contradicts their D1 original record.
+    if (head.size !== image.sizeBytes ||
+        head.httpMetadata?.contentType !== image.mimeType)
+      throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
     if (image.originalSha256) {
-      if (head.size !== image.sizeBytes ||
-          head.httpMetadata?.contentType !== image.mimeType ||
-          (head.customMetadata?.sha256 && head.customMetadata.sha256 !== image.originalSha256))
+      if (head.customMetadata?.sha256 && head.customMetadata.sha256 !== image.originalSha256)
         throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
       // R2 customMetadata is not an independent attestation: a replaced object
       // can carry the original digest unchanged. Verify bytes even on HEAD,
@@ -98,14 +101,14 @@ export async function servePrivateGalleryImage(
   if (!object) throw missing();
   if (preset !== "download" && object.size > CLIENT_MAX_UPLOAD_BYTES)
     throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
+  if (object.size !== image.sizeBytes ||
+      object.httpMetadata?.contentType !== image.mimeType)
+    throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
   // Integrity is anchored in D1 when a verified private upload completed.
   // A changed R2 object must not be streamed as a valid original or derivative.
   // Historical rows without a digest remain readable, pending separate backfill.
   let original: ReadableStream<Uint8Array> = object.body;
   if (image.originalSha256) {
-    if (object.size !== image.sizeBytes ||
-        object.httpMetadata?.contentType !== image.mimeType)
-      throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
     const bytes = new Uint8Array(await object.arrayBuffer());
     if (bytes.byteLength !== image.sizeBytes ||
         !hasMatchingOriginalDigest(image.originalSha256, await privateOriginalSha256(bytes),

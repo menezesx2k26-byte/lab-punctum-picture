@@ -231,6 +231,35 @@ describe("isolated private uploads", () => {
     expect((await head.arrayBuffer()).byteLength).toBe(0);
   });
 
+  it("does not serve mismatched R2 legacy originals when D1 has no stored digest", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    expect((await exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`, "POST"))).status).toBe(200);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    // Historical restored rows may not carry an independently attested digest.
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=NULL WHERE id=?")
+      .bind(value.imageId).run();
+    const url = `/admin/api/albuns-privados/${gallery}/images/${value.imageId}`;
+    for (const variant of [
+      { bytes: PNG.slice(0, -1), contentType: "image/png" },
+      { bytes: PNG, contentType: "image/jpeg" },
+    ]) {
+      await env.ORIGINALS.put(key, variant.bytes, {
+        httpMetadata: { contentType: variant.contentType },
+      });
+      for (const preset of ["download", "thumb", "gallery"] as const) {
+        for (const method of ["GET", "HEAD"] as const) {
+          const result = await exports.default.fetch(privateRequest(`${url}/${preset}`, method));
+          expect(result.status, `${preset} ${method} ${variant.contentType}/${variant.bytes.length}`).toBe(503);
+          if (method === "HEAD") expect((await result.arrayBuffer()).byteLength).toBe(0);
+        }
+      }
+    }
+  });
+
   it("does not promote an already-uploaded original that changed before completion", async () => {
     const gallery = await seedGallery(await seedClient(), "draft");
     const value = (await (await intent(gallery)).json()) as Intent;
@@ -451,6 +480,11 @@ describe("private media authorization", () => {
     await env.ORIGINALS.put(stored!.storageKey, PNG, {
       httpMetadata: { contentType: "image/png" },
     });
+    // The authorization-only fixture seeds size_bytes=1; give this test a
+    // coherent D1/R2 pair so it exercises HEAD metadata without bypassing
+    // the integrity guard for legacy rows.
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?")
+      .bind(PNG.length, imageId).run();
     const metadataOnlyBucket = new Proxy(env.ORIGINALS, {
       get(target, key) {
         if (key === "get")
