@@ -91,6 +91,27 @@ describe("public home isolated cache boundary", () => {
     }
   });
 
+  it("rejects forwarded credentials and per-request identity envelopes from the shared cache", () => {
+    for (const header of ["X-Forwarded-Authorization", "X-Client-Session", "X-Forwarded-Cookie"]) {
+      const request = req("/", { headers: { Accept: "text/html", [header]: "identity-secret" } });
+      expect(isPublicHomeCacheRequest(request), header).toBe(false);
+      const response = publicHomeCacheResponse(request, new Response("<html>private</html>", {
+        headers: { "Content-Type": "text/html", "Cache-Control": "no-store, must-revalidate" },
+      }));
+      expect(response.headers.get("Cache-Control"), header).toBe("private, no-store");
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"), header).toBeNull();
+    }
+    for (const header of ["X-Authenticated-User", "X-Client-Id", "X-Forwarded-User"]) {
+      const response = publicHomeCacheResponse(req(), new Response("<html>personalized</html>", {
+        headers: { "Content-Type": "text/html", "Cache-Control": "no-store, must-revalidate",
+          [header]: "identity-secret" },
+      }));
+      expect(response.headers.get("Cache-Control"), header).toBe("private, no-store");
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"), header).toBeNull();
+      expect(response.headers.get(header), header).toBeNull();
+    }
+  });
+
   it("allows only the known anonymous vinext HTML no-store header to be replaced", () => {
     const html = new Response("<html>public</html>", {
       headers: {"Content-Type": "text/html; charset=utf-8",

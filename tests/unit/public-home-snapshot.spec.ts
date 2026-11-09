@@ -36,6 +36,19 @@ describe("versioned public-home snapshot for cold cache MISS", () => {
     expect(newer!.epoch).toBe(current!.epoch + 1);
   });
 
+  it("fails closed on HTML named entities that conceal private session or R2 paths", async () => {
+    const state = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+    expect(state).not.toBeNull();
+    for (const escaped of [
+      "punctum&lowbar;client&lowbar;session=secret",
+      "client&percnt;2Dgalleries/private.jpg",
+      "/&percnt;61pi/client/galleries/secret",
+    ]) {
+      expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD,
+        HTML.replace("Studio publicado", escaped)), escaped).toBe(false);
+    }
+  });
+
   it("rejects broken SSR, tampered hashes and accidental private content", async () => {
     const state = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
     expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, "<html>partial</html>")).toBe(false);
