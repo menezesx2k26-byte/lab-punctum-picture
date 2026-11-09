@@ -213,6 +213,59 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
       .bind(client).first()).toBeNull();
   });
+  it("rejects invalid D1 row constraints and schema drift before any restored R2 write", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const image = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${image}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(37), {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const baseline = await captureClientRecovery(env.DB, env.ORIGINALS, [client]);
+    const cases: { name: string; mutate: (s: typeof baseline) => void; error: string }[] = [
+      {
+        name: "unsupported gallery theme",
+        mutate: (s) => { s.tables.client_galleries[0].theme = "unsafe-theme"; },
+        error: "Recovery snapshot row constraint mismatch",
+      },
+      {
+        name: "noncanonical account email",
+        mutate: (s) => { s.tables.client_accounts[0].email = " UPPER@EXAMPLE.COM "; },
+        error: "Recovery snapshot row constraint mismatch",
+      },
+      {
+        name: "unknown schema column",
+        mutate: (s) => { s.tables.client_gallery_images[0].unexpected_column = "x"; },
+        error: "Recovery snapshot schema mismatch",
+      },
+      {
+        name: "missing required schema column",
+        mutate: (s) => { delete s.tables.client_galleries[0].title; },
+        error: "Recovery snapshot schema mismatch",
+      },
+    ];
+    for (const scenario of cases) {
+      const snapshot = structuredClone(baseline);
+      scenario.mutate(snapshot);
+      let puts = 0;
+      const bucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+        get(target, property) {
+          if (property === "put") return () => {
+            puts++;
+            throw new Error("R2 write before D1 constraint preflight");
+          };
+          const value = Reflect.get(target, property);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, bucket), scenario.name)
+        .rejects.toThrow(scenario.error);
+      expect(puts, scenario.name).toBe(0);
+      expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+      expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+        .bind(client).first()).toBeNull();
+    }
+  });
   it("rejects a forged source digest and inconsistent backup attestations before restore writes", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);
@@ -429,6 +482,69 @@ describe("scoped private recovery with real local D1/R2", () => {
     const result = await restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
     expect(result.objects).toBe(2);
     expect(result.accountsQuarantined).toBe(true);
+  });
+  it("recovers from a failed final D1 commit without deleting or overwriting previously staged originals", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const keys: string[] = [];
+    for (const value of [61, 62]) {
+      const photo = await seedReadyImage(gallery);
+      const key = `client-galleries/${gallery}/${photo}.png`;
+      keys.push(key);
+      await env.ORIGINALS.put(key, Uint8Array.of(value), {
+        httpMetadata: { contentType: "image/png" },
+      });
+    }
+    const backup = await captureClientRecovery(env.DB, env.ORIGINALS, [client]);
+    let batches = 0;
+    const interruptedDb = new Proxy(bindings.RESTORE_DB, {
+      get(target, property) {
+        if (property === "batch") return async () => {
+          batches++;
+          throw new Error("Simulated D1 commit outage after R2 stage");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const trackR2 = { puts: 0, deletes: 0 };
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return (...args: Parameters<R2Bucket["put"]>) => {
+          trackR2.puts++;
+          return target.put(...args);
+        };
+        if (property === "delete") return () => {
+          trackR2.deletes++;
+          throw new Error("Recovery must never delete originals on interrupted D1");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(backup, interruptedDb, guardedBucket))
+      .rejects.toThrow("Simulated D1 commit outage");
+    expect(batches).toBe(1);
+    expect(trackR2.puts).toBe(2);
+    expect(trackR2.deletes).toBe(0);
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(client).first()).toBeNull();
+    for (let index = 0; index < keys.length; index++) {
+      const stored = await bindings.RESTORE_ORIGINALS.get(keys[index]);
+      expect(stored).not.toBeNull();
+      expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(Uint8Array.of(61 + index));
+    }
+    // A retry must re-verify already-staged immutable R2 objects and commit
+    // the quarantined accounts without replacing or deleting their originals.
+    const restored = await restoreClientRecovery(backup, bindings.RESTORE_DB, guardedBucket);
+    expect(restored).toMatchObject({ objects: 2, accountsQuarantined: true });
+    expect(trackR2.deletes).toBe(0);
+    expect((await bindings.RESTORE_DB.prepare("SELECT disabled_at FROM client_accounts WHERE id=?")
+      .bind(client).first<{ disabled_at: string }>())?.disabled_at).toBeTruthy();
+    for (let index = 0; index < keys.length; index++) {
+      const stored = await bindings.RESTORE_ORIGINALS.get(keys[index]);
+      expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(Uint8Array.of(61 + index));
+    }
   });
 
   it("restores two clients and ten originals then enforces A/B download isolation", async () => {

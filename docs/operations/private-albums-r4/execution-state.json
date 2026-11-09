@@ -451,6 +451,43 @@
     "costIncrementAuthorized": "R$ 0,00",
     "productionDecision": "NO_GO_PRODUCTION"
   },
+  "currentCycle20261108L": {
+    "date": "2026-11-08 (America/New_York)",
+    "baselineRemoteSha": "fc76443475cecebc82fe96654a8c21af62c3f3d4",
+    "baselineRemoteTree": "040494df456140e2a7858dd4a7b653bdcf384dde",
+    "baselineCi": "42542584271 completed/success; verify 31/31; exact K SHA",
+    "branch": "fix/punctum-albums-r4-completion-20261107",
+    "pr": 32,
+    "report": "docs/operations/private-albums-r4/49-restore-schema-cache-identity-2026-11-08.md",
+    "changes": [
+      "G23/G18: preflight destination D1 PRAGMA table_info rejects unknown columns, missing NOT NULL columns and known R4 CHECK failures before R2 PUT",
+      "G23: test interrupted post-R2 D1 batch preserves immutable originals without delete and proves safe retry with quarantined restored account",
+      "G17: public anonymous home cache refuses additional request identity headers and sanitizes auth/identity response headers while marking response private/no-store",
+      "G05: source review against 25 MiB SPEC, 20MB Images Binding, R2 delete lack of ETag condition; no unsafe limit widening or remote deletion"
+    ],
+    "redEvidence": [
+      "RED G23: invalid theme made restore attempt R2 put before SQL CHECK",
+      "RED G17: Authentication-Info response was made publicly cacheable; X-Client-Id request admitted"
+    ],
+    "focusedGreen": "34/34 Vitest in four affected suites; 1/1 historical Node G18; TypeScript PASS; diff check PASS",
+    "fullValidation": "PASS_LOCAL_COMPLETE_EXIT_0: Workers Vitest 262/262 in 57 files; Colagem 7/7; G18 Node 1/1; selected Node 14/14; SSR 1/1; TypeScript, ESLint, Vinext build 5/5, npm audit 0, Chromium E2E full A/B synthetic, JSON/diff-check; ==L_COMPLETE_PASS==",
+    "specOriginal": "NOT_FOUND_LOCAL_LIBRARY_DRIVE; do not infer section23",
+    "remoteCpuColdMiss": "NOT_MEASURED",
+    "remoteQaRollback": "NOT_RUN",
+    "finalRemoteSha": null,
+    "finalRemoteTree": null,
+    "finalCi": "PENDING_NEW_SHA_READBACK",
+    "g05RequiredBytes": 26214400,
+    "g05OperationalSafeBytes": 20000000,
+    "g05Status": "FAIL_25_MIB_NOT_PROVEN_AND_D1_R2_RACE",
+    "g17Status": "FAIL_COLD_MISS_CPU_NOT_MEASURED",
+    "g23Status": "BLOCKED_EXTERNAL_NO_AUTHORIZED_REMOTE_ROLLBACK",
+    "humanGates": "G15/G19/G20/G22 BLOCKED_EXTERNAL",
+    "remoteProductionWrites": 0,
+    "historicalQaWrites": 0,
+    "costIncrementAuthorized": "R$ 0,00",
+    "productionDecision": "NO_GO_PRODUCTION"
+  },
   "canonicalGateSystem": "ORIGINAL_SPEC_R4_SECTION_23_G01_G24",
   "canonicalGateDocument": "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
   "reconciliation": "docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md",

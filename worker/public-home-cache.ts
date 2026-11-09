@@ -11,7 +11,8 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
   for (const name of ["cookie", "authorization", "proxy-authorization",
     "cf-access-jwt-assertion", "cf-access-authenticated-user-email",
     "x-forwarded-user", "x-forwarded-email", "x-auth-user", "x-user-email",
-    "x-api-key", "x-ms-client-principal",
+    "x-api-key", "x-ms-client-principal", "x-client-id", "x-session-token",
+    "x-authenticated-user", "x-forwarded-access-token",
     "rsc", "next-router-state-tree", "next-router-prefetch", "next-url",
     "purpose", "sec-purpose", "x-nextjs-data", "x-middleware-prefetch"]) {
     if (headers.has(name)) return false;
@@ -22,6 +23,16 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
 export function publicHomeCacheResponse(request: Request, response: Response): Response {
   const headers = new Headers(response.headers);
   const current = headers.get("Cache-Control") ?? "";
+  // A public cache entrypoint must not retain or echo credential and identity
+  // metadata mistakenly emitted by an upstream response. Header-based private
+  // identity is sufficient to fail closed even when the body is HTML 200.
+  const sensitiveResponseHeaders = [
+    "Set-Cookie", "Set-Cookie2", "WWW-Authenticate", "Authentication-Info",
+    "Proxy-Authentication-Info", "CF-Access-Jwt-Assertion",
+    "CF-Access-Authenticated-User-Email", "X-Client-Identity",
+    "X-Session-Token",
+  ];
+  const hasIdentityResponseHeader = sensitiveResponseHeaders.some(name => headers.has(name));
   // Vinext emits this exact framework default on anonymous HTML too.
   // Replace it only inside this narrowly constrained public homepage entrypoint.
   const frameworkDefault = /^no-store,\s*must-revalidate$/i.test(current.trim());
@@ -33,7 +44,7 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
   const unaccountedVary = (headers.get("Vary") ?? "").split(",")
     .map(part => part.trim().toLowerCase()).filter(Boolean)
     .some(part => !allowedVary.has(part));
-  const sensitive = headers.has("Set-Cookie") || headers.has("WWW-Authenticate") ||
+  const sensitive = hasIdentityResponseHeader ||
     (!frameworkDefault && /\b(?:private|no-store|no-cache)\b/i.test(current)) ||
     unaccountedVary;
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
@@ -43,6 +54,7 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
   // 60s public-home window even when the response itself is anonymous.
   for (const name of ["CDN-Cache-Control", "Surrogate-Control", "Expires", "Age"])
     headers.delete(name);
+  for (const name of sensitiveResponseHeaders) headers.delete(name);
   // Browser always revalidates, while the named Cloudflare cache holds public HTML
   // for 60s. A Studio purge therefore cannot leave a browser-local 60s copy.
   headers.set("Cache-Control", safe ? "public, max-age=0, must-revalidate" : "private, no-store");

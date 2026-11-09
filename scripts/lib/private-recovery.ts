@@ -97,6 +97,56 @@ function assertRowScope(snapshot: ClientRecovery) {
   }
 }
 
+// A syntactically valid backup can still fail a destination D1 NOT NULL,
+// CHECK or unknown-column constraint only *after* the operator has put R2
+// objects. Read the actual destination table schemas, then enforce the
+// historical R4 CHECK constraints before crossing the D1/R2 boundary.
+// This rejects predictable failures; it is not a distributed transaction or
+// protection against a concurrent schema/data change after this preflight.
+async function assertRestoreRowConstraints(snapshot: ClientRecovery, db: D1Database) {
+  const imageMimes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  const validHash = (value: Row[string]) =>
+    value == null || (typeof value === "string" && /^[0-9a-f]{64}$/.test(value));
+  const integer = (value: Row[string]) => typeof value === "number" && Number.isSafeInteger(value);
+  const enumValue = (value: Row[string], allowed: readonly string[]) =>
+    typeof value === "string" && allowed.includes(value);
+  for (const table of tables) {
+    const info = (await db.prepare(`PRAGMA table_info(${table})`).all<{
+      name: string; notnull: number; dflt_value: string | null;
+    }>()).results;
+    if (!info.length) throw new Error("Recovery destination schema mismatch");
+    const available = new Set(info.map(column => column.name));
+    for (const row of snapshot.tables[table]) {
+      if (Object.keys(row).some(name => !available.has(name)) ||
+          info.some(column =>
+            (!(column.name in row) && column.notnull === 1 && column.dflt_value === null) ||
+            (column.name in row && row[column.name] === null && column.notnull === 1)))
+        throw new Error("Recovery snapshot schema mismatch");
+      let valid = true;
+      if (table === "client_accounts") {
+        valid = typeof row.email === "string" && row.email.length > 0 &&
+          row.email === row.email.toLowerCase().trim() &&
+          integer(row.password_iterations) && Number(row.password_iterations) >= 310000 &&
+          (row.must_change_password === 0 || row.must_change_password === 1);
+      } else if (table === "client_galleries") {
+        valid = enumValue(row.theme, ["noir", "ivory", "warm"]) &&
+          enumValue(row.status, ["draft", "published", "archived"]) &&
+          (row.allow_downloads === 0 || row.allow_downloads === 1);
+      } else if (table === "client_gallery_images") {
+        valid = typeof row.mime_type === "string" && imageMimes.has(row.mime_type) &&
+          integer(row.size_bytes) && Number(row.size_bytes) > 0 &&
+          Number(row.size_bytes) <= 26214400 &&
+          enumValue(row.status, ["pending", "ready", "failed"]) &&
+          validHash(row.original_sha256);
+      } else if (table === "client_gallery_upload_intents") {
+        valid = enumValue(row.status, ["pending", "uploaded", "completed", "expired", "failed"]) &&
+          validHash(row.sha256);
+      }
+      if (!valid) throw new Error("Recovery snapshot row constraint mismatch");
+    }
+  }
+}
+
 export async function captureClientRecovery(db: D1Database, bucket: R2Bucket, clientIds: string[]): Promise<ClientRecovery> {
   const statements = recoverySelection(clientIds);
   // D1 batch gives the relational snapshot a consistent transaction boundary.
@@ -126,6 +176,7 @@ export async function captureClientRecovery(db: D1Database, bucket: R2Bucket, cl
 
 export async function restoreClientRecovery(snapshot: ClientRecovery, db: D1Database, bucket: R2Bucket) {
   assertScope(snapshot);
+  await assertRestoreRowConstraints(snapshot, db);
   // Inspect conflicts before writes. INSERTs below still enforce uniqueness atomically.
   for (const table of tables) {
     for (const row of snapshot.tables[table]) {

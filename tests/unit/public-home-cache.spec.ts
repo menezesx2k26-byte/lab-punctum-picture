@@ -64,6 +64,32 @@ describe("public home isolated cache boundary", () => {
         .toBe(status === 200 ? "public, max-age=60" : null);
     }
   });
+  it("never promotes a public HTML response carrying identity or authentication response headers into shared cache", () => {
+    for (const header of ["Authentication-Info", "Proxy-Authentication-Info",
+      "Set-Cookie2", "CF-Access-Jwt-Assertion", "X-Client-Identity",
+      "X-Session-Token"]) {
+      const result = publicHomeCacheResponse(req(), new Response("<html>anonymous</html>", {
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store, must-revalidate",
+          [header]: "sensitive-per-request-value",
+        },
+      }));
+      expect(result.headers.get("Cache-Control"), header).toBe("private, no-store");
+      expect(result.headers.get("Cloudflare-CDN-Cache-Control"), header).toBeNull();
+      expect(result.headers.get("Cache-Tag"), header).toBeNull();
+      expect(result.headers.get(header), header).toBeNull();
+    }
+  });
+  it("rejects identity-bearing forwarded request headers outside the existing explicit list", () => {
+    for (const header of ["X-Client-Id", "X-Session-Token",
+      "X-Authenticated-User", "X-Forwarded-Access-Token"]) {
+      const result = isPublicHomeCacheRequest(req("/", {
+        headers: { Accept: "text/html", [header]: "per-request-identity" },
+      }));
+      expect(result, header).toBe(false);
+    }
+  });
 
   it("allows only the known anonymous vinext HTML no-store header to be replaced", () => {
     const html = new Response("<html>public</html>", {
