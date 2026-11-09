@@ -4,6 +4,21 @@ import { privateGalleryStorageKey } from "../../worker/client/gallery-storage-ke
 type Row = Record<string, string | number | null>;
 const tables = ["client_accounts", "client_galleries", "client_gallery_images", "client_gallery_upload_intents", "client_gallery_favorites"] as const;
 type Table = typeof tables[number];
+// Narrowly preserve the R4 synthetic G18 fixture's historic nested PNG key.
+// Unlike a prefix match this still binds the exact gallery and image IDs.
+// This exception is for operator backup/restore only; product media and
+// uploads continue to require the current canonical key.
+function isRecoverableOriginalKey(row: Row): boolean {
+  const galleryId = String(row.gallery_id);
+  const imageId = String(row.id);
+  const mime = String(row.mime_type);
+  const canonical = privateGalleryStorageKey(galleryId, imageId, mime);
+  if (!canonical) return false;
+  const historical = mime === "image/png"
+    ? `client-galleries/${galleryId}/${imageId}/original.png`
+    : null;
+  return row.storage_key === canonical || row.storage_key === historical;
+}
 export type ClientRecovery = {
   version: 1;
   tables: Record<Table, Row[]>;
@@ -51,7 +66,7 @@ function assertRowScope(snapshot: ClientRecovery) {
   const images = new Map(snapshot.tables.client_gallery_images.map((r) => [r.id, r]));
   if (snapshot.tables.client_galleries.some((r) => !clients.has(r.client_id)) ||
       snapshot.tables.client_gallery_images.some((r) => !galleries.has(r.gallery_id) ||
-        r.storage_key !== privateGalleryStorageKey(String(r.gallery_id), String(r.id), String(r.mime_type))) ||
+        !isRecoverableOriginalKey(r)) ||
       snapshot.tables.client_gallery_favorites.some((r) => !clients.has(r.client_id) || images.get(r.image_id)?.gallery_id !== r.gallery_id ||
         !snapshot.tables.client_galleries.some((g) => g.id === r.gallery_id && g.client_id === r.client_id)) ||
       snapshot.tables.client_gallery_upload_intents.some((r) => {

@@ -172,9 +172,10 @@ describe("scoped private recovery with real local D1/R2", () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);
     const photo = await seedReadyImage(gallery);
-    const wrongKey = `client-galleries/${gallery}/other-${photo}.png`;
-    await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
-      .bind(wrongKey, photo).run();
+    const wrongKeys = [
+      `client-galleries/${gallery}/other-${photo}.png`,
+      `client-galleries/${gallery}/other-${photo}/original.png`,
+    ];
     let reads = 0;
     const guardedBucket = new Proxy(env.ORIGINALS, {
       get(target, property) {
@@ -184,9 +185,34 @@ describe("scoped private recovery with real local D1/R2", () => {
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
-    await expect(captureClientRecovery(env.DB, guardedBucket, [id]))
-      .rejects.toThrow("Recovery scope mismatch");
+    for (const wrongKey of wrongKeys) {
+      await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+        .bind(wrongKey, photo).run();
+      await expect(captureClientRecovery(env.DB, guardedBucket, [id]))
+        .rejects.toThrow("Recovery scope mismatch");
+    }
     expect(reads).toBe(0);
+  });
+
+  it("preserves only the exact known historical nested original.png layout in scoped backup/restore", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const historicalKey = `client-galleries/${gallery}/${photo}/original.png`;
+    const bytes = Uint8Array.of(73);
+    await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+      .bind(historicalKey, photo).run();
+    await env.ORIGINALS.put(historicalKey, bytes, {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const backup = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    expect(backup.objects.map(o => o.key)).toEqual([historicalKey]);
+    const restored = await restoreClientRecovery(backup, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
+    expect(restored).toMatchObject({ objects: 1, accountsQuarantined: true });
+    expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(historicalKey))!.arrayBuffer()))
+      .toEqual(bytes);
+    expect((await bindings.RESTORE_DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(photo).first<{key:string}>())?.key).toBe(historicalKey);
   });
 
   it("refuses a coherent-looking restored R2 key that is not the canonical image key", async () => {
