@@ -460,6 +460,61 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect((await handleQaRecovery(request([first, second]), { ...qa, QA_RECOVERY_ALLOCATION: "unknown" })).status).toBe(403);
   });
 
+  it("round-trips a revoked ready image and completed intent without re-opening private media", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const image = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${image}.png`;
+    const bytes = Uint8Array.of(117, 21, 31);
+    const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+      .map(v => v.toString(16).padStart(2, "0")).join("");
+    const revokedAt = "2026-11-09T17:00:00.000Z";
+    await env.ORIGINALS.put(key, bytes, {
+      httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: digest },
+    });
+    await env.DB.prepare(
+      "UPDATE client_gallery_images SET size_bytes=?,original_sha256=?,deleted_at=? WHERE id=?",
+    ).bind(bytes.length, digest, revokedAt, image).run();
+    const intent = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,completed_at,sha256)
+      VALUES (?,?,?,'image/png',?,?,'completed',?,datetime('now'),datetime('now'),?)`)
+      .bind(intent, gallery, image, bytes.length, key,
+        new Date(Date.now() + 60_000).toISOString(), digest).run();
+
+    const archive = await captureClientRecovery(env.DB, env.ORIGINALS, [client]);
+    expect(archive.tables.client_gallery_images[0].deleted_at).toBe(revokedAt);
+    expect(archive.tables.client_gallery_upload_intents[0].status).toBe("completed");
+    expect((await restoreClientRecovery(archive, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)))
+      .toMatchObject({ objects: 1, accountsQuarantined: true });
+    expect(await bindings.RESTORE_DB.prepare(
+      "SELECT status,deleted_at AS deletedAt FROM client_gallery_images WHERE id=?",
+    ).bind(image).first()).toEqual({ status: "ready", deletedAt: revokedAt });
+    expect(await bindings.RESTORE_DB.prepare(
+      "SELECT status FROM client_gallery_upload_intents WHERE id=?",
+    ).bind(intent).first()).toEqual({ status: "completed" });
+    expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer()))
+      .toEqual(bytes);
+    // The restored metadata is still revoked. A prior successful signed PUT
+    // must not make soft-deleted private media available again.
+    const restoredEnv = { ...env, DB: bindings.RESTORE_DB,
+      ORIGINALS: bindings.RESTORE_ORIGINALS, PRIVATE_GALLERIES_ENABLED: "true",
+      CLIENT_SESSION_SECRET: "revoked-soft-delete-recovery-separate-secret-2026" } as Env;
+    await bindings.RESTORE_DB.prepare("UPDATE client_accounts SET disabled_at=NULL WHERE id=?")
+      .bind(client).run();
+    const cookie = "punctum_client_session=" + await createClientSession({
+      id: client, sessionVersion: 2,
+    }, restoredEnv);
+    for (const [method,variant,headOnly] of [
+      ["GET","gallery",false],["HEAD","gallery",true],["GET","download",false],
+    ] as const) {
+      await expect(servePrivateGalleryImage(privateRequest(
+        "/api/client/galleries", method, undefined, cookie,
+      ), restoredEnv, gallery, image, variant, "client", headOnly))
+        .rejects.toMatchObject({ status: 404 });
+    }
+  });
+
   it("rejects a completed intent linked to a pending image before any restore R2 write", async () => {
     const client = await seedClient();
     const gallery = await seedGallery(client);

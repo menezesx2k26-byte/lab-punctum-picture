@@ -95,14 +95,15 @@ function assertRowScope(snapshot: ClientRecovery) {
         throw new Error("Recovery cover mismatch");
     }
   }
-  // A finished upload must never point at a pending/removed image. SQLite's
-  // foreign keys and individual status CHECK constraints permit this invalid
-  // cross-table lifecycle, and D1 would otherwise accept it only *after* R2
-  // originals had been staged. Keep historic NULL digests compatible.
+  // A completed upload must reference a ready image. Soft-deletion of a
+  // previously completed image is valid historical state: deleted_at revokes
+  // all private delivery, but must not prevent a quarantined backup/restore
+  // of its immutable original or silently reopen that image. The storage
+  // lifecycle invariant is about status, not about current visibility.
+  // Keep historic NULL digests compatible.
   for (const intent of snapshot.tables.client_gallery_upload_intents) {
     const image = images.get(intent.image_id);
-    if (intent.status === "completed" &&
-        (image?.status !== "ready" || image.deleted_at !== null))
+    if (intent.status === "completed" && image?.status !== "ready")
       throw new Error("Recovery lifecycle mismatch");
   }
 }
