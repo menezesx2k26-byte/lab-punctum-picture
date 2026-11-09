@@ -6,12 +6,24 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
   const headers = request.headers;
   if (request.method !== "GET" || url.pathname !== "/" || url.search || url.hash ||
       url.username || url.password || !["http:", "https:"].includes(url.protocol)) return false;
-  const accept = headers.get("accept") ?? "";
-  if (!accept.toLowerCase().includes("text/html")) return false;
+  const accept = (headers.get("accept") ?? "").toLowerCase();
+  // A mere substring match accepts `text/html;q=0`, where HTML was explicitly
+  // rejected. Treat the shared HTML entry as ineligible for that variant.
+  const acceptsHtml = accept.split(",").some(entry => {
+    const [kind, ...params] = entry.trim().split(";");
+    if (kind.trim() !== "text/html") return false;
+    const quality = params.map(part => part.trim()).find(part => /^q\s*=/.test(part));
+    if (!quality) return true;
+    const weight = Number(quality.split("=")[1]?.trim());
+    return Number.isFinite(weight) && weight > 0 && weight <= 1;
+  });
+  if (!acceptsHtml) return false;
   // Client cache-bypass directives and conditional/range requests are not
   // ordinary anonymous HTML navigations. A shared cache entry cannot
   // represent their validators, byte ranges or proxy rewrite contexts.
-  if (/\b(?:no-store|no-cache)\b/i.test(headers.get("cache-control") ?? "") ||
+  const cacheControl = headers.get("cache-control") ?? "";
+  if (/\b(?:no-store|no-cache)\b/i.test(cacheControl) ||
+      cacheControl.split(",").some(part => /^max-age\s*=\s*0+\s*$/i.test(part.trim())) ||
       /\bno-cache\b/i.test(headers.get("pragma") ?? "")) return false;
   for (const name of ["cookie", "authorization", "proxy-authorization",
     "cf-access-jwt-assertion", "cf-access-authenticated-user-email",

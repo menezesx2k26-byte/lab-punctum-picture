@@ -705,12 +705,17 @@ describe("Worker Punctum Picture", () => {
     );
     expect(blockedPublish.status).toBe(409);
 
-    const bytes = new Uint8Array([1, 2, 3, 4]);
+    // A real decodable synthetic PNG is required: completion must fail closed
+    // on invalid bytes rather than treating metadata inspection as optional.
+    const bytes = Uint8Array.from(
+      atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+      (char) => char.charCodeAt(0),
+    );
     const intentResponse = await exports.default.fetch(
       jsonRequest("/admin/api/uploads/intents", "POST", {
         albumId,
-        filename: "teste.jpg",
-        mimeType: "image/jpeg",
+        filename: "teste.png",
+        mimeType: "image/png",
         sizeBytes: bytes.byteLength,
       }),
     );
@@ -725,7 +730,7 @@ describe("Worker Punctum Picture", () => {
       new Request(intent.uploadUrl, {
         method: "PUT",
         headers: {
-          "Content-Type": "image/jpeg",
+          "Content-Type": "image/png",
           Origin: "http://localhost:8787",
         },
         body: bytes,

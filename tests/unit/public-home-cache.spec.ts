@@ -6,6 +6,23 @@ function req(path = "/", init: RequestInit = {}) {
 }
 
 describe("public home isolated cache boundary", () => {
+  it("does not share a cache entry with explicit zero-freshness or rejected HTML negotiation", () => {
+    const cases: Record<string, string>[] = [
+      { Accept: "text/html", "Cache-Control": "max-age=0" },
+      { Accept: "text/html", "Cache-Control": "max-age=0, must-revalidate" },
+      { Accept: "application/json, text/html;q=0" },
+      { Accept: "text/html;q=0.0, application/xhtml+xml" },
+    ];
+    for (const headers of cases) {
+      const request = req("/", { headers });
+      expect(isPublicHomeCacheRequest(request), JSON.stringify(headers)).toBe(false);
+      const response = publicHomeCacheResponse(request, new Response("<html>wrong cached variant</html>", {
+        headers: {"Content-Type":"text/html", "Cache-Control":"no-store, must-revalidate"},
+      }));
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"), JSON.stringify(headers)).toBeNull();
+    }
+    expect(isPublicHomeCacheRequest(req("/", {headers:{Accept:"text/html;q=0.9, application/xhtml+xml"}}))).toBe(true);
+  });
   it("never shares bypass, conditional, partial-content, or proxy-rewritten home requests", () => {
     const conditionalOrContextHeaders: Record<string, string>[] = [
       { Range: "bytes=0-128" },
