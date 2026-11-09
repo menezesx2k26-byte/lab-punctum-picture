@@ -32,10 +32,26 @@ function validPublicSsrHtml(html: string): boolean {
   for (let pass = 0; pass < 8; pass++) {
     const next = normalizedPaths
       .replace(/(?:&amp;|&#0*38;|&#x0*26;)/gi, "&")
-      .replace(/%25/gi, "%")
-      .replace(/(?:\\u002f|\\x2f|\\\/|%2f|&#x0*2f;|&#0*47;|&sol;)/gi, "/")
-      .replace(/(?:\\u002d|\\x2d|%2d|&#x0*2d;|&#0*45;)/gi, "-")
-      .replace(/(?:\\u005f|\\x5f|%5f|&#x0*5f;|&#0*95;)/gi, "_");
+      .replace(/\\u\{([0-9a-f]{1,6})\}/gi, (whole, value: string) => {
+        const code = Number.parseInt(value, 16);
+        return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
+      })
+      // ASCII letters can encode private path markers too. Decode only for
+      // validation; never render the normalized string, and preserve any
+      // non-ASCII escapes or entities without executing markup.
+      .replace(/\\(?:u([0-9a-f]{4})|x([0-9a-f]{2}))/gi, (whole, u: string | undefined, x: string | undefined) => {
+        const code = Number.parseInt(u ?? x ?? "", 16);
+        return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
+      })
+      .replace(/%([0-9a-f]{2})/gi, (whole, value: string) => {
+        const code = Number.parseInt(value, 16);
+        return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
+      })
+      .replace(/&#(?:0*([0-9]+)|x0*([0-9a-f]+));?/gi, (whole, dec: string | undefined, hex: string | undefined) => {
+        const code = Number.parseInt(dec ?? hex ?? "", hex === undefined ? 10 : 16);
+        return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
+      })
+      .replace(/(?:\\\/|&sol;)/gi, "/");
     if (next === normalizedPaths) break;
     normalizedPaths = next;
     if (pass === 7) return false;

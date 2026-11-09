@@ -168,6 +168,52 @@ describe("scoped private recovery with real local D1/R2", () => {
     }
   });
 
+  it("refuses noncanonical image identities in source D1 before reading an R2 object", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const wrongKey = `client-galleries/${gallery}/other-${photo}.png`;
+    await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+      .bind(wrongKey, photo).run();
+    let reads = 0;
+    const guardedBucket = new Proxy(env.ORIGINALS, {
+      get(target, property) {
+        if (property === "get" || property === "head")
+          return () => { reads++; throw new Error("R2 must not be read for noncanonical source"); };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(captureClientRecovery(env.DB, guardedBucket, [id]))
+      .rejects.toThrow("Recovery scope mismatch");
+    expect(reads).toBe(0);
+  });
+
+  it("refuses a coherent-looking restored R2 key that is not the canonical image key", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(31), { httpMetadata: { contentType: "image/png" } });
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const tampered = structuredClone(snapshot);
+    const wrongKey = `client-galleries/${gallery}/other-${photo}.png`;
+    tampered.tables.client_gallery_images[0].storage_key = wrongKey;
+    tampered.objects[0].key = wrongKey;
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => { writes++; throw new Error("R2 must not be written for noncanonical restore"); };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(tampered, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery scope mismatch");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
+  });
+
   it("runs authenticated QA recovery through a private backup and denies production or replay", async () => {
     const id = await seedClient();
     await env.DB.prepare("UPDATE client_accounts SET email=? WHERE id=?").bind(`pilot-${id}@example.invalid`, id).run();

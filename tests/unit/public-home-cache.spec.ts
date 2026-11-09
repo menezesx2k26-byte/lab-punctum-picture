@@ -19,6 +19,12 @@ describe("public home isolated cache boundary", () => {
     for (const headers of sensitiveHeaders) {
       expect(isPublicHomeCacheRequest(req("/", {headers}))).toBe(false);
     }
+    for (const header of ["CF-Access-Authenticated-User-Email", "X-Forwarded-User",
+      "X-Auth-User", "X-Api-Key", "Proxy-Authorization"]) {
+      expect(isPublicHomeCacheRequest(req("/", {headers:{
+        Accept:"text/html", [header]:"identity-or-credential",
+      }}))).toBe(false);
+    }
   });
 
   it("only caches successful HTML without set-cookie or private directives", async () => {
@@ -38,6 +44,24 @@ describe("public home isolated cache boundary", () => {
       const result=publicHomeCacheResponse(req(),response);
       expect(result.headers.get("Cache-Control")).toBe("private, no-store");
       expect(result.headers.has("Cloudflare-CDN-Cache-Control")).toBe(false);
+    }
+  });
+  it("removes alternate CDN/surrogate expiry overrides from private responses and public cache envelopes", () => {
+    for (const status of [200, 401, 404]) {
+      const response = publicHomeCacheResponse(req(), new Response("<html>response</html>", {
+        status, headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": status === 200 ? "no-store, must-revalidate" : "private, no-store",
+          "CDN-Cache-Control": "public, max-age=3600",
+          "Surrogate-Control": "max-age=3600",
+          "Expires": "Wed, 21 Oct 2099 07:28:00 GMT",
+        },
+      }));
+      for (const name of ["CDN-Cache-Control", "Surrogate-Control", "Expires"]) {
+        expect(response.headers.has(name)).toBe(false);
+      }
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"))
+        .toBe(status === 200 ? "public, max-age=60" : null);
     }
   });
 

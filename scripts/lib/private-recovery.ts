@@ -1,4 +1,5 @@
 import { recoverySelection, recoveryInsert } from "./private-recovery-format.mjs";
+import { privateGalleryStorageKey } from "../../worker/client/gallery-storage-key";
 /** Operator library only. No HTTP route or automatic production invocation. */
 type Row = Record<string, string | number | null>;
 const tables = ["client_accounts", "client_galleries", "client_gallery_images", "client_gallery_upload_intents", "client_gallery_favorites"] as const;
@@ -13,25 +14,11 @@ async function hash(bytes: Uint8Array) {
 }
 function assertScope(snapshot: ClientRecovery) {
   if (snapshot.version !== 1 || !snapshot.tables.client_accounts.length) throw new Error("Invalid recovery snapshot");
-  const clients = new Set(snapshot.tables.client_accounts.map((r) => r.id));
-  const galleries = new Set(snapshot.tables.client_galleries.map((r) => r.id));
+  assertRowScope(snapshot);
   const images = new Map(snapshot.tables.client_gallery_images.map((r) => [r.id, r]));
-  if (snapshot.tables.client_galleries.some((r) => !clients.has(r.client_id)) ||
-      snapshot.tables.client_gallery_images.some((r) => !galleries.has(r.gallery_id) || !String(r.storage_key).startsWith(`client-galleries/${r.gallery_id}/`)) ||
-      snapshot.tables.client_gallery_favorites.some((r) => !clients.has(r.client_id) || images.get(r.image_id)?.gallery_id !== r.gallery_id ||
-        !snapshot.tables.client_galleries.some((g) => g.id === r.gallery_id && g.client_id === r.client_id)) ||
-      snapshot.tables.client_gallery_upload_intents.some((r) => images.get(r.image_id)?.gallery_id !== r.gallery_id || images.get(r.image_id)?.storage_key !== r.storage_key) ||
-      snapshot.objects.some((o) => !snapshot.tables.client_gallery_images.some((r) => r.storage_key === o.key)))
-    throw new Error("Recovery scope mismatch");
-  for (const gallery of snapshot.tables.client_galleries) {
-    if (gallery.cover_image_id !== null) {
-      const cover = images.get(gallery.cover_image_id);
-      if (!cover || cover.gallery_id !== gallery.id || cover.status !== "ready" || cover.deleted_at !== null)
-        throw new Error("Recovery cover mismatch");
-    }
-  }
   for (const object of snapshot.objects) {
-    const image = snapshot.tables.client_gallery_images.find((r) => r.storage_key === object.key)!;
+    const image = snapshot.tables.client_gallery_images.find((r) => r.storage_key === object.key);
+    if (!image) throw new Error("Recovery scope mismatch");
     if (object.bytes.length !== image.size_bytes || object.httpMetadata.contentType !== image.mime_type)
       throw new Error("Recovery object metadata mismatch");
     // Backups may contain pre-migration rows with NULL digests. For attested
@@ -40,10 +27,7 @@ function assertScope(snapshot: ClientRecovery) {
         (object.customMetadata?.sha256 != null && object.customMetadata.sha256 !== object.sha256))
       throw new Error("Recovery digest mismatch");
   }
-  // A backup's upload-intent digest is a separate D1 attestation. Checking
-  // only the image row would let a forged/replayed intent restore inconsistent
-  // authentication and original-byte evidence. NULL is historical, not a
-  // checksum to manufacture during recovery.
+  // A backup's upload-intent digest is a separate D1 attestation.
   const objects = new Map(snapshot.objects.map(object => [object.key, object]));
   for (const intent of snapshot.tables.client_gallery_upload_intents) {
     if (intent.sha256 === null) continue;
@@ -58,6 +42,34 @@ function assertScope(snapshot: ClientRecovery) {
     throw new Error("Recovery object missing or duplicated");
 }
 
+// Check relational ownership and canonical R2 keys *before* any bucket read
+// during capture or any bucket write during restore. Prefix-only checks could
+// back up a different image's original under a forged legacy D1 storage_key.
+function assertRowScope(snapshot: ClientRecovery) {
+  const clients = new Set(snapshot.tables.client_accounts.map((r) => r.id));
+  const galleries = new Set(snapshot.tables.client_galleries.map((r) => r.id));
+  const images = new Map(snapshot.tables.client_gallery_images.map((r) => [r.id, r]));
+  if (snapshot.tables.client_galleries.some((r) => !clients.has(r.client_id)) ||
+      snapshot.tables.client_gallery_images.some((r) => !galleries.has(r.gallery_id) ||
+        r.storage_key !== privateGalleryStorageKey(String(r.gallery_id), String(r.id), String(r.mime_type))) ||
+      snapshot.tables.client_gallery_favorites.some((r) => !clients.has(r.client_id) || images.get(r.image_id)?.gallery_id !== r.gallery_id ||
+        !snapshot.tables.client_galleries.some((g) => g.id === r.gallery_id && g.client_id === r.client_id)) ||
+      snapshot.tables.client_gallery_upload_intents.some((r) => {
+        const image = images.get(r.image_id);
+        return image?.gallery_id !== r.gallery_id || image.storage_key !== r.storage_key ||
+          image.mime_type !== r.expected_mime || image.size_bytes !== r.expected_size;
+      }) ||
+      snapshot.objects.some((o) => !snapshot.tables.client_gallery_images.some((r) => r.storage_key === o.key)))
+    throw new Error("Recovery scope mismatch");
+  for (const gallery of snapshot.tables.client_galleries) {
+    if (gallery.cover_image_id !== null) {
+      const cover = images.get(gallery.cover_image_id);
+      if (!cover || cover.gallery_id !== gallery.id || cover.status !== "ready" || cover.deleted_at !== null)
+        throw new Error("Recovery cover mismatch");
+    }
+  }
+}
+
 export async function captureClientRecovery(db: D1Database, bucket: R2Bucket, clientIds: string[]): Promise<ClientRecovery> {
   const statements = recoverySelection(clientIds);
   // D1 batch gives the relational snapshot a consistent transaction boundary.
@@ -65,10 +77,9 @@ export async function captureClientRecovery(db: D1Database, bucket: R2Bucket, cl
   const data = Object.fromEntries(tables.map((t, i) => [t, rows[i].results])) as Record<Table, Row[]>;
   if (data.client_accounts.length !== clientIds.length) throw new Error("Recovery client missing");
   const snapshot: ClientRecovery = { version: 1, tables: data, objects: [] };
+  assertRowScope(snapshot);
   for (const image of data.client_gallery_images) {
     const key = String(image.storage_key);
-    // Check scope before touching storage, including malformed DB references.
-    if (!key.startsWith(`client-galleries/${image.gallery_id}/`)) throw new Error("Recovery scope mismatch");
     const object = await bucket.get(key);
     if (!object) {
       if (image.status === "ready") throw new Error("Recovery object missing");

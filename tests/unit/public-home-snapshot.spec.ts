@@ -52,6 +52,24 @@ describe("versioned public-home snapshot for cold cache MISS", () => {
       const dangerous = HTML.replace("Studio publicado", secret);
       expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, dangerous)).toBe(false);
     }
+    // Escape the letters rather than the separators: scripts and links still
+    // decode these to known private endpoints, even when the slashes are plain.
+    for (const secret of [
+      "/\\u0061pi/client/galleries/secret",
+      "/\\x61pi/client/galleries/secret",
+      "/%61pi/client/galleries/secret",
+      "/%2561pi/client/galleries/secret",
+      "/&#97;pi/client/galleries/secret",
+      "/&#x61;pi/client/galleries/secret",
+      "/&#97pi/client/galleries/secret",
+      "/&#x61pi/client/galleries/secret",
+      "/\\u{61}pi/client/galleries/secret",
+      "client-g\\u0061lleries/private.jpg",
+      "punctum_\\u0063lient_session=secret",
+    ]) {
+      expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD,
+        HTML.replace("Studio publicado", secret))).toBe(false);
+    }
     expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, HTML)).toBe(true);
     await env.DB.prepare("UPDATE public_home_snapshot SET html_sha256=? WHERE id=1").bind("0".repeat(64)).run();
     expect(await readPublicHomeSnapshot(env.DB, BUILD)).toBeNull();

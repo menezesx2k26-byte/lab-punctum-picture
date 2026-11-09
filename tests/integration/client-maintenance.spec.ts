@@ -83,6 +83,49 @@ describe("private upload cleanup", () => {
     expect(await env.DB.prepare("SELECT completed_at AS completedAt FROM client_gallery_upload_intents WHERE id=?")
       .bind(intent).first()).toEqual({ completedAt: null });
   });
+  it("does not delete an original when a restore promotes its image immediately after cleanup marks it failed", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const image = crypto.randomUUID();
+    const intent = crypto.randomUUID();
+    const key = `client-galleries/${gallery}/${image}.jpg`;
+    await env.DB.prepare(
+      `INSERT INTO client_gallery_images (id,gallery_id,storage_key,original_filename,mime_type,size_bytes,position,status,created_at,updated_at)
+       VALUES (?,?,?,'restored.jpg','image/jpeg',1,0,'pending','2000-01-01','2000-01-01')`,
+    ).bind(image, gallery, key).run();
+    await env.DB.prepare(
+      `INSERT INTO client_gallery_upload_intents (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at)
+       VALUES (?,?,?,'image/jpeg',1,?,'uploaded','2000-01-01','2000-01-01')`,
+    ).bind(intent, gallery, image, key).run();
+    await env.ORIGINALS.put(key, "x");
+    let restored = false;
+    const raceDb = {
+      prepare(sql: string) {
+        const stmt = env.DB.prepare(sql);
+        if (!sql.startsWith("UPDATE client_gallery_images SET status='failed'")) return stmt;
+        return {
+          bind(...args: Parameters<typeof stmt.bind>) {
+            const bound = stmt.bind(...args);
+            return {
+              async run() {
+                const updated = await bound.run();
+                await env.DB.prepare("UPDATE client_gallery_images SET status='ready' WHERE id=?")
+                  .bind(image).run();
+                restored = true;
+                return updated;
+              },
+            };
+          },
+        } as unknown as typeof stmt;
+      },
+    } as unknown as D1Database;
+    await cleanupPrivateGalleryUploads({ ...env, DB: raceDb } as Env);
+    expect(restored).toBe(true);
+    expect(await env.ORIGINALS.head(key)).not.toBeNull();
+    expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+      .bind(image).first()).toEqual({ status: "ready" });
+    expect(await env.DB.prepare("SELECT completed_at AS completedAt FROM client_gallery_upload_intents WHERE id=?")
+      .bind(intent).first()).toEqual({ completedAt: null });
+  });
   it("retries an expired upload after object deletion fails", async () => {
     const gallery = await seedGallery(await seedClient(), "draft");
     const image = crypto.randomUUID();

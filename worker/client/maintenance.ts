@@ -82,6 +82,23 @@ export async function cleanupPrivateGalleryUploads(env: Env): Promise<void> {
     // claim. Without the matched D1 transition, never delete the R2 object
     // or mark cleanup completed. Expired intents are still eligible to retry.
     if (imageTransition.meta.changes !== 1) continue;
+    // A restore can also interleave immediately *after* the D1 transition.
+    // Recheck both rows just before crossing the D1/R2 boundary, including
+    // the transition timestamp. A restored ready row is never a cleanup
+    // candidate; retain the original and leave the intent retryable.
+    const stillExpired = await db.prepare(
+      `SELECT 1 FROM client_gallery_images m
+       JOIN client_gallery_upload_intents i
+         ON i.gallery_id=m.gallery_id AND i.image_id=m.id
+       WHERE i.id=? AND i.status='expired' AND i.completed_at IS NULL
+         AND i.storage_key=? AND i.expected_mime=? AND i.expected_size=?
+         AND m.gallery_id=? AND m.id=? AND m.storage_key=?
+         AND m.mime_type=? AND m.size_bytes=? AND m.status='failed'
+         AND m.deleted_at IS NULL AND m.updated_at=?`,
+    ).bind(intent.id, expectedKey, intent.expectedMime, intent.expectedSize,
+      intent.galleryId, intent.imageId, expectedKey, intent.expectedMime,
+      intent.expectedSize, now).first();
+    if (!stillExpired) continue;
     await env.ORIGINALS.delete(expectedKey);
     await db
       .prepare(

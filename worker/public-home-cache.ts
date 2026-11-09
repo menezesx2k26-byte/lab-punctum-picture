@@ -8,7 +8,10 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
       url.username || url.password || !["http:", "https:"].includes(url.protocol)) return false;
   const accept = headers.get("accept") ?? "";
   if (!accept.toLowerCase().includes("text/html")) return false;
-  for (const name of ["cookie", "authorization", "cf-access-jwt-assertion",
+  for (const name of ["cookie", "authorization", "proxy-authorization",
+    "cf-access-jwt-assertion", "cf-access-authenticated-user-email",
+    "x-forwarded-user", "x-forwarded-email", "x-auth-user", "x-user-email",
+    "x-api-key", "x-ms-client-principal",
     "rsc", "next-router-state-tree", "next-router-prefetch", "next-url",
     "purpose", "sec-purpose", "x-nextjs-data", "x-middleware-prefetch"]) {
     if (headers.has(name)) return false;
@@ -35,6 +38,11 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
     unaccountedVary;
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
     headers.get("Content-Type")?.toLowerCase().startsWith("text/html") && !sensitive;
+  // Never retain alternative surrogate/CDN caching directives from upstream:
+  // they can override the fail-closed Cache-Control on denials, or defeat the
+  // 60s public-home window even when the response itself is anonymous.
+  for (const name of ["CDN-Cache-Control", "Surrogate-Control", "Expires", "Age"])
+    headers.delete(name);
   // Browser always revalidates, while the named Cloudflare cache holds public HTML
   // for 60s. A Studio purge therefore cannot leave a browser-local 60s copy.
   headers.set("Cache-Control", safe ? "public, max-age=0, must-revalidate" : "private, no-store");
