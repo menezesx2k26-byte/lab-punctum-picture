@@ -295,3 +295,176 @@ it("refuses replay of an upload token after a coherent D1 image/key rebind", asy
     "SELECT status,image_id AS imageId FROM client_gallery_upload_intents WHERE id=?",
   ).bind(issued.intentId).first())).toEqual({ status: "pending", imageId: alternate });
 });
+
+it("does not publish an unrelated image when a restore rebinds the uploaded intent immediately before D1 completion", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const first = await seedReadyImage(gallery);
+  const alternate = await seedReadyImage(gallery);
+  const png = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", png))]
+    .map(x => x.toString(16).padStart(2, "0")).join("");
+  const firstKey = `client-galleries/${gallery}/${first}.png`;
+  const alternateKey = `client-galleries/${gallery}/${alternate}.png`;
+  await env.DB.prepare("UPDATE client_gallery_images SET status='pending',size_bytes=? WHERE id IN (?,?)")
+    .bind(png.length, first, alternate).run();
+  await env.ORIGINALS.put(firstKey, png, {
+    httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: digest },
+  });
+  const intentId = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO client_gallery_upload_intents
+     (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256)
+     VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'),?)`,
+  ).bind(intentId, gallery, first, png.length, firstKey,
+    new Date(Date.now() + 600_000).toISOString(), digest).run();
+
+  let rebinds = 0;
+  const racingDb = new Proxy(env.DB, {
+    get(target, key) {
+      if (key === "batch") return async (statements: D1PreparedStatement[]) => {
+        rebinds++;
+        await env.DB.prepare(
+          "UPDATE client_gallery_upload_intents SET image_id=?,storage_key=? WHERE id=?",
+        ).bind(alternate, alternateKey, intentId).run();
+        return target.batch(statements);
+      };
+      const value = Reflect.get(target, key);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const request = privateRequest(
+    `/admin/api/albuns-privados/${gallery}/uploads/${intentId}/complete`, "POST",
+  );
+  await expect(handleClientGalleryUploadApi(request, new URL(request.url),
+    { ...env, DB: racingDb } as Env))
+    .rejects.toMatchObject({ status: 409, code: "UPLOAD_INTENT_MISMATCH" });
+  expect(rebinds).toBe(1);
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+    .bind(first).first()).toEqual({ status: "pending" });
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+    .bind(alternate).first()).toEqual({ status: "pending" });
+  expect(await env.DB.prepare(
+    "SELECT status,image_id AS imageId FROM client_gallery_upload_intents WHERE id=?",
+  ).bind(intentId).first()).toEqual({ status: "uploaded", imageId: alternate });
+  expect(new Uint8Array(await (await env.ORIGINALS.get(firstKey))!.arrayBuffer())).toEqual(png);
+  expect(await env.ORIGINALS.head(alternateKey)).toBeNull();
+});
+
+it("keeps a staged R2 original recoverable when a restore rebinds the intent after PUT but before D1 uploaded", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
+    "POST", { filename: "staged.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const response = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  expect(response?.status).toBe(201);
+  const issued = await response!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  const alternate = await seedReadyImage(gallery);
+  const alternateKey = `client-galleries/${gallery}/${alternate}.png`;
+  await env.DB.prepare("UPDATE client_gallery_images SET status='pending',size_bytes=? WHERE id=?")
+    .bind(bytes.length, alternate).run();
+  let staged = 0;
+  const racingR2 = new Proxy(env.ORIGINALS, {
+    get(target, key) {
+      if (key === "put") return async (...args: Parameters<R2Bucket["put"]>) => {
+        const result = await target.put(...args);
+        staged++;
+        await env.DB.prepare(
+          "UPDATE client_gallery_upload_intents SET image_id=?,storage_key=? WHERE id=?",
+        ).bind(alternate, alternateKey, issued.intentId).run();
+        return result;
+      };
+      const value = Reflect.get(target, key);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const upload = new Request(issued.uploadUrl, {
+    method: "PUT",
+    headers: {
+      ...issued.requiredHeaders, Origin: "http://localhost:8787",
+      "Content-Length": String(bytes.length),
+    },
+    body: bytes.slice().buffer,
+  });
+  await expect(handleClientGalleryUploadApi(upload, new URL(upload.url),
+    { ...env, ORIGINALS: racingR2 } as Env))
+    .rejects.toMatchObject({ status: 409, code: "UPLOAD_INTENT_MISMATCH" });
+  expect(staged).toBe(1);
+  const firstKey = `client-galleries/${gallery}/${issued.imageId}.png`;
+  expect(new Uint8Array(await (await env.ORIGINALS.get(firstKey))!.arrayBuffer())).toEqual(bytes);
+  expect(await env.ORIGINALS.head(alternateKey)).toBeNull();
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+    .bind(issued.imageId).first()).toEqual({ status: "pending" });
+  expect(await env.DB.prepare(
+    "SELECT status,image_id AS imageId FROM client_gallery_upload_intents WHERE id=?",
+  ).bind(issued.intentId).first()).toEqual({ status: "pending", imageId: alternate });
+});
+
+it("does not mark another image failed if restore rebinds an intent during failed raster validation", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const first = await seedReadyImage(gallery);
+  const alternate = await seedReadyImage(gallery);
+  const png = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const sha = [...new Uint8Array(await crypto.subtle.digest("SHA-256", png))]
+    .map(v => v.toString(16).padStart(2, "0")).join("");
+  const key = `client-galleries/${gallery}/${first}.png`;
+  const alternateKey = `client-galleries/${gallery}/${alternate}.png`;
+  await env.DB.prepare("UPDATE client_gallery_images SET status='pending',size_bytes=? WHERE id IN (?,?)")
+    .bind(png.length, first, alternate).run();
+  await env.ORIGINALS.put(key, png, {
+    httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: sha },
+  });
+  const intent = crypto.randomUUID();
+  await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+    (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256)
+    VALUES (?,?,?,'image/png',?,?,'uploaded',?,datetime('now'),?)`)
+    .bind(intent, gallery, first, png.length, key, new Date(Date.now() + 600_000).toISOString(), sha).run();
+  let raced = 0;
+  const db = new Proxy(env.DB, {
+    get(target, property) {
+      if (property === "batch") return async (statements: D1PreparedStatement[]) => {
+        raced++;
+        await env.DB.prepare(
+          "UPDATE client_gallery_upload_intents SET image_id=?,storage_key=? WHERE id=?",
+        ).bind(alternate, alternateKey, intent).run();
+        return target.batch(statements);
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const invalidRaster = {
+    info: async () => ({ width: 2, height: 2 }),
+    input: () => ({
+      transform: () => ({ output: () => ({ response: async () =>
+        new Response("invalid raster", { status: 400 }) }) }),
+    }),
+  };
+  const request = privateRequest(
+    `/admin/api/albuns-privados/${gallery}/uploads/${intent}/complete`, "POST",
+  );
+  await expect(handleClientGalleryUploadApi(request, new URL(request.url),
+    { ...env, DB: db, IMAGES: invalidRaster } as unknown as Env))
+    .rejects.toMatchObject({ status: 409, code: "UPLOAD_INTENT_MISMATCH" });
+  expect(raced).toBe(1);
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+    .bind(first).first()).toEqual({ status: "pending" });
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+    .bind(alternate).first()).toEqual({ status: "pending" });
+  expect(await env.DB.prepare(
+    "SELECT status,image_id AS imageId FROM client_gallery_upload_intents WHERE id=?",
+  ).bind(intent).first()).toEqual({ status: "uploaded", imageId: alternate });
+  expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(png);
+  expect(await env.ORIGINALS.head(alternateKey)).toBeNull();
+});

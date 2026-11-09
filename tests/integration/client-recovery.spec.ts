@@ -460,6 +460,61 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect((await handleQaRecovery(request([first, second]), { ...qa, QA_RECOVERY_ALLOCATION: "unknown" })).status).toBe(403);
   });
 
+  it("rejects a completed intent linked to a pending image before any restore R2 write", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const image = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${image}.png`;
+    const bytes = Uint8Array.of(43);
+    const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+      .map(v => v.toString(16).padStart(2, "0")).join("");
+    await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" } });
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?")
+      .bind(digest, image).run();
+    const intent = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,completed_at,sha256)
+      VALUES (?,?,?,'image/png',1,?,'completed',?,datetime('now'),datetime('now'),?)`)
+      .bind(intent, gallery, image, key, new Date(Date.now() + 60_000).toISOString(), digest).run();
+    const snapshot = structuredClone(await captureClientRecovery(env.DB, env.ORIGINALS, [client]));
+    // The same bad D1 lifecycle must fail source capture before a private R2
+    // GET, not only fail destination restore before its first R2 PUT.
+    await env.DB.prepare("UPDATE client_gallery_images SET status='pending' WHERE id=?")
+      .bind(image).run();
+    let reads = 0;
+    const sourceGuard = new Proxy(env.ORIGINALS, {
+      get(target, property) {
+        if (property === "get") return () => {
+          reads++;
+          throw new Error("R2 GET before completed intent lifecycle preflight");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(captureClientRecovery(env.DB, sourceGuard, [client]))
+      .rejects.toThrow("Recovery lifecycle mismatch");
+    expect(reads).toBe(0);
+    snapshot.tables.client_gallery_images[0].status = "pending";
+    let writes = 0;
+    const bucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 PUT before completed intent lifecycle preflight");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, bucket))
+      .rejects.toThrow("Recovery lifecycle mismatch");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(client).first()).toBeNull();
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+  });
+
   it("retries after partial R2 failure while leaving destination rows untouched", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);

@@ -112,6 +112,27 @@ describe("public home isolated cache boundary", () => {
     }
   });
 
+  it("does not cache HTML containing per-response CSP nonces or forwarded identity responses", () => {
+    for (const header of ["Content-Security-Policy", "Content-Security-Policy-Report-Only"]) {
+      const result = publicHomeCacheResponse(req(), new Response("<html>public-looking</html>", {
+        headers: { "Content-Type": "text/html",
+          "Cache-Control": "no-store, must-revalidate",
+          [header]: "script-src 'nonce-UniquePerRequest123=' 'strict-dynamic'",
+        },
+      }));
+      expect(result.headers.get("Cache-Control"), header).toBe("private, no-store");
+      expect(result.headers.get("Cloudflare-CDN-Cache-Control"), header).toBeNull();
+    }
+    for (const header of ["X-Forwarded-Authorization", "X-Forwarded-Cookie", "X-Client-Session"]) {
+      const result = publicHomeCacheResponse(req(), new Response("<html>identity</html>", {
+        headers: { "Content-Type": "text/html",
+          "Cache-Control": "no-store, must-revalidate", [header]: "private-credential" },
+      }));
+      expect(result.headers.get("Cache-Control"), header).toBe("private, no-store");
+      expect(result.headers.get(header), header).toBeNull();
+      expect(result.headers.get("Cloudflare-CDN-Cache-Control"), header).toBeNull();
+    }
+  });
   it("allows only the known anonymous vinext HTML no-store header to be replaced", () => {
     const html = new Response("<html>public</html>", {
       headers: {"Content-Type": "text/html; charset=utf-8",

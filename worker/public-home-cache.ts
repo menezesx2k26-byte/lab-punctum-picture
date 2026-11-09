@@ -32,9 +32,15 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
     "Proxy-Authentication-Info", "CF-Access-Jwt-Assertion",
     "CF-Access-Authenticated-User-Email", "X-Client-Identity",
     "X-Session-Token", "X-Authenticated-User", "X-Client-Id",
-    "X-Forwarded-User",
+    "X-Forwarded-User", "X-Forwarded-Authorization",
+    "X-Forwarded-Cookie", "X-Client-Session",
   ];
   const hasIdentityResponseHeader = sensitiveResponseHeaders.some(name => headers.has(name));
+  // A CSP nonce is a per-response secret. Sharing that HTML/CSP pair across
+  // anonymous requests would turn a one-response nonce into a reusable value.
+  const hasPerResponseNonce = ["Content-Security-Policy",
+    "Content-Security-Policy-Report-Only"].some(name =>
+    /['"]nonce-[a-z0-9+/_=-]+['"]/i.test(headers.get(name) ?? ""));
   // Vinext emits this exact framework default on anonymous HTML too.
   // Replace it only inside this narrowly constrained public homepage entrypoint.
   const frameworkDefault = /^no-store,\s*must-revalidate$/i.test(current.trim());
@@ -46,7 +52,7 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
   const unaccountedVary = (headers.get("Vary") ?? "").split(",")
     .map(part => part.trim().toLowerCase()).filter(Boolean)
     .some(part => !allowedVary.has(part));
-  const sensitive = hasIdentityResponseHeader ||
+  const sensitive = hasIdentityResponseHeader || hasPerResponseNonce ||
     (!frameworkDefault && /\b(?:private|no-store|no-cache)\b/i.test(current)) ||
     unaccountedVary;
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
