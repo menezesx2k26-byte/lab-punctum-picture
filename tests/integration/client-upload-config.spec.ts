@@ -238,3 +238,60 @@ it("blocks a signed direct upload when a concurrent restore promotes the image a
     .bind(reservation.imageId).first<{ storageKey: string }>())!.storageKey;
   expect(await env.ORIGINALS.head(storageKey)).toBeNull();
 });
+
+it("refuses replay of an upload token after a coherent D1 image/key rebind", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    (c) => c.charCodeAt(0),
+  );
+  const create = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
+    filename: "first.png", mimeType: "image/png", sizeBytes: bytes.length,
+  });
+  const result = await handleClientGalleryUploadApi(create, new URL(create.url), env);
+  expect(result?.status).toBe(201);
+  const issued = await result!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  // A recovered or concurrently tampered D1 row can remain internally
+  // canonical while rebinding this intent to another image. The original
+  // bearer token must not authorize R2 writes for a different image/key.
+  const alternate = await seedReadyImage(gallery);
+  const alternateKey = `client-galleries/${gallery}/${alternate}.png`;
+  await env.DB.prepare(
+    "UPDATE client_gallery_images SET status='pending',size_bytes=? WHERE id=?",
+  ).bind(bytes.length, alternate).run();
+  await env.DB.prepare(
+    "UPDATE client_gallery_upload_intents SET image_id=?,storage_key=? WHERE id=?",
+  ).bind(alternate, alternateKey, issued.intentId).run();
+
+  let puts = 0;
+  const guardedR2 = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "put") return () => {
+        puts++;
+        throw new Error("R2 PUT reached with replayed token bound to another image");
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const upload = new Request(issued.uploadUrl, {
+    method: "PUT",
+    headers: {
+      ...issued.requiredHeaders,
+      Origin: "http://localhost:8787",
+      "Content-Length": String(bytes.length),
+    },
+    body: bytes.slice().buffer,
+  });
+  await expect(handleClientGalleryUploadApi(upload, new URL(upload.url),
+    { ...env, ORIGINALS: guardedR2 } as Env))
+    .rejects.toMatchObject({ status: 403, code: "UPLOAD_SIGNATURE" });
+  expect(puts).toBe(0);
+  expect(await env.ORIGINALS.head(alternateKey)).toBeNull();
+  expect((await env.DB.prepare(
+    "SELECT status,image_id AS imageId FROM client_gallery_upload_intents WHERE id=?",
+  ).bind(issued.intentId).first())).toEqual({ status: "pending", imageId: alternate });
+});
