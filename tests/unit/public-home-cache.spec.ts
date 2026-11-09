@@ -6,6 +6,34 @@ function req(path = "/", init: RequestInit = {}) {
 }
 
 describe("public home isolated cache boundary", () => {
+  it("never shares bypass, conditional, partial-content, or proxy-rewritten home requests", () => {
+    const conditionalOrContextHeaders: Record<string, string>[] = [
+      { Range: "bytes=0-128" },
+      { "If-Range": '"previous-object"' },
+      { "If-None-Match": '"private-etag"' },
+      { "If-Match": '"private-etag"' },
+      { "If-Modified-Since": "Mon, 09 Nov 2026 17:00:00 GMT" },
+      { "Cache-Control": "no-store" },
+      { "Cache-Control": "no-cache" },
+      { Pragma: "no-cache" },
+      { "X-Forwarded-Host": "private.example" },
+      { "X-Original-URL": "/api/client/me" },
+      { "X-Rewrite-URL": "/api/client/me" },
+      { Forwarded: "for=198.51.100.1;host=private.example" },
+      { Origin: "https://different.example" },
+    ];
+    for (const headers of conditionalOrContextHeaders) {
+      const request = req("/", { headers: { Accept: "text/html", ...headers } });
+      expect(isPublicHomeCacheRequest(request), JSON.stringify(headers)).toBe(false);
+      const response = publicHomeCacheResponse(request, new Response("<html>potential variant</html>", {
+        headers: { "Content-Type": "text/html", "Cache-Control": "no-store, must-revalidate" },
+      }));
+      expect(response.headers.get("Cache-Control"), JSON.stringify(headers)).toBe("private, no-store");
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"), JSON.stringify(headers)).toBeNull();
+      expect(response.headers.get("Cache-Tag"), JSON.stringify(headers)).toBeNull();
+    }
+    expect(isPublicHomeCacheRequest(req())).toBe(true);
+  });
   it("only admits an anonymous public navigation to the canonical home", () => {
     expect(isPublicHomeCacheRequest(req())).toBe(true);
     expect(isPublicHomeCacheRequest(req("/", { method: "HEAD" }))).toBe(false);
