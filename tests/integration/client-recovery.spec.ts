@@ -175,6 +175,44 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
       .bind(id).first()).toBeNull();
   });
+  it("rejects duplicate image primary IDs inside an archive before any R2 restore write", async () => {
+    const client = await seedClient();
+    const galleryA = await seedGallery(client);
+    const galleryB = await seedGallery(client);
+    const imageA = await seedReadyImage(galleryA);
+    const imageB = await seedReadyImage(galleryB);
+    const firstKey = `client-galleries/${galleryA}/${imageA}.png`;
+    const secondKey = `client-galleries/${galleryB}/${imageB}.png`;
+    for (const key of [firstKey, secondKey]) {
+      await env.ORIGINALS.put(key, Uint8Array.of(41), {
+        httpMetadata: { contentType: "image/png" },
+      });
+    }
+    const snapshot = structuredClone(await captureClientRecovery(env.DB, env.ORIGINALS, [client]));
+    const secondImage = snapshot.tables.client_gallery_images.find((image) => image.gallery_id === galleryB)!;
+    secondImage.id = imageA;
+    const forgedKey = `client-galleries/${galleryB}/${imageA}.png`;
+    secondImage.storage_key = forgedKey;
+    snapshot.objects.find((object) => object.key === secondKey)!.key = forgedKey;
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 write attempted before snapshot primary-key check");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery snapshot primary key mismatch");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_ORIGINALS.head(firstKey)).toBeNull();
+    expect(await bindings.RESTORE_ORIGINALS.head(forgedKey)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(client).first()).toBeNull();
+  });
   it("rejects a forged source digest and inconsistent backup attestations before restore writes", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);

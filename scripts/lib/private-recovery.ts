@@ -61,6 +61,18 @@ function assertScope(snapshot: ClientRecovery) {
 // during capture or any bucket write during restore. Prefix-only checks could
 // back up a different image's original under a forged legacy D1 storage_key.
 function assertRowScope(snapshot: ClientRecovery) {
+  // A forged archive can repeat a primary identity while giving each image a
+  // different, otherwise canonical R2 key. D1 would reject the later INSERT
+  // only after the operator had written those R2 objects. Detect duplicate
+  // source identities before any capture read or restore write.
+  for (const table of tables) {
+    const primary = table === "client_gallery_favorites"
+      ? ["client_id", "gallery_id", "image_id"] : ["id"];
+    const keys = snapshot.tables[table].map((row) => primary.map((field) => row[field]));
+    if (keys.some((parts) => parts.some((value) => typeof value !== "string" || !value.trim())) ||
+        new Set(keys.map((parts) => JSON.stringify(parts))).size !== keys.length)
+      throw new Error("Recovery snapshot primary key mismatch");
+  }
   const clients = new Set(snapshot.tables.client_accounts.map((r) => r.id));
   const galleries = new Set(snapshot.tables.client_galleries.map((r) => r.id));
   const images = new Map(snapshot.tables.client_gallery_images.map((r) => [r.id, r]));
