@@ -42,9 +42,15 @@ async function signature(intent: IntentRow, env: Env) {
         "HMAC",
         key,
         new TextEncoder().encode(
+          // Domain-separated v2 token binds the exact image and R2 key too.
+          // A coherent D1 restore/rebind must invalidate the old bearer token,
+          // even when gallery, MIME, size and expiry remain unchanged.
           JSON.stringify([
+            "private-gallery-direct-v2",
             intent.id,
             intent.galleryId,
+            intent.imageId,
+            intent.storageKey,
             intent.expectedMime,
             intent.expectedSize,
             intent.expiresAt,
