@@ -264,7 +264,29 @@ export async function handleClientGalleryUploadApi(
     const digest = await privateOriginalSha256(bytes);
     if (intent.sha256 && intent.sha256 !== digest)
       throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
-    const object = intent.status === "pending" ? await bucket.put(intent.storageKey, bytes, {
+    // A concurrent restore, revocation or parallel upload may have changed
+    // the linked image/intent while the request body was being read. Recheck
+    // the signed immutable fields and both live statuses immediately before
+    // the first R2 access. A concurrent identical PUT that is now uploaded
+    // resumes by verifying the existing object instead of overwriting it.
+    // This narrows the D1/R2 race; it cannot make them atomically transactional.
+    const live = await db.prepare(
+      `SELECT i.status, i.sha256 FROM client_gallery_upload_intents i
+       JOIN client_gallery_images m ON m.gallery_id=i.gallery_id AND m.id=i.image_id
+       WHERE i.id=? AND i.gallery_id=? AND i.image_id=? AND i.expires_at=?
+         AND i.expires_at>? AND i.completed_at IS NULL
+         AND i.storage_key=? AND i.expected_mime=? AND i.expected_size=?
+         AND i.status IN ('pending','uploaded')
+         AND m.status='pending' AND m.deleted_at IS NULL
+         AND m.storage_key=? AND m.mime_type=? AND m.size_bytes=?`,
+    ).bind(intent.id, galleryId, intent.imageId, intent.expiresAt,
+      new Date().toISOString(), intent.storageKey, intent.expectedMime,
+      intent.expectedSize, intent.storageKey, intent.expectedMime,
+      intent.expectedSize).first<{status: string; sha256: string | null}>();
+    if (!live || (live.sha256 !== null && live.sha256 !== digest))
+      throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
+        "Os metadados persistidos deste envio não conferem.");
+    const object = live.status === "pending" ? await bucket.put(intent.storageKey, bytes, {
       onlyIf: { etagDoesNotMatch: "*" },
       httpMetadata: { contentType: intent.expectedMime },
       customMetadata: { sha256: digest },

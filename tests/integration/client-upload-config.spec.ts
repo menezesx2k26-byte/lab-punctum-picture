@@ -165,3 +165,76 @@ it("rejects restored upload intents with mismatched R2 key or image metadata bef
       .bind(intentId).first()).toEqual({status:"uploaded"});
   }
 });
+it("blocks a signed direct upload when a concurrent restore promotes the image after the first D1 ownership read", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    (c) => c.charCodeAt(0),
+  );
+  const intentPath = `/admin/api/albuns-privados/${gallery}/uploads/intents`;
+  const intentRequest = privateRequest(intentPath, "POST", {
+    filename: "race.png", mimeType: "image/png", sizeBytes: bytes.length,
+  });
+  const result = await handleClientGalleryUploadApi(intentRequest, new URL(intentRequest.url), env);
+  expect(result?.status).toBe(201);
+  const reservation = await result!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  let raced = false;
+  const db = {
+    prepare(sql: string) {
+      const statement = env.DB.prepare(sql);
+      if (!sql.includes("SELECT storage_key AS storageKey, mime_type AS mimeType,"))
+        return statement;
+      return {
+        bind(...args: Parameters<typeof statement.bind>) {
+          const bound = statement.bind(...args);
+          return {
+            async first() {
+              const image = await bound.first();
+              if (!raced) {
+                raced = true;
+                await env.DB.prepare("UPDATE client_gallery_images SET status='ready' WHERE id=?")
+                  .bind(reservation.imageId).run();
+              }
+              return image;
+            },
+          };
+        },
+      } as unknown as typeof statement;
+    },
+  } as unknown as D1Database;
+  let puts = 0;
+  const originals = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "put") return () => {
+        puts++;
+        throw new Error("R2 PUT reached after restore promoted image ready");
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const upload = new Request(reservation.uploadUrl, {
+    method: "PUT",
+    headers: {
+      ...reservation.requiredHeaders,
+      Origin: "http://localhost:8787",
+      "Content-Length": String(bytes.length),
+    },
+    body: bytes.slice().buffer,
+  });
+  await expect(handleClientGalleryUploadApi(upload, new URL(upload.url),
+    { ...env, DB: db, ORIGINALS: originals } as Env))
+    .rejects.toMatchObject({ status: 409, code: "UPLOAD_INTENT_MISMATCH" });
+  expect(raced).toBe(true);
+  expect(puts).toBe(0);
+  expect((await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+    .bind(reservation.imageId).first())?.status).toBe("ready");
+  expect((await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(reservation.intentId).first())?.status).toBe("pending");
+  const storageKey = (await env.DB.prepare("SELECT storage_key AS storageKey FROM client_gallery_images WHERE id=?")
+    .bind(reservation.imageId).first<{ storageKey: string }>())!.storageKey;
+  expect(await env.ORIGINALS.head(storageKey)).toBeNull();
+});
