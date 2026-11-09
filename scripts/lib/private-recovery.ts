@@ -122,6 +122,25 @@ export async function restoreClientRecovery(snapshot: ClientRecovery, db: D1Data
         throw new Error("Recovery destination row exists");
     }
   }
+  // These UNIQUE constraints do not use the rows' primary IDs. A destination
+  // account with the same email, or an already claimed image/intent key, can
+  // otherwise cause the final D1 batch to fail *after* R2 objects were written.
+  // Preflight the immutable schema-defined columns before crossing into R2.
+  // Concurrent destination mutations still require isolated QA/restore gates.
+  for (const [table, column] of [
+    ["client_accounts", "email"],
+    ["client_gallery_images", "storage_key"],
+    ["client_gallery_upload_intents", "storage_key"],
+  ] as const) {
+    const values = snapshot.tables[table].map((row) => row[column]);
+    if (values.some((value) => typeof value !== "string" || !value.trim()) ||
+        new Set(values).size !== values.length)
+      throw new Error("Recovery snapshot unique constraint mismatch");
+    for (const value of values) {
+      if (await db.prepare(`SELECT 1 FROM ${table} WHERE ${column}=?`).bind(value).first())
+        throw new Error("Recovery destination unique conflict");
+    }
+  }
   // Validate all SQL and account versions before touching storage.
   const inserts = tables.flatMap((table) => snapshot.tables[table].map((source) => {
     const { sql, params } = recoveryInsert(table, source);

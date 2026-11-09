@@ -92,6 +92,89 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer())).toEqual(new Uint8Array([2]));
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
   });
+  it("rejects a destination account email collision before any R2 restore write", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(71), {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const existingId = crypto.randomUUID();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_accounts
+       (id,name,email,password_hash,password_salt,password_iterations,must_change_password,
+        session_version,created_at,updated_at)
+       VALUES (?,'Existing',?,'hash','salt',310000,0,1,datetime('now'),datetime('now'))`,
+    ).bind(existingId, `${id}@example.com`).run();
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 write attempted before destination email conflict check");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery destination unique conflict");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(existingId).first()).toEqual({ id: existingId });
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(id).first()).toBeNull();
+  });
+  it("rejects a destination storage-key uniqueness collision before R2 writes", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(83), {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const existingClient = crypto.randomUUID();
+    const existingGallery = crypto.randomUUID();
+    const existingImage = crypto.randomUUID();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_accounts
+       (id,name,email,password_hash,password_salt,password_iterations,must_change_password,
+        session_version,created_at,updated_at)
+       VALUES (?,'Existing',?,'hash','salt',310000,0,1,datetime('now'),datetime('now'))`,
+    ).bind(existingClient, `${existingClient}@example.invalid`).run();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_galleries (id,client_id,title,created_at,updated_at)
+       VALUES (?,?,'Existing',datetime('now'),datetime('now'))`,
+    ).bind(existingGallery, existingClient).run();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_gallery_images
+       (id,gallery_id,storage_key,original_filename,mime_type,size_bytes,position,status,created_at,updated_at)
+       VALUES (?,?,?,'existing.png','image/png',1,0,'failed',datetime('now'),datetime('now'))`,
+    ).bind(existingImage, existingGallery, key).run();
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 write attempted before storage-key conflict check");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery destination unique conflict");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_gallery_images WHERE id=?")
+      .bind(existingImage).first()).toEqual({ id: existingImage });
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(id).first()).toBeNull();
+  });
   it("rejects a forged source digest and inconsistent backup attestations before restore writes", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);
