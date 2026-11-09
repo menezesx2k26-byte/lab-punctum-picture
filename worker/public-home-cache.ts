@@ -13,6 +13,7 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
     "x-forwarded-user", "x-forwarded-email", "x-auth-user", "x-user-email",
     "x-api-key", "x-ms-client-principal", "x-client-id", "x-session-token",
     "x-authenticated-user", "x-forwarded-access-token",
+    "x-forwarded-authorization", "x-forwarded-cookie", "x-client-session",
     "rsc", "next-router-state-tree", "next-router-prefetch", "next-url",
     "purpose", "sec-purpose", "x-nextjs-data", "x-middleware-prefetch"]) {
     if (headers.has(name)) return false;
@@ -30,7 +31,8 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
     "Set-Cookie", "Set-Cookie2", "WWW-Authenticate", "Authentication-Info",
     "Proxy-Authentication-Info", "CF-Access-Jwt-Assertion",
     "CF-Access-Authenticated-User-Email", "X-Client-Identity",
-    "X-Session-Token",
+    "X-Session-Token", "X-Authenticated-User", "X-Client-Id",
+    "X-Forwarded-User",
   ];
   const hasIdentityResponseHeader = sensitiveResponseHeaders.some(name => headers.has(name));
   // Vinext emits this exact framework default on anonymous HTML too.

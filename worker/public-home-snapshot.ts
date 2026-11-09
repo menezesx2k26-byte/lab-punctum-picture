@@ -32,6 +32,11 @@ function validPublicSsrHtml(html: string): boolean {
   for (let pass = 0; pass < 8; pass++) {
     const next = normalizedPaths
       .replace(/(?:&amp;|&#0*38;|&#x0*26;)/gi, "&")
+      // Decode named ASCII HTML entities before checking private markers.
+      // A browser turns &lowbar; into "_" and &percnt; into "%"; the
+      // latter may reveal a nested URL-encoded private path on the next pass.
+      .replace(/&(?:lowbar|underbar);/gi, "_")
+      .replace(/&percnt;/gi, "%")
       .replace(/\\u\{([0-9a-f]{1,6})\}/gi, (whole, value: string) => {
         const code = Number.parseInt(value, 16);
         return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
