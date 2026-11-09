@@ -88,6 +88,78 @@ it("rejects photos over the 20 MB Images Binding input limit before any D1 reser
     .bind(gallery).first<{n:number}>())?.n).toBe(0);
 });
 
+it("rejects an authenticated upload flooded with empty stream chunks without writing R2", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
+    "POST", { filename: "flood.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  expect(issued?.status).toBe(201);
+  const intent = await issued!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (let i = 0; i < 65; i++) controller.enqueue(new Uint8Array(0));
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+  const upload = new Request(intent.uploadUrl, {
+    method: "PUT", body,
+    headers: { ...intent.requiredHeaders, Origin: "http://localhost:8787",
+      "Content-Length": String(bytes.length) },
+  });
+  await expect(handleClientGalleryUploadApi(upload, new URL(upload.url), env))
+    .rejects.toMatchObject({ status: 400, code: "UPLOAD_STREAM" });
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(intent.intentId).first()).toEqual({ status: "pending" });
+  const key = await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(intent.imageId).first<{key:string}>();
+  expect(await env.ORIGINALS.head(key!.key)).toBeNull();
+});
+
+it("keeps an upload intent retryable after its incoming body stream aborts", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
+    "POST", { filename: "retry.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  const intent = await issued!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  const headers = { ...intent.requiredHeaders, Origin: "http://localhost:8787",
+    "Content-Length": String(bytes.length) };
+  let pulled = 0;
+  const broken = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (++pulled === 1) controller.enqueue(bytes.slice(0, 10));
+      else controller.error(new Error("simulated transport interruption"));
+    },
+  });
+  const interrupted = new Request(intent.uploadUrl, { method: "PUT", headers, body: broken });
+  await expect(handleClientGalleryUploadApi(interrupted, new URL(interrupted.url), env))
+    .rejects.toMatchObject({ status: 400, code: "UPLOAD_STREAM" });
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(intent.intentId).first()).toEqual({ status: "pending" });
+  const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(intent.imageId).first<{key:string}>())!.key;
+  expect(await env.ORIGINALS.head(key)).toBeNull();
+  const retry = new Request(intent.uploadUrl, { method: "PUT", headers, body: bytes });
+  expect((await handleClientGalleryUploadApi(retry, new URL(retry.url), env))?.status).toBe(200);
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(intent.intentId).first()).toEqual({ status: "uploaded" });
+  expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
+});
+
 it("never reads R2 or calls Images for legacy oversized intents already persisted in D1", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const image = await seedReadyImage(gallery);

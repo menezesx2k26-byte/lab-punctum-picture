@@ -83,11 +83,26 @@ async function readBounded(request: Request, size: number) {
   if (!request.body || request.headers.get("content-length") !== String(size))
     throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
   let total = 0;
+  let emptyChunks = 0;
   let bytes: Uint8Array | null = null;
   const reader = request.body.getReader();
   while (true) {
-    const item = await reader.read();
+    const item = await reader.read().catch(() => {
+      // Transport interruption is a bad incoming body, not an internal 500.
+      // No R2 write or D1 state change has happened yet; the signed intent
+      // remains available for an authenticated retry until expiry.
+      throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio interrompido.");
+    });
     if (item.done) break;
+    // Empty chunks make no progress toward the signed byte count. A hostile
+    // stream could otherwise consume CPU indefinitely before any R2 write.
+    if (item.value.byteLength === 0) {
+      if (++emptyChunks > 64) {
+        await reader.cancel();
+        throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido.");
+      }
+      continue;
+    }
     if (item.value.byteLength > size - total) {
       await reader.cancel();
       throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
