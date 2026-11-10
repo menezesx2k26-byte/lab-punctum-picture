@@ -177,5 +177,5 @@ describe("private client album pilot", () => {
     expect(JSON.stringify(audit.results)).not.toContain(
       account.temporaryPassword,
     );
-  }, 30_000);
+  }, 180_000); // Ten authenticated upload/complete cycles plus lifecycle checks exceed 30s on the shared Linux runner.
 });

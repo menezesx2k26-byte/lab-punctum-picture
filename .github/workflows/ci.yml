@@ -8,7 +8,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,6 +39,7 @@ jobs:
       - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
+      - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: node --test scripts/access-cookie-navigation.test.mjs
       - run: npm run test:e2e

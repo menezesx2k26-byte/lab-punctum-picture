@@ -12,6 +12,7 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
 import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
 
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
@@ -32,10 +33,23 @@ const report = {
   buildSha256: createHash("sha256").update(await readFile(join(buildDirectory, "server/index.js"))).digest("hex"),
   scope: "real Chromium against production bundle in local workerd with new synthetic D1/R2",
   cloudflareAccessOtpTested: false, remoteQaTouched: false, productionTouched: false,
-  syntheticSessionOnly: true, physicalDevicesTested: false, reducedMotion: "reduce", checks: [], pageErrors: [], consoleWarnings: [], consoleErrors: [], expectedDenials: [], serverErrors: [], screenshotModes: {},
+  syntheticSessionOnly: true, physicalDevicesTested: false, screenReaderTested: false,
+  actualBrowserZoomTested: false, reducedMotion: "reduce", checks: [], pageErrors: [], consoleWarnings: [], consoleErrors: [], expectedDenials: [], serverErrors: [], screenshotModes: {}, accessibilityAudits: [],
 };
 await mkdir(reportDirectory, { recursive: true });
 const record = (check) => { report.checks.push(check); console.log("PASS " + check); };
+const auditAccessibility = async (page, label) => {
+  await page.addScriptTag({ path: resolve("node_modules/axe-core/axe.min.js") });
+  const result = await page.evaluate(async () => window.axe.run(document, {
+    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },
+  }));
+  const audit = summarizeAxeAudit(result);
+  report.accessibilityAudits.push({
+    label, standard: "WCAG 2.1 A/AA", ...audit,
+  });
+  assert.deepEqual(audit.violations, [], `WCAG 2.1 AA ${label}: ${JSON.stringify(audit.violations)}`);
+  record(`axe-core WCAG 2.1 A/AA ${label}: ${audit.passes} rules passed, zero violations; ${audit.incompleteCount} manual review candidates`);
+};
 const screenshot = async (page, filename) => {
   const mode = await takeEvidenceScreenshot(page, join(reportDirectory, filename));
   report.screenshotModes[filename] = mode;
@@ -149,10 +163,13 @@ try {
     assert.equal((await context.request.get(origin + "/api/client/galleries/" + foreign.gallery)).status(), 404);
     assert.equal((await context.request.get(origin + `/api/client/galleries/${foreign.gallery}/images/${foreign.images[0]}/download`)).status(), 404);
   }
+  assert.equal(await pageA.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches), true);
+  await auditAccessibility(pageA, "private client library");
   record("real browser client A/B libraries and foreign gallery/original denial");
   await pageA.getByRole("link", { name: /Álbum sintético A/ }).click();
   await pageA.getByRole("heading", { name: "Álbum sintético A", exact: true }).waitFor();
   await pageA.waitForFunction(() => document.querySelector(".pa-photo img")?.naturalWidth > 0);
+  await auditAccessibility(pageA, "private gallery detail");
   await pageA.getByRole("button", { name: "Favoritar: Fotografia sintética A 1", exact: true }).click();
   await pageA.getByRole("button", { name: "Remover dos favoritos: Fotografia sintética A 1", exact: true }).waitFor();
   await pageA.reload();
@@ -160,6 +177,7 @@ try {
   const opener = pageA.getByRole("button", { name: "Abrir Fotografia sintética A 1", exact: true });
   await opener.click();
   const dialog = pageA.getByRole("dialog", { name: "Visualização da fotografia" }); await dialog.waitFor();
+  await auditAccessibility(pageA, "private gallery lightbox");
   await pageA.keyboard.press("ArrowRight"); await dialog.getByText("Fotografia sintética A 2", { exact: true }).waitFor();
   await pageA.keyboard.press("Escape"); await dialog.waitFor({ state: "hidden" });
   assert.ok(await opener.evaluate((el) => el === document.activeElement), "lightbox restores keyboard focus");
@@ -169,12 +187,12 @@ try {
   assert.deepEqual(await readFile(await download.path()), png);
   assert.equal((await b.request.put(origin + `/api/client/galleries/${clients[0].gallery}/favorites/${clients[0].images[0]}`, { headers: { Origin: origin } })).status(), 404);
   record("favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified");
-  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
+  for (const width of [320, 360, 375, 390, 430, 640, 768, 1024, 1440]) {
     await pageA.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(pageA);
   }
   await pageA.setViewportSize({ width: 390, height: 844 });
   await screenshot(pageA, "private-gallery-mobile.png");
-  record("private gallery has no horizontal overflow at 320/360/375/390/430/768/1024/1440px");
+  record("private gallery has no horizontal overflow at 320/360/375/390/430/640/768/1024/1440px; 640px is a responsive-layout proxy only, not a 200% browser-zoom test");
   const media = `/api/client/galleries/${clients[0].gallery}/images/${clients[0].images[0]}/gallery`;
   assert.equal((await anonymous.request.get(origin + media)).status(), 404);
   assert.equal((await a.request.get(origin + "/_vinext/image?url=" + encodeURIComponent(media) + "&w=640&q=75")).status(), 404);
@@ -227,6 +245,7 @@ try {
   // load event on a CPU-constrained local runner.
   const home = await publicPage.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 90_000 }); assert.equal(home.status(), 200);
   await publicPage.locator("h1").first().waitFor();
+  await auditAccessibility(publicPage, "public home");
   report.localBrowserHomeNavigationMs = performance.now() - publicStart;
   await screenshot(publicPage, "public-home.png");
   assert.equal((await anonymous.request.get(origin + "/admin/studio", { maxRedirects: 0 })).status(), 303);
@@ -235,6 +254,7 @@ try {
   const studio = await admin.newPage();
   assert.equal((await studio.goto(origin + "/admin/studio")).status(), 200);
   await studio.getByRole("heading", { name: "Studio", exact: true }).waitFor();
+  await auditAccessibility(studio, "Studio");
   await studio.getByRole("button", { name: "Textos", exact: true }).click();
   await studio.getByRole("heading", { name: "Textos do site", exact: true }).waitFor();
   await screenshot(studio, "studio.png");
@@ -245,12 +265,13 @@ try {
   await studio.getByText("Alterações publicadas. O site já está atualizado.", { exact: true }).waitFor();
   await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
   await publicPage.locator('[data-theme-preset="colagem-autoral"]').first().waitFor();
-  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
+  await auditAccessibility(publicPage, "public home with Colagem Autoral");
+  for (const width of [320, 360, 375, 390, 430, 640, 768, 1024, 1440]) {
     await publicPage.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(publicPage);
   }
   await publicPage.setViewportSize({ width: 390, height: 844 });
   await screenshot(publicPage, "colagem-mobile.png");
-  record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/768/1024/1440px");
+  record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/640/768/1024/1440px");
   // Exercise the private administration through hydrated forms, with fictional data only.
   await studio.goto(origin + "/admin/clientes");
   await studio.getByRole("button", { name: "Cadastrar cliente", exact: true }).waitFor();
@@ -278,6 +299,7 @@ try {
   assert.equal(await publishButton.isDisabled(), true, "empty gallery publication is blocked");
   await studio.getByLabel("Adicionar fotos").setInputFiles({ name: "browser-synthetic.png", mimeType: "image/png", buffer: png });
   await studio.getByText("Concluído", { exact: true }).waitFor();
+  await auditAccessibility(studio, "private admin gallery editor");
   assert.equal(await studio.getByRole("progressbar", { name: "Envio de browser-synthetic.png", exact: true }).getAttribute("value"), "100");
   const [coverResponse] = await Promise.all([
     studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi + "/cover" && r.request().method() === "PUT"),
@@ -296,7 +318,7 @@ try {
     publishButton.click(),
   ]);
   assert.equal(publishResponse.status(), 200);
-  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
+  for (const width of [320, 360, 375, 390, 430, 640, 768, 1024, 1440]) {
     await studio.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(studio);
     assert.ok(await studio.locator(".pga-editor-form .pga-actions .button").evaluateAll(buttons => buttons.every(button => button.scrollWidth <= button.clientWidth + 1)), "private admin action text is clipped at " + width + "px");
   }
@@ -305,7 +327,7 @@ try {
   const row = await db.prepare("SELECT status,theme,introduction FROM client_galleries WHERE id=?").bind(browserGalleryId).first();
   assert.equal(row.status, "published"); assert.equal(row.theme, "ivory");
   assert.equal(row.introduction, "Somente dados fictícios para homologação.");
-  record("private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; eight responsive widths");
+  record("private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; nine responsive widths including 640px");
   // Close live pages before the deliberately injected runtime restarts.
   await Promise.all(contexts.flatMap((context) => context.pages().map((page) => page.close())));
   // Persist only synthetic local data, stop workerd, then make a consistent snapshot.
