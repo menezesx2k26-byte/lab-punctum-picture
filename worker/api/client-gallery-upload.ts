@@ -84,6 +84,7 @@ async function readBounded(request: Request, size: number) {
     throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
   let total = 0;
   let emptyChunks = 0;
+  let nonemptyChunks = 0;
   let bytes: Uint8Array | null = null;
   const reader = request.body.getReader();
   while (true) {
@@ -102,6 +103,13 @@ async function readBounded(request: Request, size: number) {
         throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido.");
       }
       continue;
+    }
+    // Extremely fragmented nonempty streams can consume CPU far beyond the
+    // signed upload size (one byte per read). Preserve the pending intent for
+    // a normal retry, without writing any partial object to private R2.
+    if (++nonemptyChunks > 8192) {
+      await reader.cancel();
+      throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido.");
     }
     if (item.value.byteLength > size - total) {
       await reader.cancel();

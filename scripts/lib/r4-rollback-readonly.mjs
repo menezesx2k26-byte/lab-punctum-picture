@@ -25,10 +25,28 @@ export function summarizeRollbackPreflight(data) {
   const ids = [...new Set(deployments.flatMap(row => Array.isArray(row?.versions)
     ? row.versions.map(version => version?.version_id).filter(id => typeof id === "string" && /^[a-zA-Z0-9-]{8,128}$/.test(id))
     : []))];
-  // A deployment list with only one version cannot identify any predecessor
-  // for rollback. This remains a read-only inventory condition, NOT proof that
-  // a second ID is a verified deploy/config/assets restore target.
-  const versionHistoryPresent = ids.length >= 2;
+  // A single deployment can split traffic between multiple Worker versions.
+  // That does not establish an earlier deployed configuration for rollback.
+  // Require distinct deployment IDs with valid, strictly ordered timestamps.
+  // Even then, inventory is NOT proof that the old assets/config can be restored.
+  const history = deployments.map(row => ({
+    id: row?.id,
+    created: typeof row?.created_on === "string" ? Date.parse(row.created_on) : NaN,
+    hasVersion: Array.isArray(row?.versions) && row.versions.some(version =>
+      typeof version?.version_id === "string" && /^[a-zA-Z0-9-]{8,128}$/.test(version.version_id)),
+  }));
+  const validHistory = history.length === deployments.length && history.every(row =>
+    typeof row.id === "string" && row.id.length > 0 &&
+    Number.isFinite(row.created) && row.hasVersion) &&
+    new Set(history.map(row => row.id)).size === history.length;
+  const newestCreated = validHistory ? Math.max(...history.map(row => row.created)) : NaN;
+  // A prior deployment repeating a version still present in today's traffic
+  // split is not proof of a distinct older code/config restoration target.
+  const newestVersions = new Set(deployments.filter((_, index) =>
+    history[index].created === newestCreated).flatMap(row => row.versions.map(version => version.version_id)));
+  const versionHistoryPresent = validHistory && ids.length >= 2 &&
+    deployments.some((row, index) => history[index].created < newestCreated &&
+      row.versions.some(version => !newestVersions.has(version.version_id)));
   const subscriptionIds = subscriptions.map(row => row?.rate_plan?.id).filter(Boolean);
   const free = subscriptionIds.includes("free") && !subscriptionIds.some(id => id === "workers_paid");
   const expectedD1 = R4_ROLLBACK_QA.databases.every(expected =>
@@ -49,7 +67,7 @@ export function summarizeRollbackPreflight(data) {
   ];
   if (!inventoryVerified) blockers.unshift("Incomplete or unexpected read-only QA account inventory");
   if (!versionHistoryPresent)
-    blockers.unshift("No distinct prior Worker version in read-only deployment history");
+    blockers.unshift("No distinct prior Worker deployment/version with verified chronology in read-only history");
   return {
     schemaVersion:1,
     scope:"PUNCTUM_R4_HISTORICAL_QA_READ_ONLY",

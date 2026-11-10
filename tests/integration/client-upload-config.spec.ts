@@ -123,6 +123,44 @@ it("rejects an authenticated upload flooded with empty stream chunks without wri
   expect(await env.ORIGINALS.head(key!.key)).toBeNull();
 });
 
+it("rejects excessive nonempty upload fragments before R2 and allows a normal retry", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const png = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const bytes = new Uint8Array(8_193);
+  bytes.set(png);
+  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
+    "POST", { filename: "fragments.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  expect(issued?.status).toBe(201);
+  const intent = await issued!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  let offset = 0;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (offset < bytes.length) controller.enqueue(bytes.subarray(offset++, offset));
+      else controller.close();
+    },
+  });
+  const headers = { ...intent.requiredHeaders, Origin: "http://localhost:8787",
+    "Content-Length": String(bytes.length) };
+  const upload = new Request(intent.uploadUrl, { method: "PUT", headers, body });
+  await expect(handleClientGalleryUploadApi(upload, new URL(upload.url), env))
+    .rejects.toMatchObject({status:400,code:"UPLOAD_STREAM"});
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(intent.intentId).first()).toEqual({status:"pending"});
+  const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(intent.imageId).first<{key:string}>())!.key;
+  expect(await env.ORIGINALS.head(key)).toBeNull();
+  const retry = new Request(intent.uploadUrl, {method:"PUT",headers,body:bytes});
+  expect((await handleClientGalleryUploadApi(retry,new URL(retry.url),env))?.status).toBe(200);
+  expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
+});
+
 it("keeps an upload intent retryable after its incoming body stream aborts", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const bytes = Uint8Array.from(

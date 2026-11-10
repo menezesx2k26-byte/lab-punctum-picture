@@ -6,6 +6,37 @@ function req(path = "/", init: RequestInit = {}) {
 }
 
 describe("public home isolated cache boundary", () => {
+  it("rejects HTML-like response MIME types instead of treating arbitrary suffixes as HTML", () => {
+    for (const contentType of ["text/html+json", "text/htmlx", "text/html, application/json", "text/html-internal"]) {
+      const response = publicHomeCacheResponse(req(), new Response("<html>not a canonical HTML response</html>", {
+        headers:{"Content-Type":contentType,"Cache-Control":"no-store, must-revalidate"},
+      }));
+      expect(response.headers.get("Cache-Control"),contentType).toBe("private, no-store");
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"),contentType).toBeNull();
+      expect(response.headers.get("Cache-Tag"),contentType).toBeNull();
+    }
+    const html = publicHomeCacheResponse(req(), new Response("<html>HTML page</html>",{
+      headers:{"Content-Type":"TEXT/HTML ; charset=utf-8", "Cache-Control":"no-store, must-revalidate"},
+    }));
+    expect(html.headers.get("Cloudflare-CDN-Cache-Control")).toBe("public, max-age=60");
+  });
+
+  it("never caches React Flight or JSON content negotiations when HTML is also accepted", () => {
+    for(const accept of [
+      "text/x-component;q=1, text/html;q=0.8",
+      "text/html;q=1, text/x-component;q=0.9",
+      "application/json;q=1, text/html;q=0.1",
+    ]) {
+      const request=req("/",{headers:{Accept:accept}});
+      expect(isPublicHomeCacheRequest(request),accept).toBe(false);
+      const response=publicHomeCacheResponse(request,new Response("<html>potentially negotiated</html>",{
+        headers:{"Content-Type":"text/html", "Cache-Control":"no-store, must-revalidate"},
+      }));
+      expect(response.headers.get("Cloudflare-CDN-Cache-Control"),accept).toBeNull();
+    }
+    const typicalBrowser=req("/",{headers:{Accept:"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,*/*;q=0.8"}});
+    expect(isPublicHomeCacheRequest(typicalBrowser)).toBe(true);
+  });
   it("does not share a cache entry with explicit zero-freshness or rejected HTML negotiation", () => {
     const cases: Record<string, string>[] = [
       { Accept: "text/html", "Cache-Control": "max-age=0" },

@@ -11,7 +11,10 @@ const fixture = () => ({
     { name:"DB", type:"d1", id:R4_ROLLBACK_QA.databases[0].id },
     { name:"PRIVATE_GALLERIES_ENABLED", type:"plain_text", text:"false" },
   ] },
-  deployments: { deployments:[{ id:"deployment-1",versions:[{version_id:"current-version-id"},{version_id:"previous-version-id"}] }] },
+  deployments: { deployments:[
+    { id:"deployment-current",created_on:"2026-11-09T12:00:00Z",versions:[{version_id:"current-version-id"}] },
+    { id:"deployment-prior",created_on:"2026-11-08T12:00:00Z",versions:[{version_id:"previous-version-id"}] },
+  ] },
 });
 test("read-only QA inventory is scoped but never authorizes a G23 rollback", () => {
   const result = summarizeRollbackPreflight(fixture());
@@ -25,7 +28,7 @@ test("read-only QA inventory is scoped but never authorizes a G23 rollback", () 
 });
 test("a single current Worker version never qualifies as a verified rollback predecessor", () => {
   const single = fixture();
-  single.deployments.deployments[0].versions = [{version_id:"current-version-id"}];
+  single.deployments.deployments = [single.deployments.deployments[0]];
   const onlyCurrent = summarizeRollbackPreflight(single);
   assert.equal(onlyCurrent.inventoryVerified, false);
   assert.equal(onlyCurrent.rollbackAuthorized, false);
@@ -35,6 +38,42 @@ test("a single current Worker version never qualifies as a verified rollback pre
   assert.equal(inventory.inventoryVerified,true);
   assert.equal(inventory.rollbackAuthorized,false);
   assert.equal(inventory.productionSafeToRelease,false);
+});
+test("a traffic split inside one deployment is not an earlier deployed rollback version", () => {
+  const split = fixture();
+  split.deployments.deployments = [{
+    id:"deployment-current",created_on:"2026-11-09T12:00:00Z",
+    versions:[{version_id:"current-version-id"},{version_id:"previous-version-id"}],
+  }];
+  const result = summarizeRollbackPreflight(split);
+  assert.deepEqual(result.versionIds,["current-version-id","previous-version-id"]);
+  assert.equal(result.versionHistoryPresent,false);
+  assert.equal(result.inventoryVerified,false);
+  assert.equal(result.rollbackAuthorized,false);
+});
+test("rollback predecessor must be a distinct earlier deployment with verified chronology", () => {
+  for (const deployments of [
+    [{id:"same-deployment",created_on:"2026-11-09T12:00:00Z",versions:[{version_id:"current-version-id"}]},
+     {id:"same-deployment",created_on:"2026-11-08T12:00:00Z",versions:[{version_id:"previous-version-id"}]}],
+    [{id:"deployment-current",versions:[{version_id:"current-version-id"}]},
+     {id:"deployment-prior",created_on:"2026-11-08T12:00:00Z",versions:[{version_id:"previous-version-id"}]}],
+    [{id:"deployment-current",created_on:"2026-11-09T12:00:00Z",versions:[{version_id:"current-version-id"}]},
+     {id:"deployment-prior",created_on:"2026-11-09T12:00:00Z",versions:[{version_id:"previous-version-id"}]}],
+  ]) {
+    const input = fixture();
+    input.deployments.deployments = deployments;
+    const result = summarizeRollbackPreflight(input);
+    assert.equal(result.versionHistoryPresent,false);
+    assert.equal(result.inventoryVerified,false);
+  }
+});
+test("an older deployment sharing all its versions with a current traffic split is not a distinct restore target", () => {
+  const input = fixture();
+  input.deployments.deployments[0].versions.push({version_id:"previous-version-id"});
+  const result = summarizeRollbackPreflight(input);
+  assert.equal(result.versionHistoryPresent,false);
+  assert.equal(result.inventoryVerified,false);
+  assert.equal(result.rollbackAuthorized,false);
 });
 test("missing or ambiguous resource readback fails closed, not PASS", () => {
   for (const patch of [

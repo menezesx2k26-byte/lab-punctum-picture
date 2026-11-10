@@ -7,6 +7,12 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
   if (request.method !== "GET" || url.pathname !== "/" || url.search || url.hash ||
       url.username || url.password || !["http:", "https:"].includes(url.protocol)) return false;
   const accept = (headers.get("accept") ?? "").toLowerCase();
+  // Explicit API/React Flight negotiation is not a canonical browser HTML
+  // navigation. A shared URL-only home entry must not choose one variant for
+  // a client which may request component or JSON data at the same URL.
+  const acceptedTypes = accept.split(",").map(entry => entry.trim().split(";")[0]?.trim());
+  if (acceptedTypes.some(type => type === "text/x-component" || type === "application/json"))
+    return false;
   // A mere substring match accepts `text/html;q=0`, where HTML was explicitly
   // rejected. Treat the shared HTML entry as ineligible for that variant.
   const acceptsHtml = accept.split(",").some(entry => {
@@ -76,8 +82,13 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
   const sensitive = hasIdentityResponseHeader || hasPerResponseNonce ||
     (!frameworkDefault && /\b(?:private|no-store|no-cache)\b/i.test(current)) ||
     unaccountedVary;
+  // `startsWith("text/html")` also admits non-HTML MIME types such as
+  // text/html+json or text/html-internal. Admit only an exact HTML media type
+  // with optional parameters, never a MIME list or suffix variant.
+  const contentType = headers.get("Content-Type")?.trim() ?? "";
+  const canonicalHtml = /^text\/html(?:\s*;|$)/i.test(contentType) && !contentType.includes(",");
   const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
-    headers.get("Content-Type")?.toLowerCase().startsWith("text/html") && !sensitive;
+    canonicalHtml && !sensitive;
   // Never retain alternative surrogate/CDN caching directives from upstream:
   // they can override the fail-closed Cache-Control on denials, or defeat the
   // 60s public-home window even when the response itself is anonymous.
