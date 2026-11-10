@@ -49,6 +49,31 @@ describe("versioned public-home snapshot for cold cache MISS", () => {
     }
   });
 
+  it("rejects private URLs hidden by browser-stripped HTML URL control whitespace", async () => {
+    const state = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+    expect(state).not.toBeNull();
+    // URL parsing removes ASCII tab/newline characters, including ones that
+    // HTML entity decoding first introduces in an href attribute. The snapshot
+    // guard must test the effective URL rather than just its literal spelling.
+    for (const path of [
+      "/api/cl&Tab;ient/galleries/secret",
+      "/api/cl&NewLine;ient/galleries/secret",
+      "/api/cl&#9;ient/galleries/secret",
+      "/api/cl&#xA;ient/galleries/secret",
+      "/api/cl&#13;ient/galleries/secret",
+      "/api/cl\tient/galleries/secret",
+      "/api/cl\nient/galleries/secret",
+      "/api/cl\\u0009ient/galleries/secret",
+      "/api/cl\\x09ient/galleries/secret",
+      "/api/cl\\u{9}ient/galleries/secret",
+      "/api/cl%09ient/galleries/secret",
+      "/api/cl%250Aient/galleries/secret",
+    ]) {
+      const malicious = HTML.replace("Studio publicado", `<a href="${path}">Publicar</a>`);
+      expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, malicious), path).toBe(false);
+    }
+  });
+
   it("rejects broken SSR, tampered hashes and accidental private content", async () => {
     const state = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
     expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, "<html>partial</html>")).toBe(false);

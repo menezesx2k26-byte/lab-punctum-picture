@@ -123,6 +123,36 @@ it("rejects an authenticated upload flooded with empty stream chunks without wri
   expect(await env.ORIGINALS.head(key!.key)).toBeNull();
 });
 
+it("preserves the signed intent when an invalid stream also rejects cancellation", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
+    "POST", { filename: "cancellation.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  const intent = await issued!.json() as {
+    intentId:string; imageId:string; uploadUrl:string; requiredHeaders:Record<string,string>;
+  };
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) { for (let i = 0; i < 65; i++) controller.enqueue(new Uint8Array(0)); },
+    cancel() { throw new Error("simulated transport cancel rejection"); },
+  });
+  const request = new Request(intent.uploadUrl, { method: "PUT", body,
+    headers: {...intent.requiredHeaders, Origin:"http://localhost:8787", "Content-Length":String(bytes.length)} });
+  await expect(handleClientGalleryUploadApi(request, new URL(request.url), env))
+    .rejects.toMatchObject({status:400, code:"UPLOAD_STREAM"});
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(intent.intentId).first()).toEqual({status:"pending"});
+  const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(intent.imageId).first<{key:string}>())!.key;
+  expect(await env.ORIGINALS.head(key)).toBeNull();
+  const retry = new Request(intent.uploadUrl, {method:"PUT", body:bytes,
+    headers:{...intent.requiredHeaders, Origin:"http://localhost:8787", "Content-Length":String(bytes.length)}});
+  expect((await handleClientGalleryUploadApi(retry, new URL(retry.url), env))?.status).toBe(200);
+});
+
 it("rejects excessive nonempty upload fragments before R2 and allows a normal retry", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const png = Uint8Array.from(

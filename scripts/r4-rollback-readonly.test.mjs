@@ -90,6 +90,19 @@ test("missing or ambiguous resource readback fails closed, not PASS", () => {
     assert.equal(result.rollbackAuthorized, false);
   }
 });
+test("duplicate or ambiguous private-gallery flag bindings never qualify a rollback inventory", () => {
+  for (const extra of [
+    {name:"PRIVATE_GALLERIES_ENABLED",type:"plain_text",text:"true"},
+    {name:"PRIVATE_GALLERIES_ENABLED",type:"plain_text",text:"false"},
+    {name:"PRIVATE_GALLERIES_ENABLED",type:"secret_text"},
+  ]) {
+    const data = fixture();
+    data.settings.bindings.push(extra);
+    const result = summarizeRollbackPreflight(data);
+    assert.equal(result.inventoryVerified,false);
+    assert.equal(result.rollbackAuthorized,false);
+  }
+});
 test("failed subscription and D1 probes disclose only actionable scope diagnostics, not secrets", () => {
   const result = summarizeQaReadOnlyProbes({
     subscriptions:{http:403,success:false}, scripts:{http:200,success:true},

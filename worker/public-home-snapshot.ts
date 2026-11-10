@@ -31,7 +31,12 @@ function validPublicSsrHtml(html: string): boolean {
   let normalizedPaths = html;
   for (let pass = 0; pass < 8; pass++) {
     const next = normalizedPaths
+      // Browsers discard ASCII tab/CR/LF while parsing URL attributes. An
+      // encoded control inside a private route must not evade the public
+      // snapshot guard (e.g. /api/cl&Tab;ient/galleries/...).
+      .replace(/[\t\r\n]/g, "")
       .replace(/(?:&amp;|&#0*38;|&#x0*26;)/gi, "&")
+      .replace(/&(?:Tab|NewLine);/gi, "")
       // Decode named ASCII HTML entities before checking private markers.
       // A browser turns &lowbar; into "_" and &percnt; into "%"; the
       // latter may reveal a nested URL-encoded private path on the next pass.
@@ -39,6 +44,7 @@ function validPublicSsrHtml(html: string): boolean {
       .replace(/&percnt;/gi, "%")
       .replace(/\\u\{([0-9a-f]{1,6})\}/gi, (whole, value: string) => {
         const code = Number.parseInt(value, 16);
+        if (code === 9 || code === 10 || code === 13) return "";
         return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
       })
       // ASCII letters can encode private path markers too. Decode only for
@@ -46,14 +52,17 @@ function validPublicSsrHtml(html: string): boolean {
       // non-ASCII escapes or entities without executing markup.
       .replace(/\\(?:u([0-9a-f]{4})|x([0-9a-f]{2}))/gi, (whole, u: string | undefined, x: string | undefined) => {
         const code = Number.parseInt(u ?? x ?? "", 16);
+        if (code === 9 || code === 10 || code === 13) return "";
         return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
       })
       .replace(/%([0-9a-f]{2})/gi, (whole, value: string) => {
         const code = Number.parseInt(value, 16);
+        if (code === 9 || code === 10 || code === 13) return "";
         return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
       })
       .replace(/&#(?:0*([0-9]+)|x0*([0-9a-f]+));?/gi, (whole, dec: string | undefined, hex: string | undefined) => {
         const code = Number.parseInt(dec ?? hex ?? "", hex === undefined ? 10 : 16);
+        if (code === 9 || code === 10 || code === 13) return "";
         return code >= 32 && code <= 126 ? String.fromCharCode(code) : whole;
       })
       .replace(/(?:\\\/|&sol;)/gi, "/");

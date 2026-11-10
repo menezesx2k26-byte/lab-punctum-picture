@@ -33,6 +33,9 @@ builds a variant. In that case **also set `PUNCTUM_E2E_BUILD_SHA` to the actual
 source revision used to build that snapshot**. The report records the SHA-256 of
 `server/index.js` independently. `PUNCTUM_E2E_OUTPUT` selects the evidence directory.
 The default SHA is the checkout HEAD; do not run it against stale build output.
+Public home navigation/reload waits for `DOMContentLoaded`, then asserts the
+rendered heading and Colagem preset. Missing required content still fails QA;
+this avoids conflating slow auxiliary image `load` events with route readiness.
 
 Coverage:
 
@@ -63,3 +66,9 @@ Browser home navigation duration is a local diagnostic, not Worker CPU telemetry
 The intentional missing-gallery 404 is separately recorded as `expectedDenials`;
 all other browser console errors and warnings fail the run. Live pages are closed
 before the injected runtime restarts to avoid test-generated connection resets.
+Screenshot evidence prefers full-page captures. When full-page capture times out
+under a slow local browser, the suite attempts a bounded Chromium DevTools
+viewport capture before Playwright's viewport-only retry. It records
+`screenshotModes[filename]` as `cdpViewportFallback` or `viewportFallback`.
+It still fails if the fallback cannot be captured. A fallback is not full-page
+visual homologation, and does not affect any behavioral assertions.

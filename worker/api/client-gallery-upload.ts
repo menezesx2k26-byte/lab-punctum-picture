@@ -79,6 +79,12 @@ function matchesMime(bytes: Uint8Array, mime: string) {
     String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
   );
 }
+async function cancelInvalidUpload(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  // Cancellation is best effort: a disconnected/failed upstream may reject
+  // cancel() as well. Never replace our explicit fail-closed 400 with an
+  // unclassified error or make a pending signed intent non-retryable.
+  try { await reader.cancel(); } catch { /* transport already interrupted */ }
+}
 async function readBounded(request: Request, size: number) {
   if (!request.body || request.headers.get("content-length") !== String(size))
     throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
@@ -99,7 +105,7 @@ async function readBounded(request: Request, size: number) {
     // stream could otherwise consume CPU indefinitely before any R2 write.
     if (item.value.byteLength === 0) {
       if (++emptyChunks > 64) {
-        await reader.cancel();
+        await cancelInvalidUpload(reader);
         throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido.");
       }
       continue;
@@ -108,11 +114,11 @@ async function readBounded(request: Request, size: number) {
     // signed upload size (one byte per read). Preserve the pending intent for
     // a normal retry, without writing any partial object to private R2.
     if (++nonemptyChunks > 8192) {
-      await reader.cancel();
+      await cancelInvalidUpload(reader);
       throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido.");
     }
     if (item.value.byteLength > size - total) {
-      await reader.cancel();
+      await cancelInvalidUpload(reader);
       throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
     }
     // Allocate only after a first chunk arrives, then copy each chunk once.

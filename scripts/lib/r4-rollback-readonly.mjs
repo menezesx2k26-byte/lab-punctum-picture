@@ -54,7 +54,11 @@ export function summarizeRollbackPreflight(data) {
   const expectedBuckets = R4_ROLLBACK_QA.buckets.every(name =>
     buckets.filter(bucket => bucket.name === name).length === 1);
   const expectedWorker = scripts.filter(script => script.id === R4_ROLLBACK_QA.worker).length === 1;
-  const flag = bindings.find(binding => binding.name === "PRIVATE_GALLERIES_ENABLED" && binding.type === "plain_text")?.text ?? null;
+  // A duplicated/ambiguous feature flag is not a proven disabled deployment.
+  // Read-only inventory must fail closed rather than trusting the first match.
+  const flags = bindings.filter(binding => binding.name === "PRIVATE_GALLERIES_ENABLED");
+  const flag = flags.length === 1 && flags[0].type === "plain_text"
+    ? flags[0].text ?? null : null;
   const knownBoundD1 = bindings.filter(binding => binding.name === "DB").length === 1 &&
     bindings.some(binding => binding.name === "DB" && binding.type === "d1" &&
       binding.id === R4_ROLLBACK_QA.databases[0].id);

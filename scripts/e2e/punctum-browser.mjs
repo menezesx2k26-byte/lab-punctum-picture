@@ -12,6 +12,7 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
 
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 const buildDirectory = resolve(process.env.PUNCTUM_E2E_DIST || "dist");
@@ -31,10 +32,15 @@ const report = {
   buildSha256: createHash("sha256").update(await readFile(join(buildDirectory, "server/index.js"))).digest("hex"),
   scope: "real Chromium against production bundle in local workerd with new synthetic D1/R2",
   cloudflareAccessOtpTested: false, remoteQaTouched: false, productionTouched: false,
-  syntheticSessionOnly: true, physicalDevicesTested: false, reducedMotion: "reduce", checks: [], pageErrors: [], consoleWarnings: [], consoleErrors: [], expectedDenials: [], serverErrors: [],
+  syntheticSessionOnly: true, physicalDevicesTested: false, reducedMotion: "reduce", checks: [], pageErrors: [], consoleWarnings: [], consoleErrors: [], expectedDenials: [], serverErrors: [], screenshotModes: {},
 };
 await mkdir(reportDirectory, { recursive: true });
 const record = (check) => { report.checks.push(check); console.log("PASS " + check); };
+const screenshot = async (page, filename) => {
+  const mode = await takeEvidenceScreenshot(page, join(reportDirectory, filename));
+  report.screenshotModes[filename] = mode;
+  if (mode !== "fullPage") console.warn("Screenshot " + mode + ": " + filename);
+};
 const sign = (payload, secret) => {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return body + "." + createHmac("sha256", secret).update(body).digest("base64url");
@@ -167,7 +173,7 @@ try {
     await pageA.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(pageA);
   }
   await pageA.setViewportSize({ width: 390, height: 844 });
-  await pageA.screenshot({ path: join(reportDirectory, "private-gallery-mobile.png"), fullPage: true });
+  await screenshot(pageA, "private-gallery-mobile.png");
   record("private gallery has no horizontal overflow at 320/360/375/390/430/768/1024/1440px");
   const media = `/api/client/galleries/${clients[0].gallery}/images/${clients[0].images[0]}/gallery`;
   assert.equal((await anonymous.request.get(origin + media)).status(), 404);
@@ -212,12 +218,17 @@ try {
   await malformedPage.getByRole("alert").first().waitFor();
   assert.equal(await malformedPage.locator(".pa-album-card").count(), 0);
   record("malformed success envelope produces a safe library alert without a render exception");
+  // Private cases have completed; closing their renderers before the much
+  // heavier public SSR screenshot avoids unnecessary Chromium memory pressure.
+  await Promise.all([pageA.close(), pageB.close(), malformedPage.close()]);
   const publicPage = await anonymous.newPage();
   const publicStart = performance.now();
-  const home = await publicPage.goto(origin + "/"); assert.equal(home.status(), 200);
+  // Assert rendered content below instead of awaiting every editorial asset's
+  // load event on a CPU-constrained local runner.
+  const home = await publicPage.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 90_000 }); assert.equal(home.status(), 200);
   await publicPage.locator("h1").first().waitFor();
   report.localBrowserHomeNavigationMs = performance.now() - publicStart;
-  await publicPage.screenshot({ path: join(reportDirectory, "public-home.png"), fullPage: true });
+  await screenshot(publicPage, "public-home.png");
   assert.equal((await anonymous.request.get(origin + "/admin/studio", { maxRedirects: 0 })).status(), 303);
   const admin = await newContext();
   await admin.addCookies([{ name: "punctum_admin_session", value: sign({ email: "qa@punctum.invalid", exp: Math.floor(Date.now() / 1000) + 3600 }, adminSecret + "\0env:" + adminHash), url: origin + "/admin", httpOnly: true, sameSite: "Strict" }]);
@@ -226,19 +237,19 @@ try {
   await studio.getByRole("heading", { name: "Studio", exact: true }).waitFor();
   await studio.getByRole("button", { name: "Textos", exact: true }).click();
   await studio.getByRole("heading", { name: "Textos do site", exact: true }).waitFor();
-  await studio.screenshot({ path: join(reportDirectory, "studio.png"), fullPage: true });
+  await screenshot(studio, "studio.png");
   record("public home and authenticated Studio render; anonymous Studio denied");
   await studio.getByRole("button", { name: "Estilo", exact: true }).click();
   await studio.getByRole("button", { name: /^Colagem autoral/ }).click();
   await studio.getByRole("button", { name: "Publicar alterações", exact: true }).click();
   await studio.getByText("Alterações publicadas. O site já está atualizado.", { exact: true }).waitFor();
-  await publicPage.reload();
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
   await publicPage.locator('[data-theme-preset="colagem-autoral"]').first().waitFor();
   for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440]) {
     await publicPage.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(publicPage);
   }
   await publicPage.setViewportSize({ width: 390, height: 844 });
-  await publicPage.screenshot({ path: join(reportDirectory, "colagem-mobile.png"), fullPage: true });
+  await screenshot(publicPage, "colagem-mobile.png");
   record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/768/1024/1440px");
   // Exercise the private administration through hydrated forms, with fictional data only.
   await studio.goto(origin + "/admin/clientes");
@@ -290,7 +301,7 @@ try {
     assert.ok(await studio.locator(".pga-editor-form .pga-actions .button").evaluateAll(buttons => buttons.every(button => button.scrollWidth <= button.clientWidth + 1)), "private admin action text is clipped at " + width + "px");
   }
   await studio.setViewportSize({ width: 390, height: 844 });
-  await studio.screenshot({ path: join(reportDirectory, "private-admin-mobile.png"), fullPage: true });
+  await screenshot(studio, "private-admin-mobile.png");
   const row = await db.prepare("SELECT status,theme,introduction FROM client_galleries WHERE id=?").bind(browserGalleryId).first();
   assert.equal(row.status, "published"); assert.equal(row.theme, "ivory");
   assert.equal(row.introduction, "Somente dados fictícios para homologação.");
