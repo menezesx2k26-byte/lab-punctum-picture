@@ -15,4 +15,3 @@ TypeError: beginPublicHomeSnapshotMutation is not a function
       Tests  1 failed | 5 skipped (6)
    Start at  18:08:13
    Duration  2.52s (transform 165ms, setup 0ms, import 278ms, tests 121ms, environment 1ms)
-

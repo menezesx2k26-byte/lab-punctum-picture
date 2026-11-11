@@ -16,4 +16,3 @@ AppError: Os metadados persistidos deste envio não conferem.
       Tests  1 failed | 15 skipped (16)
    Start at  18:06:41
    Duration  7.29s (transform 2.05s, setup 0ms, import 4.09s, tests 257ms, environment 1ms)
-

@@ -74,3 +74,16 @@ QA R4: versão `e05a3001-3c78-4703-8055-acf3026bd450`, deployment `5658b99f-3ff4
 ## Veredito e operação seguinte
 
 **GLOBAL_DOD_OPEN / NO_GO_PRODUCTION**. A migração 0012 só foi aplicada em bases efêmeras locais; deve ser incluída em futura autorização aditiva e rollback, antes de habilitar snapshot. Nenhum merge, deploy produtivo, flag privada true, compra ou contrato foi realizado. Faltas humanas não foram assinadas por agente. O estado final do commit/CI/Drive é conferido na PR sem atribuir CI anterior ao novo código.
+
+
+## Fechamento conferido do código AA
+
+Código remoto **45d998411952e4b8d613c89684748165004acbfe**, parent f25a99cc, árvore **ceb297e0ec176877c6043915fcb0a583d46a5d7c** idêntica ao local testado6cf090f. Push terminal não tinha credencial de escrita; API autenticada criou árvore idêntica/commit filho e moveu ref com expected_sha/force=false. Checkout remoto limpo criado em `../punctum-r4-aa-verified`; checkout irmão anterior preservado.
+
+CI [43102450821](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43102450821) **completed/success**, job130797118391 **33/33 etapas**. Inclui audit zero, Workers299, Colagem7, testes Node/SSR, cookie cross-site Chromium e E2E. Artefato13892057814,10.836.088B, ZIP baixado e SHA256 **b2da8d428c6984677674ecc660bdaa3aaf114a7ec80e9efd348c9cb67b1f67d8** verificado. Report interno SHA256 **a2e20f0295a333710dd09de007309e4421c7cda97666cf776f27801c35694cde**, sourceSha45d9984, checkoutDirtyAtRun=false, PASS_LOCAL, **22 checks**, sete auditorias/145 regras/zero violações/117 nós incomplete. CincoPNGfullPage; zero pageErrors/consoleWarnings/consoleErrors/serverErrors. Os testes novos de publicação e ambas flags passaram no bundle real. O warning de purge sem cache no servidor é esperado nesse ambiente; não foi erro HTTP/JS.
+
+Escopo: Chromium145.0.7632.6 em workerd local do Actions, D1/R2 sintéticos. Não OTP real, Cloudflare QA remoto, CPUFree ou aparelhos físicos. O bloqueio local Chromium EPERM permanece documentado e foi superado somente no runner CI, não apagado.
+
+Checkpoint privado Drive [ciclo AA](https://docs.google.com/document/d/1nXaCZFo4QuJbip5aCdx_0GXOMyikX5ksFsfBFdu8ruo/edit) escrito com requiredRevisionId e lido de volta. ZIP persistido no [Drive sgtmenezes](https://drive.google.com/file/d/1_OpwYVEh47SZHlKnVsaGrWRUZe60Nr7c/view). Recibo `evidence/cycle-aa-20261111/ci-code-readback.json`. Engram/PersistFlow continuam indisponíveis, sem alegação de gravação.
+
+A conferência pós-commit detectou linhas extras ao EOF em três recibos RED (untracked não abrangidos pelo diff-check inicial). Este fechamento remove só essas linhas e mantém a evidência causal. Código/dependências/testes/migrações são idênticos a45d9984. CI do novo HEAD documental é conferida separadamente na PR/Drive; a CI45d9984 não lhe é atribuída automaticamente. Nenhum gate global promovido: **17PASS históricos,2FAIL,5BLOCKED_EXTERNAL; NO_GO_PRODUCTION**.

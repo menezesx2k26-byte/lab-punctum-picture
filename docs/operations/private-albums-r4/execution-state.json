@@ -4,7 +4,7 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AA local regression validated; exact SHA CI/browser pending. See currentCycle20261111AA. Historical cycle entries preserved.",
+  "statusScope": "Cycle AA code45d9984 CI43102450821 success33/33, browser22 checks/7axe/zero violations, exact clean SHA. Documentary closure requires its own CI readback in PR/Drive. G05/G17 FAIL; five gates BLOCKED_EXTERNAL; NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-11",
   "branch": "fix/punctum-albums-r4-completion-20261107",
   "baseBranch": "agent/hst-001-hostinger-qa-20261028",
@@ -3447,11 +3447,35 @@
     "g23": "BLOCKED_EXTERNAL full segregated rollback missing",
     "humanGates": "G15/G19/G20/G22 BLOCKED_EXTERNAL",
     "migration0012": "LOCAL_ONLY_ADDITIVE_NOT_APPLIED_REMOTE",
-    "newHeadCi": "PENDING_EXACT_SHA_AFTER_PUSH",
-    "drive": "PENDING_CHECKPOINT",
+    "newHeadCi": "DOCUMENTARY_CLOSURE_HEAD_READBACK_IN_PR32_AND_DRIVE_REQUIRED",
+    "drive": {
+      "checkpoint": "1nXaCZFo4QuJbip5aCdx_0GXOMyikX5ksFsfBFdu8ruo",
+      "checkpointReadback": true,
+      "artifact": "1_OpwYVEh47SZHlKnVsaGrWRUZe60Nr7c",
+      "artifactZipSha256": "b2da8d428c6984677674ecc660bdaa3aaf114a7ec80e9efd348c9cb67b1f67d8"
+    },
     "engram": "NO_APPLICABLE_TOOL_DISCOVERED",
     "persistflow": "NO_ACTIVE_CONNECTION",
     "production": "NO_GO_PRODUCTION",
-    "costIncrementAuthorized": "R$ 0,00"
+    "costIncrementAuthorized": "R$ 0,00",
+    "codeRemoteSha": "45d998411952e4b8d613c89684748165004acbfe",
+    "codeTree": "ceb297e0ec176877c6043915fcb0a583d46a5d7c",
+    "codeCi": {
+      "runId": 43102450821,
+      "conclusion": "completed/success",
+      "jobStepsSucceeded": 33,
+      "artifactId": 13892057814
+    },
+    "ciBrowser": {
+      "status": "PASS_LOCAL",
+      "sourceSha": "45d998411952e4b8d613c89684748165004acbfe",
+      "checkoutDirtyAtRun": false,
+      "checks": 22,
+      "axeAudits": 7,
+      "axeRulesPassed": 145,
+      "axeViolations": 0,
+      "axeIncompleteNodes": 117,
+      "fullPageScreenshots": 5
+    }
   }
 }
