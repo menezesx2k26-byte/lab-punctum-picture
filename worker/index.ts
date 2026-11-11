@@ -1,6 +1,6 @@
 import { WorkerEntrypoint } from "cloudflare:workers";
 import { isPublicHomeCacheRequest, isPublicHomeMutationRequest, publicHomeCacheResponse, shouldPurgePublicHome, PUBLIC_HOME_CACHE_TAG } from "./public-home-cache";
-import { invalidatePublicHomeSnapshot, readPublicHomeSnapshot } from "./public-home-snapshot";
+import { beginPublicHomeSnapshotMutation, readPublicHomeSnapshot } from "./public-home-snapshot";
 import { envString } from "./utils/env";
 import {
   DEFAULT_DEVICE_SIZES,
@@ -195,7 +195,12 @@ export class PublicHome extends WorkerEntrypoint<Env> {
       return publicHomeCacheResponse(request, new Response(null, { status: 404 }));
     try {
       const response = await routeRequest(request, this.env, this.ctx);
-      return publicHomeCacheResponse(request, response);
+      // Snapshot epochs live in D1. A shared pre-invocation cache cannot
+      // atomically bind a response to that epoch: old in-flight SSR could
+      // refill it after purge. Snapshot mode therefore uses D1 on every
+      // navigation and never admits even its SSR fallback into this cache.
+      return publicHomeCacheResponse(request, response,
+        envString(this.env, "PUBLIC_HOME_SNAPSHOT_ENABLED") !== "true");
     } catch (error) {
       return publicHomeCacheResponse(request, apiError(error));
     }
@@ -205,8 +210,10 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const requestId = request.headers.get("cf-ray") ?? crypto.randomUUID();
     let snapshotInvalidated = false;
+    let finishSnapshotMutation: (() => Promise<void>) | undefined;
     try {
-      if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && isPublicHomeCacheRequest(request)) {
+      if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" &&
+          envString(env, "PUBLIC_HOME_SNAPSHOT_ENABLED") !== "true" && isPublicHomeCacheRequest(request)) {
         const entrypoint = (ctx as ExecutionContext & { exports?: { PublicHome?: { fetch(req: Request): Promise<Response> } } }).exports?.PublicHome;
         if (!entrypoint) throw new AppError(503, "PUBLIC_HOME_CACHE_UNAVAILABLE", "Cache de páginas públicas indisponível.");
         return await entrypoint.fetch(request);
@@ -218,7 +225,7 @@ export default {
         await requireAdmin(request, env);
         assertAllowedOrigin(request, env);
         if (!env.DB) throw new AppError(503, "PUBLIC_HOME_SNAPSHOT_UNAVAILABLE", "Snapshot público indisponível.");
-        await invalidatePublicHomeSnapshot(env.DB);
+        finishSnapshotMutation = await beginPublicHomeSnapshotMutation(env.DB);
         snapshotInvalidated = true;
       }
       const response = await routeRequest(request, env, ctx);
@@ -258,6 +265,15 @@ export default {
         });
       }
       return apiError(error, requestId);
+    } finally {
+      if (finishSnapshotMutation) {
+        try { await finishSnapshotMutation(); }
+        catch {
+          // Keep the fence on storage failure; never disguise a committed
+          // editorial write as an HTTP error that would invite a duplicate.
+          console.warn("Punctum public home snapshot mutation completion unconfirmed");
+        }
+      }
     }
   },
   scheduled: handleScheduled,

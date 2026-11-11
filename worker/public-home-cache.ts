@@ -48,7 +48,7 @@ export function isPublicHomeCacheRequest(request: Request): boolean {
   return true;
 }
 
-export function publicHomeCacheResponse(request: Request, response: Response): Response {
+export function publicHomeCacheResponse(request: Request, response: Response, allowSharedCache = true): Response {
   const headers = new Headers(response.headers);
   const current = headers.get("Cache-Control") ?? "";
   // A public cache entrypoint must not retain or echo credential and identity
@@ -87,7 +87,7 @@ export function publicHomeCacheResponse(request: Request, response: Response): R
   // with optional parameters, never a MIME list or suffix variant.
   const contentType = headers.get("Content-Type")?.trim() ?? "";
   const canonicalHtml = /^text\/html(?:\s*;|$)/i.test(contentType) && !contentType.includes(",");
-  const safe = isPublicHomeCacheRequest(request) && response.status === 200 &&
+  const safe = allowSharedCache && isPublicHomeCacheRequest(request) && response.status === 200 &&
     canonicalHtml && !sensitive;
   // Never retain alternative surrogate/CDN caching directives from upstream:
   // they can override the fail-closed Cache-Control on denials, or defeat the

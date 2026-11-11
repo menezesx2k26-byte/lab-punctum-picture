@@ -1,0 +1,22 @@
+ FAIL  tests/unit/public-home-cache.spec.ts > never admits publication-fenced snapshot responses or SSR fallbacks into shared cache
+AssertionError: expected 'public, max-age=0, must-revalidate' to be 'private, no-store' // Object.is equality
+
+Expected: "private, no-store"
+Received: "public, max-age=0, must-revalidate"
+
+ ❯ tests/unit/public-home-cache.spec.ts:272:49
+    270|     headers:{"Content-Type":"text/html", "Cache-Control":"no-store, mu…
+    271|   }), false);
+    272|   expect(response.headers.get("Cache-Control")).toBe("private, no-stor…
+       |                                                 ^
+    273|   expect(response.headers.has("Cloudflare-CDN-Cache-Control")).toBe(fa…
+    274|   expect(response.headers.has("Cache-Tag")).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  18:13:54
+   Duration  1.76s (transform 96ms, setup 0ms, import 142ms, tests 35ms, environment 1ms)
+

@@ -528,9 +528,32 @@ export async function handleClientGalleryUploadApi(
           intent.expectedSize, digest),
     ]);
     if (completed.length !== 2 ||
-        completed.some(result => result.meta.changes !== 1))
+        completed.some(result => result.meta.changes !== 1)) {
+      // Two requests can decode the same immutable original concurrently.
+      // A zero/zero CAS is idempotent only if the winner completed this exact
+      // signed tuple, digest and decoded dimensions. A rebind, revocation or
+      // partial transition remains a conflict; never retry writes blindly.
+      const converged = completed.length === 2 &&
+        completed.every(result => result.meta.changes === 0) &&
+        await db.prepare(`SELECT i.id FROM client_gallery_upload_intents i
+          JOIN client_gallery_images m ON m.gallery_id=i.gallery_id AND m.id=i.image_id
+          WHERE i.id=? AND i.gallery_id=? AND i.image_id=? AND i.storage_key=?
+            AND i.expected_mime=? AND i.expected_size=? AND i.expires_at=?
+            AND i.status='completed' AND i.completed_at IS NOT NULL AND i.sha256=?
+            AND m.storage_key=? AND m.mime_type=? AND m.size_bytes=?
+            AND m.status='ready' AND m.deleted_at IS NULL AND m.original_sha256=?
+            AND m.width=? AND m.height=?`)
+          .bind(intent.id, galleryId, intent.imageId, intent.storageKey,
+            intent.expectedMime, intent.expectedSize, intent.expiresAt, digest,
+            intent.storageKey, intent.expectedMime, intent.expectedSize, digest,
+            width, height).first();
+      if (converged) {
+        const image = await getReadyGalleryImage(db, galleryId, intent.imageId);
+        if (image) return privateJson({ image: serializeImage(image) });
+      }
       throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
         "Os metadados persistidos deste envio não conferem.");
+    }
     const image = await getReadyGalleryImage(db, galleryId, intent.imageId);
     if (!image) throw new AppError(409, "UPLOAD_CLOSED", "Este envio expirou.");
     await writeAudit(

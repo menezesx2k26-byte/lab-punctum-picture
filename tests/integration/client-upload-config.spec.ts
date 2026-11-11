@@ -608,3 +608,51 @@ it("does not mark another image failed if restore rebinds an intent during faile
   expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(png);
   expect(await env.ORIGINALS.head(alternateKey)).toBeNull();
 });
+
+it.each(["identical", "revoked", "digest", "dimensions", "expiry"])("reconciles concurrent completion only for the identical original: %s", async scenario => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
+  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
+    filename: "concurrent.png", mimeType: "image/png", sizeBytes: bytes.length,
+  });
+  const issued = await (await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env))!.json() as {
+    intentId:string; imageId:string; uploadUrl:string; requiredHeaders:Record<string,string>;
+  };
+  const upload = new Request(issued.uploadUrl, {method:"PUT", body:bytes,
+    headers:{...issued.requiredHeaders, Origin:"http://localhost:8787", "Content-Length":String(bytes.length)}});
+  expect((await handleClientGalleryUploadApi(upload, new URL(upload.url), env))?.status).toBe(200);
+  let races = 0;
+  const db = new Proxy(env.DB, {
+    get(target, property) {
+      if (property === "batch") return async (statements:D1PreparedStatement[]) => {
+        // Another request commits the exact same completion before this CAS.
+        races++;
+        const won = await target.batch(statements);
+        expect(won.map(row => row.meta.changes)).toEqual([1,1]);
+        if (scenario === "revoked") await env.DB.prepare("UPDATE client_gallery_images SET deleted_at=datetime('now') WHERE id=?").bind(issued.imageId).run();
+        if (scenario === "digest") await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind("0".repeat(64),issued.imageId).run();
+        if (scenario === "dimensions") await env.DB.prepare("UPDATE client_gallery_images SET width=3 WHERE id=?").bind(issued.imageId).run();
+        if (scenario === "expiry") await env.DB.prepare("UPDATE client_gallery_upload_intents SET expires_at=? WHERE id=?").bind(new Date(Date.now()+7200000).toISOString(),issued.intentId).run();
+        return target.batch(statements);
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const complete = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/${issued.intentId}/complete`, "POST");
+  const completion = handleClientGalleryUploadApi(complete, new URL(complete.url), {...env,DB:db} as Env);
+  if (scenario !== "identical") {
+    await expect(completion).rejects.toMatchObject({status:409,code:"UPLOAD_INTENT_MISMATCH"});
+    expect(races).toBe(1);
+    return;
+  }
+  const result = await completion;
+  expect(result?.status).toBe(200);
+  expect(races).toBe(1);
+  const payload = await result!.json() as {image:{id:string;status:string}};
+  expect(payload.image.id).toBe(issued.imageId);
+  expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(issued.intentId).first()).toEqual({status:"completed"});
+  const key = `client-galleries/${gallery}/${issued.imageId}.png`;
+  expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
+});

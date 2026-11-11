@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { bootstrapPrivateDb } from "../integration/client-fixture";
 import {
   invalidatePublicHomeSnapshot,
+  beginPublicHomeSnapshotMutation,
   readPublicHomeSnapshot,
   stagePublicHomeSnapshot,
 } from "../../worker/public-home-snapshot";
@@ -112,4 +113,27 @@ describe("versioned public-home snapshot for cold cache MISS", () => {
     await env.DB.prepare("UPDATE public_home_snapshot SET html_sha256=? WHERE id=1").bind("0".repeat(64)).run();
     expect(await readPublicHomeSnapshot(env.DB, BUILD)).toBeNull();
   });
+});
+
+
+it("blocks snapshot staging throughout overlapping publications and rejects renders started inside them", async () => {
+  await bootstrapPrivateDb();
+  const finishA = await beginPublicHomeSnapshotMutation(env.DB);
+  const duringA = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+  expect(await stagePublicHomeSnapshot(env.DB, duringA!.epoch, BUILD, HTML)).toBe(false);
+  const finishB = await beginPublicHomeSnapshotMutation(env.DB);
+  await finishA();
+  const duringB = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+  expect(await stagePublicHomeSnapshot(env.DB, duringB!.epoch, BUILD, HTML)).toBe(false);
+  expect(await readPublicHomeSnapshot(env.DB, BUILD)).toBeNull();
+  await finishB();
+  expect(await stagePublicHomeSnapshot(env.DB, duringB!.epoch, BUILD, HTML)).toBe(false);
+  const final = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+  expect(await stagePublicHomeSnapshot(env.DB, final!.epoch, BUILD, HTML)).toBe(true);
+  // A finally callback invoked again must not release somebody else's fence.
+  const finishC = await beginPublicHomeSnapshotMutation(env.DB);
+  await finishA();
+  const duringC = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+  expect(await stagePublicHomeSnapshot(env.DB, duringC!.epoch, BUILD, HTML)).toBe(false);
+  await finishC();
 });

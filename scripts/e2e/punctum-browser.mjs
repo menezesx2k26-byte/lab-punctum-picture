@@ -80,6 +80,8 @@ const options = convertV4MiniflareOptions({
   bindings: {
     ENVIRONMENT: "preview", SITE_ORIGIN: origin, PUBLIC_SITE_URL: origin,
     PRIVATE_GALLERIES_ENABLED: "true", CLIENT_AUTH_MODE: "access", CLIENT_SESSION_SECRET: sessionSecret,
+    PUBLIC_HOME_SNAPSHOT_ENABLED: "true", PUBLIC_HOME_SNAPSHOT_BUILD_ID: "punctum-isolated-browser-snapshot",
+    PUBLIC_HOME_CACHE_ENABLED: "true",
     ADMIN_SESSION_SECRET: adminSecret, ADMIN_PASSWORD_HASH: adminHash, ADMIN_ALLOWED_EMAILS: "qa@punctum.invalid",
     MAX_UPLOAD_BYTES: "26214400", ALLOWED_MIME_TYPES: "image/jpeg,image/png,image/webp",
     PUBLIC_WHATSAPP_E164: "5511999999999", PUBLIC_INSTAGRAM_URL: "https://instagram.com/punctumpicture",
@@ -244,6 +246,8 @@ try {
   // Assert rendered content below instead of awaiting every editorial asset's
   // load event on a CPU-constrained local runner.
   const home = await publicPage.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 90_000 }); assert.equal(home.status(), 200);
+  assert.match(home.headers()["cache-control"] || "", /no-store/,
+    "snapshot mode bypasses shared cache even when both flags are enabled");
   await publicPage.locator("h1").first().waitFor();
   await auditAccessibility(publicPage, "public home");
   report.localBrowserHomeNavigationMs = performance.now() - publicStart;
@@ -259,10 +263,28 @@ try {
   await studio.getByRole("heading", { name: "Textos do site", exact: true }).waitFor();
   await screenshot(studio, "studio.png");
   record("public home and authenticated Studio render; anonymous Studio denied");
+  const epochBeforePublish = await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first();
+  const deniedPublish = await anonymous.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: 2147483647 },
+  });
+  assert.ok([401,403].includes(deniedPublish.status()));
+  assert.deepEqual(await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first(), epochBeforePublish,
+    "unauthorized mutation must not invalidate snapshots");
   await studio.getByRole("button", { name: "Estilo", exact: true }).click();
   await studio.getByRole("button", { name: /^Colagem autoral/ }).click();
   await studio.getByRole("button", { name: "Publicar alterações", exact: true }).click();
   await studio.getByText("Alterações publicadas. O site já está atualizado.", { exact: true }).waitFor();
+  const epochAfterPublish = await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first();
+  assert.equal(epochAfterPublish.epoch, epochBeforePublish.epoch + 2, "publication fences both start and finish");
+  assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM public_home_snapshot_mutations").first()).n, 0);
+  const stalePublication = await admin.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: 2147483647 },
+  });
+  assert.equal(stalePublication.status(), 409);
+  assert.equal((await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first()).epoch, epochAfterPublish.epoch + 2);
+  assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM public_home_snapshot_mutations").first()).n, 0,
+    "failed publication must release only its own fence");
+  record("production entrypoint fences successful and failed Studio publications; unauthorized changes do not touch snapshot state");
   await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
   await publicPage.locator('[data-theme-preset="colagem-autoral"]').first().waitFor();
   await auditAccessibility(publicPage, "public home with Colagem Autoral");

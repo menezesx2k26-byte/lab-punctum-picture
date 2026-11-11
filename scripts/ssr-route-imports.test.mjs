@@ -85,8 +85,10 @@ test("home SSR loads its own references; Studio loads only when requested", asyn
     });
     assert.equal(authorizedInvalidPublish.ok, false);
     const invalidated = await db.prepare("SELECT epoch,html FROM public_home_snapshot WHERE id=1").first();
-    assert.equal(invalidated.epoch, 1);
+    assert.equal(invalidated.epoch, 2, "mutation start and finish each advance the publication epoch");
     assert.equal(invalidated.html, null);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM public_home_snapshot_mutations").first()).n, 0,
+      "rejected payload must release its mutation fence");
     const freshResponse = await navigateHome();
     assert.equal(freshResponse.status, 200);
     assert.doesNotMatch(await freshResponse.text(), /PUNCTUM_VERIFIED_STATIC_SNAPSHOT/);

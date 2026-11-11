@@ -1,0 +1,19 @@
+ FAIL  tests/integration/client-upload-config.spec.ts > converges concurrent completion of the same verified original without a false conflict
+AppError: Os metadados persistidos deste envio não conferem.
+ ❯ handleClientGalleryUploadApi worker/api/client-gallery-upload.ts:532:13
+    530|     if (completed.length !== 2 ||
+    531|         completed.some(result => result.meta.changes !== 1))
+    532|       throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
+       |             ^
+    533|         "Os metadados persistidos deste envio não conferem.");
+    534|     const image = await getReadyGalleryImage(db, galleryId, intent.ima…
+ ❯ tests/integration/client-upload-config.spec.ts:639:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  18:06:41
+   Duration  7.29s (transform 2.05s, setup 0ms, import 4.09s, tests 257ms, environment 1ms)
+

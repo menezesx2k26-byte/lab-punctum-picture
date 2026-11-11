@@ -92,7 +92,8 @@ export async function readPublicHomeSnapshot(db: D1Database, buildId: string): P
   try {
     row = await db.prepare(
       `SELECT epoch, snapshot_epoch AS snapshotEpoch, build_id AS buildId,
-         html_sha256 AS htmlSha256, html FROM public_home_snapshot WHERE id=1`,
+         html_sha256 AS htmlSha256, html FROM public_home_snapshot WHERE id=1
+         AND NOT EXISTS(SELECT 1 FROM public_home_snapshot_mutations)`,
     ).first<SnapshotRow>();
   } catch {
     // Migration/binding may be unavailable in an old deployment. Keep the
@@ -122,6 +123,36 @@ export async function invalidatePublicHomeSnapshot(db: D1Database): Promise<void
   if (result.meta.changes !== 1) throw new Error("Public home snapshot invalidation was not confirmed");
 }
 
+/** Fence the complete mutation, not just its start. A producer can otherwise
+ * capture pre-publication HTML under the NEW epoch and stage it after commit.
+ * Distinct leases also keep overlapping publications fenced independently.
+ * On process termination a retained lease disables snapshots (SSR fallback)
+ * until an operator reconciles the publication; time is not proof of commit.
+ */
+export async function beginPublicHomeSnapshotMutation(db: D1Database): Promise<() => Promise<void>> {
+  const id = crypto.randomUUID();
+  const started = await db.batch([
+    db.prepare("INSERT INTO public_home_snapshot_mutations (id,created_at) VALUES (?,?)")
+      .bind(id, new Date().toISOString()),
+    db.prepare(`UPDATE public_home_snapshot SET epoch=epoch+1,
+      snapshot_epoch=NULL,build_id=NULL,html_sha256=NULL,html=NULL WHERE id=1`),
+  ]);
+  if (started.length !== 2 || started.some(result => result.meta.changes !== 1))
+    throw new Error("Public home snapshot mutation fence was not confirmed");
+  let finishing: Promise<void> | undefined;
+  return () => finishing ??= (async () => {
+    // Invalidation and removal are transactional: no render from inside this
+    // publication may become eligible when the final active fence is removed.
+    const finished = await db.batch([
+      db.prepare(`UPDATE public_home_snapshot SET epoch=epoch+1,
+        snapshot_epoch=NULL,build_id=NULL,html_sha256=NULL,html=NULL WHERE id=1`),
+      db.prepare("DELETE FROM public_home_snapshot_mutations WHERE id=?").bind(id),
+    ]);
+    if (finished.length !== 2 || finished.some(result => result.meta.changes !== 1))
+      throw new Error("Public home snapshot mutation completion was not confirmed");
+  })();
+}
+
 /**
  * For a trusted offline snapshot producer using the same D1 snapshot/epoch:
  * capture complete published HTML, pin the deployed bundle ID and stage via
@@ -139,7 +170,8 @@ export async function stagePublicHomeSnapshot(
   const result = await db.prepare(
     `UPDATE public_home_snapshot
      SET html=?, html_sha256=?, build_id=?, snapshot_epoch=epoch
-     WHERE id=1 AND epoch=?`,
+     WHERE id=1 AND epoch=?
+       AND NOT EXISTS(SELECT 1 FROM public_home_snapshot_mutations)`,
   ).bind(html, digest, buildId, expectedEpoch).run();
   return result.meta.changes === 1;
 }

@@ -263,3 +263,13 @@ describe("public home isolated cache boundary", () => {
     }
     expect(shouldPurgePublicHome(req("/admin/api/studio/publish"),new Response(null,{status:200}))).toBe(false);
   });});
+
+it("never admits publication-fenced snapshot responses or SSR fallbacks into shared cache", () => {
+  const request = new Request("https://punctum.example/", {headers:{Accept:"text/html"}});
+  const response = publicHomeCacheResponse(request, new Response("public HTML", {
+    headers:{"Content-Type":"text/html", "Cache-Control":"no-store, must-revalidate"},
+  }), false);
+  expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  expect(response.headers.has("Cloudflare-CDN-Cache-Control")).toBe(false);
+  expect(response.headers.has("Cache-Tag")).toBe(false);
+});

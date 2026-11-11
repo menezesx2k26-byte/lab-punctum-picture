@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "observedDateUtc": "2026-11-11",
+  "scope": "Cloudflare control plane read-only; no remote writes",
+  "accountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "subscriptionPlanIds": [
+    "free",
+    "teams_free",
+    "r2_paid"
+  ],
+  "subscriptionLimitations": "Subscription list is not billed usage, Free headroom or final cost proof; no Workers Paid/Images Paid listed",
+  "d1Count": 10,
+  "r2BucketCount": 13,
+  "workerScriptCount": 18,
+  "qaWorker": "punctum-picture-r4-qa-20261028",
+  "qaCurrentVersion": "e05a3001-3c78-4703-8055-acf3026bd450",
+  "qaCurrentDeployment": "5658b99f-3ff4-4282-aa0f-1e851f34eeb0",
+  "qaDeploymentHistoryEntries": 32,
+  "qaBindings": {
+    "PRIVATE_GALLERIES_ENABLED": "false",
+    "DB": "2e7710f3-dc92-4aeb-976a-5f15d8c5262c",
+    "R2": false,
+    "IMAGES": false,
+    "CLIENT_ACCESS_TEAM_DOMAIN": "qa-placeholder.cloudflareaccess.com",
+    "CLIENT_ACCESS_AUD": "r4-qa-access-unconfigured"
+  },
+  "qaReadOnlyCounts": {
+    "clients": 3,
+    "galleries": 3,
+    "images": 11,
+    "intents": 11,
+    "favorites": 2
+  },
+  "d1QueryMetadata": {
+    "changed_db": false,
+    "rows_written": 0,
+    "rows_read": 30
+  },
+  "limitations": [
+    "Counts do not prove unchanged full-row/object hashes",
+    "No new empty segregated D1 slot established",
+    "QA historic resources remain immutable",
+    "No current exact-HEAD remote upload, CPU cold/MISS or rollback qualification",
+    "No production runtime readback; QA flag does not prove production flag"
+  ],
+  "sources": [
+    "Composio Cloudflare LIST_ACCOUNTS",
+    "LIST_ACCOUNT_SUBSCRIPTIONS",
+    "LIST_D1_DATABASES",
+    "LIST_R2_BUCKETS",
+    "LIST_WORKER_SCRIPTS",
+    "GET_WORKER_SCRIPT_SETTINGS",
+    "LIST_WORKER_DEPLOYMENTS",
+    "EXECUTE_D1_QUERY SELECT counts only"
+  ],
+  "writeOperations": 0
+}
