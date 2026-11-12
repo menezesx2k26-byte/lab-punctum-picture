@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-route-latency-oom-filter-20261112-09",
+  "request_id": "candidate-no-compression-qa-20261112-10",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d1ff-94f7-70f8-ac74-342b54e77e35",
+  "expected_build_uuid": "01a1d209-9c17-7206-a677-5d2f8d0e4d3b",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }
