@@ -1,9 +1,14 @@
 import { z } from "zod";
 
 export const CLIENT_THEMES = ["noir", "ivory", "warm"] as const;
-// Canonical R4 product requirement. Do not lower this to match a provider limit.
-export const CLIENT_MAX_UPLOAD_BYTES = 26_214_400;
-export const CLIENT_MAX_UPLOAD_LABEL = "25 MiB";
+// Operational upload ceiling. Do not advertise or accept a larger upload until
+// the complete private Images-validation path is proven for the original spec.
+export const CLIENT_MAX_UPLOAD_BYTES = 20_000_000;
+export const CLIENT_MAX_UPLOAD_LABEL = "20 MB";
+// Canonical R4 product requirement, retained separately while the provider gap
+// remains open. This is a contract bound, not the currently accepted upload size.
+export const CLIENT_SPEC_MAX_UPLOAD_BYTES = 26_214_400;
+export const CLIENT_SPEC_MAX_UPLOAD_LABEL = "25 MiB";
 // Current Cloudflare Images Binding .input() ceiling. This is a separate
 // provider capability guard, not the product/specification maximum.
 export const IMAGES_BINDING_MAX_INPUT_BYTES = 20_000_000;
@@ -40,7 +45,7 @@ export const clientImageIntentSchema = z
   .object({
     filename: z.string().trim().min(1).max(240),
     mimeType: z.enum(CLIENT_MIME_TYPES),
-    sizeBytes: z.number().int().positive().max(CLIENT_MAX_UPLOAD_BYTES),
+    sizeBytes: z.number().int().positive().max(CLIENT_SPEC_MAX_UPLOAD_BYTES),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
     altText: z.string().trim().max(500).default(""),
   })

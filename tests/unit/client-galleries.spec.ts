@@ -6,6 +6,8 @@ import {
   clientImageIntentSchema,
   CLIENT_MAX_UPLOAD_BYTES,
   CLIENT_MAX_UPLOAD_LABEL,
+  CLIENT_SPEC_MAX_UPLOAD_BYTES,
+  CLIENT_SPEC_MAX_UPLOAD_LABEL,
   IMAGES_BINDING_MAX_INPUT_BYTES,
   IMAGES_BINDING_MAX_INPUT_LABEL,
   IMAGES_BINDING_LIMIT_MESSAGE,
@@ -38,8 +40,10 @@ describe("private gallery contracts", () => {
         email: "ANA@EXAMPLE.COM ",
       }).email,
     ).toBe("ana@example.com");
-    expect(CLIENT_MAX_UPLOAD_BYTES).toBe(26_214_400);
-    expect(CLIENT_MAX_UPLOAD_LABEL).toBe("25 MiB");
+    expect(CLIENT_MAX_UPLOAD_BYTES).toBe(20_000_000);
+    expect(CLIENT_MAX_UPLOAD_LABEL).toBe("20 MB");
+    expect(CLIENT_SPEC_MAX_UPLOAD_BYTES).toBe(26_214_400);
+    expect(CLIENT_SPEC_MAX_UPLOAD_LABEL).toBe("25 MiB");
     expect(IMAGES_BINDING_MAX_INPUT_BYTES).toBe(20_000_000);
     expect(IMAGES_BINDING_MAX_INPUT_LABEL).toBe("20 MB");
     expect(IMAGES_BINDING_LIMIT_MESSAGE).toContain("25 MiB");

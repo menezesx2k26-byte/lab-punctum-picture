@@ -13,6 +13,7 @@ import { globSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { cpuQaFixtureEligibility } from "./lib/r4-cpu-readonly.mjs";
 
 const variants = process.argv.slice(2).map(argument => {
   const separator = argument.indexOf("=");
@@ -24,9 +25,10 @@ const repetitions = Number(process.env.PUNCTUM_PROFILE_REPETITIONS || 10);
 assert.ok(Number.isInteger(repetitions) && repetitions >= 1 && repetitions <= 30);
 const report = {
   startedUtc: new Date().toISOString(),
-  scope: "LOCAL workerd/V8 sampled execution; excludes idle samples, includes compilation/program samples; not edge CPU or billable CPU",
+  scope: "LOCAL workerd/V8 sampled execution on the first unprimed home request after a synthetic /api/public/site bootstrap has established one valid published-config pointer; measured home requests do not include one-time DB bootstrap; excludes idle samples, includes compilation/program samples; not edge CPU or billable CPU",
   node: process.version, repetitions, warmRequestsPerIsolate: 5,
   builds: variants.map(variant => ({ label: variant.label, bundleSha256: createHash("sha256").update(readFileSync(resolve(variant.directory, "server/index.js"))).digest("hex"), ssrBundleSha256: createHash("sha256").update(readFileSync(resolve(variant.directory, "server/ssr/index.js"))).digest("hex") })),
+  profileFixtures: [],
   samples: [],
 };
 const connect = async mf => {
@@ -83,10 +85,23 @@ async function sampleBuild(variant, repetition) {
     for (const file of globSync("migrations/*.sql").sort()) {
       for (const sql of readFileSync(file, "utf8").split(";").map(s => s.trim()).filter(Boolean)) await db.prepare(sql).run();
     }
+    // Production's first home request normally starts against an already-
+    // published config pointer. Bootstrap only the synthetic D1 through the
+    // public site API before profiling, so measured home requests exercise the
+    // steady-state LEFT JOIN path rather than legacy DB bootstrap.
+    const worker = await mf.getWorker();
+    const bootstrap = await worker.fetch("http://localhost/api/public/site", { headers: { accept: "application/json" } });
+    const fixture = await db.prepare(`SELECT
+      (SELECT COUNT(*) FROM site_config_pointers) AS pointers,
+      (SELECT COUNT(*) FROM site_config_versions) AS configVersions,
+      (SELECT COUNT(*) FROM site_config_pointers p JOIN site_config_versions v
+        ON v.id=p.published_version_id AND v.state='published' WHERE p.id=1) AS validPublishedPointers`).first();
+    assert.equal(bootstrap.status, 200, "Synthetic public site bootstrap must succeed before profiling");
+    assert.ok(cpuQaFixtureEligibility(fixture), "Profiler D1 must have one valid published pointer before sampling");
+    report.profileFixtures.push({ build: variant.label, repetition, bootstrapStatus: bootstrap.status, ...fixture });
     inspector = await connect(mf);
     await inspector.send("Profiler.enable");
     await inspector.send("Profiler.setSamplingInterval", { interval: 100 });
-    const worker = await mf.getWorker();
     if (snapshotHitMode) {
       // Generate the same public SSR HTML once, then stage it through the
       // production validator into this isolate's synthetic D1 only.

@@ -1,6 +1,6 @@
 import {
   clientImageIntentSchema,
-  CLIENT_MAX_UPLOAD_BYTES,
+  CLIENT_SPEC_MAX_UPLOAD_BYTES,
   IMAGES_BINDING_MAX_INPUT_BYTES,
   IMAGES_BINDING_LIMIT_MESSAGE,
   type ClientImageIntentInput,
@@ -368,7 +368,7 @@ export async function handleClientGalleryUploadApi(
   // Keep the 25 MiB product bound distinct, then fail closed at the Images
   // boundary before body allocation, R2 reads or Images calls.
   if (!Number.isSafeInteger(intent.expectedSize) || intent.expectedSize < 1 ||
-      intent.expectedSize > CLIENT_MAX_UPLOAD_BYTES)
+      intent.expectedSize > CLIENT_SPEC_MAX_UPLOAD_BYTES)
     throw new AppError(413, "UPLOAD_SIZE", "O tamanho do envio excede o requisito de 25 MiB.");
   if (intent.expectedSize > IMAGES_BINDING_MAX_INPUT_BYTES)
     throw new AppError(413, "UPLOAD_IMAGE_LIMIT", IMAGES_BINDING_LIMIT_MESSAGE);

@@ -9,6 +9,7 @@ import type {
 import {
   CLIENT_MAX_UPLOAD_BYTES,
   CLIENT_MAX_UPLOAD_LABEL,
+  CLIENT_SPEC_MAX_UPLOAD_BYTES,
   IMAGES_BINDING_MAX_INPUT_BYTES,
   IMAGES_BINDING_LIMIT_MESSAGE,
   CLIENT_MIME_TYPES,
@@ -316,7 +317,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
       progress: 0,
     }));
     const providerBlocked = queue.find(
-      (j) => j.file.size > IMAGES_BINDING_MAX_INPUT_BYTES && j.file.size <= CLIENT_MAX_UPLOAD_BYTES,
+      (j) => j.file.size > IMAGES_BINDING_MAX_INPUT_BYTES && j.file.size <= CLIENT_SPEC_MAX_UPLOAD_BYTES,
     );
     if (providerBlocked) {
       setError(IMAGES_BINDING_LIMIT_MESSAGE + " Arquivo: " + providerBlocked.file.name);

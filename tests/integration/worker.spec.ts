@@ -118,6 +118,47 @@ describe("Worker Punctum Picture", () => {
     }
   });
 
+  it("falha fechado sem bootstrap quando o LEFT JOIN encontra um ponteiro publicado dangling", async () => {
+    const settings = await readPublicSiteSettings(env.DB);
+    const statements: string[] = [];
+    let batchCalls = 0;
+    const danglingDb = {
+      prepare(sql: string) {
+        statements.push(sql);
+        return {
+          first: async () => ({
+            id: null,
+            schemaVersion: null,
+            state: null,
+            revision: null,
+            configJson: null,
+            basedOnVersionId: null,
+            restoredFromVersionId: null,
+            createdAt: null,
+            updatedAt: null,
+            publishedAt: null,
+            createdBy: null,
+            updatedBy: null,
+            publishedBy: null,
+          }),
+        };
+      },
+      batch: async () => {
+        batchCalls += 1;
+        throw new Error("Bootstrap não pode escrever neste cenário.");
+      },
+    } as unknown as D1Database;
+
+    const state = await readPublicSiteConfigState(danglingDb, settings);
+
+    expect(state.source).toBe("safe-fallback");
+    expect(state.versionId).toBeNull();
+    expect(state.issues).toContain("A versão publicada não foi encontrada.");
+    expect(statements).toHaveLength(1);
+    expect(statements[0]).toMatch(/LEFT JOIN\s+site_config_versions/i);
+    expect(batchCalls).toBe(0);
+  });
+
   it("propaga settings administrativas para a API pública", async () => {
     const update = await exports.default.fetch(
       jsonRequest("/admin/api/settings", "PATCH", {
