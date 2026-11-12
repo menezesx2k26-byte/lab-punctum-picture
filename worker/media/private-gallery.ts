@@ -1,5 +1,5 @@
 import { requireClient } from "../client/auth";
-import { CLIENT_MAX_UPLOAD_BYTES } from "../../shared/client-galleries";
+import { IMAGES_BINDING_MAX_INPUT_BYTES } from "../../shared/client-galleries";
 import {
   getOwnedGallery,
   getGallery,
@@ -58,7 +58,7 @@ export async function servePrivateGalleryImage(
   // Historical ready rows can predate today's safe Images Binding limit.
   // Never feed their originals to Images even when a D1 row or its R2 object
   // is inconsistent. Downloads remain a separate authorized R2 operation.
-  if (preset !== "download" && image.sizeBytes > CLIENT_MAX_UPLOAD_BYTES)
+  if (preset !== "download" && image.sizeBytes > IMAGES_BINDING_MAX_INPUT_BYTES)
     throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   const bucket = requireOriginals(env);
   if (headOnly) {
@@ -70,7 +70,7 @@ export async function servePrivateGalleryImage(
       );
     const head = await bucket.head(image.storageKey);
     if (!head) throw missing();
-    if (preset !== "download" && head.size > CLIENT_MAX_UPLOAD_BYTES)
+    if (preset !== "download" && head.size > IMAGES_BINDING_MAX_INPUT_BYTES)
       throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
     // Even pre-migration ready rows without a D1 digest must never claim
     // success when R2 size or MIME contradicts their D1 original record.
@@ -109,7 +109,7 @@ export async function servePrivateGalleryImage(
   }
   const object = await bucket.get(image.storageKey);
   if (!object) throw missing();
-  if (preset !== "download" && object.size > CLIENT_MAX_UPLOAD_BYTES)
+  if (preset !== "download" && object.size > IMAGES_BINDING_MAX_INPUT_BYTES)
     throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   if (object.size !== image.sizeBytes ||
       object.httpMetadata?.contentType !== image.mimeType)

@@ -9,6 +9,8 @@ import type {
 import {
   CLIENT_MAX_UPLOAD_BYTES,
   CLIENT_MAX_UPLOAD_LABEL,
+  IMAGES_BINDING_MAX_INPUT_BYTES,
+  IMAGES_BINDING_LIMIT_MESSAGE,
   CLIENT_MIME_TYPES,
 } from "../../../shared/client-galleries";
 import {
@@ -313,6 +315,13 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
       status: "queued",
       progress: 0,
     }));
+    const providerBlocked = queue.find(
+      (j) => j.file.size > IMAGES_BINDING_MAX_INPUT_BYTES && j.file.size <= CLIENT_MAX_UPLOAD_BYTES,
+    );
+    if (providerBlocked) {
+      setError(IMAGES_BINDING_LIMIT_MESSAGE + " Arquivo: " + providerBlocked.file.name);
+      return;
+    }
     const invalid = queue.find(
       (j) =>
         j.file.size > CLIENT_MAX_UPLOAD_BYTES ||
@@ -481,6 +490,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
             <p className="pga-note">
               JPG, PNG ou WebP · até {CLIENT_MAX_UPLOAD_LABEL} por foto · até 3 envios simultâneos.
             </p>
+            <p className="pga-note" role="note">{IMAGES_BINDING_LIMIT_MESSAGE}</p>
             {jobs.length > 0 && (
               <ul className="pga-queue" aria-label="Progresso dos envios">
                 {jobs.map((j) => (

@@ -1,4 +1,10 @@
-import { clientImageIntentSchema, CLIENT_MAX_UPLOAD_BYTES } from "../../shared/client-galleries";
+import {
+  clientImageIntentSchema,
+  CLIENT_MAX_UPLOAD_BYTES,
+  IMAGES_BINDING_MAX_INPUT_BYTES,
+  IMAGES_BINDING_LIMIT_MESSAGE,
+  type ClientImageIntentInput,
+} from "../../shared/client-galleries";
 import { validateGalleryRaster, isGalleryRasterTransientError } from "../client/gallery-raster.mjs";
 import {
   hasMatchingOriginalDigest,
@@ -252,14 +258,23 @@ export async function handleClientGalleryUploadApi(
   if (!match) return null;
   const actor = await requireAdmin(request, env);
   assertAllowedOrigin(request, env);
+  const galleryId = match[1];
+  let intentInput: ClientImageIntentInput | null = null;
+  if (match[2] === "intents" && request.method === "POST") {
+    // Parse and reject the provider-incompatible 20-25 MiB range before the
+    // rate-limit D1 write, gallery reservation, or any R2 access. The public
+    // product/schema maximum remains the canonical 25 MiB requirement.
+    intentInput = await parseJson(request, clientImageIntentSchema);
+    if (intentInput.sizeBytes > IMAGES_BINDING_MAX_INPUT_BYTES)
+      throw new AppError(413, "UPLOAD_IMAGE_LIMIT", IMAGES_BINDING_LIMIT_MESSAGE);
+  }
   const db = requireDb(env);
   const bucket = requireOriginals(env);
-  const galleryId = match[1];
   await assertRateLimit(request, db, "private-upload", 200, 60);
   if (!(await getGallery(db, galleryId)))
     throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   if (match[2] === "intents" && request.method === "POST") {
-    const input = await parseJson(request, clientImageIntentSchema);
+    const input = intentInput!;
     // Reject before reserving an image or writing to R2 when this Worker cannot
     // validate and serve it. The existing completion guard stays fail-closed.
     if (!env.IMAGES)
@@ -349,14 +364,14 @@ export async function handleClientGalleryUploadApi(
     .bind(match[3] ?? "", galleryId)
     .first<IntentRow>();
   if (!intent) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
-  // Older/externally restored D1 intents may predate the 20 MB operational
-  // Images limit. Guard the persisted size on EVERY continuation path, before
-  // body allocation, R2 reads or Images calls. This does not change the
-  // original 25 MiB product requirement; it fails closed until a validated
-  // 25 MiB architecture is implemented and independently measured.
+  // Older/externally restored D1 intents may predate today's provider ceiling.
+  // Keep the 25 MiB product bound distinct, then fail closed at the Images
+  // boundary before body allocation, R2 reads or Images calls.
   if (!Number.isSafeInteger(intent.expectedSize) || intent.expectedSize < 1 ||
       intent.expectedSize > CLIENT_MAX_UPLOAD_BYTES)
-    throw new AppError(413, "UPLOAD_IMAGE_LIMIT", "Este envio ultrapassa o limite seguro de validação de fotos.");
+    throw new AppError(413, "UPLOAD_SIZE", "O tamanho do envio excede o requisito de 25 MiB.");
+  if (intent.expectedSize > IMAGES_BINDING_MAX_INPUT_BYTES)
+    throw new AppError(413, "UPLOAD_IMAGE_LIMIT", IMAGES_BINDING_LIMIT_MESSAGE);
   if (!["image/jpeg", "image/png", "image/webp"].includes(intent.expectedMime))
     throw new AppError(409, "UPLOAD_TYPE", "O tipo do envio não é suportado.");
   // An old/restored intent is not authority to read or put an arbitrary R2

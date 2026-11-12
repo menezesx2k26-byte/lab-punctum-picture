@@ -285,8 +285,9 @@ it("keeps an uploaded original recoverable when Images responds 503 during compl
   expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
 });
 
-it("rejects photos over the 20 MB Images Binding input limit before any D1 reservation or R2 put", async () => {
+it("preserves the 25 MiB product requirement but blocks the 20 MB Images provider gap before D1/R2 writes", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
+  const r2Before = (await env.ORIGINALS.list()).objects.map((object) => object.key).sort();
   for (const sizeBytes of [20_000_001, 26_214_400]) {
     const request = privateRequest("/admin/api/albuns-privados/" + gallery + "/uploads/intents", "POST", {
       filename: "too-large-for-images-binding.png",
@@ -295,12 +296,13 @@ it("rejects photos over the 20 MB Images Binding input limit before any D1 reser
       sha256: "0".repeat(64),
     });
     await expect(handleClientGalleryUploadApi(request, new URL(request.url), env))
-      .rejects.toMatchObject({status:400});
+      .rejects.toMatchObject({status:413,code:"UPLOAD_IMAGE_LIMIT",message:expect.stringContaining("25 MiB")});
   }
   expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM client_gallery_images WHERE gallery_id=?")
     .bind(gallery).first<{n:number}>())?.n).toBe(0);
   expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM client_gallery_upload_intents WHERE gallery_id=?")
     .bind(gallery).first<{n:number}>())?.n).toBe(0);
+  expect((await env.ORIGINALS.list()).objects.map((object) => object.key).sort()).toEqual(r2Before);
 });
 
 it("shows the local Images emulator accepts 25 MiB through the real raster helper and cannot prove the provider cap", async () => {
