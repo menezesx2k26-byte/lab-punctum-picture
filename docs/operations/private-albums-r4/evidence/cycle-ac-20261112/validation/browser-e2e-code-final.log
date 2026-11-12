@@ -1,0 +1,25 @@
+PASS fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals
+PASS anonymous gallery access denied; Access mode disables password login
+PASS axe-core WCAG 2.1 A/AA private client library: 17 rules passed, zero violations; 0 manual review candidates
+PASS real browser client A/B libraries and foreign gallery/original denial
+PASS axe-core WCAG 2.1 A/AA private gallery detail: 17 rules passed, zero violations; 1 manual review candidates
+PASS axe-core WCAG 2.1 A/AA private gallery lightbox: 12 rules passed, zero violations; 0 manual review candidates
+PASS favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified
+PASS private gallery has no horizontal overflow at 320/360/375/390/430/640/768/1024/1440px; 640px is a responsive-layout proxy only, not a 200% browser-zoom test
+PASS private media is denied anonymously and cannot enter public media/image optimizer
+PASS same-component client navigation clears prior gallery while pending and after an intentional404
+PASS malformed success envelope produces a safe library alert without a render exception
+PASS axe-core WCAG 2.1 A/AA public home: 26 rules passed, zero violations; 1 manual review candidates
+PASS axe-core WCAG 2.1 A/AA Studio: 25 rules passed, zero violations; 0 manual review candidates
+PASS public home and authenticated Studio render; anonymous Studio denied
+Punctum public home purge unconfirmed after a successful admin change
+PASS production entrypoint fences successful and failed Studio publications; unauthorized changes do not touch snapshot state
+PASS axe-core WCAG 2.1 A/AA public home with Colagem Autoral: 26 rules passed, zero violations; 1 manual review candidates
+PASS Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/640/768/1024/1440px
+PASS axe-core WCAG 2.1 A/AA private admin gallery editor: 25 rules passed, zero violations; 0 manual review candidates
+PASS private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; nine responsive widths including 640px
+PASS workerd restart preserves favorites, authenticated gallery and original bytes
+PASS isolated local consistent-storage rollback restores gallery availability after archiving
+PASS logout revokes client A while client B remains authorized
+PASS actual 200 percent Chromium browser zoom: library, gallery, keyboard lightbox, admin and public home; no horizontal overflow
+Browser report: /home/desktop/Documents/punctum-r4-takeover-f591/outputs/cycle-ac/browser-e2e-code-final/report.json

@@ -1,0 +1,55 @@
+{
+  "decision": "NO_GO_PRODUCTION",
+  "actions": [
+    {
+      "gate": "G01",
+      "owner": "SPEC custodian",
+      "action": "Provide original 40541-byte PUNCTUM_SPEC_R4_ALBUNS_PRIVADOS.txt, expected SHA256 2989e0ba18982658570dc699842393b3f980c9a5312237af33ab02292d10ecfb; no derived document substituted"
+    },
+    {
+      "gate": "G21/publication",
+      "owner": "GitHub repository owner",
+      "action": "Authenticate local Git using a secure credential helper, then fast-forward push HEAD to existing PR32 branch; no force. Read back remote SHA and wait for exact-head CI"
+    },
+    {
+      "gate": "G05",
+      "owner": "Cloudflare/QA owner",
+      "action": "Confirm Images plan and usage plus approved segregated D1/R2 destination. Existing input20MB, hosted10MB and shared-cache URL resizing do not satisfy private25MiB. A complete private decoder/preview pipeline with zero incremental cost remains unproven"
+    },
+    {
+      "gate": "G15",
+      "owner": "Accessibility tester",
+      "action": "Measure remaining image/gradient/pseudo/overlap contrast candidates; execute physical Android/TalkBack and iOS/VoiceOver cases. Desktop real200% zoom is now locally verified"
+    },
+    {
+      "gate": "G17",
+      "owner": "Cloudflare/QA owner",
+      "action": "Supply QA-only D1 read, subscription/usage read, scoped ephemeral Worker/version/settings and telemetry access. Confirm zero cost and rollback before probe. Trusted production HTML producer absent; SSR MISS still unqualified"
+    },
+    {
+      "gate": "G19",
+      "owner": "Independent reviewer",
+      "action": "Formal review of exact code/runtime boundary and documented zero open P0/P1; internal and auxiliary review are not substitute"
+    },
+    {
+      "gate": "G20",
+      "owner": "Studio controller",
+      "action": "Document actual purpose/legal-basis/retention/export/deletion/operator/incident decisions and signed approval"
+    },
+    {
+      "gate": "G22",
+      "owner": "Release owner",
+      "action": "Approve each release step only after gates; merge/deploy/activation have not been authorized"
+    },
+    {
+      "gate": "G23",
+      "owner": "Cloudflare/QA owner",
+      "action": "QA-only D1/Billing reads (prior401/403), authorized empty segregated restore destination and recoverable prior Worker/config; no newD1 or historical fixture mutation"
+    },
+    {
+      "gate": "G24",
+      "owner": "Checkpoint services owner",
+      "action": "Reconnect PersistFlow, expose actual Engram conversation service, and transfer local ZIP through supported file upload. Direct Drive local path upload failed; no remote artifact created"
+    }
+  ]
+}
