@@ -50,9 +50,10 @@ jobs:
               "build_settings": f"{site}/builds/settings",
               "build_history": f"{site}/builds",
               "env_inventory": f"{site}/builds/settings/env",
+              "document_root": f"/accounts/{username}/domains/{domain}/files?max_depth=1&max_items=20",
           }
           for file in ("app.mjs", "server.mjs", "package.json", "README.md"):
-              path = urllib.parse.urlencode({"path": file, "max_lines": 500})
+              path = urllib.parse.urlencode({"path": file})
               checks["probe_" + file] = f"/accounts/{username}/domains/{domain}/files/content?{path}"
           opener = urllib.request.build_opener(NoRedirect())
           settings_fields = {
@@ -82,9 +83,15 @@ jobs:
                                                  all(char.isalnum() or char in "/_-.:" for char in data[key]))}
                       if name == "build_history" and isinstance(data, list):
                           result["page_items"] = len(data)
-                          result["states"] = [row.get("status") for row in data if isinstance(row, dict)]
+                          result["states"] = [row.get("state") for row in data if isinstance(row, dict)]
                       if name == "env_inventory" and isinstance(data, list):
                           result["variables"] = len(data)
+                      if name == "document_root" and isinstance(data, dict):
+                          result["shape"] = sorted(key for key in ("items", "files", "total_items") if key in data)
+                          rows = data.get("items", data.get("files", []))
+                          if isinstance(rows, list):
+                              result["items"] = len(rows)
+                              result["known_probe_files"] = sorted({row.get("name", "") for row in rows if isinstance(row, dict)} & {"server.mjs", "app.mjs", "package.json", "README.md"})
                       if name.startswith("probe_") and isinstance(data, dict):
                           content = data.get("content")
                           if isinstance(content, str):
@@ -94,7 +101,15 @@ jobs:
                               result["has_text"] = False
                       print(name, json.dumps(result))
               except urllib.error.HTTPError as error:
+                  details = {}
+                  if error.code == 422 and error.headers.get_content_type() == "application/json":
+                      payload = json.loads(error.read(4096))
+                      fields = payload.get("errors", {})
+                      details["invalid_fields"] = sorted(set(fields) & {"path", "from_line", "max_lines", "directory", "max_depth", "max_items"}) if isinstance(fields, dict) else []
+                      message = str(payload.get("message", "")).lower()
+                      details["file_unavailable"] = any(reason in message for reason in ("not found", "not exist", "not a file"))
                   print(name, json.dumps({
+                      **details,
                       "status": error.code,
                       "json": error.headers.get_content_type() == "application/json",
                       "challenge": error.headers.get("cf-mitigated") == "challenge",
@@ -139,6 +154,7 @@ jobs:
                   with opener.open(req, timeout=15) as response:
                       payload = json.loads(response.read(2_000_000))
                       print(label, json.dumps({"status": response.status, **transform(payload)}))
+                      return payload
               except urllib.error.HTTPError as error:
                   print(label, json.dumps({"status": error.code}))
               except (KeyError, TypeError, ValueError, OSError) as error:
@@ -166,4 +182,22 @@ jobs:
           for bucket in ("punctum-picture-originals", "punctum-picture-backups"):
               request(bucket, f"/r2/buckets/{bucket}", cf_token,
                       transform=lambda payload: {"bucket_present": bool(payload["result"].get("name"))})
+              count = size = 0
+              cursor = ""
+              complete = False
+              for page in range(1, 11):
+                  query = urllib.parse.urlencode({"per_page": 250, **({"cursor": cursor} if cursor else {})})
+                  result = request(bucket + "_page", f"/r2/buckets/{bucket}/objects?{query}", cf_token)
+                  if not result or not isinstance(result.get("result"), list):
+                      break
+                  count += len(result["result"])
+                  size += sum(item.get("size", 0) for item in result["result"])
+                  info = result.get("result_info", {})
+                  if not info.get("is_truncated"):
+                      complete = True
+                      break
+                  cursor = info.get("cursor")
+                  if not cursor:
+                      break
+              print(bucket + "_inventory", json.dumps({"objects": count, "bytes": size, "complete": complete}))
           PY
