@@ -15,6 +15,7 @@ import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
 import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
 import { createZoomBrowser, readBrowserZoom, captureZoomViewport } from "./browser-zoom-evidence.mjs";
+import { measureConservativeContrast } from "./contrast-pixel-evidence.mjs";
 
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 const buildDirectory = resolve(process.env.PUNCTUM_E2E_DIST || "dist");
@@ -48,6 +49,27 @@ const auditAccessibility = async (page, label) => {
   report.accessibilityAudits.push({
     label, standard: "WCAG 2.1 A/AA", ...audit,
   });
+  if(process.env.PUNCTUM_CONTRAST_REVIEW==='1'){
+    const directory=join(reportDirectory,'contrast-backgrounds');
+    await mkdir(directory,{recursive:true});
+    const scroll=await page.evaluate(()=>({x:scrollX,y:scrollY}));
+    const nodes=audit.incomplete.filter(rule=>rule.id==='color-contrast').flatMap(rule=>rule.nodes);
+    const measurements=[];
+    try {
+      for(const [index,node] of nodes.entries()){
+        const filename=label.replace(/[^a-z0-9]+/gi,'-')+'-'+index+'.png';
+        const measurement=typeof node.target[0]==='string'&&node.target.length===1
+          ? await measureConservativeContrast(page,node.target[0],join(directory,filename))
+          : {status:'UNSUPPORTED_COMPOSITING',reason:'complex selector or frame'};
+        measurements.push({target:node.target,...measurement,
+          ...(measurement.backgroundSha256?{backgroundFile:'contrast-backgrounds/'+filename}:{})});
+      }
+    } finally {await page.evaluate(({x,y})=>scrollTo(x,y),scroll);}
+    report.accessibilityAudits.at(-1).contrastPixelReview={
+      scope:'Conservative whole-background pixel bound at observed scroll position; unsupported or low bounds require manual review; no full accessibility signoff',
+      measurements,
+    };
+  }
   assert.deepEqual(audit.violations, [], `WCAG 2.1 AA ${label}: ${JSON.stringify(audit.violations)}`);
   record(`axe-core WCAG 2.1 A/AA ${label}: ${audit.passes} rules passed, zero violations; ${audit.incompleteCount} manual review candidates`);
 };

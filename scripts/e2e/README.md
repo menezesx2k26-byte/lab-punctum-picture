@@ -79,3 +79,11 @@ viewport capture before Playwright's viewport-only retry. It records
 `screenshotModes[filename]` as `cdpViewportFallback` or `viewportFallback`.
 It still fails if the fallback cannot be captured. A fallback is not full-page
 visual homologation, and does not affect any behavioral assertions.
+
+`PUNCTUM_CONTRAST_REVIEW=1` additionally measures incomplete contrast candidates
+using a conservative bound over every pixel of the rendered background rectangle.
+Only constant-color text without unsupported opacity/blend/filter/pseudo-content
+is eligible. Text masking is temporary and restored in `finally`; PNG backgrounds
+and hashes are retained. A passing bound supports that observed rendering only.
+A low bound is **not** an automatic violation because the rectangle includes pixels
+outside glyphs. Unsupported compositing and physical assistive testing remain open.
