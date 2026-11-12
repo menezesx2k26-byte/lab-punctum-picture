@@ -13,7 +13,7 @@ export async function createZoomBrowser(chromium, directory, executablePath) {
     partition:{default_zoom_level:{x:Math.log(2)/Math.log(1.2)}},
   }),{flag:'wx'});
   return chromium.launchPersistentContext(directory,{
-    executablePath,headless:true,viewport:null,reducedMotion:'reduce',
+    executablePath,...(executablePath ? {} : {channel:'chromium'}),headless:true,viewport:null,reducedMotion:'reduce',
     args:['--no-sandbox','--disable-dev-shm-usage','--window-size=1280,900'],
   });
 }
