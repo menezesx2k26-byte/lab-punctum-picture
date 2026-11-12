@@ -55,7 +55,8 @@ jobs:
           }
           for name, path in checks.items():
               req = urllib.request.Request(base + path, headers={
-                  "Authorization": f"Bearer {token}", "Accept": "application/json", "Content-Type": "application/json",
+                  "Authorization": f"Bearer {token}", "Accept": "application/json",
+                  "Content-Type": "application/json", "User-Agent": "Punctum QA inventory/1.0",
               })
               try:
                   with opener.open(req, timeout=12) as response:
@@ -75,7 +76,76 @@ jobs:
                           result["page_items"] = len(data)
                       print(name, json.dumps(result))
               except urllib.error.HTTPError as error:
-                  print(name, json.dumps({"status": error.code}))
+                  print(name, json.dumps({
+                      "status": error.code,
+                      "json": error.headers.get_content_type() == "application/json",
+                      "challenge": error.headers.get("cf-mitigated") == "challenge",
+                  }))
               except (ValueError, OSError) as error:
                   print(name, json.dumps({"error": type(error).__name__}))
+          PY
+      - name: Read Cloudflare production bindings and public table totals
+        env:
+          CF_WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+        shell: bash
+        run: |
+          set +x
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect())
+          account = "257bca437616da74ece1ce4bbaf0bd89"
+          database = "22697f13-7484-41e3-9441-f7b902c6577a"
+          base = f"https://api.cloudflare.com/client/v4/accounts/{account}"
+          worker = "/workers/scripts/punctum-picture-migration"
+          cf_token = os.environ.get("CF_WORKERS_TOKEN")
+          d1_token = os.environ.get("CF_D1_TOKEN")
+
+          def request(label, path, token, data=None, transform=lambda result: {}):
+              if not token:
+                  print(label, json.dumps({"credential_available": False}))
+                  return
+              body = json.dumps(data).encode() if data is not None else None
+              req = urllib.request.Request(base + path, data=body, headers={
+                  "Authorization": f"Bearer {token}", "Accept": "application/json", "Content-Type": "application/json",
+              })
+              try:
+                  with opener.open(req, timeout=15) as response:
+                      payload = json.loads(response.read(2_000_000))
+                      print(label, json.dumps({"status": response.status, **transform(payload)}))
+              except urllib.error.HTTPError as error:
+                  print(label, json.dumps({"status": error.code}))
+              except (KeyError, TypeError, ValueError, OSError) as error:
+                  print(label, json.dumps({"error": type(error).__name__}))
+
+          def bindings(payload):
+              names = {"DB", "ORIGINALS", "BACKUPS", "IMAGES", "ASSETS", "ADMIN_SESSION_SECRET",
+                       "ADMIN_ACCESS_JWKS_URL", "ADMIN_ACCESS_AUDIENCE", "PRIVATE_GALLERIES_ENABLED"}
+              return {"bindings": {
+                  item["name"]: item["type"] for item in payload["result"].get("bindings", [])
+                  if item.get("name") in names
+              }}
+
+          request("production_worker", worker + "/settings", cf_token, transform=bindings)
+          request("production_d1", "/d1/database/" + database, d1_token,
+                  transform=lambda payload: {"database_present": payload["result"]["name"] == "punctum-picture"})
+          query = {"sql": """SELECT
+              (SELECT COUNT(*) FROM albums WHERE status = 'published' AND deleted_at IS NULL) AS published_albums,
+              (SELECT COUNT(*) FROM categories WHERE is_visible = 1) AS visible_categories,
+              (SELECT COUNT(*) FROM images WHERE status = 'ready' AND deleted_at IS NULL) AS ready_images,
+              (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'site_config_versions') AS has_editorial_versions""",
+              "params": []}
+          request("production_d1_aggregate", f"/d1/database/{database}/query", d1_token, query,
+                  transform=lambda payload: payload["result"][0]["results"][0])
+          for bucket in ("punctum-picture-originals", "punctum-picture-backups"):
+              request(bucket, f"/r2/buckets/{bucket}", cf_token,
+                      transform=lambda payload: {"bucket_present": bool(payload["result"].get("name"))})
           PY
