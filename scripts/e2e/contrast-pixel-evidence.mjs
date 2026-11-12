@@ -12,10 +12,16 @@ export async function measureConservativeContrast(page,selector,capturePath) {
   await locator.scrollIntoViewIfNeeded();
   const style=await locator.evaluate(root=>{
     const nodes=[];
+    const rect=root.getBoundingClientRect();
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     let text;
     while((text=walker.nextNode())){
-      if(text.textContent.trim()&&text.parentElement)nodes.push(text.parentElement);
+      if(text.textContent.trim()&&text.parentElement){
+        const range=document.createRange();range.selectNodeContents(text);
+        if([...range.getClientRects()].some(box=>box.left<rect.left-.5||box.top<rect.top-.5||
+          box.right>rect.right+.5||box.bottom>rect.bottom+.5))return {reason:'text paints outside capture box'};
+        nodes.push(text.parentElement);
+      }
     }
     if(!nodes.length)return {reason:'no text'};
     const parents=[...new Set(nodes)];
@@ -27,15 +33,20 @@ export async function measureConservativeContrast(page,selector,capturePath) {
         return {reason:'mixed or stroked text'};
       for(let el=node;el;el=el.parentElement){
         const s=getComputedStyle(el);
-        if(s.opacity!=='1'||s.mixBlendMode!=='normal'||s.filter!=='none'||s.backdropFilter!=='none'||s.backgroundClip==='text')
-          return {reason:'opacity, blend, filter or text clipping'};
+        if(s.opacity!=='1'||s.mixBlendMode!=='normal'||s.filter!=='none'||s.backdropFilter!=='none'||
+          s.backgroundClip==='text'||s.transform!=='none')
+          return {reason:'opacity, blend, filter, transform or text clipping'};
+        if(el.getAnimations().some(a=>a.playState==='running'))return {reason:'active ancestor animation'};
+        const box=el.getBoundingClientRect();
+        if((s.overflowX!=='visible'&&(rect.left<box.left-.5||rect.right>box.right+.5))||
+          (s.overflowY!=='visible'&&(rect.top<box.top-.5||rect.bottom>box.bottom+.5)))
+          return {reason:'ancestor clips capture box'};
         for(const pseudo of ['::before','::after']){
           const content=getComputedStyle(el,pseudo).content;
           if(!['none','normal','""','\'\''].includes(content))return {reason:'textual pseudo content'};
         }
       }
     }
-    const rect=root.getBoundingClientRect();
     if(rect.width*rect.height>1000000)return {reason:'capture exceeds pixel budget'};
     if(root.getAnimations({subtree:true}).some(a=>a.playState==='running'))return {reason:'active animation'};
     const sizes=parents.map(el=>{
