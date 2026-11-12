@@ -33,7 +33,8 @@
     "domainsDirectory": "You don't have permissions to access this.",
     "domainScopedManagerHomeListed": true,
     "privateDirectoryCreated": false,
-    "privatePersistenceVerified": false
+    "privatePersistenceVerified": false,
+    "managedPersistenceRunInProgress": 43311462641
   },
   "ssh": {
     "status": "INACTIVE",
@@ -54,12 +55,14 @@
     "output": "none",
     "environmentCount": 0,
     "saveAndRedeployClicked": false,
-    "managedRestoreVerified": false
+    "managedRestoreVerified": true,
+    "restoredBuild": "01a1d1a8-cc2a-7124-9aa0-8c2cc220904c",
+    "recoveryRun": 43310427100
   },
   "productionMutations": 0,
-  "providerBuildsStarted": 0,
+  "providerBuildsStarted": 1,
   "incrementalCostBRL": 0,
   "decision": "PARTIAL_VERIFIED / NO_GO_MANAGED_DEPLOY / NO_GO_PRODUCTION / NO_GO_R4",
-  "nextGateDependency": "Prepare and validate the identical recovery ZIP, then rehearse restoration on the existing disposable probe. Prove private runtime persistence across restart/rebuild before the candidate. No second Node app is required.",
+  "nextGateDependency": "Finish runtime private storage/restart/rebuild proof on the existing QA probe, then validate the full candidate; second Node app is not required.",
   "correction": "User confirmed the existing probe itself is the migration destination; quota does not block its replacement."
 }

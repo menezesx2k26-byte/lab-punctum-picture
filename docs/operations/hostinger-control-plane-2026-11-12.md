@@ -50,15 +50,15 @@ A opção visual não transforma o 404 anterior da autodetecção REST em recupe
 | Gate | Resultado após acesso ao hPanel |
 |---|---|
 | A | PASS — conta e serviço corretos reconciliados |
-| B | NOT_VERIFIED — restauração do ZIP idêntico na própria instância existente; segundo Node dispensado |
+| B | PASS — restauração idêntica no próprio probe, run 43310427100; segundo Node dispensado |
 | C | NOT_VERIFIED — acesso do gerenciador falhou; capacidade do runtime de persistir fora do deploy ainda precisa de prova |
 | D | PARTIAL_VERIFIED — CPU/RAM/disco/processos agora conhecidos; limite de 1 Node comprovado; candidato nativo ainda não homologado |
 | E | NOT_TESTED — nenhum deploy do candidato no provedor |
 | F/G | PARTIAL_VERIFIED — provas sintéticas e matriz R4 preservadas |
 | H | BLOCKED_EXTERNAL — sem cutover e sem autorização específica |
 
-O próximo passo executável é preparar o ZIP de recuperação na própria aplicação existente pela API autenticada. O workflow `hostinger-managed-qa.yml` só é acionado por alteração explícita do arquivo de solicitação, fixa conta/domínio, compara o SHA-256 do backup e verifica a identidade, configuração, ambiente vazio e histórico do probe antes de qualquer build. A primeira solicitação é somente `prepare`: upload exclusivo e leitura do arquivo pelo provedor, sem reimplantação. O resultado será registrado antes de solicitar o ensaio de restauração idêntica. A cota de uma aplicação não é classificada como bloqueio de migração.
+O próximo passo executável é preparar o ZIP de recuperação na própria aplicação existente pela API autenticada. O workflow `hostinger-managed-qa.yml` só é acionado por alteração explícita do arquivo de solicitação, fixa conta/domínio, compara o SHA-256 do backup e verifica a identidade, configuração, ambiente vazio e histórico do probe antes de qualquer build. A primeira solicitação é somente `prepare`: upload exclusivo e leitura do arquivo pelo provedor, sem reimplantação. O ensaio foi executado: run 43310427100 success, SHA 52bde3b482f95d09e24980efdffe4cce228a6dc2, build 01a1d1a8-cc2a-7124-9aa0-8c2cc220904c completed. Fonte e tupla explícita foram confirmadas, health novo 200, settings/env preservados. A autodetecção sugeriu Node22/app.mjs e não foi aplicada. O perfil de persistência está em execução no run 43311462641 e ainda não recebeu PASS. A cota de uma aplicação não é classificada como bloqueio de migração.
 
-Custo incremental R$ 0. Nenhum deploy/restart, alteração de settings/env/DNS, escrita de produção, contratação, upgrade ou merge. Código Node/SSR/SQLite/Sharp/Studio/R4 e os artefatos da CI anterior permanecem intactos.
+Custo incremental R$ 0. Restauração e ensaios limitados ao probe QA existente. Nenhuma alteração de DNS, escrita de produção, contratação, upgrade ou merge. Código Node/SSR/SQLite/Sharp/Studio/R4 e os artefatos da CI anterior permanecem intactos.
 
 Evidência estruturada: [hostinger-control-plane-2026-11-12.json](hostinger-control-plane-2026-11-12.json). Não contém credenciais, URLs de sessão, dados de login ou conteúdo de arquivos privados.

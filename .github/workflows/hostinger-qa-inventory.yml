@@ -81,6 +81,12 @@ jobs:
                       if name == "build_history" and isinstance(data, list):
                           result["page_items"] = len(data)
                           result["states"] = [row.get("state") for row in data if isinstance(row, dict)]
+                          result["recent_builds"] = [
+                              {"uuid": row.get("uuid"), "state": row.get("state")}
+                              for row in data[:5] if isinstance(row, dict)
+                              and isinstance(row.get("uuid"), str) and len(row["uuid"]) == 36
+                              and all(char in "0123456789abcdef-" for char in row["uuid"])
+                          ]
                       if name == "env_inventory" and isinstance(data, list):
                           result["variables"] = len(data)
                       if name == "document_root" and isinstance(data, dict):
@@ -228,6 +234,12 @@ jobs:
                           expected_nonce = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["nonce"][0]
                           result.update({k: health.get(k) for k in ("service", "version", "node", "ssrValidated", "production")})
                           result["nonceMatches"] = health.get("nonce") == expected_nonce
+                          storage = json.loads(response.headers.get("X-Punctum-QA-Persistence", "{}"))
+                          if isinstance(storage, dict) and storage.get("schema") == 1:
+                              result["privateStorage"] = {key: storage[key] for key in (
+                                  "scope", "status", "code", "bootId", "boots", "fixtureSha256",
+                                  "integrity", "backupVerified", "privateOutsideDeployment", "directoryMode", "databaseMode"
+                              ) if key in storage}
                       report["checks"][label] = result
               except urllib.error.HTTPError as error:
                   report["checks"][label] = {"status": error.code,
