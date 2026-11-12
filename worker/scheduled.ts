@@ -104,34 +104,80 @@ async function cleanupOldBackups(env: Env): Promise<void> {
   ]);
 }
 
+// Public editorial images and private client albums use different namespaces.
+// This exact mapping is a fail-closed guard against legacy/restored D1 intents
+// that accidentally point at another public image or a private-gallery key.
+function publicOriginalKey(albumId: string, imageId: string, mime: string): string | null {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(albumId) ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(imageId)) return null;
+  const extension = mime === "image/png" ? "png" :
+    mime === "image/webp" ? "webp" : mime === "image/jpeg" ? "jpg" : null;
+  return extension ? `originals/${albumId}/${imageId}.${extension}` : null;
+}
+
 async function cleanupOrphanUploads(env: Env): Promise<void> {
   const db = requireDb(env);
   const ageHours = envNumber(env, "CLEANUP_ORPHAN_UPLOAD_AGE_HOURS", 24);
+  const now = new Date().toISOString();
   const cutoff = new Date(Date.now() - ageHours * 3_600_000).toISOString();
   const expired = await db
     .prepare(
-      `SELECT id, image_id AS imageId, object_key AS objectKey
-       FROM upload_intents
-       WHERE status IN ('pending','uploaded') AND expires_at < ? AND created_at < ?
+      `SELECT i.id, i.album_id AS albumId, i.image_id AS imageId,
+         i.object_key AS objectKey, i.expected_mime AS expectedMime,
+         i.expected_size AS expectedSize
+       FROM upload_intents i
+       JOIN images m ON m.id=i.image_id AND m.album_id=i.album_id
+       WHERE i.status IN ('pending','uploaded','expired')
+         AND i.completed_at IS NULL AND i.expires_at < ? AND i.created_at < ?
+         AND m.status!='ready' AND m.deleted_at IS NULL
+         AND m.original_key=i.object_key AND m.mime_type=i.expected_mime
+         AND m.size_bytes=i.expected_size
        LIMIT 500`,
     )
-    .bind(new Date().toISOString(), cutoff)
-    .all<{ id: string; imageId: string; objectKey: string }>();
+    .bind(now, cutoff)
+    .all<{ id: string; albumId: string; imageId: string; objectKey: string;
+      expectedMime: string; expectedSize: number }>();
 
   for (const intent of expired.results) {
-    if (env.ORIGINALS) {
-      await env.ORIGINALS.delete(intent.objectKey);
-    }
-    await db.batch([
-      db
-        .prepare(
-          "UPDATE upload_intents SET status = 'expired', error_message = ? WHERE id = ?",
-        )
-        .bind("Expirado e limpo pelo cron", intent.id),
-      db
-        .prepare("UPDATE images SET status = 'failed', updated_at = ? WHERE id = ?")
-        .bind(new Date().toISOString(), intent.imageId),
-    ]);
+    const key = publicOriginalKey(intent.albumId, intent.imageId, intent.expectedMime);
+    if (!key || intent.objectKey !== key) continue;
+    // Never delete an R2 original from an active Worker. A restore may rebind
+    // the D1 identity or promote the image after the final D1 read; R2.delete
+    // has no onlyIf precondition. Preserve bytes in private bucket quarantine
+    // until a separately authorized, exclusive operator has verified backup,
+    // ownership and rollback. No unverified R2 reads or copies are needed.
+    const image = await db.prepare(
+      `UPDATE images SET status='failed',updated_at=?
+       WHERE id=? AND album_id=? AND original_key=?
+         AND mime_type=? AND size_bytes=?
+         AND status IN ('pending','failed') AND deleted_at IS NULL
+         AND EXISTS(SELECT 1 FROM upload_intents i
+           WHERE i.id=? AND i.album_id=? AND i.image_id=?
+             AND i.object_key=? AND i.expected_mime=? AND i.expected_size=?
+             AND i.status IN ('pending','uploaded','expired')
+             AND i.completed_at IS NULL AND i.expires_at<? AND i.created_at<?)`,
+    ).bind(now, intent.imageId, intent.albumId, key, intent.expectedMime,
+      intent.expectedSize, intent.id, intent.albumId, intent.imageId, key,
+      intent.expectedMime, intent.expectedSize, now, cutoff).run();
+    if (image.meta.changes !== 1) continue;
+    // A late restore that makes the image ready prevents finalization.
+    // completed_at for an expired intent means quarantine was recorded in D1,
+    // not that the R2 object was physically deleted.
+    await db.prepare(
+      `UPDATE upload_intents
+       SET status='expired',completed_at=?,error_message=?
+       WHERE id=? AND album_id=? AND image_id=? AND object_key=?
+         AND expected_mime=? AND expected_size=?
+         AND status IN ('pending','uploaded','expired') AND completed_at IS NULL
+         AND expires_at<? AND created_at<?
+         AND EXISTS(SELECT 1 FROM images m
+           WHERE m.id=? AND m.album_id=? AND m.original_key=?
+             AND m.mime_type=? AND m.size_bytes=? AND m.status='failed'
+             AND m.deleted_at IS NULL AND m.updated_at=?)`,
+    ).bind(now, "Expirado; original preservado em quarentena", intent.id,
+      intent.albumId, intent.imageId, key, intent.expectedMime, intent.expectedSize,
+      now, cutoff, intent.imageId, intent.albumId, key,
+      intent.expectedMime, intent.expectedSize, now).run();
   }
   await db
     .prepare("DELETE FROM rate_limit_buckets WHERE expires_at < ?")

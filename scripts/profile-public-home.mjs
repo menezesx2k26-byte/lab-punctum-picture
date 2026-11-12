@@ -1,6 +1,9 @@
 /**
  * Reproducible local workerd profiler, not Cloudflare billing CPU or RUM.
  * Usage: node scripts/profile-public-home.mjs baseline=/tmp/baseline-dist after=dist
+ * Add `snapshot-miss=dist` and/or `snapshot=dist` to profile the existing D1
+ * snapshot miss/hit paths. Run either with Node's --experimental-strip-types
+ * flag; the hit mode stages synthetic local HTML in Miniflare only.
  * Alternates fresh isolates per build to reduce ordering/load bias. Each isolate
  * serves one cold and five warm homes using identical fresh synthetic D1 seeds.
  */
@@ -10,6 +13,7 @@ import { globSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { cpuQaFixtureEligibility } from "./lib/r4-cpu-readonly.mjs";
 
 const variants = process.argv.slice(2).map(argument => {
   const separator = argument.indexOf("=");
@@ -21,9 +25,10 @@ const repetitions = Number(process.env.PUNCTUM_PROFILE_REPETITIONS || 10);
 assert.ok(Number.isInteger(repetitions) && repetitions >= 1 && repetitions <= 30);
 const report = {
   startedUtc: new Date().toISOString(),
-  scope: "LOCAL workerd/V8 sampled execution; excludes idle samples, includes compilation/program samples; not edge CPU or billable CPU",
+  scope: "LOCAL workerd/V8 sampled execution on the first unprimed home request after a synthetic /api/public/site bootstrap has established one valid published-config pointer; measured home requests do not include one-time DB bootstrap; excludes idle samples, includes compilation/program samples; not edge CPU or billable CPU",
   node: process.version, repetitions, warmRequestsPerIsolate: 5,
   builds: variants.map(variant => ({ label: variant.label, bundleSha256: createHash("sha256").update(readFileSync(resolve(variant.directory, "server/index.js"))).digest("hex"), ssrBundleSha256: createHash("sha256").update(readFileSync(resolve(variant.directory, "server/ssr/index.js"))).digest("hex") })),
+  profileFixtures: [],
   samples: [],
 };
 const connect = async mf => {
@@ -53,6 +58,9 @@ const connect = async mf => {
   };
 };
 async function sampleBuild(variant, repetition) {
+  const snapshotMode = variant.label === "snapshot" || variant.label === "snapshot-miss";
+  const snapshotHitMode = variant.label === "snapshot";
+  const snapshotBuildId = "local-profile-synthetic-build";
   const root = resolve(variant.directory, "server");
   const main = resolve(root, "index.js");
   const mf = new Miniflare(convertV4MiniflareOptions({
@@ -62,7 +70,12 @@ async function sampleBuild(variant, repetition) {
     d1Databases: { DB: "punctum-home-profiler" },
     r2Buckets: { ORIGINALS: "punctum-home-profiler-originals", BACKUPS: "punctum-home-profiler-backups" },
     assets: { directory: resolve(variant.directory, "client"), binding: "ASSETS", routerConfig: { has_user_worker: true } },
-    bindings: { ENVIRONMENT: "local", PRIVATE_GALLERIES_ENABLED: "false", CLIENT_AUTH_MODE: "access", SITE_ORIGIN: "http://localhost", PUBLIC_SITE_URL: "http://localhost" },
+    bindings: {
+      ENVIRONMENT: "local", PRIVATE_GALLERIES_ENABLED: "false", CLIENT_AUTH_MODE: "access",
+      SITE_ORIGIN: "http://localhost", PUBLIC_SITE_URL: "http://localhost",
+      PUBLIC_HOME_SNAPSHOT_ENABLED: snapshotMode ? "true" : "false",
+      PUBLIC_HOME_SNAPSHOT_BUILD_ID: snapshotMode ? snapshotBuildId : "",
+    },
     host: "127.0.0.1", port: 0, inspectorPort: 0,
   }));
   let inspector;
@@ -72,14 +85,41 @@ async function sampleBuild(variant, repetition) {
     for (const file of globSync("migrations/*.sql").sort()) {
       for (const sql of readFileSync(file, "utf8").split(";").map(s => s.trim()).filter(Boolean)) await db.prepare(sql).run();
     }
+    // Production's first home request normally starts against an already-
+    // published config pointer. Bootstrap only the synthetic D1 through the
+    // public site API before profiling, so measured home requests exercise the
+    // steady-state LEFT JOIN path rather than legacy DB bootstrap.
+    const worker = await mf.getWorker();
+    const bootstrap = await worker.fetch("http://localhost/api/public/site", { headers: { accept: "application/json" } });
+    const fixture = await db.prepare(`SELECT
+      (SELECT COUNT(*) FROM site_config_pointers) AS pointers,
+      (SELECT COUNT(*) FROM site_config_versions) AS configVersions,
+      (SELECT COUNT(*) FROM site_config_pointers p JOIN site_config_versions v
+        ON v.id=p.published_version_id AND v.state='published' WHERE p.id=1) AS validPublishedPointers`).first();
+    assert.equal(bootstrap.status, 200, "Synthetic public site bootstrap must succeed before profiling");
+    assert.ok(cpuQaFixtureEligibility(fixture), "Profiler D1 must have one valid published pointer before sampling");
+    report.profileFixtures.push({ build: variant.label, repetition, bootstrapStatus: bootstrap.status, ...fixture });
     inspector = await connect(mf);
     await inspector.send("Profiler.enable");
     await inspector.send("Profiler.setSamplingInterval", { interval: 100 });
-    const worker = await mf.getWorker();
+    if (snapshotHitMode) {
+      // Generate the same public SSR HTML once, then stage it through the
+      // production validator into this isolate's synthetic D1 only.
+      const seedResponse = await worker.fetch("http://localhost/", { headers: { accept: "text/html" } });
+      const seedHtml = await seedResponse.text();
+      assert.equal(seedResponse.status, 200);
+      assert.match(seedHtml, /__VINEXT_RSC_DONE__/);
+      const markedSnapshotHtml = seedHtml.replace(/<\/html\s*>/i, "<!-- local-profile-snapshot-probe --></html>");
+      assert.notEqual(markedSnapshotHtml, seedHtml, "Synthetic marker must be inserted into the staged HTML");
+      const state = await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id = 1").first();
+      assert.ok(state && Number.isInteger(state.epoch));
+      const { stagePublicHomeSnapshot } = await import("../worker/public-home-snapshot.ts");
+      assert.equal(await stagePublicHomeSnapshot(db, state.epoch, snapshotBuildId, markedSnapshotHtml), true);
+    }
     for (let index = 0; index < 6; index++) {
       await inspector.send("Profiler.start");
       const start = performance.now();
-      const response = await worker.fetch("http://localhost/");
+      const response = await worker.fetch("http://localhost/", { headers: { accept: "text/html" } });
       const html = await response.text();
       const elapsedMs = performance.now() - start;
       const { profile } = await inspector.send("Profiler.stop");
@@ -99,7 +139,9 @@ async function sampleBuild(variant, repetition) {
       const heap = await inspector.send("Runtime.getHeapUsage");
       assert.equal(response.status, 200);
       assert.match(html, /__VINEXT_RSC_DONE__/);
-      report.samples.push({ build: variant.label, repetition, phase: index === 0 ? "cold" : "warm", index, status: response.status, htmlBytes: Buffer.byteLength(html), elapsedMs, sampledExecutionMs: sampledExecutionUs / 1000, heapUsedBytes: heap.usedSize, topFrames });
+      if (snapshotHitMode) assert.ok(html.includes("local-profile-snapshot-probe"), "Expected the staged snapshot, not the SSR fallback");
+      if (variant.label === "snapshot-miss") assert.ok(!html.includes("local-profile-snapshot-probe"), "Expected the SSR fallback because no compatible snapshot was staged");
+      report.samples.push({ build: variant.label, mode: snapshotHitMode ? "snapshot-hit" : snapshotMode ? "snapshot-miss" : "ssr", repetition, phase: index === 0 ? "cold" : "warm", index, status: response.status, htmlBytes: Buffer.byteLength(html), elapsedMs, sampledExecutionMs: sampledExecutionUs / 1000, heapUsedBytes: heap.usedSize, topFrames });
     }
     console.log(`PROFILE ${variant.label} isolate ${repetition + 1}/${repetitions}`);
   } finally {

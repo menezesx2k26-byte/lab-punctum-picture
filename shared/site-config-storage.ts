@@ -45,6 +45,22 @@ type PointerRow = {
   publishedVersionId: string;
 };
 
+type PublishedPointerVersionRow = {
+  id: string | null;
+  schemaVersion: number | null;
+  state: string | null;
+  revision: number | null;
+  configJson: string | null;
+  basedOnVersionId: string | null;
+  restoredFromVersionId: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  publishedAt: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  publishedBy: string | null;
+};
+
 export type PublicSiteConfigState = {
   config: SiteConfig;
   versionId: string | null;
@@ -190,6 +206,44 @@ async function readVersion(db: D1Database, id: string): Promise<VersionRow | nul
     )
     .bind(id)
     .first<VersionRow>();
+}
+
+async function readPublishedPointerVersion(
+  db: D1Database,
+): Promise<{ row: VersionRow | null } | null> {
+  const joined = await db
+    .prepare(
+      `SELECT v.id AS id, v.schema_version AS schemaVersion, v.state AS state,
+        v.revision AS revision, v.config_json AS configJson,
+        v.based_on_version_id AS basedOnVersionId,
+        v.restored_from_version_id AS restoredFromVersionId,
+        v.created_at AS createdAt, v.updated_at AS updatedAt,
+        v.published_at AS publishedAt, v.created_by AS createdBy,
+        v.updated_by AS updatedBy, v.published_by AS publishedBy
+       FROM site_config_pointers p
+       LEFT JOIN site_config_versions v ON v.id = p.published_version_id
+       WHERE p.id = 1`,
+    )
+    .first<PublishedPointerVersionRow>();
+  if (!joined) return null;
+  if (joined.id === null) return { row: null };
+  return {
+    row: {
+      id: joined.id,
+      schemaVersion: Number(joined.schemaVersion ?? 0),
+      state: joined.state === "published" ? "published" : "draft",
+      revision: Number(joined.revision ?? 0),
+      configJson: joined.configJson ?? "",
+      basedOnVersionId: joined.basedOnVersionId,
+      restoredFromVersionId: joined.restoredFromVersionId,
+      createdAt: joined.createdAt ?? "",
+      updatedAt: joined.updatedAt ?? "",
+      publishedAt: joined.publishedAt,
+      createdBy: joined.createdBy ?? "",
+      updatedBy: joined.updatedBy ?? "",
+      publishedBy: joined.publishedBy,
+    },
+  };
 }
 
 async function ensureVersionedSiteConfig(
@@ -341,8 +395,20 @@ export async function readPublicSiteConfigState(
   settings?: PublicSiteSettings,
 ): Promise<PublicSiteConfigState> {
   const publicSettings = settings ?? (await readPublicSiteSettings(db));
-  const { pointers, bootstrapIssues } = await ensureVersionedSiteConfig(db, publicSettings);
-  const row = await readVersion(db, pointers.publishedVersionId);
+  const joined = await readPublishedPointerVersion(db);
+  let row: VersionRow | null;
+  let bootstrapIssues: readonly string[] = [];
+  if (joined) {
+    // A present pointer with a dangling or non-published version is a safe
+    // fallback, not a reason to bootstrap or mutate the published history.
+    row = joined.row;
+  } else {
+    // Preserve the existing one-time legacy bootstrap when the pointer row
+    // itself is absent. The steady-state path above is a single D1 read.
+    const bootstrapped = await ensureVersionedSiteConfig(db, publicSettings);
+    bootstrapIssues = bootstrapped.bootstrapIssues;
+    row = await readVersion(db, bootstrapped.pointers.publishedVersionId);
+  }
   if (!row || row.state !== "published") {
     return {
       config: siteConfigFromLegacySettings(publicSettings),

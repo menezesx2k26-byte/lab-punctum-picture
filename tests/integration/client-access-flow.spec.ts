@@ -48,6 +48,11 @@ describe("integrated Access identity and private album flow on isolated D1/R2", 
       "SELECT storage_key AS key FROM client_gallery_images WHERE id=?",
     ).bind(image).first<{ key: string }>();
     await env.ORIGINALS.put(imageRow!.key, PNG, { httpMetadata: { contentType: "image/png" } });
+    // The lightweight ready-image fixture initially stores size_bytes=1.
+    // For an end-to-end media download, D1 and R2 must describe the same
+    // original rather than relying on the legacy integrity gap.
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?")
+      .bind(PNG.length, image).run();
     await env.DB.prepare("UPDATE client_galleries SET allow_downloads=1 WHERE id=?").bind(galleryA).run();
 
     const entryA = await entry(a.toUpperCase() + "@EXAMPLE.COM");

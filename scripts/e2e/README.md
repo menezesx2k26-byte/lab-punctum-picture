@@ -33,6 +33,9 @@ builds a variant. In that case **also set `PUNCTUM_E2E_BUILD_SHA` to the actual
 source revision used to build that snapshot**. The report records the SHA-256 of
 `server/index.js` independently. `PUNCTUM_E2E_OUTPUT` selects the evidence directory.
 The default SHA is the checkout HEAD; do not run it against stale build output.
+Public home navigation/reload waits for `DOMContentLoaded`, then asserts the
+rendered heading and Colagem preset. Missing required content still fails QA;
+this avoids conflating slow auxiliary image `load` events with route readiness.
 
 Coverage:
 
@@ -52,6 +55,13 @@ Coverage:
 - Local Studio publication of Colagem Autoral and public responsive rendering.
 - Runtime restart with persisted local D1/R2 and consistent-storage rollback.
 - Logout revocation with the other client remaining authorized.
+- Actual 200% Chromium page zoom in a disposable HostZoomMap profile: library,
+  gallery, lightbox keyboard/Escape/focus, private admin and public home. CDP
+  `cssVisualViewport.zoom=2`, pinch `scale=1`, native window width and CSS layout
+  are recorded for every page. No CSS zoom, device-scale or viewport override is
+  used. Five additional screenshots are explicitly viewport-only. This is a
+  headless desktop browser check; physical Android/iOS and assistive tools remain
+  separate pending tests.
 - Unhandled browser exceptions, console warnings/errors and HTTP 5xx checks.
 
 The session cookies are synthesized from **new local test secrets** for exercising
@@ -63,3 +73,17 @@ Browser home navigation duration is a local diagnostic, not Worker CPU telemetry
 The intentional missing-gallery 404 is separately recorded as `expectedDenials`;
 all other browser console errors and warnings fail the run. Live pages are closed
 before the injected runtime restarts to avoid test-generated connection resets.
+Screenshot evidence prefers full-page captures. When full-page capture times out
+under a slow local browser, the suite attempts a bounded Chromium DevTools
+viewport capture before Playwright's viewport-only retry. It records
+`screenshotModes[filename]` as `cdpViewportFallback` or `viewportFallback`.
+It still fails if the fallback cannot be captured. A fallback is not full-page
+visual homologation, and does not affect any behavioral assertions.
+
+`PUNCTUM_CONTRAST_REVIEW=1` additionally measures incomplete contrast candidates
+using a conservative bound over every pixel of the rendered background rectangle.
+Only constant-color text without unsupported opacity/blend/filter/pseudo-content
+is eligible. Text masking is temporary and restored in `finally`; PNG backgrounds
+and hashes are retained. A passing bound supports that observed rendering only.
+A low bound is **not** an automatic violation because the rectangle includes pixels
+outside glyphs. Unsupported compositing and physical assistive testing remain open.

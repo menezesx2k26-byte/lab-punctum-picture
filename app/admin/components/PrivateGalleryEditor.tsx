@@ -8,6 +8,10 @@ import type {
 } from "../../../shared/client-galleries";
 import {
   CLIENT_MAX_UPLOAD_BYTES,
+  CLIENT_MAX_UPLOAD_LABEL,
+  CLIENT_SPEC_MAX_UPLOAD_BYTES,
+  IMAGES_BINDING_MAX_INPUT_BYTES,
+  IMAGES_BINDING_LIMIT_MESSAGE,
   CLIENT_MIME_TYPES,
 } from "../../../shared/client-galleries";
 import {
@@ -19,6 +23,8 @@ import { privateImageUrl } from "../../albuns/components/routes";
 import {
   canSubmitPrivateGallery,
   runPrivateUploadQueue,
+  isSuccessfulPrivateUpload,
+  privateGalleryFileSha256,
   PRIVATE_GALLERY_STATUS,
   type ClientAccountSummary,
 } from "./private-gallery-utils";
@@ -158,6 +164,7 @@ type UploadJob = {
   error?: string;
   intent?: UploadIntent;
   uploaded?: boolean;
+  sha256?: string;
 };
 function directUpload(
   intent: UploadIntent,
@@ -180,7 +187,7 @@ function directUpload(
       reject(new Error("O envio demorou demais. Tente novamente."));
     xhr.timeout = 180000;
     xhr.onload = () => {
-      if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 409)
+      if (isSuccessfulPrivateUpload(xhr.status))
         resolve();
       else {
         let message = "Não foi possível enviar a foto.";
@@ -257,6 +264,8 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
       };
       patch({ status: "uploading", error: undefined });
       try {
+        if (!job.sha256)
+          patch({ sha256: await privateGalleryFileSha256(job.file) });
         if (!job.intent)
           patch({
             intent: await privateApi<UploadIntent>(
@@ -266,6 +275,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
                 filename: job.file.name,
                 mimeType: job.file.type,
                 sizeBytes: job.file.size,
+                sha256: job.sha256!,
                 altText: job.file.name.replace(/\.[^.]+$/, ""),
               },
             ),
@@ -306,6 +316,13 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
       status: "queued",
       progress: 0,
     }));
+    const providerBlocked = queue.find(
+      (j) => j.file.size > IMAGES_BINDING_MAX_INPUT_BYTES && j.file.size <= CLIENT_SPEC_MAX_UPLOAD_BYTES,
+    );
+    if (providerBlocked) {
+      setError(IMAGES_BINDING_LIMIT_MESSAGE + " Arquivo: " + providerBlocked.file.name);
+      return;
+    }
     const invalid = queue.find(
       (j) =>
         j.file.size > CLIENT_MAX_UPLOAD_BYTES ||
@@ -313,7 +330,8 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
     );
     if (invalid) {
       setError(
-        "Escolha somente fotos JPG, PNG ou WebP de até 25 MiB: " +
+        "Escolha somente fotos JPG, PNG ou WebP de até " +
+          CLIENT_MAX_UPLOAD_LABEL + ": " +
           invalid.file.name,
       );
       return;
@@ -471,8 +489,9 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
               />
             </label>
             <p className="pga-note">
-              JPG, PNG ou WebP · até 25 MiB por foto · até 3 envios simultâneos.
+              JPG, PNG ou WebP · até {CLIENT_MAX_UPLOAD_LABEL} por foto · até 3 envios simultâneos.
             </p>
+            <p className="pga-note" role="note">{IMAGES_BINDING_LIMIT_MESSAGE}</p>
             {jobs.length > 0 && (
               <ul className="pga-queue" aria-label="Progresso dos envios">
                 {jobs.map((j) => (

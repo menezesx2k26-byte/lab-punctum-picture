@@ -1,0 +1,31 @@
+PASS fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals
+PASS anonymous gallery access denied; Access mode disables password login
+PASS axe-core WCAG 2.1 A/AA private client library: 17 rules passed, zero violations; 0 manual review candidates
+PASS real browser client A/B libraries and foreign gallery/original denial
+PASS axe-core WCAG 2.1 A/AA private gallery detail: 17 rules passed, zero violations; 1 manual review candidates
+PASS axe-core WCAG 2.1 A/AA private gallery lightbox: 12 rules passed, zero violations; 0 manual review candidates
+PASS favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified
+PASS private gallery has no horizontal overflow at 320/360/375/390/430/640/768/1024/1440px; 640px is a responsive-layout proxy only, not a 200% browser-zoom test
+PASS private media is denied anonymously and cannot enter public media/image optimizer
+PASS same-component client navigation clears prior gallery while pending and after an intentional404
+PASS malformed success envelope produces a safe library alert without a render exception
+PASS axe-core WCAG 2.1 A/AA public home: 26 rules passed, zero violations; 1 manual review candidates
+PASS axe-core WCAG 2.1 A/AA Studio: 25 rules passed, zero violations; 0 manual review candidates
+PASS public home and authenticated Studio render; anonymous Studio denied
+Punctum public home purge unconfirmed after a successful admin change
+PASS production entrypoint fences successful and failed Studio publications; unauthorized changes do not touch snapshot state
+locator.screenshot: Timeout 8021.531999999977ms exceeded.
+Call log:
+[2m  - taking element screenshot[22m
+[2m    - disabled all CSS animations[22m
+[2m  - waiting for fonts to load...[22m
+[2m  - fonts loaded[22m
+[2m  - attempting scroll into view action[22m
+[2m    - waiting for element to be stable[22m
+
+    at measureConservativeContrast (/home/desktop/Documents/punctum-r4-takeover-f591/scripts/e2e/contrast-pixel-evidence.mjs:75:34)
+    at async auditAccessibility (/home/desktop/Documents/punctum-r4-takeover-f591/scripts/e2e/punctum-browser.mjs:62:13)
+    at async file:///home/desktop/Documents/punctum-r4-takeover-f591/scripts/e2e/punctum-browser.mjs:313:3 {
+  name: 'TimeoutError'
+}
+Browser report: /home/desktop/Documents/punctum-r4-takeover-f591/outputs/cycle-ac/browser-e2e-qualified/report.json

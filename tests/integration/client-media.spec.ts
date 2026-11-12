@@ -10,6 +10,9 @@ import {
 import { handleClientGalleryUploadApi } from "../../worker/api/client-gallery-upload";
 import { handlePrivateGalleryRoutes } from "../../worker/client/router";
 import { createClientSession } from "../../worker/client/auth";
+import { servePrivateGalleryImage } from "../../worker/media/private-gallery";
+import { base64Url } from "../../worker/client/passwords";
+import { requireClientSessionSecret } from "../../worker/client/secret";
 
 const PNG = Uint8Array.from(
   atob(
@@ -23,16 +26,40 @@ type Intent = {
   uploadUrl: string;
   requiredHeaders: Record<string, string>;
 };
+async function sha256(bytes: Uint8Array) {
+  const data = new Uint8Array(bytes.byteLength);
+  data.set(bytes);
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", data.buffer))]
+    .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+function sha256Bytes(hex: string) {
+  return Uint8Array.from(hex.match(/.{2}/g) ?? [], part => Number.parseInt(part, 16));
+}
+async function legacyV2Token(row: {
+  id: string; galleryId: string; imageId: string; storageKey: string;
+  expectedMime: string; expectedSize: number; expiresAt: string;
+}) {
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(requireClientSessionSecret(env)),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const payload = JSON.stringify([
+    "private-gallery-direct-v2", row.id, row.galleryId, row.imageId,
+    row.storageKey, row.expectedMime, row.expectedSize, row.expiresAt,
+  ]);
+  return base64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
+}
 async function intent(
   gallery: string,
   sizeBytes = PNG.length,
   mimeType = "image/png",
+  bytes = PNG,
 ) {
   return exports.default.fetch(
     privateRequest(
       "/admin/api/albuns-privados/" + gallery + "/uploads/intents",
       "POST",
-      { filename: "pilot.png", mimeType, sizeBytes },
+      { filename: "pilot.png", mimeType, sizeBytes, sha256: await sha256(bytes) },
     ),
   );
 }
@@ -96,6 +123,9 @@ describe("isolated private uploads", () => {
     const response = await intent(gallery);
     expect(response.status).toBe(201);
     const value = (await response.json()) as Intent;
+    expect(await env.DB.prepare(
+      "SELECT sha256,upload_token_version AS version FROM client_gallery_upload_intents WHERE id=?",
+    ).bind(value.intentId).first()).toEqual({ sha256: await sha256(PNG), version: 3 });
     expect(JSON.stringify(value)).not.toContain("client-galleries/");
     expect(
       (
@@ -145,6 +175,12 @@ describe("isolated private uploads", () => {
         .bind(value.imageId)
         .first(),
     ).toEqual({ status: "ready" });
+    const expectedSha256 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", PNG))]
+      .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    expect(await env.DB.prepare("SELECT original_sha256 AS sha FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first()).toEqual({ sha: expectedSha256 });
+    expect(await env.DB.prepare("SELECT sha256 AS sha FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first()).toEqual({ sha: expectedSha256 });
     const key = await env.DB.prepare(
       "SELECT storage_key AS key FROM client_gallery_images WHERE id=?",
     )
@@ -165,7 +201,11 @@ describe("isolated private uploads", () => {
     const value = (await (await intent(gallery)).json()) as Intent;
     const row = await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
       .bind(value.imageId).first<{ key: string }>();
-    await env.ORIGINALS.put(row!.key, PNG, { httpMetadata: { contentType: "image/png" } });
+    await env.ORIGINALS.put(row!.key, PNG, {
+      sha256: sha256Bytes(await sha256(PNG)),
+      httpMetadata: { contentType: "image/png" },
+      customMetadata: { sha256: await sha256(PNG) },
+    });
     const different = PNG.slice();
     different[different.length - 1] ^= 1;
     expect((await upload(value, different)).status).toBe(409);
@@ -173,6 +213,160 @@ describe("isolated private uploads", () => {
     expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
       .bind(value.intentId).first()).toEqual({ status: "uploaded" });
     expect(new Uint8Array(await (await env.ORIGINALS.get(row!.key))!.arrayBuffer())).toEqual(PNG);
+    expect((await env.DB.prepare("SELECT sha256 FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first<{sha256:string}>())?.sha256).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("rejects modified R2 originals even with matching size/MIME before serving any image bytes", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    const completePath = `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`;
+    expect((await exports.default.fetch(privateRequest(completePath, "POST"))).status).toBe(200);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    const modified = PNG.slice();
+    modified[modified.length - 1] ^= 1;
+    await env.ORIGINALS.put(key, modified, { httpMetadata: {contentType: "image/png"} });
+    const download = await exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/images/${value.imageId}/download`, "GET"));
+    expect(download.status).toBe(503);
+    expect(download.headers.get("Content-Type") ?? "").not.toMatch(/^image\/png/i);
+    expect(new Uint8Array(await download.arrayBuffer())).not.toEqual(modified);
+    const head = await exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/images/${value.imageId}/download`, "HEAD"));
+    expect(head.status).toBe(503);
+    expect((await head.arrayBuffer()).byteLength).toBe(0);
+    expect((await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{status:string}>())?.status).toBe("ready");
+  });
+
+  it("does not trust matching R2 digest metadata when the original bytes were replaced", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    expect((await exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`, "POST"))).status).toBe(200);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    const legitimate = (await env.ORIGINALS.head(key))!.customMetadata?.sha256;
+    expect(legitimate).toMatch(/^[0-9a-f]{64}$/);
+    const corrupted = PNG.slice();
+    corrupted[corrupted.length - 1] ^= 1;
+    await env.ORIGINALS.put(key, corrupted, {
+      sha256: sha256Bytes(await sha256(corrupted)),
+      httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: legitimate! },
+    });
+    const url = `/admin/api/albuns-privados/${gallery}/images/${value.imageId}/download`;
+    const get = await exports.default.fetch(privateRequest(url, "GET"));
+    expect(get.status).toBe(503);
+    const head = await exports.default.fetch(privateRequest(url, "HEAD"));
+    expect(head.status).toBe(503);
+    expect((await head.arrayBuffer()).byteLength).toBe(0);
+  });
+
+  it("does not serve mismatched R2 legacy originals when D1 has no stored digest", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    expect((await exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`, "POST"))).status).toBe(200);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    // Historical restored rows may not carry an independently attested digest.
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=NULL WHERE id=?")
+      .bind(value.imageId).run();
+    const url = `/admin/api/albuns-privados/${gallery}/images/${value.imageId}`;
+    for (const variant of [
+      { bytes: PNG.slice(0, -1), contentType: "image/png" },
+      { bytes: PNG, contentType: "image/jpeg" },
+    ]) {
+      await env.ORIGINALS.put(key, variant.bytes, {
+        httpMetadata: { contentType: variant.contentType },
+      });
+      for (const preset of ["download", "thumb", "gallery"] as const) {
+        for (const method of ["GET", "HEAD"] as const) {
+          const result = await exports.default.fetch(privateRequest(`${url}/${preset}`, method));
+          expect(result.status, `${preset} ${method} ${variant.contentType}/${variant.bytes.length}`).toBe(503);
+          if (method === "HEAD") expect((await result.arrayBuffer()).byteLength).toBe(0);
+        }
+      }
+    }
+  });
+
+  it("does not promote an already-uploaded original that changed before completion", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    const tampered = PNG.slice();
+    tampered[tampered.length - 1] ^= 1;
+    await env.ORIGINALS.put(key, tampered, {httpMetadata:{contentType:"image/png"}});
+    const result = await exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`, "POST"));
+    expect(result.status).toBe(409);
+    expect((await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first<{status:string}>())?.status).toBe("uploaded");
+    expect(await env.DB.prepare("SELECT status,original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first()).toEqual({status:"pending",original_sha256:null});
+  });
+
+  it("requires an authenticated byte-for-byte retry for pre-migration uploaded v2 intents without SHA", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    const row = await env.DB.prepare(`SELECT id,gallery_id AS galleryId,image_id AS imageId,
+      storage_key AS storageKey,expected_mime AS expectedMime,expected_size AS expectedSize,
+      expires_at AS expiresAt FROM client_gallery_upload_intents WHERE id=?`)
+      .bind(value.intentId).first<{
+        id:string; galleryId:string; imageId:string; storageKey:string;
+        expectedMime:string; expectedSize:number; expiresAt:string;
+      }>();
+    const token = await legacyV2Token(row!);
+    const legacyValue = {
+      ...value,
+      requiredHeaders: { ...value.requiredHeaders, "X-Upload-Token": token },
+    };
+    await env.ORIGINALS.put(key, PNG, { httpMetadata: { contentType: "image/png" } });
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET status='uploaded',sha256=NULL,upload_token_version=2 WHERE id=?")
+      .bind(value.intentId).run();
+    const completePath = `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`;
+    const unverified = await exports.default.fetch(privateRequest(completePath, "POST"));
+    expect(unverified.status).toBe(409);
+    expect(await env.DB.prepare("SELECT status,original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first()).toEqual({status:"pending", original_sha256:null});
+    expect((await env.ORIGINALS.head(key))?.size).toBe(PNG.length);
+    // A signed retry re-attests the actual bytes without overwriting the R2 object.
+    expect((await upload(legacyValue)).status).toBe(200);
+    expect((await exports.default.fetch(privateRequest(completePath, "POST"))).status).toBe(200);
+    expect((await env.DB.prepare("SELECT original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{original_sha256:string}>())?.original_sha256).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("rejects truncated and oversized streamed bodies without writing R2 or finishing D1", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    async function sendChunks(parts: Uint8Array[]) {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) { for (const bytes of parts) controller.enqueue(bytes); controller.close(); },
+      });
+      return exports.default.fetch(new Request(value.uploadUrl, {
+        method:"PUT", headers:{ ...value.requiredHeaders,
+          Origin:"http://localhost:8787", "Content-Length":String(PNG.length) },
+        body, duplex:"half",
+      } as RequestInit));
+    }
+    expect((await sendChunks([PNG.slice(0,PNG.length-1)])).status).toBe(400);
+    expect((await sendChunks([PNG, new Uint8Array([1])])).status).toBe(400);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    expect(await env.ORIGINALS.head(key)).toBeNull();
+    expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first()).toEqual({status:"pending"});
+    expect((await sendChunks([PNG.slice(0,9),PNG.slice(9,31),PNG.slice(31)])).status).toBe(200);
+    expect((await env.ORIGINALS.head(key))?.size).toBe(PNG.length);
   });
 
   it("accepts concurrent identical retries without changing stored bytes", async () => {
@@ -223,6 +417,12 @@ describe("isolated private uploads", () => {
     const tampered = new Uint8Array(PNG.length);
     tampered.fill(65);
     expect((await upload(value, tampered)).status).toBe(400);
+    const checksumMismatch = PNG.slice();
+    checksumMismatch[checksumMismatch.length - 1] ^= 1;
+    expect((await upload(value, checksumMismatch)).status).toBe(409);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    expect(await env.ORIGINALS.head(key)).toBeNull();
     await env.DB.prepare(
       "UPDATE client_gallery_upload_intents SET expires_at='2000-01-01T00:00:00Z' WHERE id=?",
     )
@@ -246,7 +446,7 @@ describe("isolated private uploads", () => {
       (c) => c.charCodeAt(0),
     );
     const value = (await (
-      await intent(gallery, corrupt.length)
+      await intent(gallery, corrupt.length, "image/png", corrupt)
     ).json()) as Intent;
     expect((await upload(value, corrupt)).status).toBe(200);
     expect(
@@ -276,6 +476,78 @@ describe("isolated private uploads", () => {
 describe("private media authorization", () => {
   beforeAll(bootstrapPrivateDb);
 
+  it("rejects restored ready image keys belonging to another photo or wrong MIME before touching R2 or Images", async () => {
+    const gallery = await seedGallery(await seedClient(), "published");
+    const imageId = await seedReadyImage(gallery);
+    const siblingId = await seedReadyImage(gallery);
+    const siblingKey = `client-galleries/${gallery}/${siblingId}.png`;
+    // Simulate a contradictory restore while respecting the D1 UNIQUE storage_key constraint.
+    await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+      .bind(`client-galleries/${gallery}/quarantine-${siblingId}.png`, siblingId).run();
+    const noBucket = {
+      get: () => { throw new Error("Mismatched key must not read R2"); },
+      head: () => { throw new Error("Mismatched key must not read R2"); },
+    };
+    const noImages = { input: () => { throw new Error("Mismatched key must not reach Images"); } };
+    const isolated = { ...env, ORIGINALS: noBucket, IMAGES: noImages } as unknown as Env;
+    for (const badKey of [siblingKey, `client-galleries/${gallery}/${imageId}.jpg`]) {
+      await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+        .bind(badKey, imageId).run();
+      for (const preset of ["thumb", "gallery", "download"] as const) {
+        for (const head of [false, true]) {
+          const path = `/admin/api/albuns-privados/${gallery}/images/${imageId}/${preset}`;
+          await expect(servePrivateGalleryImage(
+            privateRequest(path, head ? "HEAD" : "GET"), isolated,
+            gallery, imageId, preset, "admin", head,
+          )).rejects.toMatchObject({ status: 404, code: "NOT_FOUND" });
+        }
+      }
+    }
+  });
+
+  it("never feeds oversized legacy or inconsistent R2 originals into Images previews", async () => {
+    const gallery = await seedGallery(await seedClient());
+    const imageId = await seedReadyImage(gallery);
+    const failImages = {
+      info: () => { throw new Error("Images must not inspect oversized original"); },
+      input: () => { throw new Error("Images must not receive oversized original"); },
+    };
+    const failBucket = new Proxy(env.ORIGINALS, {
+      get(target,key) {
+        if (key === "head" || key === "get") return () => { throw new Error("R2 must not be read for oversized DB row"); };
+        const value = Reflect.get(target,key);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=26214400 WHERE id=?")
+      .bind(imageId).run();
+    for (const preset of ["thumb", "gallery"] as const) {
+      for (const head of [false,true]) {
+        const path=`/admin/api/albuns-privados/${gallery}/images/${imageId}/${preset}`;
+        await expect(servePrivateGalleryImage(privateRequest(path,head?"HEAD":"GET"),
+          {...env,ORIGINALS:failBucket,IMAGES:failImages} as unknown as Env,
+          gallery,imageId,preset,"admin",head))
+          .rejects.toMatchObject({status:413,code:"IMAGE_INPUT_LIMIT"});
+      }
+    }
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?")
+      .bind(PNG.length,imageId).run();
+    const mismatchedR2 = {
+      head: async () => ({size:20_000_001, httpMetadata:{contentType:"image/png"}}),
+      get: async () => ({size:20_000_001,httpMetadata:{contentType:"image/png"},
+        body:new Response(PNG).body!,arrayBuffer:async()=>PNG.buffer}),
+    };
+    for(const preset of ["thumb","gallery"] as const) {
+      for(const head of [false,true]) {
+        const path=`/admin/api/albuns-privados/${gallery}/images/${imageId}/${preset}`;
+        await expect(servePrivateGalleryImage(privateRequest(path,head?"HEAD":"GET"),
+          {...env,ORIGINALS:mismatchedR2,IMAGES:failImages} as unknown as Env,
+          gallery,imageId,preset,"admin",head))
+          .rejects.toMatchObject({status:413,code:"IMAGE_INPUT_LIMIT"});
+      }
+    }
+  });
+
   it("uses R2 metadata only for authorized HEAD requests", async () => {
     const owner = await seedClient();
     const gallery = await seedGallery(owner);
@@ -289,6 +561,11 @@ describe("private media authorization", () => {
     await env.ORIGINALS.put(stored!.storageKey, PNG, {
       httpMetadata: { contentType: "image/png" },
     });
+    // The authorization-only fixture seeds size_bytes=1; give this test a
+    // coherent D1/R2 pair so it exercises HEAD metadata without bypassing
+    // the integrity guard for legacy rows.
+    await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?")
+      .bind(PNG.length, imageId).run();
     const metadataOnlyBucket = new Proxy(env.ORIGINALS, {
       get(target, key) {
         if (key === "get")

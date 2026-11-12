@@ -9,6 +9,12 @@ const PNG = Uint8Array.from(
   ),
   (c) => c.charCodeAt(0),
 );
+async function sha256(bytes: Uint8Array) {
+  const data = new Uint8Array(bytes.byteLength);
+  data.set(bytes);
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", data.buffer))]
+    .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 describe("private client album pilot", () => {
   beforeAll(bootstrapPrivateDb);
   it("delivers 10 real uploads with isolated retry and exercises the entire lifecycle", async () => {
@@ -60,6 +66,7 @@ describe("private client album pilot", () => {
           filename: "pilot-" + job.index + ".png",
           mimeType: "image/png",
           sizeBytes: PNG.length,
+          sha256: await sha256(PNG),
         });
         expect(intentResponse.status).toBe(201);
         const intent = (await intentResponse.json()) as {
@@ -177,5 +184,5 @@ describe("private client album pilot", () => {
     expect(JSON.stringify(audit.results)).not.toContain(
       account.temporaryPassword,
     );
-  }, 30_000);
+  }, 180_000); // Ten authenticated upload/complete cycles plus lifecycle checks exceed 30s on the shared Linux runner.
 });

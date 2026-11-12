@@ -1,10 +1,17 @@
 import { requireClient } from "../client/auth";
+import { IMAGES_BINDING_MAX_INPUT_BYTES } from "../../shared/client-galleries";
 import {
   getOwnedGallery,
   getGallery,
   getReadyGalleryImage,
 } from "../client/repository";
 import { privateResponse } from "../client/response";
+import {
+  hasMatchingOriginalDigest,
+  hasMatchingR2Sha256,
+  privateOriginalSha256,
+} from "../client/gallery-integrity";
+import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import { requireAdmin } from "../utils/auth";
 import { requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
@@ -39,7 +46,8 @@ export async function servePrivateGalleryImage(
   }
   if (!gallery) throw missing();
   const image = await getReadyGalleryImage(db, galleryId, imageId);
-  if (!image || !image.storageKey.startsWith(`client-galleries/${galleryId}/`))
+  if (!image || image.storageKey !==
+      privateGalleryStorageKey(galleryId, imageId, image.mimeType))
     throw missing();
   if (preset === "download" && audience === "client" && !gallery.allowDownloads)
     throw new AppError(
@@ -47,6 +55,11 @@ export async function servePrivateGalleryImage(
       "DOWNLOAD_DISABLED",
       "O download deste álbum está desativado.",
     );
+  // Historical ready rows can predate today's safe Images Binding limit.
+  // Never feed their originals to Images even when a D1 row or its R2 object
+  // is inconsistent. Downloads remain a separate authorized R2 operation.
+  if (preset !== "download" && image.sizeBytes > IMAGES_BINDING_MAX_INPUT_BYTES)
+    throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   const bucket = requireOriginals(env);
   if (headOnly) {
     if (preset !== "download" && !env.IMAGES)
@@ -55,7 +68,33 @@ export async function servePrivateGalleryImage(
         "IMAGE_SERVICE_UNAVAILABLE",
         "A prévia desta foto está temporariamente indisponível.",
       );
-    if (!(await bucket.head(image.storageKey))) throw missing();
+    const head = await bucket.head(image.storageKey);
+    if (!head) throw missing();
+    if (preset !== "download" && head.size > IMAGES_BINDING_MAX_INPUT_BYTES)
+      throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
+    // Even pre-migration ready rows without a D1 digest must never claim
+    // success when R2 size or MIME contradicts their D1 original record.
+    if (head.size !== image.sizeBytes ||
+        head.httpMetadata?.contentType !== image.mimeType)
+      throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+    if (image.originalSha256) {
+      if (head.customMetadata?.sha256 !== undefined && head.customMetadata.sha256 !== image.originalSha256)
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      if (head.checksums.sha256 !== undefined) {
+        if (!hasMatchingR2Sha256(image.originalSha256, head.checksums.sha256))
+          throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      } else {
+        // Legacy R2 objects without a native checksum retain byte-level
+        // verification; new v3 objects can be attested from R2 metadata.
+        const original = await bucket.get(image.storageKey);
+        if (!original || original.size !== image.sizeBytes ||
+            original.httpMetadata?.contentType !== image.mimeType ||
+            !hasMatchingOriginalDigest(image.originalSha256,
+              await privateOriginalSha256(new Uint8Array(await original.arrayBuffer())),
+              original.customMetadata?.sha256))
+          throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      }
+    }
     const headers =
       preset === "download"
         ? {
@@ -70,9 +109,32 @@ export async function servePrivateGalleryImage(
   }
   const object = await bucket.get(image.storageKey);
   if (!object) throw missing();
+  if (preset !== "download" && object.size > IMAGES_BINDING_MAX_INPUT_BYTES)
+    throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
+  if (object.size !== image.sizeBytes ||
+      object.httpMetadata?.contentType !== image.mimeType)
+    throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+  // Integrity is anchored in D1 when a verified private upload completed.
+  // A changed R2 object must not be streamed as a valid original or derivative.
+  // Historical rows without a digest remain readable, pending separate backfill.
+  let original: ReadableStream<Uint8Array> = object.body;
+  if (image.originalSha256) {
+    if (object.checksums.sha256 !== undefined) {
+      if (!hasMatchingR2Sha256(image.originalSha256, object.checksums.sha256) ||
+          (object.customMetadata?.sha256 !== undefined && object.customMetadata.sha256 !== image.originalSha256))
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+    } else {
+      const bytes = new Uint8Array(await object.arrayBuffer());
+      if (bytes.byteLength !== image.sizeBytes ||
+          !hasMatchingOriginalDigest(image.originalSha256, await privateOriginalSha256(bytes),
+            object.customMetadata?.sha256))
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      original = new Response(bytes).body!;
+    }
+  }
   if (preset === "download")
     return privateResponse(
-      new Response(object.body, {
+      new Response(original, {
         headers: {
           "Content-Type": image.mimeType,
           "Content-Disposition": `attachment; filename="foto-${image.id}.${image.mimeType === "image/png" ? "png" : image.mimeType === "image/webp" ? "webp" : "jpg"}"`,
@@ -90,7 +152,7 @@ export async function servePrivateGalleryImage(
   let transformed: Response;
   try {
     transformed = (
-      await env.IMAGES.input(object.body)
+      await env.IMAGES.input(original)
         .transform({
           width: size.width,
           height: size.height,

@@ -1,3 +1,7 @@
+import { WorkerEntrypoint } from "cloudflare:workers";
+import { isPublicHomeCacheRequest, isPublicHomeMutationRequest, publicHomeCacheResponse, shouldPurgePublicHome, PUBLIC_HOME_CACHE_TAG } from "./public-home-cache";
+import { beginPublicHomeSnapshotMutation, readPublicHomeSnapshot } from "./public-home-snapshot";
+import { envString } from "./utils/env";
 import {
   DEFAULT_DEVICE_SIZES,
   DEFAULT_IMAGE_SIZES,
@@ -13,7 +17,7 @@ import { serveMedia } from "./media/serve";
 import { handleScheduled } from "./scheduled";
 import { robots, sitemap } from "./seo";
 import { handleSiteMediaApi } from "./site-media";
-import { requireAdmin } from "./utils/auth";
+import { assertAllowedOrigin, requireAdmin } from "./utils/auth";
 import { AppError } from "./utils/errors";
 import { apiError, withSecurityHeaders } from "./utils/response";
 
@@ -38,7 +42,7 @@ async function routeRequest(
     if (!env.IMAGES) {
       const source = url.searchParams.get("url");
       if (!source || !source.startsWith("/") || source.startsWith("//")) {
-        throw new AppError(400, "INVALID_IMAGE_SOURCE", "A origem da imagem é inválida.");
+        throw new AppError(400, "INVALID_IMAGE_SOURCE", "A origem da imagem Ã© invÃ¡lida.");
       }
 
       const sourceUrl = new URL(source, request.url);
@@ -134,7 +138,7 @@ async function routeRequest(
     url.pathname === "/studio-preview-internal" ||
     url.pathname.startsWith("/studio-preview-internal/")
   ) {
-    throw new AppError(404, "NOT_FOUND", "Página não encontrada.");
+    throw new AppError(404, "NOT_FOUND", "PÃ¡gina nÃ£o encontrada.");
   }
 
   if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
@@ -166,24 +170,110 @@ async function routeRequest(
     return withSecurityHeaders(previewResponse, { studioPreview: true });
   }
 
+  if (envString(env, "PUBLIC_HOME_SNAPSHOT_ENABLED") === "true" && isPublicHomeCacheRequest(request) && env.DB) {
+    const snapshot = await readPublicHomeSnapshot(env.DB, envString(env, "PUBLIC_HOME_SNAPSHOT_BUILD_ID") ?? "");
+    if (snapshot) return withSecurityHeaders(snapshot);
+  }
   const response = await handler.fetch(request, env, ctx);
   return isPrivateGalleryPath(url.pathname) ? privateResponse(response) : withSecurityHeaders(response);
 }
 
+/**
+ * A separately cached WorkerEntrypoint for anonymous public home HTML only.
+ * Default/admin/client entrypoints remain uncached; no client data reaches here.
+ */
+export class PublicHome extends WorkerEntrypoint<Env> {
+  async purgeCache(): Promise<boolean> {
+    // Purge must execute from the entrypoint that owns the cached HTML.
+    if (!this.ctx.cache) return false;
+    const result = await this.ctx.cache.purge({ tags: [PUBLIC_HOME_CACHE_TAG] });
+    return result.success === true;
+  }
+
+  async fetch(request: Request): Promise<Response> {
+    if (!isPublicHomeCacheRequest(request))
+      return publicHomeCacheResponse(request, new Response(null, { status: 404 }));
+    try {
+      const response = await routeRequest(request, this.env, this.ctx);
+      // Snapshot epochs live in D1. A shared pre-invocation cache cannot
+      // atomically bind a response to that epoch: old in-flight SSR could
+      // refill it after purge. Snapshot mode therefore uses D1 on every
+      // navigation and never admits even its SSR fallback into this cache.
+      return publicHomeCacheResponse(request, response,
+        envString(this.env, "PUBLIC_HOME_SNAPSHOT_ENABLED") !== "true");
+    } catch (error) {
+      return publicHomeCacheResponse(request, apiError(error));
+    }
+  }
+}
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const requestId = request.headers.get("cf-ray") ?? crypto.randomUUID();
+    let snapshotInvalidated = false;
+    let finishSnapshotMutation: (() => Promise<void>) | undefined;
     try {
-      return await routeRequest(request, env, ctx);
+      if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" &&
+          envString(env, "PUBLIC_HOME_SNAPSHOT_ENABLED") !== "true" && isPublicHomeCacheRequest(request)) {
+        const entrypoint = (ctx as ExecutionContext & { exports?: { PublicHome?: { fetch(req: Request): Promise<Response> } } }).exports?.PublicHome;
+        if (!entrypoint) throw new AppError(503, "PUBLIC_HOME_CACHE_UNAVAILABLE", "Cache de páginas públicas indisponível.");
+        return await entrypoint.fetch(request);
+      }
+      if (envString(env, "PUBLIC_HOME_SNAPSHOT_ENABLED") === "true" && isPublicHomeMutationRequest(request)) {
+        // If publication wins a race with snapshot staging, the epoch prevents
+        // an older render from being reintroduced. Verify the same security
+        // boundaries as the admin router before touching the epoch.
+        await requireAdmin(request, env);
+        assertAllowedOrigin(request, env);
+        if (!env.DB) throw new AppError(503, "PUBLIC_HOME_SNAPSHOT_UNAVAILABLE", "Snapshot público indisponível.");
+        finishSnapshotMutation = await beginPublicHomeSnapshotMutation(env.DB);
+        snapshotInvalidated = true;
+      }
+      const response = await routeRequest(request, env, ctx);
+      if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && shouldPurgePublicHome(request, response)) {
+        const entrypoint = (ctx as ExecutionContext & {
+          exports?: { PublicHome?: { purgeCache(): Promise<boolean> } }
+        }).exports?.PublicHome;
+        // An already-committed write must not be retried or disguised as a failed
+        // request just because a best-effort cache purge is unavailable.
+        try {
+          if (!entrypoint || !(await entrypoint.purgeCache()))
+            console.warn("Punctum public home purge unconfirmed after a successful admin change");
+        } catch {
+          console.warn("Punctum public home purge unavailable after a successful admin change");
+        }
+      }
+      return response;
     } catch (error) {
+      if (snapshotInvalidated && envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true") {
+        // Even a failed mutation might have partially committed a public edit.
+        // Do not leave the previous public HTML at the edge in that case.
+        try {
+          const entrypoint = (ctx as ExecutionContext & {
+            exports?: { PublicHome?: { purgeCache(): Promise<boolean> } }
+          }).exports?.PublicHome;
+          if (!entrypoint || !(await entrypoint.purgeCache()))
+            console.warn("Punctum public home purge unconfirmed after failed admin change");
+        } catch {
+          console.warn("Punctum public home purge unavailable after failed admin change");
+        }
+      }
       if (isPrivateGalleryPath(new URL(request.url).pathname)) return privateResponse(apiError(error,requestId));
       if (error instanceof AppError && error.status === 404 && !new URL(request.url).pathname.startsWith("/api/")) {
-        return new Response("Página não encontrada.", {
+        return new Response("PÃ¡gina nÃ£o encontrada.", {
           status: 404,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         });
       }
       return apiError(error, requestId);
+    } finally {
+      if (finishSnapshotMutation) {
+        try { await finishSnapshotMutation(); }
+        catch {
+          // Keep the fence on storage failure; never disguise a committed
+          // editorial write as an HTTP error that would invite a duplicate.
+          console.warn("Punctum public home snapshot mutation completion unconfirmed");
+        }
+      }
     }
   },
   scheduled: handleScheduled,

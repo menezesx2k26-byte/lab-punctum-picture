@@ -1,0 +1,98 @@
+
+> punctum-picture@0.1.0 build
+> cross-env WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build
+
+
+  vinext build  (Vite 8.3.5)
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./build/local-photography-fixtures" without a file extension (vite.config.ts:3:42). Add the file extension
+  - import "./build/sites-vite-plugin" without a file extension (vite.config.ts:4:23). Add the file extension
+  - import "./build/ssr-on-demand" without a file extension (vite.config.ts:5:45). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+[1/5] analyze client references...
+transforming...
+✓ 462 modules transformed.
+rendering chunks...
+[plugin rsc:virtual:vite-rsc/assets-manifest] [33m[SOURCEMAP_BROKEN] [0mSourcemap is likely to be incorrect: a plugin (rsc:virtual:vite-rsc/assets-manifest) was used to transform files, but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help: https://rolldown.rs/guide/troubleshooting#warning-sourcemap-is-likely-to-be-incorrect
+
+✓ built in 3.96s
+[33m[PLUGIN_TIMINGS] [0mJavaScript callbacks ran for 3.7s of this 3.9s build (96%).
+6 callbacks are listed without a time. Their calls overlapped, so the time inside one call includes work from other calls. To find their cost, profile the build with `node --cpu-prof`:
+  - plugin rsc:virtual-client-package resolveId (1410 calls)
+  - plugin rsc:use-client transform (462 calls)
+  - plugin vinext:optimize-imports transform (450 calls)
+  … and 3 more
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+[2/5] analyze server references...
+transforming...
+✓ 323 modules transformed.
+rendering chunks...
+[plugin rsc:virtual:vite-rsc/assets-manifest] [33m[SOURCEMAP_BROKEN] [0mSourcemap is likely to be incorrect: a plugin (rsc:virtual:vite-rsc/assets-manifest) was used to transform files, but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help: https://rolldown.rs/guide/troubleshooting#warning-sourcemap-is-likely-to-be-incorrect
+
+✓ built in 1.05s
+[3/5] build rsc environment...
+transforming...
+✓ 468 modules transformed.
+rendering chunks...
+computing gzip size...
+[plugin rsc:inject-async-local-storage] [33m[SOURCEMAP_BROKEN] [0mSourcemap is likely to be incorrect: a plugin (rsc:inject-async-local-storage) was used to transform files, but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help: https://rolldown.rs/guide/troubleshooting#warning-sourcemap-is-likely-to-be-incorrect
+
+[plugin rsc:virtual:vite-rsc/assets-manifest] [33m[SOURCEMAP_BROKEN] [0mSourcemap is likely to be incorrect: a plugin (rsc:virtual:vite-rsc/assets-manifest) was used to transform files, but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help: https://rolldown.rs/guide/troubleshooting#warning-sourcemap-is-likely-to-be-incorrect
+
+✓ built in 3.11s
+[4/5] build client environment...
+`output.codeSplitting.groups[0].name` is a function. Set `output.codeSplitting.groups[0].debugName` so the bundler timing report can identify this group.
+transforming...
+✓ 2045 modules transformed.
+rendering chunks...
+computing gzip size...
+✓ built in 2.83s
+[5/5] build ssr environment...
+transforming...
+✓ 329 modules transformed.
+rendering chunks...
+computing gzip size...
+[plugin rsc:inject-async-local-storage] [33m[SOURCEMAP_BROKEN] [0mSourcemap is likely to be incorrect: a plugin (rsc:inject-async-local-storage) was used to transform files, but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help: https://rolldown.rs/guide/troubleshooting#warning-sourcemap-is-likely-to-be-incorrect
+
+[plugin rsc:virtual:vite-rsc/assets-manifest] [33m[SOURCEMAP_BROKEN] [0mSourcemap is likely to be incorrect: a plugin (rsc:virtual:vite-rsc/assets-manifest) was used to transform files, but didn't generate a sourcemap for the transformation. Consult the plugin documentation for help: https://rolldown.rs/guide/troubleshooting#warning-sourcemap-is-likely-to-be-incorrect
+
+✓ built in 1.27s
+[0m
+  Route (app)
+  ┌ ? /                                
+  ├ ? /acesso                          
+  ├ ƒ /admin                           
+  ├ ? /admin/albuns-privados           
+  ├ ƒ /admin/albuns-privados/:galleryId
+  ├ ƒ /admin/categorias                
+  ├ ? /admin/clientes                  
+  ├ ƒ /admin/configuracoes             
+  ├ ƒ /admin/contatos                  
+  ├ ƒ /admin/ensaios                   
+  ├ ƒ /admin/ensaios/:id               
+  ├ ƒ /admin/studio                    
+  ├ ? /albuns                          
+  ├ ƒ /albuns/:galleryId               
+  ├ ? /albuns/entrar                   
+  ├ ? /albuns/trocar-senha             
+  ├ ? /arquivo                         
+  ├ ? /contato                         
+  ├ ƒ /ensaios/:slug                   
+  ├ ? /fotografia                      
+  ├ ƒ /fotografia/:cidade              
+  ├ ? /laboratorio                     
+  ├ ? /portfolio                       
+  ├ ? /servicos                        
+  ├ ƒ /servicos/:servico               
+  └ ƒ /studio-preview-internal         
+
+  ƒ Dynamic  ? Unknown
+
+  ? Some routes could not be classified. vinext currently uses static analysis
+    and cannot detect dynamic API usage (headers(), cookies(), etc.) at build time.
+    Automatic classification will be improved in a future release.
+
+  Build complete. Run `vinext start` to start the production server.
+

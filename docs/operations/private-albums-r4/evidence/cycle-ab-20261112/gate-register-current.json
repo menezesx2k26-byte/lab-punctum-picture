@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "dateUtc": "2026-11-12",
+  "source": "docs/operations/private-albums-r4/65-cycle-ab-2026-11-12.md",
+  "decision": "NO_GO_PRODUCTION",
+  "currentCodeSha": "397d1077b713e2852b722b83c31fcb6ce9c5ae98",
+  "currentCodeTree": "8366b743a0f5c8c1a6b26ae2b320a415bec5c72d",
+  "remotePrHeadBeforePush": "f591706114ace01aeb4881b00c490ba8de289c54",
+  "counts": {
+    "PASS_HISTORICAL": 15,
+    "FAIL": 2,
+    "BLOCKED_EXTERNAL": 7
+  },
+  "schema": [
+    "GATE",
+    "STATUS",
+    "OWNER",
+    "SHA",
+    "TESTS",
+    "ENVIRONMENT",
+    "EVIDENCE",
+    "BLOCKERS",
+    "NEXT_ACTION"
+  ],
+  "gates": [
+    {
+      "gate": "G01",
+      "status": "BLOCKED_EXTERNAL",
+      "owner": "prime/spec custodian",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Docs 35/36/16 and reports 25-34/60-64 read; original TXT not found in current takeover.",
+      "environment": "Repository and Google Drive read-only.",
+      "evidence": ["docs/operations/private-albums-r4/execution-state.json#currentCycle20261112AB.originalSpecReadback", "historical report 25 and CI 40786692800"],
+      "blockers": "Original PUNCTUM_SPEC_R4_ALBUNS_PRIVADOS.txt §23 is unavailable; historical read/hash claim cannot be independently re-read now.",
+      "nextAction": "Locate the original file and reconcile §23; do not substitute reports 35/36/16."
+    },
+    {
+      "gate": "G02", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G03", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G04", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G05", "status": "FAIL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "Upload transport v3, native R2 SHA/onlyIf/retry, v2 fallback; focused 26/26; Vitest 308/308; Node 116/116.",
+      "environment": "Local Miniflare and synthetic D1/R2 only.",
+      "evidence": ["migration 0013_private_gallery_upload_token_version.sql", "worker/api/client-gallery-upload.ts", "tests/integration/client-upload-config.spec.ts", "docs/operations/private-albums-r4/65-cycle-ab-2026-11-12.md"],
+      "blockers": "Images Binding .input() maximum is 20 MB; original requirement is 26,214,400 bytes. Effective UI/API cap remains 20,000,000 bytes. No private, full-raster-validating, zero-incremental-cost 25 MiB path is proven.",
+      "nextAction": "Keep FAIL until a complete private 25 MiB validation path is proven or the user explicitly changes the requirement."
+    },
+    {
+      "gate": "G06", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific cryptographic QA remains historical.",
+      "environment": "Local and historical Cloudflare QA.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if authentication changes affect this gate."
+    },
+    {
+      "gate": "G07", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G08", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G09", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G10", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G11", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G12", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G13", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G14", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G15", "status": "BLOCKED_EXTERNAL", "owner": "device QA",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "browserSource": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "Local Chromium/Chrome 22 checks; 7 axe audits; 148 rules passed; 0 violations; 3 incomplete/manual candidates; 5 full-page screenshots.",
+      "environment": "Google Chrome 157.0.8103.38, local synthetic D1/R2; no physical devices.",
+      "evidence": ["evidence/cycle-ab-20261112/browser-e2e-final/report.json", "five screenshots in the same directory"],
+      "blockers": "TalkBack, VoiceOver, physical devices and actual browser zoom not tested.",
+      "nextAction": "Run real-device TalkBack and VoiceOver checks; do not simulate them."
+    },
+    {
+      "gate": "G16", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G17", "status": "FAIL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "CPU helper 12/12; worker integration 20/20; seeded local profiler 15 fixtures (5 per variant).",
+      "environment": "Local Miniflare/workerd only; no remote CPU telemetry.",
+      "evidence": ["evidence/cycle-ab-20261112/local-ssr-profile-seeded-20261112.json", "scripts/r4-cpu-ephemeral-qa.mjs", "scripts/r4-cpu-readonly.test.mjs"],
+      "blockers": "No production snapshot producer; no per-invocation CPU from first access/MISS/purge; previous D1 API scope returned 401.",
+      "nextAction": "Obtain D1 QA read authorization, run isolated CPU probe and implement a trusted snapshot producer only with verified cost and mutation safety."
+    },
+    {
+      "gate": "G18", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Local G18 scoped fixture 1/1; Node operational suite 116/116.",
+      "environment": "Local synthetic D1/R2 only.",
+      "evidence": ["validation/node-operational-final.log", "historical report 25 and CI 40786692800"],
+      "blockers": "Local restore does not satisfy remote G23.",
+      "nextAction": "Revalidate if recovery changes affect this gate; keep G23 separate."
+    },
+    {
+      "gate": "G19", "status": "BLOCKED_EXTERNAL", "owner": "independent security reviewer",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "npm audit 0 vulnerabilities; internal review only.",
+      "environment": "Local repository.",
+      "evidence": ["validation/npm-audit-final.log", "current code review notes"],
+      "blockers": "No independent reviewer or formal signoff.",
+      "nextAction": "Obtain an independent security review with no P0/P1 findings."
+    },
+    {
+      "gate": "G20", "status": "BLOCKED_EXTERNAL", "owner": "studio LGPD controller",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "No approval assumed or fabricated.",
+      "environment": "External human approval.",
+      "evidence": [],
+      "blockers": "Formal LGPD approval absent.",
+      "nextAction": "Obtain documented approval from the studio's responsible controller."
+    },
+    {
+      "gate": "G21", "status": "PASS_HISTORICAL", "owner": "prime",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98", "historicalEvidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0" },
+      "tests": "Current regression suite 308/308; gate-specific proof remains historical.",
+      "environment": "Local and historical CI.",
+      "evidence": ["docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md", "CI 40786692800"],
+      "blockers": "Historical evidence is not attributed to current code SHA.",
+      "nextAction": "Revalidate if later integration affects this gate."
+    },
+    {
+      "gate": "G22", "status": "BLOCKED_EXTERNAL", "owner": "release owner",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "No release approval presumed.",
+      "environment": "External human authorization.",
+      "evidence": [],
+      "blockers": "Specific release authorization absent.",
+      "nextAction": "Obtain explicit release authorization after all technical and external gates pass."
+    },
+    {
+      "gate": "G23", "status": "BLOCKED_EXTERNAL", "owner": "Cloudflare/QA owner",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "Rollback read-only tests 14/14; local G18 fixture 1/1; prior preflight D1 401/Billing 403.",
+      "environment": "Local synthetic and prior Cloudflare read-only preflight.",
+      "evidence": ["validation/node-operational-final.log", "reports G23 previous read-only preflight"],
+      "blockers": "No authorized segregated remote D1/R2 restore/rollback; no version/config/relation/hash before-after proof.",
+      "nextAction": "Obtain D1/Billing scopes and segregated QA destination; perform backup, restore, revocation/re-entry and actual rollback with readbacks."
+    },
+    {
+      "gate": "G24", "status": "BLOCKED_EXTERNAL", "owner": "prime + checkpoint services",
+      "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
+      "tests": "Repository evidence and current Drive folder readback; no Engram/PersistFlow write/readback.",
+      "environment": "Local, Google Drive connected; other stores unavailable.",
+      "evidence": ["New Drive checkpoint 1WUtJmiHNsnPt6OoRdRW2MYxTr9mD2r_9NzSeTxhtXWw; owner sgtmenezes2002@gmail.com; parent folder 1faquU27mdRUcmNn4iIOm4bcyjE34NVU4; metadata and content readback verified", "Prior cycle AA checkpoint 1nXaCZFo4QuJbip5aCdx_0GXOMyikX5ksFsfBFdu8ruo preserved"],
+      "blockers": "Engram tool not found; Mem0 is not a substitute. PersistFlow toolkit found but no active connection; user authentication required. Evidence ZIP remains local and is not uploaded to Drive.",
+      "nextAction": "Ask user to authenticate PersistFlow; locate the actual Engram service; upload the evidence ZIP only when a supported local-file upload reference is available."
+    }
+  ]
+}

@@ -8,7 +8,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
@@ -28,14 +28,20 @@ jobs:
       - run: node --test services/punctum-password-bridge/server.test.mjs
       - run: node --test services/punctum-hostinger-qa/server.test.mjs
       - run: node --test scripts/r4-edge-qa.test.mjs
+      - run: node --test scripts/r4-images-preflight.test.mjs scripts/r4-images-probe-worker.test.mjs
+      - run: node --test scripts/r4-product-raster-validation.test.mjs
+      - run: node --test scripts/r4-cpu-readonly.test.mjs
+      - run: node --test scripts/r4-cpu-historical-readonly.test.mjs scripts/r4-rollback-readonly.test.mjs
+      - run: node --test scripts/r4-originals-inventory-readonly.test.mjs
       - run: node --test scripts/r4-access-runtime.test.mjs
       - run: node --test scripts/r4-recovery-qa.test.mjs
       - run: node --test scripts/r4-scoped-local.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
+      - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
       - run: npx playwright install --with-deps chromium
-      - run: node --test scripts/access-cookie-navigation.test.mjs
+      - run: node --test scripts/access-cookie-navigation.test.mjs scripts/e2e/browser-zoom-launch.test.mjs scripts/e2e/browser-zoom-evidence.test.mjs scripts/e2e/contrast-pixel-evidence.test.mjs
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v6
         if: always()

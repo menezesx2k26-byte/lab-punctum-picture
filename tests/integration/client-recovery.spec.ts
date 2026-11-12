@@ -47,16 +47,22 @@ describe("scoped private recovery with real local D1/R2", () => {
       await env.ORIGINALS.put(`client-galleries/${gallery}/${next}.png`, bytes, { httpMetadata: { contentType: "image/png" } });
       await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?").bind(bytes.length, next).run();
     }
+    const digest = "f1581abaa0673dad1cdb190a5234ee14eff769d3836de4f70ecb17cdd4ccfa76";
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE gallery_id=?")
+      .bind(digest, gallery).run();
     await env.DB.prepare("INSERT INTO client_gallery_favorites VALUES (?,?,?,datetime('now'))").bind(a, gallery, photo).run();
     const sourceCookie = await createClientSession({ id: a, sessionVersion: 1 }, env);
     const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [a]);
     expect(snapshot.tables.client_accounts.map((c) => c.id)).toEqual([a]);
     expect(snapshot.tables.client_galleries.map((g) => g.id)).toEqual([gallery]);
+    expect(snapshot.tables.client_gallery_images.map((image) => image.original_sha256)).toEqual(Array(10).fill(digest));
     const publicBefore = await bindings.RESTORE_DB.prepare("SELECT * FROM site_settings").all();
     const result = await restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
     expect(result.rows).toBe(13);
     expect(result.objects).toBe(10);
     expect(result.hashes).toEqual(Array(10).fill("f1581abaa0673dad1cdb190a5234ee14eff769d3836de4f70ecb17cdd4ccfa76"));
+    expect((await bindings.RESTORE_DB.prepare("SELECT original_sha256 FROM client_gallery_images WHERE id=?")
+      .bind(photo).first<{ original_sha256: string }>())?.original_sha256).toBe(digest);
     expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(b).first()).toBeNull();
     expect(await bindings.RESTORE_DB.prepare("SELECT * FROM site_settings").all()).toMatchObject({ results: publicBefore.results });
@@ -86,6 +92,236 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer())).toEqual(new Uint8Array([2]));
     expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
   });
+  it("rejects a destination account email collision before any R2 restore write", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(71), {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const existingId = crypto.randomUUID();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_accounts
+       (id,name,email,password_hash,password_salt,password_iterations,must_change_password,
+        session_version,created_at,updated_at)
+       VALUES (?,'Existing',?,'hash','salt',310000,0,1,datetime('now'),datetime('now'))`,
+    ).bind(existingId, `${id}@example.com`).run();
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 write attempted before destination email conflict check");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery destination unique conflict");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(existingId).first()).toEqual({ id: existingId });
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(id).first()).toBeNull();
+  });
+  it("rejects a destination storage-key uniqueness collision before R2 writes", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(83), {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const existingClient = crypto.randomUUID();
+    const existingGallery = crypto.randomUUID();
+    const existingImage = crypto.randomUUID();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_accounts
+       (id,name,email,password_hash,password_salt,password_iterations,must_change_password,
+        session_version,created_at,updated_at)
+       VALUES (?,'Existing',?,'hash','salt',310000,0,1,datetime('now'),datetime('now'))`,
+    ).bind(existingClient, `${existingClient}@example.invalid`).run();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_galleries (id,client_id,title,created_at,updated_at)
+       VALUES (?,?,'Existing',datetime('now'),datetime('now'))`,
+    ).bind(existingGallery, existingClient).run();
+    await bindings.RESTORE_DB.prepare(
+      `INSERT INTO client_gallery_images
+       (id,gallery_id,storage_key,original_filename,mime_type,size_bytes,position,status,created_at,updated_at)
+       VALUES (?,?,?,'existing.png','image/png',1,0,'failed',datetime('now'),datetime('now'))`,
+    ).bind(existingImage, existingGallery, key).run();
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 write attempted before storage-key conflict check");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery destination unique conflict");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_gallery_images WHERE id=?")
+      .bind(existingImage).first()).toEqual({ id: existingImage });
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(id).first()).toBeNull();
+  });
+  it("rejects duplicate image primary IDs inside an archive before any R2 restore write", async () => {
+    const client = await seedClient();
+    const galleryA = await seedGallery(client);
+    const galleryB = await seedGallery(client);
+    const imageA = await seedReadyImage(galleryA);
+    const imageB = await seedReadyImage(galleryB);
+    const firstKey = `client-galleries/${galleryA}/${imageA}.png`;
+    const secondKey = `client-galleries/${galleryB}/${imageB}.png`;
+    for (const key of [firstKey, secondKey]) {
+      await env.ORIGINALS.put(key, Uint8Array.of(41), {
+        httpMetadata: { contentType: "image/png" },
+      });
+    }
+    const snapshot = structuredClone(await captureClientRecovery(env.DB, env.ORIGINALS, [client]));
+    const secondImage = snapshot.tables.client_gallery_images.find((image) => image.gallery_id === galleryB)!;
+    secondImage.id = imageA;
+    const forgedKey = `client-galleries/${galleryB}/${imageA}.png`;
+    secondImage.storage_key = forgedKey;
+    snapshot.objects.find((object) => object.key === secondKey)!.key = forgedKey;
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 write attempted before snapshot primary-key check");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery snapshot primary key mismatch");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_ORIGINALS.head(firstKey)).toBeNull();
+    expect(await bindings.RESTORE_ORIGINALS.head(forgedKey)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(client).first()).toBeNull();
+  });
+  it("rejects invalid D1 row constraints and schema drift before any restored R2 write", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const image = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${image}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(37), {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const baseline = await captureClientRecovery(env.DB, env.ORIGINALS, [client]);
+    const cases: { name: string; mutate: (s: typeof baseline) => void; error: string }[] = [
+      {
+        name: "unsupported gallery theme",
+        mutate: (s) => { s.tables.client_galleries[0].theme = "unsafe-theme"; },
+        error: "Recovery snapshot row constraint mismatch",
+      },
+      {
+        name: "noncanonical account email",
+        mutate: (s) => { s.tables.client_accounts[0].email = " UPPER@EXAMPLE.COM "; },
+        error: "Recovery snapshot row constraint mismatch",
+      },
+      {
+        name: "unknown schema column",
+        mutate: (s) => { s.tables.client_gallery_images[0].unexpected_column = "x"; },
+        error: "Recovery snapshot schema mismatch",
+      },
+      {
+        name: "missing required schema column",
+        mutate: (s) => { delete s.tables.client_galleries[0].title; },
+        error: "Recovery snapshot schema mismatch",
+      },
+    ];
+    for (const scenario of cases) {
+      const snapshot = structuredClone(baseline);
+      scenario.mutate(snapshot);
+      let puts = 0;
+      const bucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+        get(target, property) {
+          if (property === "put") return () => {
+            puts++;
+            throw new Error("R2 write before D1 constraint preflight");
+          };
+          const value = Reflect.get(target, property);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, bucket), scenario.name)
+        .rejects.toThrow(scenario.error);
+      expect(puts, scenario.name).toBe(0);
+      expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+      expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+        .bind(client).first()).toBeNull();
+    }
+  });
+  it("rejects a forged source digest and inconsistent backup attestations before restore writes", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    const bytes = new Uint8Array([1]);
+    const actual = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+      .map((part) => part.toString(16).padStart(2, "0")).join("");
+    await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: actual } });
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind("a".repeat(64), photo).run();
+    await expect(captureClientRecovery(env.DB, env.ORIGINALS, [id])).rejects.toThrow("digest mismatch");
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind(actual, photo).run();
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const tampered = structuredClone(snapshot);
+    tampered.tables.client_gallery_images[0].original_sha256 = "b".repeat(64);
+    await expect(restoreClientRecovery(tampered, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)).rejects.toThrow("digest mismatch");
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
+    const metadataTampered = structuredClone(snapshot);
+    metadataTampered.objects[0].customMetadata.sha256 = "c".repeat(64);
+    await expect(restoreClientRecovery(metadataTampered, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)).rejects.toThrow("digest mismatch");
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+  });
+  it("rejects mismatched uploaded intent SHA evidence during capture and before restore writes", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    const bytes = new Uint8Array([1]);
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)))
+      .map(part => part.toString(16).padStart(2,"0")).join("");
+    await env.ORIGINALS.put(key, bytes, {httpMetadata:{contentType:"image/png"},customMetadata:{sha256:digest}});
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind(digest,photo).run();
+    const intentId = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,completed_at,sha256)
+      VALUES (?,?,?,?,?,?,'completed',datetime('now','+1 hour'),datetime('now'),datetime('now'),?)`)
+      .bind(intentId,gallery,photo,"image/png",1,key,digest).run();
+    const snapshot = await captureClientRecovery(env.DB,env.ORIGINALS,[client]);
+    expect(snapshot.tables.client_gallery_upload_intents[0].sha256).toBe(digest);
+    const corrupted = structuredClone(snapshot);
+    corrupted.tables.client_gallery_upload_intents[0].sha256 = "d".repeat(64);
+    await expect(restoreClientRecovery(corrupted,bindings.RESTORE_DB,bindings.RESTORE_ORIGINALS))
+      .rejects.toThrow("digest mismatch");
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(client).first()).toBeNull();
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=? WHERE id=?")
+      .bind("f".repeat(64),intentId).run();
+    await expect(captureClientRecovery(env.DB,env.ORIGINALS,[client])).rejects.toThrow("digest mismatch");
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=? WHERE id=?")
+      .bind(digest,intentId).run();
+    const restored = await restoreClientRecovery(snapshot,bindings.RESTORE_DB,bindings.RESTORE_ORIGINALS);
+    expect(restored.objects).toBe(1);
+    expect((await bindings.RESTORE_DB.prepare("SELECT sha256 FROM client_gallery_upload_intents WHERE id=?")
+      .bind(intentId).first<{sha256:string}>())?.sha256).toBe(digest);
+  });
   it("rejects incoherent covers, size and MIME before writing any restored object", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);
@@ -104,6 +340,78 @@ describe("scoped private recovery with real local D1/R2", () => {
       expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
       expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
     }
+  });
+
+  it("refuses noncanonical image identities in source D1 before reading an R2 object", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const wrongKeys = [
+      `client-galleries/${gallery}/other-${photo}.png`,
+      `client-galleries/${gallery}/other-${photo}/original.png`,
+    ];
+    let reads = 0;
+    const guardedBucket = new Proxy(env.ORIGINALS, {
+      get(target, property) {
+        if (property === "get" || property === "head")
+          return () => { reads++; throw new Error("R2 must not be read for noncanonical source"); };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    for (const wrongKey of wrongKeys) {
+      await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+        .bind(wrongKey, photo).run();
+      await expect(captureClientRecovery(env.DB, guardedBucket, [id]))
+        .rejects.toThrow("Recovery scope mismatch");
+    }
+    expect(reads).toBe(0);
+  });
+
+  it("preserves only the exact known historical nested original.png layout in scoped backup/restore", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const historicalKey = `client-galleries/${gallery}/${photo}/original.png`;
+    const bytes = Uint8Array.of(73);
+    await env.DB.prepare("UPDATE client_gallery_images SET storage_key=? WHERE id=?")
+      .bind(historicalKey, photo).run();
+    await env.ORIGINALS.put(historicalKey, bytes, {
+      httpMetadata: { contentType: "image/png" },
+    });
+    const backup = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    expect(backup.objects.map(o => o.key)).toEqual([historicalKey]);
+    const restored = await restoreClientRecovery(backup, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
+    expect(restored).toMatchObject({ objects: 1, accountsQuarantined: true });
+    expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(historicalKey))!.arrayBuffer()))
+      .toEqual(bytes);
+    expect((await bindings.RESTORE_DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(photo).first<{key:string}>())?.key).toBe(historicalKey);
+  });
+
+  it("refuses a coherent-looking restored R2 key that is not the canonical image key", async () => {
+    const id = await seedClient();
+    const gallery = await seedGallery(id);
+    const photo = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${photo}.png`;
+    await env.ORIGINALS.put(key, Uint8Array.of(31), { httpMetadata: { contentType: "image/png" } });
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [id]);
+    const tampered = structuredClone(snapshot);
+    const wrongKey = `client-galleries/${gallery}/other-${photo}.png`;
+    tampered.tables.client_gallery_images[0].storage_key = wrongKey;
+    tampered.objects[0].key = wrongKey;
+    let writes = 0;
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => { writes++; throw new Error("R2 must not be written for noncanonical restore"); };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(tampered, bindings.RESTORE_DB, guardedBucket))
+      .rejects.toThrow("Recovery scope mismatch");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?").bind(id).first()).toBeNull();
   });
 
   it("runs authenticated QA recovery through a private backup and denies production or replay", async () => {
@@ -152,6 +460,116 @@ describe("scoped private recovery with real local D1/R2", () => {
     expect((await handleQaRecovery(request([first, second]), { ...qa, QA_RECOVERY_ALLOCATION: "unknown" })).status).toBe(403);
   });
 
+  it("round-trips a revoked ready image and completed intent without re-opening private media", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const image = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${image}.png`;
+    const bytes = Uint8Array.of(117, 21, 31);
+    const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+      .map(v => v.toString(16).padStart(2, "0")).join("");
+    const revokedAt = "2026-11-09T17:00:00.000Z";
+    await env.ORIGINALS.put(key, bytes, {
+      httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: digest },
+    });
+    await env.DB.prepare(
+      "UPDATE client_gallery_images SET size_bytes=?,original_sha256=?,deleted_at=? WHERE id=?",
+    ).bind(bytes.length, digest, revokedAt, image).run();
+    const intent = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,completed_at,sha256)
+      VALUES (?,?,?,'image/png',?,?,'completed',?,datetime('now'),datetime('now'),?)`)
+      .bind(intent, gallery, image, bytes.length, key,
+        new Date(Date.now() + 60_000).toISOString(), digest).run();
+
+    const archive = await captureClientRecovery(env.DB, env.ORIGINALS, [client]);
+    expect(archive.tables.client_gallery_images[0].deleted_at).toBe(revokedAt);
+    expect(archive.tables.client_gallery_upload_intents[0].status).toBe("completed");
+    expect((await restoreClientRecovery(archive, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS)))
+      .toMatchObject({ objects: 1, accountsQuarantined: true });
+    expect(await bindings.RESTORE_DB.prepare(
+      "SELECT status,deleted_at AS deletedAt FROM client_gallery_images WHERE id=?",
+    ).bind(image).first()).toEqual({ status: "ready", deletedAt: revokedAt });
+    expect(await bindings.RESTORE_DB.prepare(
+      "SELECT status FROM client_gallery_upload_intents WHERE id=?",
+    ).bind(intent).first()).toEqual({ status: "completed" });
+    expect(new Uint8Array(await (await bindings.RESTORE_ORIGINALS.get(key))!.arrayBuffer()))
+      .toEqual(bytes);
+    // The restored metadata is still revoked. A prior successful signed PUT
+    // must not make soft-deleted private media available again.
+    const restoredEnv = { ...env, DB: bindings.RESTORE_DB,
+      ORIGINALS: bindings.RESTORE_ORIGINALS, PRIVATE_GALLERIES_ENABLED: "true",
+      CLIENT_SESSION_SECRET: "revoked-soft-delete-recovery-separate-secret-2026" } as Env;
+    await bindings.RESTORE_DB.prepare("UPDATE client_accounts SET disabled_at=NULL WHERE id=?")
+      .bind(client).run();
+    const cookie = "punctum_client_session=" + await createClientSession({
+      id: client, sessionVersion: 2,
+    }, restoredEnv);
+    for (const [method,variant,headOnly] of [
+      ["GET","gallery",false],["HEAD","gallery",true],["GET","download",false],
+    ] as const) {
+      await expect(servePrivateGalleryImage(privateRequest(
+        "/api/client/galleries", method, undefined, cookie,
+      ), restoredEnv, gallery, image, variant, "client", headOnly))
+        .rejects.toMatchObject({ status: 404 });
+    }
+  });
+
+  it("rejects a completed intent linked to a pending image before any restore R2 write", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const image = await seedReadyImage(gallery);
+    const key = `client-galleries/${gallery}/${image}.png`;
+    const bytes = Uint8Array.of(43);
+    const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+      .map(v => v.toString(16).padStart(2, "0")).join("");
+    await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" } });
+    await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?")
+      .bind(digest, image).run();
+    const intent = crypto.randomUUID();
+    await env.DB.prepare(`INSERT INTO client_gallery_upload_intents
+      (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,completed_at,sha256)
+      VALUES (?,?,?,'image/png',1,?,'completed',?,datetime('now'),datetime('now'),?)`)
+      .bind(intent, gallery, image, key, new Date(Date.now() + 60_000).toISOString(), digest).run();
+    const snapshot = structuredClone(await captureClientRecovery(env.DB, env.ORIGINALS, [client]));
+    // The same bad D1 lifecycle must fail source capture before a private R2
+    // GET, not only fail destination restore before its first R2 PUT.
+    await env.DB.prepare("UPDATE client_gallery_images SET status='pending' WHERE id=?")
+      .bind(image).run();
+    let reads = 0;
+    const sourceGuard = new Proxy(env.ORIGINALS, {
+      get(target, property) {
+        if (property === "get") return () => {
+          reads++;
+          throw new Error("R2 GET before completed intent lifecycle preflight");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(captureClientRecovery(env.DB, sourceGuard, [client]))
+      .rejects.toThrow("Recovery lifecycle mismatch");
+    expect(reads).toBe(0);
+    snapshot.tables.client_gallery_images[0].status = "pending";
+    let writes = 0;
+    const bucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return () => {
+          writes++;
+          throw new Error("R2 PUT before completed intent lifecycle preflight");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(snapshot, bindings.RESTORE_DB, bucket))
+      .rejects.toThrow("Recovery lifecycle mismatch");
+    expect(writes).toBe(0);
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(client).first()).toBeNull();
+    expect(await bindings.RESTORE_ORIGINALS.head(key)).toBeNull();
+  });
+
   it("retries after partial R2 failure while leaving destination rows untouched", async () => {
     const id = await seedClient();
     const gallery = await seedGallery(id);
@@ -174,6 +592,69 @@ describe("scoped private recovery with real local D1/R2", () => {
     const result = await restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
     expect(result.objects).toBe(2);
     expect(result.accountsQuarantined).toBe(true);
+  });
+  it("recovers from a failed final D1 commit without deleting or overwriting previously staged originals", async () => {
+    const client = await seedClient();
+    const gallery = await seedGallery(client);
+    const keys: string[] = [];
+    for (const value of [61, 62]) {
+      const photo = await seedReadyImage(gallery);
+      const key = `client-galleries/${gallery}/${photo}.png`;
+      keys.push(key);
+      await env.ORIGINALS.put(key, Uint8Array.of(value), {
+        httpMetadata: { contentType: "image/png" },
+      });
+    }
+    const backup = await captureClientRecovery(env.DB, env.ORIGINALS, [client]);
+    let batches = 0;
+    const interruptedDb = new Proxy(bindings.RESTORE_DB, {
+      get(target, property) {
+        if (property === "batch") return async () => {
+          batches++;
+          throw new Error("Simulated D1 commit outage after R2 stage");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const trackR2 = { puts: 0, deletes: 0 };
+    const guardedBucket = new Proxy(bindings.RESTORE_ORIGINALS, {
+      get(target, property) {
+        if (property === "put") return (...args: Parameters<R2Bucket["put"]>) => {
+          trackR2.puts++;
+          return target.put(...args);
+        };
+        if (property === "delete") return () => {
+          trackR2.deletes++;
+          throw new Error("Recovery must never delete originals on interrupted D1");
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    await expect(restoreClientRecovery(backup, interruptedDb, guardedBucket))
+      .rejects.toThrow("Simulated D1 commit outage");
+    expect(batches).toBe(1);
+    expect(trackR2.puts).toBe(2);
+    expect(trackR2.deletes).toBe(0);
+    expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
+      .bind(client).first()).toBeNull();
+    for (let index = 0; index < keys.length; index++) {
+      const stored = await bindings.RESTORE_ORIGINALS.get(keys[index]);
+      expect(stored).not.toBeNull();
+      expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(Uint8Array.of(61 + index));
+    }
+    // A retry must re-verify already-staged immutable R2 objects and commit
+    // the quarantined accounts without replacing or deleting their originals.
+    const restored = await restoreClientRecovery(backup, bindings.RESTORE_DB, guardedBucket);
+    expect(restored).toMatchObject({ objects: 2, accountsQuarantined: true });
+    expect(trackR2.deletes).toBe(0);
+    expect((await bindings.RESTORE_DB.prepare("SELECT disabled_at FROM client_accounts WHERE id=?")
+      .bind(client).first<{ disabled_at: string }>())?.disabled_at).toBeTruthy();
+    for (let index = 0; index < keys.length; index++) {
+      const stored = await bindings.RESTORE_ORIGINALS.get(keys[index]);
+      expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(Uint8Array.of(61 + index));
+    }
   });
 
   it("restores two clients and ten originals then enforces A/B download isolation", async () => {

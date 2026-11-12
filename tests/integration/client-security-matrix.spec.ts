@@ -174,7 +174,7 @@ describe("complete A1 / A2 / B1 security matrix and zero-byte media denials", ()
       expect(response.headers.has("Content-Disposition")).toBe(false);
       expect(response.headers.has("Last-Modified")).toBe(false);
     }
-  });
+  }, 60_000); // 13 sequential synthetic Worker requests; local CPU-constrained runner can exceed Vitest's 20s default.
 
   it("blocks B1 privilege escalation when a client email presents a Cloudflare Access JWT to requireAdmin", async () => {
     const { publicKey, privateKey } = await generateKeyPair("RS256", {

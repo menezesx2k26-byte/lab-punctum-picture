@@ -1,0 +1,43 @@
+name: R4 Images and cost entitlement read-only
+
+on:
+  push:
+    branches: ["fix/punctum-albums-r4-completion-20261107"]
+    paths:
+      - ".github/workflows/r4-images-readonly.yml"
+      - "scripts/r4-images-preflight.mjs"
+      - "scripts/lib/r4-images-preflight.mjs"
+      - "scripts/r4-images-preflight.test.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r4-images-readonly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Test fail-closed Images entitlement parser
+        run: node --test scripts/r4-images-preflight.test.mjs
+      - name: Read-only Punctum QA account capabilities and usage
+        env:
+          CF_TOKEN_1: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_2: ${{ secrets.CLOUDFLARE_API_TOKEN2 }}
+          CF_TOKEN_3: ${{ secrets.CLOUDFLARE_API_TOKEN3 }}
+        run: node scripts/r4-images-preflight.mjs
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-images-readonly-report
+          path: outputs/r4-images-preflight.json
+          if-no-files-found: warn
+          retention-days: 7

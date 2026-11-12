@@ -11,10 +11,10 @@ describe("private administrative state changes have an attributed audit event", 
     expect(response.status).toBe(200);
     const event = await env.DB.prepare("SELECT actor_email FROM audit_log WHERE entity_id=? AND action='client_gallery.images_reordered'").bind(gallery).first();
     expect(event).toEqual({ actor_email: "maria.helena@local.dev" });
-  });
+  }, 60_000); // Worker startup plus D1 audit write exceeds the 20s default on the shared Linux runner.
   it("records a pending upload intent so abandoned administrative uploads are attributable", async () => {
     const gallery = await seedGallery(await seedClient(), "draft");
-    const response = await exports.default.fetch(privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", { filename: "synthetic.png", mimeType: "image/png", sizeBytes: 80 }));
+    const response = await exports.default.fetch(privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", { filename: "synthetic.png", mimeType: "image/png", sizeBytes: 80, sha256: "0".repeat(64) }));
     expect(response.status).toBe(201);
     const event = await env.DB.prepare("SELECT actor_email FROM audit_log WHERE entity_id=? AND action='client_gallery.upload_intent_created'").bind(gallery).first();
     expect(event).toEqual({ actor_email: "maria.helena@local.dev" });

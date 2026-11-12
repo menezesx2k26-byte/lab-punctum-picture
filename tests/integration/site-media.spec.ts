@@ -59,7 +59,7 @@ describe("mídia independente do Hero", () => {
     expect(list.status).toBe(200);
     const listed = await list.json() as { media: Array<{ id: string; role: string }> };
     expect(listed.media.some((item) => item.id === body.media.id && item.role === "hero")).toBe(true);
-  });
+  }, 90_000); // Worker startup and D1 migration-backed fixture exceed the 20s default on the shared Linux runner.
 
   it("rejeita tipo inválido e arquivo acima de 25 MiB", async () => {
     const invalidType = await exports.default.fetch(jsonRequest("/admin/api/site-media/intents", "POST", {
@@ -71,5 +71,5 @@ describe("mídia independente do Hero", () => {
       filename: "hero.jpg", mimeType: "image/jpeg", sizeBytes: 26_214_401, role: "hero",
     }));
     expect(tooLarge.status).toBe(400);
-  });
+  }, 60_000); // The 25 MiB rejection path is measured separately from worker startup.
 });
