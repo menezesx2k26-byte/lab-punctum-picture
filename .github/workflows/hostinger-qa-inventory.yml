@@ -17,7 +17,7 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
        github.head_ref == 'agent/hostinger-node-migration-20261112')
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - name: Check access to the existing QA website and its Node builds
         env:
@@ -117,6 +117,123 @@ jobs:
               except (ValueError, OSError) as error:
                   print(name, json.dumps({"error": type(error).__name__}))
           PY
+      - name: Reconcile recovery, entitlement metadata and public health without provider writes
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set +x
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, pathlib, re, urllib.error, urllib.parse, urllib.request, uuid
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+          opener = urllib.request.build_opener(NoRedirect())
+          base = "https://developers.hostinger.com/api/hosting/v1"
+          domain = "aliceblue-locust-999458.hostingersite.com"
+          username = "u571409090"
+          site = f"/accounts/{username}/websites/{domain}/nodejs"
+          token = os.environ["HOSTINGER_API"]
+          report = {"schema": 1, "sourceSha": os.environ["SOURCE_SHA"],
+                    "observedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "scope": "read-only-provider-and-public-http", "managedQa": "NOT_TESTED",
+                    "writesAttempted": 0, "checks": {}}
+          def read(label, path):
+              req = urllib.request.Request(base + path, headers={"Authorization": "Bearer " + token, "Accept": "application/json"})
+              try:
+                  with opener.open(req, timeout=12) as response:
+                      raw = response.read(2000001)
+                      if len(raw) > 2000000:
+                          raise ValueError("bounded response exceeded")
+                      payload = json.loads(raw)
+                      data = payload.get("data", payload) if isinstance(payload, dict) else payload
+                      report["checks"][label] = {"status": response.status}
+                      return data
+              except urllib.error.HTTPError as error:
+                  report["checks"][label] = {"status": error.code}
+              except (OSError, ValueError):
+                  report["checks"][label] = {"error": "READ_UNAVAILABLE"}
+              return None
+          websites = read("website", "/websites?" + urllib.parse.urlencode({"domain": domain}))
+          website = next((x for x in websites or [] if isinstance(x, dict) and x.get("domain") == domain and x.get("username") == username), {})
+          report["checks"]["website"].update({"targetPresent": bool(website), "websiteType": website.get("website_type")})
+          orders = read("orders", "/orders?per_page=100")
+          order = next((x for x in orders or [] if isinstance(x, dict) and x.get("id") == website.get("order_id")), {})
+          plan = order.get("plan", {})
+          if isinstance(plan, dict):
+              report["checks"]["orders"].update({"matchedWebsiteOrder": bool(order),
+                  "planName": plan.get("name"), "planCode": plan.get("code"),
+                  "planFieldNames": sorted(plan),
+                  "effectiveQuotasConfirmed": False, "newBuildEntitlementConfirmed": False})
+          settings = read("settings", site + "/builds/settings")
+          fields = ("app_type", "node_version", "root_directory", "output_directory", "build_script", "entry_file", "package_manager")
+          if isinstance(settings, dict):
+              report["checks"]["settings"]["configuration"] = {k: settings.get(k) for k in fields}
+          env = read("environment", site + "/builds/settings/env")
+          if isinstance(env, list):
+              report["checks"]["environment"]["variableCount"] = len(env)
+          files = read("documentRoot", f"/accounts/{username}/domains/{domain}/files?max_depth=1&max_items=30")
+          if isinstance(files, dict):
+              rows = files.get("items", [])
+              report["checks"]["documentRoot"].update({"totalItems": files.get("total_items"),
+                  "returnedItems": len(rows), "entryTypes": [x.get("type") for x in rows if isinstance(x, dict)],
+                  "probeFiles": sorted(x.get("name") for x in rows if isinstance(x, dict) and x.get("name") in ("app.mjs", "server.mjs", "package.json", "README.md"))})
+          dbs = read("assignedDatabases", f"/accounts/{username}/databases?" + urllib.parse.urlencode({"domain": domain, "is_assigned": "true", "per_page": 100}))
+          if isinstance(dbs, list):
+              report["checks"]["assignedDatabases"]["count"] = len(dbs)
+          builds = read("builds", site + "/builds")
+          build_summaries = []
+          for row in (builds or [])[:2]:
+              if not isinstance(row, dict) or not re.fullmatch(r"[a-fA-F0-9-]{36}", str(row.get("uuid", ""))):
+                  continue
+              build_id = row["uuid"]
+              detail = read("build-" + build_id, site + "/builds/" + build_id)
+              logs = read("logs-" + build_id, site + "/builds/" + build_id + "/logs?from_line=0")
+              options = (detail or row).get("options", {})
+              summary = {"uuid": build_id, "state": row.get("state"),
+                         "configuration": {k: options.get(k) for k in fields},
+                         "sourceType": options.get("source_type"),
+                         "sourceOptionKeys": sorted(options.get("source_options") or {})}
+              if isinstance(logs, dict) and isinstance(logs.get("logs"), str):
+                  content = logs["logs"]
+                  summary["logs"] = {"lines": logs.get("lines"), "sha256": hashlib.sha256(content.encode()).hexdigest(),
+                      "mentionsHbuilds": "hbuilds" in content, "mentionsProbe": "probe" in content.lower(),
+                      "mentionsBuildSuccess": bool(re.search(r"build.{0,30}(success|complet)", content, re.I))}
+              build_summaries.append(summary)
+          report["checks"]["builds"]["history"] = build_summaries
+          for label, url in (
+              ("probeHealth", "https://" + domain + "/health?nonce=" + str(uuid.uuid4())),
+              ("productionHome", "https://punctumpicture.com/"),
+              ("productionStudioAnonymous", "https://punctumpicture.com/admin/studio"),
+              ("productionR4Anonymous", "https://punctumpicture.com/albuns/entrar")):
+              try:
+                  with opener.open(urllib.request.Request(url, headers={"User-Agent": "Punctum takeover read-only/1.0"}), timeout=15) as response:
+                      raw = response.read(1000000)
+                      result = {"status": response.status, "contentType": response.headers.get_content_type()}
+                      if label == "probeHealth":
+                          health = json.loads(raw)
+                          expected_nonce = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["nonce"][0]
+                          result.update({k: health.get(k) for k in ("service", "version", "node", "ssrValidated", "production")})
+                          result["nonceMatches"] = health.get("nonce") == expected_nonce
+                      report["checks"][label] = result
+              except urllib.error.HTTPError as error:
+                  report["checks"][label] = {"status": error.code,
+                      "loginRedirect": str(error.headers.get("Location", "")).startswith("/acesso")}
+              except (OSError, ValueError):
+                  report["checks"][label] = {"error": "READ_UNAVAILABLE"}
+          path = pathlib.Path("outputs/hostinger-takeover/inventory.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: hostinger-takeover-readonly
+          path: outputs/hostinger-takeover/
+          if-no-files-found: error
+          retention-days: 14
       - name: Read Cloudflare production bindings and public table totals
         env:
           CF_WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
