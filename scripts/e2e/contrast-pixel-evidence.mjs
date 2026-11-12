@@ -25,6 +25,7 @@ export async function measureConservativeContrast(page,selector,capturePath) {
     }
     if(!nodes.length)return {reason:'no text'};
     const parents=[...new Set(nodes)];
+    if(parents.some(el=>el.namespaceURI!=='http://www.w3.org/1999/xhtml'))return {reason:'non-HTML text paint'};
     const base=getComputedStyle(parents[0]);
     const color=base.color;
     for(const node of parents){
@@ -34,8 +35,9 @@ export async function measureConservativeContrast(page,selector,capturePath) {
       for(let el=node;el;el=el.parentElement){
         const s=getComputedStyle(el);
         if(s.opacity!=='1'||s.mixBlendMode!=='normal'||s.filter!=='none'||s.backdropFilter!=='none'||
-          s.backgroundClip==='text'||s.transform!=='none')
-          return {reason:'opacity, blend, filter, transform or text clipping'};
+          s.backgroundClip==='text'||s.transform!=='none'||s.maskImage!=='none'||
+          s.webkitMaskImage!=='none'||s.clipPath!=='none'||s.clip!=='auto'||s.webkitBoxReflect!=='none')
+          return {reason:'opacity, blend, filter, mask, reflection, transform or text clipping'};
         if(el.getAnimations().some(a=>a.playState==='running'))return {reason:'active ancestor animation'};
         const box=el.getBoundingClientRect();
         if((s.overflowX!=='visible'&&(rect.left<box.left-.5||rect.right>box.right+.5))||

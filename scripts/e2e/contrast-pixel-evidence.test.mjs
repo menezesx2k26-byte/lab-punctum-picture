@@ -17,5 +17,7 @@ test('rendered gradient contrast uses a conservative pixel bound and refuses mix
     assert.equal((await measureConservativeContrast(page,'#group')).status,'UNSUPPORTED_COMPOSITING');
     assert.equal((await measureConservativeContrast(page,'#overflow')).status,'UNSUPPORTED_COMPOSITING');
     assert.equal((await measureConservativeContrast(page,'#animated')).status,'UNSUPPORTED_COMPOSITING');
+    await page.setContent('<div style="background:black"><p id="masked" style="color:white;background:black;mask-image:linear-gradient(#0001,#0001)">Texto mascarado</p></div>');
+    assert.equal((await measureConservativeContrast(page,'#masked')).status,'UNSUPPORTED_COMPOSITING');
   } finally { await browser.close(); }
 });
