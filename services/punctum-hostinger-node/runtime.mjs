@@ -1,4 +1,6 @@
-import { isAbsolute } from "node:path";
+import { realpathSync, statSync } from "node:fs";
+import { dirname, isAbsolute, relative, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export function qaOrigin() {
   const url = new URL(process.env.PUNCTUM_QA_ORIGIN ?? "");
@@ -11,7 +13,25 @@ export function qaOrigin() {
 }
 
 export function qaDatabasePath() {
-  const path = process.env.PUNCTUM_QA_DB_FILE;
+  return privateQaDatabasePath(process.env.PUNCTUM_QA_DB_FILE);
+}
+
+export function privateQaDatabasePath(path) {
   if (!path || !isAbsolute(path)) throw new Error("An absolute QA SQLite path is required");
-  return path;
+  const canonical = realpathSync(path);
+  const project = fileURLToPath(new URL("../../", import.meta.url));
+  const forbidden = new Set(["public_html", "hbuilds", "public", "dist"]);
+  for (const candidate of [path, canonical]) {
+    const fromProject = relative(project, candidate);
+    if ((!fromProject.startsWith(`..${sep}`) && fromProject !== ".." && !isAbsolute(fromProject)) ||
+        candidate.split(sep).some(part => forbidden.has(part.toLowerCase()))) {
+      throw new Error("QA SQLite must use private storage outside deployment directories");
+    }
+  }
+  const info = statSync(canonical);
+  const parent = statSync(dirname(canonical));
+  if (!info.isFile() || info.nlink !== 1 || (info.mode & 0o077) || (parent.mode & 0o077)) {
+    throw new Error("QA SQLite requires private owner-only file and directory permissions");
+  }
+  return canonical;
 }

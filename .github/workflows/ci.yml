@@ -65,7 +65,7 @@ jobs:
       - run: npm ci
       - run: npm run build:hostinger:qa
       - run: npx playwright install --with-deps chromium
-      - run: node --test services/punctum-hostinger-node/server.test.mjs
+      - run: node --test services/punctum-hostinger-node/*.test.mjs
         env:
           PUNCTUM_QA_BROWSER: "1"
       - uses: actions/upload-artifact@v6

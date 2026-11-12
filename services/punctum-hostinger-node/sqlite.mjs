@@ -1,12 +1,11 @@
-import { statSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { performance } from "node:perf_hooks";
+import { privateQaDatabasePath } from "./runtime.mjs";
 
 export const qaApplicationId = 0x50554e51;
 
 export function openQaDatabase(path) {
-  if (!statSync(path).isFile()) throw new Error("QA database must be an existing file");
-  const sqlite = new DatabaseSync(path, { enableForeignKeyConstraints: true, timeout: 5000 });
+  const sqlite = new DatabaseSync(privateQaDatabasePath(path), { enableForeignKeyConstraints: true, timeout: 5000 });
   if (sqlite.prepare("PRAGMA application_id").get().application_id !== qaApplicationId) {
     sqlite.close();
     throw new Error("Only a synthetic Punctum QA database is accepted");
@@ -19,11 +18,15 @@ export function openQaDatabase(path) {
     const execute = () => {
       const started = performance.now();
       const hasColumns = statement.columns().length > 0;
+      const before = hasColumns ? sqlite.prepare("SELECT total_changes() AS count").get().count : 0;
       const result = hasColumns ? undefined : statement.run(...values);
+      const results = hasColumns ? statement.all(...values) : [];
+      const wroteRows = hasColumns && sqlite.prepare("SELECT total_changes() AS count").get().count !== before;
+      const changes = wroteRows ? sqlite.prepare("SELECT changes() AS count").get().count : result?.changes ?? 0;
       return {
         success: true,
-        results: hasColumns ? statement.all(...values) : [],
-        meta: { duration: performance.now() - started, changes: Number(result?.changes ?? 0) },
+        results,
+        meta: { duration: performance.now() - started, changes: Number(changes) },
       };
     };
     const bound = {
