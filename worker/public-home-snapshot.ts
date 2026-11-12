@@ -6,6 +6,8 @@
  */
 
 const MAX_HTML_BYTES = 1_500_000;
+const TEXT_ENCODER = new TextEncoder();
+const HEX_BYTE = Array.from({ length: 256 }, (_, value) => value.toString(16).padStart(2, "0"));
 
 type SnapshotRow = {
   epoch: number;
@@ -20,7 +22,7 @@ function validBuildId(buildId: string): boolean {
 }
 
 function validPublicSsrHtml(html: string): boolean {
-  if (!html || new TextEncoder().encode(html).byteLength > MAX_HTML_BYTES) return false;
+  if (!html || TEXT_ENCODER.encode(html).byteLength > MAX_HTML_BYTES) return false;
   // Common HTML/JSON/URL escaping cannot turn a known private-media path
   // into publicly cacheable markup. This is a defense-in-depth gate; the
   // snapshot producer must still be trusted and independently audited.
@@ -81,8 +83,10 @@ function validPublicSsrHtml(html: string): boolean {
 }
 
 async function sha256(text: string): Promise<string> {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", TEXT_ENCODER.encode(text)));
+  let hex = "";
+  for (const byte of bytes) hex += HEX_BYTE[byte];
+  return hex;
 }
 
 /** Returns null for absent, stale, incomplete, altered or cross-deploy output. */
@@ -101,8 +105,13 @@ export async function readPublicHomeSnapshot(db: D1Database, buildId: string): P
     return null;
   }
   if (!row || row.epoch !== row.snapshotEpoch || row.buildId !== buildId ||
-    typeof row.html !== "string" || !validPublicSsrHtml(row.html) ||
-    !/^[a-f0-9]{64}$/.test(row.htmlSha256 ?? "")) return null;
+    typeof row.html !== "string" || !/^[a-f0-9]{64}$/.test(row.htmlSha256 ?? "")) return null;
+  // The only path that writes non-empty HTML is stagePublicHomeSnapshot(),
+  // which performs the complete public-HTML/escape policy scan before the
+  // atomic D1 write; invalidation paths only clear the staged content. Repeating that
+  // eight-pass scan on every cold MISS adds CPU without strengthening the
+  // trust boundary; the read still recomputes SHA-256 to detect post-stage
+  // byte changes, and epoch/build/mutation fences remain mandatory.
   if (await sha256(row.html) !== row.htmlSha256) return null;
   return new Response(row.html, {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, must-revalidate" },

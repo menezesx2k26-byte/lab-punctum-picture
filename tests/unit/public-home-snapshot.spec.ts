@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bootstrapPrivateDb } from "../integration/client-fixture";
 import {
   invalidatePublicHomeSnapshot,
@@ -23,6 +23,25 @@ describe("versioned public-home snapshot for cold cache MISS", () => {
     expect(response?.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
     expect(response?.headers.has("Set-Cookie")).toBe(false);
     expect(await response?.text()).toBe(HTML);
+  });
+
+  it("does not repeat full HTML policy scanning on read but still verifies the staged SHA-256", async () => {
+    const state = await env.DB.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first<{epoch:number}>();
+    expect(state).not.toBeNull();
+    expect(await stagePublicHomeSnapshot(env.DB, state!.epoch, BUILD, HTML)).toBe(true);
+    const encode = vi.spyOn(TextEncoder.prototype, "encode");
+    try {
+      const response = await readPublicHomeSnapshot(env.DB, BUILD);
+      expect(response?.status).toBe(200);
+      // One encoding is required for the SHA-256 digest. The stage-time
+      // validator already enforced the public HTML policy before persistence.
+      expect(encode).toHaveBeenCalledTimes(1);
+    } finally {
+      encode.mockRestore();
+    }
+    await env.DB.prepare("UPDATE public_home_snapshot SET html=? WHERE id=1")
+      .bind(HTML.replace("Studio publicado", "alterado depois do staging")).run();
+    expect(await readPublicHomeSnapshot(env.DB, BUILD)).toBeNull();
   });
 
   it("refuses cross-build content, then invalidates before publication and prevents stale reuse", async () => {

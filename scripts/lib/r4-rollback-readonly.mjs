@@ -47,8 +47,12 @@ export function summarizeRollbackPreflight(data) {
   const versionHistoryPresent = validHistory && ids.length >= 2 &&
     deployments.some((row, index) => history[index].created < newestCreated &&
       row.versions.some(version => !newestVersions.has(version.version_id)));
-  const subscriptionIds = subscriptions.map(row => row?.rate_plan?.id).filter(Boolean);
-  const free = subscriptionIds.includes("free") && !subscriptionIds.some(id => id === "workers_paid");
+  const subscriptionIds = subscriptions.map(row => String(row?.rate_plan?.id ?? "").trim().toLowerCase()).filter(Boolean);
+  const workersFree = subscriptionIds.includes("free") && !subscriptionIds.includes("workers_paid");
+  const r2PaidSubscriptionPresent = subscriptionIds.includes("r2_paid");
+  const accountPlan = workersFree
+    ? r2PaidSubscriptionPresent ? "workers_free_with_r2_paid" : "workers_free_no_r2_paid_listed"
+    : "unverified_or_not_free";
   const expectedD1 = R4_ROLLBACK_QA.databases.every(expected =>
     databases.filter(db => db.name === expected.name && db.uuid === expected.id).length === 1);
   const expectedBuckets = R4_ROLLBACK_QA.buckets.every(name =>
@@ -62,20 +66,25 @@ export function summarizeRollbackPreflight(data) {
   const knownBoundD1 = bindings.filter(binding => binding.name === "DB").length === 1 &&
     bindings.some(binding => binding.name === "DB" && binding.type === "d1" &&
       binding.id === R4_ROLLBACK_QA.databases[0].id);
-  const inventoryVerified = free && expectedD1 && expectedBuckets && expectedWorker &&
+  const inventoryVerified = workersFree && expectedD1 && expectedBuckets && expectedWorker &&
     knownBoundD1 && flag === "false" && versionHistoryPresent;
   const blockers = [
     "D1/R2 writable and truly segregated target not verified; historical QA fixtures remain immutable",
     "Exact prior Worker version/config/assets/Access fingerprints and reopening not homologated",
     "Remote D1/R2 object SHA-256 relations, sessions and zero-byte denial rollback not executed",
   ];
+  if (r2PaidSubscriptionPresent)
+    blockers.push("Existing R2 Paid subscription detected; R2 usage/headroom and incremental cost remain unverified");
   if (!inventoryVerified) blockers.unshift("Incomplete or unexpected read-only QA account inventory");
   if (!versionHistoryPresent)
     blockers.unshift("No distinct prior Worker deployment/version with verified chronology in read-only history");
   return {
     schemaVersion:1,
     scope:"PUNCTUM_R4_HISTORICAL_QA_READ_ONLY",
-    accountPlan:free?"free":"unverified_or_not_free",
+    accountPlan,
+    workerPlan:workersFree?"free":"unverified_or_paid",
+    r2PaidSubscriptionPresent,
+    incrementalCostVerified:false,
     qaWorker:R4_ROLLBACK_QA.worker,
     qaDatabaseCount:databases.length,
     qaBucketCount:buckets.length,

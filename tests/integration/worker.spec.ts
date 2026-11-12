@@ -11,6 +11,8 @@ import {
   PUNCTUM_DEFAULT_SITE_CONFIG,
   applyFontPair,
 } from "../../shared/config";
+import { readPublicSiteSettings } from "../../shared/public-content";
+import { readPublicSiteConfigState } from "../../shared/site-config-storage";
 
 async function applySql(sql: string) {
   if (!env.DB) throw new Error("Binding DB ausente no teste");
@@ -55,6 +57,65 @@ describe("Worker Punctum Picture", () => {
     expect(await site.json()).toMatchObject({
       site: { brandName: "Punctum Picture" },
     });
+    const bootstrapped = await env.DB.prepare(
+      "SELECT draft_version_id AS draftVersionId, published_version_id AS publishedVersionId FROM site_config_pointers WHERE id = 1",
+    ).first<{ draftVersionId: string; publishedVersionId: string }>();
+    expect(bootstrapped).toMatchObject({
+      draftVersionId: "site-draft-current",
+      publishedVersionId: "site-published-initial",
+    });
+  });
+
+  it("lê a configuração publicada com uma única consulta JOIN no caminho normal", async () => {
+    const settings = await readPublicSiteSettings(env.DB);
+    await readPublicSiteConfigState(env.DB, settings);
+    const statements: string[] = [];
+    const countedDb = new Proxy(env.DB, {
+      get(target, property, receiver) {
+        if (property === "prepare") {
+          return (sql: string) => {
+            statements.push(sql);
+            return target.prepare(sql);
+          };
+        }
+        const value = Reflect.get(target, property, receiver);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const state = await readPublicSiteConfigState(countedDb, settings);
+    const versionedReads = statements.filter((sql) =>
+      /site_config_pointers|site_config_versions/i.test(sql),
+    );
+    expect(versionedReads).toHaveLength(1);
+    expect(versionedReads[0]).toMatch(/LEFT JOIN\s+site_config_versions/i);
+    expect(state.source).toBe("published");
+  });
+
+  it("falha fechado sem bootstrap quando o ponteiro publicado aponta para draft", async () => {
+    const settings = await readPublicSiteSettings(env.DB);
+    const original = await env.DB.prepare(
+      "SELECT draft_version_id AS draftVersionId, published_version_id AS publishedVersionId FROM site_config_pointers WHERE id = 1",
+    ).first<{ draftVersionId: string; publishedVersionId: string }>();
+    expect(original).not.toBeNull();
+    const before = await env.DB.prepare(
+      "SELECT COUNT(*) AS count FROM site_config_versions",
+    ).first<{ count: number }>();
+    try {
+      await env.DB.prepare(
+        "UPDATE site_config_pointers SET published_version_id = ? WHERE id = 1",
+      ).bind(original!.draftVersionId).run();
+      const draftPointer = await readPublicSiteConfigState(env.DB, settings);
+      expect(draftPointer.source).toBe("safe-fallback");
+
+      const after = await env.DB.prepare(
+        "SELECT COUNT(*) AS count FROM site_config_versions",
+      ).first<{ count: number }>();
+      expect(after?.count).toBe(before?.count);
+    } finally {
+      await env.DB.prepare(
+        "UPDATE site_config_pointers SET draft_version_id = ?, published_version_id = ? WHERE id = 1",
+      ).bind(original!.draftVersionId, original!.publishedVersionId).run();
+    }
   });
 
   it("propaga settings administrativas para a API pública", async () => {

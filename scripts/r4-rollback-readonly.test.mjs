@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { summarizeRollbackPreflight, summarizeQaReadOnlyProbes, summarizeTokenReadOnlyCheck, R4_ROLLBACK_QA } from "./lib/r4-rollback-readonly.mjs";
 
 const fixture = () => ({
-  subscriptions: [{ rate_plan: { id: "free" } }],
+  subscriptions: [{ rate_plan: { id: "free" } }, { rate_plan: { id: "r2_paid" } }],
   scripts: [{ id: R4_ROLLBACK_QA.worker }],
   databases: R4_ROLLBACK_QA.databases.map(({ name, id }) => ({ name, uuid: id })),
   buckets: { buckets: R4_ROLLBACK_QA.buckets.map((name) => ({name})) },
@@ -21,10 +21,14 @@ test("read-only QA inventory is scoped but never authorizes a G23 rollback", () 
   assert.equal(result.inventoryVerified, true);
   assert.equal(result.rollbackAuthorized, false);
   assert.equal(result.productionSafeToRelease, false);
-  assert.equal(result.accountPlan, "free");
+  assert.equal(result.accountPlan, "workers_free_with_r2_paid");
+  assert.equal(result.workerPlan, "free");
+  assert.equal(result.r2PaidSubscriptionPresent, true);
+  assert.equal(result.incrementalCostVerified, false);
   assert.deepEqual(result.versionIds, ["current-version-id","previous-version-id"]);
   assert.equal(result.flag, "false");
   assert.ok(result.blockers.some(s => s.includes("D1/R2")));
+  assert.ok(result.blockers.some(s => /R2 Paid.*cost.*unverified/i.test(s)));
 });
 test("a single current Worker version never qualifies as a verified rollback predecessor", () => {
   const single = fixture();

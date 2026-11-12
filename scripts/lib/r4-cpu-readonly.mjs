@@ -2,16 +2,27 @@ import {summarizeSubscriptions} from './r4-images-preflight.mjs';
 const ACCOUNT='257bca437616da74ece1ce4bbaf0bd89';
 const SOURCE_ID='2e7710f3-dc92-4aeb-976a-5f15d8c5262c';
 const SOURCE_NAME='punctum-picture-r4-qa-20261028';
+const COLD_CPU_REQUIRED_SAMPLES=12;
+const FREE_CPU_LIMIT_MS=10;
 export function cpuQaEligibility({subscriptions,workers,databases,name}) {
   const plan=summarizeSubscriptions(subscriptions);
+  const subscriptionIds=Array.isArray(subscriptions)
+    ? subscriptions.map(row=>String(row?.id??'').trim().toLowerCase()).filter(Boolean) : [];
   const allowed=plan.workerPlan==='free' &&
     Array.isArray(workers)&&workers.length<95&&workers.length>=0 &&
     Array.isArray(databases) &&
     databases.some(db=>db.name===SOURCE_NAME&&db.uuid===SOURCE_ID) &&
     typeof name==='string'&&/^punctum-r4-cpu-probe-[0-9]{5,15}$/.test(name)&&
     !workers.some(w=>w.id===name);
-  return {allowed,reason:allowed?'ISOLATED_PUBLIC_READS_ONLY':'INSUFFICIENT_READONLY_PREFLIGHT'};
+  return {allowed,reason:allowed?'ISOLATED_PUBLIC_READS_ONLY':'INSUFFICIENT_READONLY_PREFLIGHT',
+    workerPlan:plan.workerPlan,r2PaidSubscriptionPresent:subscriptionIds.includes('r2_paid'),
+    incrementalCostVerified:false};
 }
+export function cpuQaFixtureEligibility(counts){
+  return !!counts&&Number(counts.pointers)===1&&Number(counts.configVersions)>=1&&
+    Number(counts.validPublishedPointers)===1;
+}
+
 export function cpuQaWorkerConfig(name,origin,token) {
   if (!/^punctum-r4-cpu-probe-[0-9]{5,15}$/.test(name))
     throw Error('Unrecognized ephemeral name');
@@ -23,6 +34,7 @@ export function cpuQaWorkerConfig(name,origin,token) {
     throw Error('Missing ephemeral authentication token');
   return {
     name,account_id:ACCOUNT,main:'r4-cpu-entry.mjs',no_bundle:true,
+    version_metadata:{binding:'QA_VERSION'},
     rules:[{type:'ESModule',globs:['**/*.js','**/*.mjs']}],
     compatibility_date:'2026-11-07',compatibility_flags:['nodejs_compat'],
     exports:{default:{type:'worker',cache:{enabled:false}},PublicHome:{type:'worker',cache:{enabled:true}}},
@@ -30,7 +42,8 @@ export function cpuQaWorkerConfig(name,origin,token) {
     observability:{enabled:true,logs:{head_sampling_rate:1}},
     assets:{directory:'../client',binding:'ASSETS',
       not_found_handling:'single-page-application',run_worker_first:['/*']},
-    vars:{R4_CPU_PROBE_TOKEN:token,PUBLIC_HOME_CACHE_ENABLED:'true',ENVIRONMENT:'preview',PRIVATE_GALLERIES_ENABLED:'false',
+    vars:{R4_CPU_PROBE_TOKEN:token,PUBLIC_HOME_CACHE_ENABLED:'true',
+      ENVIRONMENT:'preview',PRIVATE_GALLERIES_ENABLED:'false',
       CLIENT_AUTH_MODE:'access',SITE_ORIGIN:origin,PUBLIC_SITE_URL:origin,
       PUBLIC_WHATSAPP_E164:'UNSPECIFIED',PUBLIC_INSTAGRAM_URL:'UNSPECIFIED'},
     d1_databases:[{binding:'DB',database_name:SOURCE_NAME,database_id:SOURCE_ID}],
@@ -38,12 +51,71 @@ export function cpuQaWorkerConfig(name,origin,token) {
   };
 }
 
+/** Correlate Cloudflare per-invocation telemetry with one isolated HTTP MISS. */
+export function correlateColdCpuSamples(requestSamples,telemetryRecords){
+  const records=Array.isArray(telemetryRecords)?telemetryRecords:[];
+  // Cloudflare Observability returns `timestamp` as Unix epoch milliseconds
+  // (number), not an ISO string. Keep string support for archived fixtures,
+  // but never pass a numeric epoch through Date.parse(), which treats it as
+  // date text and silently drops the real per-invocation CPU samples.
+  const epochMs=value=>typeof value==='number'&&Number.isFinite(value)?value:
+    typeof value==='string'?Date.parse(value):NaN;
+  return (Array.isArray(requestSamples)?requestSamples:[]).map(request=>{
+    const started=Date.parse(request?.startedAt);
+    const finished=Date.parse(request?.finishedAt);
+    const withinSingleSecond=Number.isFinite(started)&&Number.isFinite(finished)&&
+      Math.floor(started/1000)===Math.floor(finished/1000);
+    const matching=Number.isFinite(started)&&Number.isFinite(finished)?records.filter(event=>{
+      const timestamp=epochMs(event?.timestamp);
+      return Number.isFinite(timestamp)&&timestamp>=started-500&&timestamp<=finished+500;
+    }):[];
+    const cpuTimes=matching.map(event=>event?.cpuTimeMs).filter(value=>
+      typeof value==='number'&&Number.isFinite(value)&&value>=0);
+    return {...request,withinSingleSecond,telemetryEvents:matching.length,
+      cpuTimeMsMax:cpuTimes.length?Math.max(...cpuTimes):null};
+  });
+}
+
+/** Twelve isolated MISSes with exact per-request telemetry are required. */
+export function summarizeColdCpuMeasurement(samples){
+  const rows=Array.isArray(samples)?samples:[];
+  const missingTelemetrySamples=rows.filter(sample=>sample.telemetryEvents<1||
+    !Number.isSafeInteger(sample.telemetryEvents)||!Number.isFinite(sample.cpuTimeMsMax)).length;
+  const overLimitSamples=rows.filter(sample=>Number.isFinite(sample.cpuTimeMsMax)&&
+    sample.cpuTimeMsMax>FREE_CPU_LIMIT_MS).length;
+  const unqualifiedSamples=rows.filter(sample=>sample.status!==200||sample.validHtml!==true||
+    !['MISS','EXPIRED'].includes(sample.cacheStatus)||sample.withinSingleSecond!==true||
+    !Number.isSafeInteger(sample.telemetryEvents)||sample.telemetryEvents<1||
+    sample.telemetryEvents>2||!Number.isFinite(sample.cpuTimeMsMax)||
+    sample.cpuTimeMsMax>FREE_CPU_LIMIT_MS).length;
+  const cpuTimes=rows.map(sample=>sample.cpuTimeMsMax).filter(value=>
+    typeof value==='number'&&Number.isFinite(value));
+  const qualified=rows.length===COLD_CPU_REQUIRED_SAMPLES&&unqualifiedSamples===0;
+  return {requiredSamples:COLD_CPU_REQUIRED_SAMPLES,observedSamples:rows.length,qualified,
+    missingTelemetrySamples,overLimitSamples,unqualifiedSamples,
+    maxCpuTimeMs:cpuTimes.length?Math.max(...cpuTimes):null,
+    freeCpuLimitMs:FREE_CPU_LIMIT_MS};
+}
+
+/** The first authenticated request after deploy is a separate CPU gate. */
+export function summarizeFirstRequestCpu(sample){
+  const telemetryEvents=sample?.telemetryEvents;
+  const cpuTimeMsMax=sample?.cpuTimeMsMax;
+  const requestValid=sample?.status===200&&sample?.validHtml===true&&
+    ['MISS','EXPIRED'].includes(sample?.cacheStatus);
+  const telemetryComplete=Number.isSafeInteger(telemetryEvents)&&
+    telemetryEvents>=1&&telemetryEvents<=2&&Number.isFinite(cpuTimeMsMax);
+  const overLimit=Number.isFinite(cpuTimeMsMax)&&cpuTimeMsMax>FREE_CPU_LIMIT_MS;
+  return {qualified:requestValid&&telemetryComplete&&!overLimit,requestValid,
+    telemetryComplete,overLimit,telemetryEvents:Number.isSafeInteger(telemetryEvents)?telemetryEvents:0,
+    cpuTimeMsMax:Number.isFinite(cpuTimeMsMax)?cpuTimeMsMax:null,freeCpuLimitMs:FREE_CPU_LIMIT_MS};
+}
+
 /**
- * A successful benchmark run does not prove Workers Free cold CPU compliance.
- * Cache HITs skip the named SSR handler, but every cache MISS can still spend
- * >10ms CPU, and adaptive GraphQL quantiles sample only a subset.
+ * Cache HITs do not qualify cold CPU. Even twelve passing cold samples leave
+ * cost/headroom and a trusted snapshot producer as separate G17 requirements.
  */
-export function summarizePublicCacheProbe(samples,cpuAnalytics){
+export function summarizePublicCacheProbe(samples,cpuAnalytics,coldCpuSamples=[]){
   const statusDistribution={};const cacheStatuses={};
   for(const sample of samples){
     const status=String(sample.status);
@@ -56,7 +128,12 @@ export function summarizePublicCacheProbe(samples,cpuAnalytics){
   const cacheHotPathVerified=allHtml&&hitCount>=30&&(cacheStatuses.BYPASS??0)===0;
   const highCpu=Array.isArray(cpuAnalytics)&&cpuAnalytics.some(s=>
     typeof s.cpuP99==='number'&&s.cpuP99>10000);
+  const coldCpu=summarizeColdCpuMeasurement(coldCpuSamples);
+  const reason=!cacheHotPathVerified?'CACHE_NOT_VERIFIED':
+    highCpu||coldCpu.overLimitSamples>0?'COLD_CPU_ABOVE_FREE_LIMIT':
+    !coldCpu.qualified?'COLD_CPU_TELEMETRY_INCOMPLETE':
+    'COLD_CPU_WITHIN_LIMIT_COST_AND_PRODUCER_UNVERIFIED';
   return {statusDistribution,cacheStatuses,hitCount,cacheHotPathVerified,
-    freeCpuGatePassed:false,reason:highCpu?'COLD_CPU_ABOVE_FREE_LIMIT':
-      cacheHotPathVerified?'SAMPLED_CPU_NOT_FULL_COLD_PROOF':'CACHE_NOT_VERIFIED'};
+    coldCpuMeasurementQualified:coldCpu.qualified,coldCpu,
+    freeCpuGatePassed:false,reason};
 }
