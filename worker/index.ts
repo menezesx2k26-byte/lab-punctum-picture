@@ -10,6 +10,7 @@ import {
 import handler from "vinext/server/app-router-entry";
 import { handlePrivateGalleryRoutes, isPrivateGalleryPath } from "./client/router";
 import { privateResponse } from "./client/response";
+import { handleClerkPilotRequest } from "./client/clerk-pilot";
 import { handleAdminApi } from "./api/admin";
 import { handleAdminAuth } from "./api/admin-auth";
 import { handlePublicApi } from "./api/public";
@@ -35,6 +36,8 @@ async function routeRequest(
     );
     return isPrivateGalleryPath(url.pathname) ? privateResponse(redirect) : redirect;
   }
+  const clerkPilot = await handleClerkPilotRequest(request, env);
+  if (clerkPilot) return clerkPilot;
   const privateResult = await handlePrivateGalleryRoutes(request, url, env);
   if (privateResult) return privateResult;
 
