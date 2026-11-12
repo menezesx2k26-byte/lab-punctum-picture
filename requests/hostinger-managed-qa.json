@@ -1,5 +1,5 @@
 {
-  "request_id": "candidate-no-compression-qa-20261112-10",
+  "request_id": "candidate-chunked-tus-no-compression-20261112-11",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
   "expected_build_uuid": "01a1d209-9c17-7206-a677-5d2f8d0e4d3b",
