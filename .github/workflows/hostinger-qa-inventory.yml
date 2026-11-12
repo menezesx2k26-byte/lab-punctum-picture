@@ -39,7 +39,7 @@ jobs:
           if not token:
               raise SystemExit("HOSTINGER_API is unavailable in this workflow context.")
 
-          base = "https://api.hostinger.com/api/hosting/v1"
+          base = "https://developers.hostinger.com/api/hosting/v1"
           domain = "aliceblue-locust-999458.hostingersite.com"
           username = "u571409090"
           site = f"/accounts/{username}/websites/{domain}/nodejs"
@@ -55,7 +55,7 @@ jobs:
           }
           for name, path in checks.items():
               req = urllib.request.Request(base + path, headers={
-                  "Authorization": f"Bearer {token}", "Accept": "application/json",
+                  "Authorization": f"Bearer {token}", "Accept": "application/json", "Content-Type": "application/json",
               })
               try:
                   with opener.open(req, timeout=12) as response:
