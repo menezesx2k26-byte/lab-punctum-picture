@@ -93,7 +93,7 @@ def ready(operation, phase):
 
 def runtime_receipts(operation, phase):
     try:
-        logs = operation.api(phase + 'RuntimeLogs', SITE + '/runtime-logs')
+        logs = operation.api(phase + 'RuntimeLogs', SITE + '/runtime-logs?period=1h&limit=1000')
         # Decode strings recursively without publishing arbitrary logs.
         strings = []
         def visit(value):
