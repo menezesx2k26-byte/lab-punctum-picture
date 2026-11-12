@@ -5,6 +5,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -69,10 +70,16 @@ class RequestFailure(Exception):
 
 
 class Recovery:
-    def __init__(self, root, action, expected_build):
-        if action not in ("prepare", "restore-probe"):
+    def __init__(self, root, action, expected_build, existing_archive=None):
+        if action not in ("prepare", "inspect-upload", "restore-probe"):
             raise ValueError("Only probe preparation or identical probe recovery is supported")
         self.root, self.action, self.expected_build = root, action, expected_build
+        if existing_archive is not None and (not isinstance(existing_archive, str) or
+                not re.fullmatch(r"punctum-recovery-v2-[a-f0-9]{32}\.zip", existing_archive)):
+            raise ValueError("Unexpected recovery archive name")
+        if action == "inspect-upload" and not existing_archive:
+            raise ValueError("Inspect requires the already acknowledged recovery archive")
+        self.existing_archive = existing_archive
         self.token = os.environ.get("HOSTINGER_API")
         if not self.token:
             raise ValueError("HOSTINGER_API is unavailable")
@@ -106,8 +113,21 @@ class Recovery:
     def api(self, label, path, payload=None):
         headers = {"Authorization": "Bearer " + self.token, "Accept": "application/json",
                    "Content-Type": "application/json", "User-Agent": "Punctum QA inventory/1.0"}
-        raw = self.request(label, API + path, "POST" if payload is not None else "GET", headers,
-                           json.dumps(payload).encode() if payload is not None else None)[2]
+        attempts = 1 if payload is not None else 3
+        statuses = []
+        for attempt in range(attempts):
+            try:
+                raw = self.request(label, API + path, "POST" if payload is not None else "GET", headers,
+                                   json.dumps(payload).encode() if payload is not None else None)[2]
+                statuses.append(self.report["checks"][label]["status"])
+                self.report["checks"][label]["attemptStatuses"] = statuses
+                break
+            except RequestFailure as error:
+                statuses.append(error.status)
+                self.report["checks"][label]["attemptStatuses"] = list(statuses)
+                if error.status not in (None, 500, 502, 503, 504) or attempt + 1 == attempts:
+                    raise
+                time.sleep(2)
         response = json.loads(raw)
         return response.get("data", response) if isinstance(response, dict) else response
 
@@ -137,6 +157,21 @@ class Recovery:
             raise ValueError("Another managed build is already active")
         self.report["originalBuild"] = self.expected_build
         self.save()
+
+        if self.existing_archive:
+            name = self.existing_archive
+            self.report["archiveName"] = name
+            files = self.api("uploadedFileInventory", f"/accounts/{USERNAME}/domains/{DOMAIN}/files?max_depth=1&max_items=100")
+            rows = files.get("items", files.get("files", [])) if isinstance(files, dict) else files
+            matches = [row for row in rows if isinstance(row, dict) and row.get("name") == name] if isinstance(rows, list) else []
+            self.report["uploadedFile"] = {"listed": bool(matches), "matches": len(matches)}
+            detected = self.api("archiveDetection", SITE + "/builds/settings/from-archive?" + urllib.parse.urlencode({"archive_path": name}))
+            if not isinstance(detected, dict):
+                raise ValueError("Provider could not inspect the recovery archive")
+            self.report["detectedSettings"] = {k: detected.get(k) for k in PROBE_SETTINGS}
+            self.report["status"] = "RECOVERY_ARCHIVE_PREPARED_NOT_DEPLOYED"
+            self.health("healthUnchanged")
+            return
 
         # Mint short-lived upload credentials for this existing QA site only.
         credentials = self.api("uploadCredentials", "/files/upload-urls", {"username": USERNAME, "domain": DOMAIN})
@@ -198,7 +233,7 @@ def main():
     request = json.loads(Path(args.request).read_text())
     if request.get("domain") != DOMAIN or request.get("backup_sha256") != BACKUP_DIGEST:
         raise ValueError("Recovery request target or backup is not authorized")
-    operation = Recovery(root, request["action"], request["expected_build_uuid"])
+    operation = Recovery(root, request["action"], request["expected_build_uuid"], request.get("existing_archive"))
     try:
         operation.run()
     except (RequestFailure, ValueError, KeyError, TypeError) as error:

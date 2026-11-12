@@ -2,6 +2,7 @@ import io
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 from pathlib import Path
 
@@ -40,6 +41,28 @@ class RecoveryContractTests(unittest.TestCase):
                 qa.check_probe_settings(settings, [])
         with self.assertRaises(ValueError):
             qa.check_probe_settings(dict(qa.PROBE_SETTINGS), [{"name": "UNEXPECTED_ENV"}])
+
+    def test_transient_read_is_retried_but_a_build_post_is_never_retried(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            calls = []
+            def failing_read(label, url, method, headers, body):
+                calls.append(method)
+                recovery.report['checks'][label] = {'status': 500}
+                raise qa.RequestFailure(label, 500)
+            with patch.object(recovery, 'request', side_effect=failing_read), patch.object(qa.time, 'sleep'):
+                with self.assertRaises(qa.RequestFailure):
+                    recovery.api('read', '/read')
+                self.assertEqual(calls, ['GET', 'GET', 'GET'])
+                calls.clear()
+                with self.assertRaises(qa.RequestFailure):
+                    recovery.api('build', '/build', {'source_type': 'archive'})
+                self.assertEqual(calls, ['POST'])
+
+    def test_inspection_cannot_accept_an_arbitrary_archive_or_path(self):
+        for name in ['../app.zip', 'production.zip', 'https://example.test/app.zip', None]:
+            with self.assertRaises(ValueError):
+                qa.Recovery(Path('.'), 'inspect-upload', 'expected', name)
 
 
 if __name__ == "__main__":
