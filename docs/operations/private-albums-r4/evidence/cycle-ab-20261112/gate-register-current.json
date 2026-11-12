@@ -237,9 +237,9 @@
       "sha": { "currentCode": "397d1077b713e2852b722b83c31fcb6ce9c5ae98" },
       "tests": "Repository evidence and current Drive folder readback; no Engram/PersistFlow write/readback.",
       "environment": "Local, Google Drive connected; other stores unavailable.",
-      "evidence": ["Google Drive folder 1faquU27mdRUcmNn4iIOm4bcyjE34NVU4", "prior checkpoint 1nXaCZFo4QuJbip5aCdx_0GXOMyikX5ksFsfBFdu8ruo"],
-      "blockers": "Engram tool not found; Mem0 is not a substitute. PersistFlow toolkit found but no active connection; user authentication required.",
-      "nextAction": "Create a new Drive checkpoint without overwriting history; ask user to authenticate PersistFlow; locate the actual Engram service."
+      "evidence": ["New Drive checkpoint 1WUtJmiHNsnPt6OoRdRW2MYxTr9mD2r_9NzSeTxhtXWw; owner sgtmenezes2002@gmail.com; parent folder 1faquU27mdRUcmNn4iIOm4bcyjE34NVU4; metadata and content readback verified", "Prior cycle AA checkpoint 1nXaCZFo4QuJbip5aCdx_0GXOMyikX5ksFsfBFdu8ruo preserved"],
+      "blockers": "Engram tool not found; Mem0 is not a substitute. PersistFlow toolkit found but no active connection; user authentication required. Evidence ZIP remains local and is not uploaded to Drive.",
+      "nextAction": "Ask user to authenticate PersistFlow; locate the actual Engram service; upload the evidence ZIP only when a supported local-file upload reference is available."
     }
   ]
 }

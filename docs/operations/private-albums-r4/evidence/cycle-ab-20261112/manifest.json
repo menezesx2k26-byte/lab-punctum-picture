@@ -115,8 +115,8 @@
     },
     {
       "path": "gate-register-current.json",
-      "bytes": 16491,
-      "sha256": "9aa2539ab305cb84eba47f797ae113d2f39d2d32463eabc589487fd5bb53a6d5"
+      "bytes": 16729,
+      "sha256": "f8f57567715631aca142e3b52251a8ced21248580daf84d63f568d176d4d94a9"
     },
     {
       "path": "gate-register.json",
