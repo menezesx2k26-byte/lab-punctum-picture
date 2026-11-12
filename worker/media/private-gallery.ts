@@ -6,7 +6,11 @@ import {
   getReadyGalleryImage,
 } from "../client/repository";
 import { privateResponse } from "../client/response";
-import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
+import {
+  hasMatchingOriginalDigest,
+  hasMatchingR2Sha256,
+  privateOriginalSha256,
+} from "../client/gallery-integrity";
 import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import { requireAdmin } from "../utils/auth";
 import { requireDb, requireOriginals } from "../utils/env";
@@ -74,18 +78,22 @@ export async function servePrivateGalleryImage(
         head.httpMetadata?.contentType !== image.mimeType)
       throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
     if (image.originalSha256) {
-      if (head.customMetadata?.sha256 && head.customMetadata.sha256 !== image.originalSha256)
+      if (head.customMetadata?.sha256 !== undefined && head.customMetadata.sha256 !== image.originalSha256)
         throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
-      // R2 customMetadata is not an independent attestation: a replaced object
-      // can carry the original digest unchanged. Verify bytes even on HEAD,
-      // and never return an apparent success for a corrupt stored original.
-      const original = await bucket.get(image.storageKey);
-      if (!original || original.size !== image.sizeBytes ||
-          original.httpMetadata?.contentType !== image.mimeType ||
-          !hasMatchingOriginalDigest(image.originalSha256,
-            await privateOriginalSha256(new Uint8Array(await original.arrayBuffer())),
-            original.customMetadata?.sha256))
-        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      if (head.checksums.sha256 !== undefined) {
+        if (!hasMatchingR2Sha256(image.originalSha256, head.checksums.sha256))
+          throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      } else {
+        // Legacy R2 objects without a native checksum retain byte-level
+        // verification; new v3 objects can be attested from R2 metadata.
+        const original = await bucket.get(image.storageKey);
+        if (!original || original.size !== image.sizeBytes ||
+            original.httpMetadata?.contentType !== image.mimeType ||
+            !hasMatchingOriginalDigest(image.originalSha256,
+              await privateOriginalSha256(new Uint8Array(await original.arrayBuffer())),
+              original.customMetadata?.sha256))
+          throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      }
     }
     const headers =
       preset === "download"
@@ -111,12 +119,18 @@ export async function servePrivateGalleryImage(
   // Historical rows without a digest remain readable, pending separate backfill.
   let original: ReadableStream<Uint8Array> = object.body;
   if (image.originalSha256) {
-    const bytes = new Uint8Array(await object.arrayBuffer());
-    if (bytes.byteLength !== image.sizeBytes ||
-        !hasMatchingOriginalDigest(image.originalSha256, await privateOriginalSha256(bytes),
-          object.customMetadata?.sha256))
-      throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
-    original = new Response(bytes).body!;
+    if (object.checksums.sha256 !== undefined) {
+      if (!hasMatchingR2Sha256(image.originalSha256, object.checksums.sha256) ||
+          (object.customMetadata?.sha256 !== undefined && object.customMetadata.sha256 !== image.originalSha256))
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+    } else {
+      const bytes = new Uint8Array(await object.arrayBuffer());
+      if (bytes.byteLength !== image.sizeBytes ||
+          !hasMatchingOriginalDigest(image.originalSha256, await privateOriginalSha256(bytes),
+            object.customMetadata?.sha256))
+        throw new AppError(503, "ORIGINAL_INTEGRITY", "A integridade desta foto não pôde ser confirmada.");
+      original = new Response(bytes).body!;
+    }
   }
   if (preset === "download")
     return privateResponse(

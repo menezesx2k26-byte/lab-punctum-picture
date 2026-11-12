@@ -1,6 +1,11 @@
 import { clientImageIntentSchema, CLIENT_MAX_UPLOAD_BYTES } from "../../shared/client-galleries";
 import { validateGalleryRaster, isGalleryRasterTransientError } from "../client/gallery-raster.mjs";
-import { hasMatchingOriginalDigest, privateOriginalSha256 } from "../client/gallery-integrity";
+import {
+  hasMatchingOriginalDigest,
+  hasMatchingR2Sha256,
+  privateOriginalSha256,
+  privateOriginalSha256Bytes,
+} from "../client/gallery-integrity";
 import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import {
   getGallery,
@@ -27,6 +32,7 @@ type IntentRow = {
   status: string;
   expiresAt: string;
   sha256: string | null;
+  uploadTokenVersion: number;
 };
 async function signature(intent: IntentRow, env: Env) {
   const key = await crypto.subtle.importKey(
@@ -36,26 +42,35 @@ async function signature(intent: IntentRow, env: Env) {
     false,
     ["sign"],
   );
+  const payload = intent.uploadTokenVersion === 3
+    ? [
+        "private-gallery-direct-v3",
+        intent.id,
+        intent.galleryId,
+        intent.imageId,
+        intent.storageKey,
+        intent.expectedMime,
+        intent.expectedSize,
+        intent.expiresAt,
+        intent.sha256,
+      ]
+    : [
+        // Preserve the exact v2 token payload for intents already issued.
+        "private-gallery-direct-v2",
+        intent.id,
+        intent.galleryId,
+        intent.imageId,
+        intent.storageKey,
+        intent.expectedMime,
+        intent.expectedSize,
+        intent.expiresAt,
+      ];
   return base64Url(
     new Uint8Array(
       await crypto.subtle.sign(
         "HMAC",
         key,
-        new TextEncoder().encode(
-          // Domain-separated v2 token binds the exact image and R2 key too.
-          // A coherent D1 restore/rebind must invalidate the old bearer token,
-          // even when gallery, MIME, size and expiry remain unchanged.
-          JSON.stringify([
-            "private-gallery-direct-v2",
-            intent.id,
-            intent.galleryId,
-            intent.imageId,
-            intent.storageKey,
-            intent.expectedMime,
-            intent.expectedSize,
-            intent.expiresAt,
-          ]),
-        ),
+        new TextEncoder().encode(JSON.stringify(payload)),
       ),
     ),
   );
@@ -132,6 +147,100 @@ async function readBounded(request: Request, size: number) {
     throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
   return bytes!;
 }
+
+type UploadStreamState = { failure: AppError | null; validated: boolean };
+function cancellationSafeBody(body: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+  const reader = body.getReader();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const item = await reader.read();
+        if (item.done) controller.close();
+        else controller.enqueue(item.value);
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      try { await reader.cancel(reason); } catch { /* upstream cancellation is best effort */ }
+    },
+  });
+}
+function validatedUploadStream(
+  request: Request,
+  size: number,
+  mime: string,
+): { stream: ReadableStream<Uint8Array>; state: UploadStreamState } {
+  if (!request.body || request.headers.get("content-length") !== String(size))
+    throw new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere.");
+  const state: UploadStreamState = { failure: null, validated: false };
+  let total = 0;
+  let emptyChunks = 0;
+  let nonemptyChunks = 0;
+  const prefix = new Uint8Array(24);
+  let prefixLength = 0;
+  const fail = (error: AppError): never => {
+    state.failure = error;
+    throw error;
+  };
+  const guarded = cancellationSafeBody(request.body).pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      if (chunk.byteLength === 0) {
+        if (++emptyChunks > 64)
+          fail(new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido."));
+        return;
+      }
+      if (++nonemptyChunks > 8192)
+        fail(new AppError(400, "UPLOAD_STREAM", "Fluxo de envio inválido."));
+      if (chunk.byteLength > size - total)
+        fail(new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere."));
+      const copyLength = Math.min(prefix.byteLength - prefixLength, chunk.byteLength);
+      if (copyLength > 0) {
+        prefix.set(chunk.subarray(0, copyLength), prefixLength);
+        prefixLength += copyLength;
+      }
+      total += chunk.byteLength;
+      controller.enqueue(chunk);
+    },
+    flush() {
+      if (total !== size)
+        fail(new AppError(400, "UPLOAD_SIZE", "O tamanho da foto não confere."));
+      if (!matchesMime(prefix.subarray(0, prefixLength), mime))
+        fail(new AppError(400, "INVALID_IMAGE", "Envie uma imagem JPG, PNG ou WebP válida."));
+      state.validated = true;
+    },
+  }));
+  return { stream: guarded.pipeThrough(new FixedLengthStream(size)), state };
+}
+
+async function digestValidatedStream(
+  stream: ReadableStream<Uint8Array>,
+  state: UploadStreamState,
+): Promise<string> {
+  const digest = new (crypto as Crypto & {
+    DigestStream: new (algorithm: "SHA-256") => WritableStream<Uint8Array> & { digest: Promise<ArrayBuffer> };
+  }).DigestStream("SHA-256");
+  try {
+    await stream.pipeTo(digest);
+    return Array.from(new Uint8Array(await digest.digest), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
+  } catch {
+    throw state.failure ?? new AppError(400, "UPLOAD_STREAM", "Fluxo de envio interrompido.");
+  }
+}
+
+function assertR2Digest(
+  object: Pick<R2Object, "size" | "httpMetadata" | "customMetadata" | "checksums">,
+  expectedSize: number,
+  expectedMime: string,
+  expectedDigest: string,
+) {
+  if (object.size !== expectedSize || object.httpMetadata?.contentType !== expectedMime ||
+      !hasMatchingR2Sha256(expectedDigest, object.checksums.sha256) ||
+      (object.customMetadata?.sha256 !== undefined && object.customMetadata.sha256 !== expectedDigest))
+    throw new AppError(409, "UPLOAD_MISMATCH", "A integridade do original armazenado não confere.");
+}
 export async function handleClientGalleryUploadApi(
   request: Request,
   url: URL,
@@ -174,7 +283,8 @@ export async function handleClientGalleryUploadApi(
       storageKey,
       status: "pending",
       expiresAt: new Date(Date.now() + 900_000).toISOString(),
-      sha256: null,
+      sha256: input.sha256,
+      uploadTokenVersion: 3,
     };
     const token = await signature(intent, env);
     await db.batch([
@@ -197,8 +307,9 @@ export async function handleClientGalleryUploadApi(
         ),
       db
         .prepare(
-          `INSERT INTO client_gallery_upload_intents (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at)
-        VALUES (?,?,?,?,?,?,'pending',?,?)`,
+          `INSERT INTO client_gallery_upload_intents
+           (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256,upload_token_version)
+        VALUES (?,?,?,?,?,?,'pending',?,?,?,3)`,
         )
         .bind(
           id,
@@ -209,6 +320,7 @@ export async function handleClientGalleryUploadApi(
           storageKey,
           intent.expiresAt,
           now,
+          input.sha256,
         ),
     ]);
     await writeAudit(db, auditPrincipal(actor), "client_gallery.upload_intent_created", "client_gallery", galleryId, { imageId });
@@ -231,7 +343,8 @@ export async function handleClientGalleryUploadApi(
   const intent = await db
     .prepare(
       `SELECT id,gallery_id AS galleryId,image_id AS imageId,expected_mime AS expectedMime,expected_size AS expectedSize,
-    storage_key AS storageKey,status,expires_at AS expiresAt,sha256 FROM client_gallery_upload_intents WHERE id=? AND gallery_id=?`,
+    storage_key AS storageKey,status,expires_at AS expiresAt,sha256,upload_token_version AS uploadTokenVersion
+    FROM client_gallery_upload_intents WHERE id=? AND gallery_id=?`,
     )
     .bind(match[3] ?? "", galleryId)
     .first<IntentRow>();
@@ -289,22 +402,9 @@ export async function handleClientGalleryUploadApi(
       throw new AppError(403, "UPLOAD_SIGNATURE", "Envio não autorizado.");
     if (request.headers.get("Content-Type") !== intent.expectedMime)
       throw new AppError(400, "UPLOAD_TYPE", "O tipo da foto não confere.");
-    const bytes = await readBounded(request, intent.expectedSize);
-    if (!matchesMime(bytes, intent.expectedMime))
-      throw new AppError(
-        400,
-        "INVALID_IMAGE",
-        "Envie uma imagem JPG, PNG ou WebP válida.",
-      );
-    const digest = await privateOriginalSha256(bytes);
-    if (intent.sha256 && intent.sha256 !== digest)
-      throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
-    // A concurrent restore, revocation or parallel upload may have changed
-    // the linked image/intent while the request body was being read. Recheck
-    // the signed immutable fields and both live statuses immediately before
-    // the first R2 access. A concurrent identical PUT that is now uploaded
-    // resumes by verifying the existing object instead of overwriting it.
-    // This narrows the D1/R2 race; it cannot make them atomically transactional.
+    // Recheck the exact D1 tuple immediately before starting the stream into
+    // R2. The later uploaded CAS still protects against a restore racing the
+    // stream; D1 and R2 do not share an atomic transaction.
     const live = await db.prepare(
       `SELECT i.status, i.sha256 FROM client_gallery_upload_intents i
        JOIN client_gallery_images m ON m.gallery_id=i.gallery_id AND m.id=i.image_id
@@ -318,26 +418,109 @@ export async function handleClientGalleryUploadApi(
       new Date().toISOString(), intent.storageKey, intent.expectedMime,
       intent.expectedSize, intent.storageKey, intent.expectedMime,
       intent.expectedSize).first<{status: string; sha256: string | null}>();
-    if (!live || (live.sha256 !== null && live.sha256 !== digest))
+    if (!live)
       throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
         "Os metadados persistidos deste envio não conferem.");
-    const object = live.status === "pending" ? await bucket.put(intent.storageKey, bytes, {
-      onlyIf: { etagDoesNotMatch: "*" },
-      httpMetadata: { contentType: intent.expectedMime },
-      customMetadata: { sha256: digest },
-    }) : null;
-    if (!object) {
-      // A previous put may have succeeded before its D1 transition failed.
-      // Resume only for the identical immutable object; never overwrite it.
-      const existing = await bucket.get(intent.storageKey);
-      if (!existing || existing.size !== bytes.length ||
-          existing.httpMetadata?.contentType !== intent.expectedMime)
-        throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
-      const saved = new Uint8Array(await existing.arrayBuffer());
-      if (saved.length !== bytes.length || saved.some((byte, i) => byte !== bytes[i]))
-        throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
-      if (!hasMatchingOriginalDigest(digest, digest, existing.customMetadata?.sha256))
-        throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde ao original armazenado.");
+
+    let digest: string;
+    if (intent.uploadTokenVersion === 3) {
+      if (!intent.sha256 || live.sha256 !== intent.sha256)
+        throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
+          "O resumo de integridade deste envio não confere.");
+      const validated = validatedUploadStream(request, intent.expectedSize, intent.expectedMime);
+      if (live.status === "pending") {
+        // Recover an R2-success/D1-pending upload by validating this retry
+        // stream against the signed digest and the existing native checksum.
+        const existingBefore = await bucket.head(intent.storageKey);
+        if (existingBefore) {
+          digest = await digestValidatedStream(validated.stream, validated.state);
+          if (digest !== intent.sha256)
+            throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
+          assertR2Digest(existingBefore, intent.expectedSize, intent.expectedMime, intent.sha256);
+        } else {
+          let object: R2Object | null;
+          try {
+            object = await bucket.put(intent.storageKey, validated.stream, {
+              sha256: privateOriginalSha256Bytes(intent.sha256),
+              onlyIf: { etagDoesNotMatch: "*" },
+              httpMetadata: { contentType: intent.expectedMime },
+              customMetadata: { sha256: intent.sha256 },
+            });
+          } catch (error) {
+            if (validated.state.failure) throw validated.state.failure;
+            if (!validated.state.validated)
+              throw new AppError(400, "UPLOAD_STREAM", "Fluxo de envio interrompido.");
+            if (/checksum/i.test(String(error)))
+              throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
+            throw error;
+          }
+          if (!validated.state.validated)
+            throw new AppError(409, "UPLOAD_CLOSED", "Repita o envio para confirmar o original armazenado.");
+          if (object) {
+            assertR2Digest(object, intent.expectedSize, intent.expectedMime, intent.sha256);
+          } else {
+            // A concurrent identical request may have won the immutable R2
+            // write. R2 verifies the supplied checksum while consuming the
+            // stream; confirm the stored checksum before accepting the race.
+            const existing = await bucket.head(intent.storageKey);
+            if (!existing)
+              throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
+            assertR2Digest(existing, intent.expectedSize, intent.expectedMime, intent.sha256);
+          }
+          digest = intent.sha256;
+        }
+      } else {
+        // A retry after R2 succeeded but before the D1 transition validates
+        // its incoming stream, then compares the existing native R2 checksum.
+        digest = await digestValidatedStream(validated.stream, validated.state);
+        if (digest !== intent.sha256)
+          throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
+        const existing = await bucket.head(intent.storageKey);
+        if (!existing)
+          throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
+        assertR2Digest(existing, intent.expectedSize, intent.expectedMime, intent.sha256);
+      }
+    } else {
+      // Legacy v2 intents keep their original buffered protocol and signature.
+      // New v2 re-attestations also ask R2 to retain a native checksum, while
+      // old objects without one are verified byte-for-byte below.
+      const bytes = await readBounded(request, intent.expectedSize);
+      if (!matchesMime(bytes, intent.expectedMime))
+        throw new AppError(400, "INVALID_IMAGE", "Envie uma imagem JPG, PNG ou WebP válida.");
+      digest = await privateOriginalSha256(bytes);
+      if (intent.sha256 && intent.sha256 !== digest)
+        throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde à foto recebida.");
+      if (live.sha256 !== null && live.sha256 !== digest)
+        throw new AppError(409, "UPLOAD_INTENT_MISMATCH",
+          "Os metadados persistidos deste envio não conferem.");
+      const object = live.status === "pending" ? await bucket.put(intent.storageKey, bytes, {
+        sha256: privateOriginalSha256Bytes(digest),
+        onlyIf: { etagDoesNotMatch: "*" },
+        httpMetadata: { contentType: intent.expectedMime },
+        customMetadata: { sha256: digest },
+      }) : null;
+      if (object) {
+        if (object.checksums.sha256 && !hasMatchingR2Sha256(digest, object.checksums.sha256))
+          throw new AppError(409, "UPLOAD_MISMATCH", "O resumo do original armazenado não confere.");
+      } else {
+        const existing = await bucket.head(intent.storageKey);
+        if (!existing || existing.size !== bytes.length ||
+            existing.httpMetadata?.contentType !== intent.expectedMime)
+          throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
+        if (existing.checksums.sha256) {
+          if (!hasMatchingR2Sha256(digest, existing.checksums.sha256) ||
+              (existing.customMetadata?.sha256 !== undefined && existing.customMetadata.sha256 !== digest))
+            throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde ao original armazenado.");
+        } else {
+          const savedObject = await bucket.get(intent.storageKey);
+          if (!savedObject) throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
+          const saved = new Uint8Array(await savedObject.arrayBuffer());
+          if (saved.length !== bytes.length || saved.some((byte, i) => byte !== bytes[i]))
+            throw new AppError(409, "UPLOAD_CLOSED", "Este envio já foi recebido.");
+          if (!hasMatchingOriginalDigest(digest, digest, savedObject.customMetadata?.sha256))
+            throw new AppError(409, "UPLOAD_MISMATCH", "Este envio não corresponde ao original armazenado.");
+        }
+      }
     }
     // The immutable R2 write can succeed while a concurrent restore changes
     // D1. Never mark the restored/rebound intent uploaded with this object's
@@ -409,7 +592,11 @@ export async function handleClientGalleryUploadApi(
     if (
       !head ||
       head.size !== intent.expectedSize ||
-      head.httpMetadata?.contentType !== intent.expectedMime
+      head.httpMetadata?.contentType !== intent.expectedMime ||
+      (head.checksums.sha256 !== undefined &&
+        !hasMatchingR2Sha256(intent.sha256, head.checksums.sha256)) ||
+      (intent.uploadTokenVersion === 3 && !hasMatchingR2Sha256(intent.sha256, head.checksums.sha256)) ||
+      (head.customMetadata?.sha256 !== undefined && head.customMetadata.sha256 !== intent.sha256)
     )
       throw new AppError(
         409,
@@ -423,18 +610,31 @@ export async function handleClientGalleryUploadApi(
         "UPLOAD_INCOMPLETE",
         "Não foi possível conferir o envio da foto.",
       );
-    // Verify the exact persisted bytes, not only R2's size, MIME or ETag.
-    // Keep old intents nullable rather than invent historical checksums.
-    const source = new Uint8Array(await object.arrayBuffer());
-    if (source.byteLength !== intent.expectedSize)
-      throw new AppError(409, "UPLOAD_MISMATCH", "O tamanho do original armazenado não confere.");
-    const digest = await privateOriginalSha256(source);
-    if (!hasMatchingOriginalDigest(intent.sha256, digest, object.customMetadata?.sha256))
-      throw new AppError(409, "UPLOAD_MISMATCH", "A integridade do original armazenado não confere.");
+    if (object.size !== intent.expectedSize ||
+        object.httpMetadata?.contentType !== intent.expectedMime)
+      throw new AppError(409, "UPLOAD_MISMATCH", "O tamanho ou tipo do original armazenado não confere.");
+    // v3 objects carry R2's independently verified native checksum. Legacy v2
+    // objects without that checksum retain the old full-byte re-attestation.
+    let source: ReadableStream<Uint8Array>;
+    if (object.checksums.sha256 !== undefined) {
+      if (!hasMatchingR2Sha256(intent.sha256, object.checksums.sha256) ||
+          (object.customMetadata?.sha256 !== undefined && object.customMetadata.sha256 !== intent.sha256))
+        throw new AppError(409, "UPLOAD_MISMATCH", "A integridade do original armazenado não confere.");
+      source = object.body;
+    } else {
+      if (intent.uploadTokenVersion === 3)
+        throw new AppError(409, "UPLOAD_MISMATCH", "O checksum nativo do original não está disponível.");
+      const bytes = new Uint8Array(await object.arrayBuffer());
+      if (bytes.byteLength !== intent.expectedSize ||
+          !hasMatchingOriginalDigest(intent.sha256, await privateOriginalSha256(bytes), object.customMetadata?.sha256))
+        throw new AppError(409, "UPLOAD_MISMATCH", "A integridade do original armazenado não confere.");
+      source = new Response(bytes).body!;
+    }
+    const digest = intent.sha256;
     let width: number;
     let height: number;
     try {
-      const raster = await validateGalleryRaster(env.IMAGES, new Response(source).body!);
+      const raster = await validateGalleryRaster(env.IMAGES, source);
       width = raster.width;
       height = raster.height;
     } catch (error) {

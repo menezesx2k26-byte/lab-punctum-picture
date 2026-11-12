@@ -41,6 +41,7 @@ describe("private gallery contracts", () => {
       filename: "a.jpg",
       mimeType: "image/jpeg",
       sizeBytes: 20_000_000,
+      sha256: "a".repeat(64),
     };
     expect(clientImageIntentSchema.safeParse(input).success).toBe(true);
     expect(

@@ -9,6 +9,12 @@ export function isSuccessfulPrivateUpload(status: number): boolean {
   return Number.isInteger(status) && status >= 200 && status < 300;
 }
 
+/** Hash the selected original before requesting a signed upload intent. */
+export async function privateGalleryFileSha256(file: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export function uploadQueueBatch<T>(items: T[], limit = 3): T[][] {
   const size = Math.max(1, Math.min(3, Math.floor(limit) || 3));
   const groups: T[][] = [];

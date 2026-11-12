@@ -2,14 +2,228 @@ import { env } from "cloudflare:workers";
 import { beforeAll, expect, it } from "vitest";
 import { bootstrapPrivateDb, privateRequest, seedClient, seedGallery, seedReadyImage } from "./client-fixture";
 import { handleClientGalleryUploadApi } from "../../worker/api/client-gallery-upload";
+import { servePrivateGalleryImage } from "../../worker/media/private-gallery";
+import { validateGalleryRaster } from "../../worker/client/gallery-raster.mjs";
+import { base64Url } from "../../worker/client/passwords";
+import { requireClientSessionSecret } from "../../worker/client/secret";
 
 beforeAll(bootstrapPrivateDb);
+async function sha256(bytes: Uint8Array) {
+  const data = new Uint8Array(bytes.byteLength);
+  data.set(bytes);
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", data.buffer))]
+    .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+async function uploadIntentRequest(gallery: string, filename: string, bytes: Uint8Array) {
+  return privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
+    filename, mimeType: "image/png", sizeBytes: bytes.length, sha256: await sha256(bytes),
+  });
+}
+function hexBytes(value: string) {
+  return Uint8Array.from(value.match(/.{2}/g) ?? [], part => Number.parseInt(part, 16));
+}
+function hexBuffer(value?: ArrayBuffer) {
+  return value ? [...new Uint8Array(value)].map(byte => byte.toString(16).padStart(2, "0")).join("") : null;
+}
+function forbidArrayBuffer<T extends object>(object: T): T {
+  return new Proxy(object, {
+    get(target, property) {
+      if (property === "arrayBuffer")
+        return () => { throw new Error("native R2 SHA-256 should avoid arrayBuffer()"); };
+      const value = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
+async function legacyV2Token(row: {
+  id: string; galleryId: string; imageId: string; storageKey: string;
+  expectedMime: string; expectedSize: number; expiresAt: string;
+}) {
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(requireClientSessionSecret(env)),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const payload = JSON.stringify([
+    "private-gallery-direct-v2", row.id, row.galleryId, row.imageId,
+    row.storageKey, row.expectedMime, row.expectedSize, row.expiresAt,
+  ]);
+  return base64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
+}
+it("requires the client digest and binds new upload intents to HMAC v3", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
+  const missing = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
+    filename: "missing-digest.png", mimeType: "image/png", sizeBytes: bytes.length,
+  });
+  await expect(handleClientGalleryUploadApi(missing, new URL(missing.url), env))
+    .rejects.toMatchObject({ status: 400 });
+  const reserve = await uploadIntentRequest(gallery, "bound.png", bytes);
+  const response = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  expect(response?.status).toBe(201);
+  const issued = await response!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  const row = await env.DB.prepare(
+    "SELECT sha256,upload_token_version AS version FROM client_gallery_upload_intents WHERE id=?",
+  ).bind(issued.intentId).first<{ sha256: string; version: number }>();
+  expect(row).toEqual({ sha256: await sha256(bytes), version: 3 });
+  await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=? WHERE id=?")
+    .bind("0".repeat(64), issued.intentId).run();
+  const upload = new Request(issued.uploadUrl, {
+    method: "PUT", body: bytes,
+    headers: { ...issued.requiredHeaders, Origin: "http://localhost:8787", "Content-Length": String(bytes.length) },
+  });
+  await expect(handleClientGalleryUploadApi(upload, new URL(upload.url), env))
+    .rejects.toMatchObject({ status: 403, code: "UPLOAD_SIGNATURE" });
+  const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(issued.imageId).first<{ key: string }>())!.key;
+  expect(await env.ORIGINALS.head(key)).toBeNull();
+});
+
+it("streams v3 bytes with FixedLengthStream and R2 SHA-256, then verifies retry, complete, HEAD and download without buffering", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
+  const digest = await sha256(bytes);
+  const reserve = await uploadIntentRequest(gallery, "stream.png", bytes);
+  const response = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  const issued = await response!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+    .bind(issued.imageId).first<{ key: string }>())!.key;
+  let observedPut = 0;
+  const streamingBucket = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "put") return async (objectKey: string, value: ReadableStream<Uint8Array>, options: R2PutOptions) => {
+        observedPut++;
+        expect(objectKey).toBe(key);
+        expect(value).toBeInstanceOf(ReadableStream);
+        expect(options.sha256).toBeInstanceOf(Uint8Array);
+        expect([...(options.sha256 as Uint8Array)]).toEqual([...hexBytes(digest)]);
+        expect(options.onlyIf).toEqual({ etagDoesNotMatch: "*" });
+        return target.put(objectKey, value, options);
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const fragmented = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes.slice(0, 8));
+      controller.enqueue(bytes.slice(8, 19));
+      controller.enqueue(bytes.slice(19));
+      controller.close();
+    },
+  });
+  const uploadRequest = new Request(issued.uploadUrl, {
+    method: "PUT", body: fragmented,
+    headers: { ...issued.requiredHeaders, Origin: "http://localhost:8787", "Content-Length": String(bytes.length) },
+  });
+  expect((await handleClientGalleryUploadApi(uploadRequest, new URL(uploadRequest.url),
+    { ...env, ORIGINALS: streamingBucket } as Env))?.status).toBe(200);
+  expect(observedPut).toBe(1);
+  expect(hexBuffer((await env.ORIGINALS.head(key))?.checksums.sha256)).toBe(digest);
+
+  const retryBucket = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "put" || property === "get")
+        return () => { throw new Error("an uploaded v3 retry must verify the existing R2 checksum only"); };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const retry = new Request(issued.uploadUrl, {
+    method: "PUT", body: bytes,
+    headers: { ...issued.requiredHeaders, Origin: "http://localhost:8787", "Content-Length": String(bytes.length) },
+  });
+  expect((await handleClientGalleryUploadApi(retry, new URL(retry.url),
+    { ...env, ORIGINALS: retryBucket } as Env))?.status).toBe(200);
+
+  const noBufferBucket = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "get") return async (objectKey: string) => {
+        const object = await target.get(objectKey);
+        return object ? forbidArrayBuffer(object) : null;
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const complete = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/${issued.intentId}/complete`, "POST");
+  expect((await handleClientGalleryUploadApi(complete, new URL(complete.url),
+    { ...env, ORIGINALS: noBufferBucket } as Env))?.status).toBe(200);
+  expect((await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+    .bind(issued.intentId).first())?.status).toBe("completed");
+
+  const mediaBucket = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "get") return async (objectKey: string) => {
+        const object = await target.get(objectKey);
+        return object ? forbidArrayBuffer(object) : null;
+      };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const isolated = { ...env, ORIGINALS: mediaBucket } as Env;
+  const headOnlyBucket = new Proxy(env.ORIGINALS, {
+    get(target, property) {
+      if (property === "get")
+        return () => { throw new Error("native R2 checksum HEAD must not fetch the object body"); };
+      const value = Reflect.get(target, property);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+  const head = await servePrivateGalleryImage(
+    privateRequest(`/admin/api/albuns-privados/${gallery}/images/${issued.imageId}/download`, "HEAD"),
+    { ...env, ORIGINALS: headOnlyBucket } as Env, gallery, issued.imageId, "download", "admin", true,
+  );
+  expect(head.status).toBe(200);
+  const download = await servePrivateGalleryImage(
+    privateRequest(`/admin/api/albuns-privados/${gallery}/images/${issued.imageId}/download`, "GET"),
+    isolated, gallery, issued.imageId, "download", "admin", false,
+  );
+  expect(download.status).toBe(200);
+  expect(new Uint8Array(await download.arrayBuffer())).toEqual(bytes);
+});
+
+it("keeps pre-existing HMAC v2 intents on v2 after the server fills their legacy digest", async () => {
+  const gallery = await seedGallery(await seedClient(), "draft");
+  const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
+  const reserve = await uploadIntentRequest(gallery, "legacy.png", bytes);
+  const response = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
+  const issued = await response!.json() as {
+    intentId: string; imageId: string; uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  const row = await env.DB.prepare(`SELECT id,gallery_id AS galleryId,image_id AS imageId,
+    storage_key AS storageKey,expected_mime AS expectedMime,expected_size AS expectedSize,
+    expires_at AS expiresAt FROM client_gallery_upload_intents WHERE id=?`)
+    .bind(issued.intentId).first<{
+      id: string; galleryId: string; imageId: string; storageKey: string;
+      expectedMime: string; expectedSize: number; expiresAt: string;
+    }>();
+  await env.DB.prepare("UPDATE client_gallery_upload_intents SET upload_token_version=2,sha256=NULL WHERE id=?")
+    .bind(issued.intentId).run();
+  const token = await legacyV2Token(row!);
+  const headers = { ...issued.requiredHeaders, "X-Upload-Token": token,
+    Origin: "http://localhost:8787", "Content-Length": String(bytes.length) };
+  const put = () => new Request(issued.uploadUrl, { method: "PUT", headers, body: bytes });
+  expect((await handleClientGalleryUploadApi(put(), new URL(issued.uploadUrl), env))?.status).toBe(200);
+  expect(await env.DB.prepare("SELECT sha256,upload_token_version AS version FROM client_gallery_upload_intents WHERE id=?")
+    .bind(issued.intentId).first()).toEqual({ sha256: await sha256(bytes), version: 2 });
+  expect((await handleClientGalleryUploadApi(put(), new URL(issued.uploadUrl), env))?.status).toBe(200);
+});
+
 it("refuses new upload intents before creating gallery rows when image validation is unavailable", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const request = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
     filename: "foto.png",
     mimeType: "image/png",
     sizeBytes: 80,
+    sha256: await sha256(new Uint8Array(80)),
   });
   await expect(handleClientGalleryUploadApi(request, new URL(request.url), {
     ...env,
@@ -78,6 +292,7 @@ it("rejects photos over the 20 MB Images Binding input limit before any D1 reser
       filename: "too-large-for-images-binding.png",
       mimeType: "image/png",
       sizeBytes,
+      sha256: "0".repeat(64),
     });
     await expect(handleClientGalleryUploadApi(request, new URL(request.url), env))
       .rejects.toMatchObject({status:400});
@@ -88,14 +303,25 @@ it("rejects photos over the 20 MB Images Binding input limit before any D1 reser
     .bind(gallery).first<{n:number}>())?.n).toBe(0);
 });
 
+it("shows the local Images emulator accepts 25 MiB through the real raster helper and cannot prove the provider cap", async () => {
+  const png = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
+    c => c.charCodeAt(0),
+  );
+  const original = new Uint8Array(26_214_400);
+  original.set(png);
+  const result = await validateGalleryRaster(env.IMAGES, new Response(original).body!);
+  expect(original.byteLength).toBe(26_214_400);
+  expect(result).toMatchObject({ width: 2, height: 2 });
+});
+
 it("rejects an authenticated upload flooded with empty stream chunks without writing R2", async () => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const bytes = Uint8Array.from(
     atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
     c => c.charCodeAt(0),
   );
-  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
-    "POST", { filename: "flood.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const reserve = await uploadIntentRequest(gallery, "flood.png", bytes);
   const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
   expect(issued?.status).toBe(201);
   const intent = await issued!.json() as {
@@ -129,8 +355,7 @@ it("preserves the signed intent when an invalid stream also rejects cancellation
     atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
     c => c.charCodeAt(0),
   );
-  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
-    "POST", { filename: "cancellation.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const reserve = await uploadIntentRequest(gallery, "cancellation.png", bytes);
   const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
   const intent = await issued!.json() as {
     intentId:string; imageId:string; uploadUrl:string; requiredHeaders:Record<string,string>;
@@ -161,8 +386,7 @@ it("rejects excessive nonempty upload fragments before R2 and allows a normal re
   );
   const bytes = new Uint8Array(8_193);
   bytes.set(png);
-  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
-    "POST", { filename: "fragments.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const reserve = await uploadIntentRequest(gallery, "fragments.png", bytes);
   const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
   expect(issued?.status).toBe(201);
   const intent = await issued!.json() as {
@@ -197,8 +421,7 @@ it("keeps an upload intent retryable after its incoming body stream aborts", asy
     atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
     c => c.charCodeAt(0),
   );
-  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
-    "POST", { filename: "retry.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const reserve = await uploadIntentRequest(gallery, "retry.png", bytes);
   const issued = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
   const intent = await issued!.json() as {
     intentId: string; imageId: string; uploadUrl: string;
@@ -311,10 +534,7 @@ it("blocks a signed direct upload when a concurrent restore promotes the image a
     atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
     (c) => c.charCodeAt(0),
   );
-  const intentPath = `/admin/api/albuns-privados/${gallery}/uploads/intents`;
-  const intentRequest = privateRequest(intentPath, "POST", {
-    filename: "race.png", mimeType: "image/png", sizeBytes: bytes.length,
-  });
+  const intentRequest = await uploadIntentRequest(gallery, "race.png", bytes);
   const result = await handleClientGalleryUploadApi(intentRequest, new URL(intentRequest.url), env);
   expect(result?.status).toBe(201);
   const reservation = await result!.json() as {
@@ -385,9 +605,7 @@ it("refuses replay of an upload token after a coherent D1 image/key rebind", asy
     atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
     (c) => c.charCodeAt(0),
   );
-  const create = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
-    filename: "first.png", mimeType: "image/png", sizeBytes: bytes.length,
-  });
+  const create = await uploadIntentRequest(gallery, "first.png", bytes);
   const result = await handleClientGalleryUploadApi(create, new URL(create.url), env);
   expect(result?.status).toBe(201);
   const issued = await result!.json() as {
@@ -499,8 +717,7 @@ it("keeps a staged R2 original recoverable when a restore rebinds the intent aft
     atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="),
     c => c.charCodeAt(0),
   );
-  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`,
-    "POST", { filename: "staged.png", mimeType: "image/png", sizeBytes: bytes.length });
+  const reserve = await uploadIntentRequest(gallery, "staged.png", bytes);
   const response = await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env);
   expect(response?.status).toBe(201);
   const issued = await response!.json() as {
@@ -612,9 +829,7 @@ it("does not mark another image failed if restore rebinds an intent during faile
 it.each(["identical", "revoked", "digest", "dimensions", "expiry"])("reconciles concurrent completion only for the identical original: %s", async scenario => {
   const gallery = await seedGallery(await seedClient(), "draft");
   const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), c => c.charCodeAt(0));
-  const reserve = privateRequest(`/admin/api/albuns-privados/${gallery}/uploads/intents`, "POST", {
-    filename: "concurrent.png", mimeType: "image/png", sizeBytes: bytes.length,
-  });
+  const reserve = await uploadIntentRequest(gallery, "concurrent.png", bytes);
   const issued = await (await handleClientGalleryUploadApi(reserve, new URL(reserve.url), env))!.json() as {
     intentId:string; imageId:string; uploadUrl:string; requiredHeaders:Record<string,string>;
   };

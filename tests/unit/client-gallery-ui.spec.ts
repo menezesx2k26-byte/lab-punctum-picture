@@ -10,9 +10,15 @@ import {
   uploadQueueBatch,
   runPrivateUploadQueue,
   isSuccessfulPrivateUpload,
+  privateGalleryFileSha256,
 } from "../../app/admin/components/private-gallery-utils";
 
 describe("private client navigation", () => {
+  it("computes a lowercase SHA-256 digest from the selected file before reservation", async () => {
+    expect(await privateGalleryFileSha256(new Blob(["abc"]))).toBe(
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    );
+  });
   it("never accepts an HTTP 409 conflict as a successful direct upload", () => {
     expect(isSuccessfulPrivateUpload(200)).toBe(true);
     expect(isSuccessfulPrivateUpload(201)).toBe(true);

@@ -36,6 +36,7 @@ export const clientImageIntentSchema = z
     filename: z.string().trim().min(1).max(240),
     mimeType: z.enum(CLIENT_MIME_TYPES),
     sizeBytes: z.number().int().positive().max(CLIENT_MAX_UPLOAD_BYTES),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
     altText: z.string().trim().max(500).default(""),
   })
   .strict();

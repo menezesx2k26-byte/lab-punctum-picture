@@ -21,6 +21,7 @@ import {
   canSubmitPrivateGallery,
   runPrivateUploadQueue,
   isSuccessfulPrivateUpload,
+  privateGalleryFileSha256,
   PRIVATE_GALLERY_STATUS,
   type ClientAccountSummary,
 } from "./private-gallery-utils";
@@ -160,6 +161,7 @@ type UploadJob = {
   error?: string;
   intent?: UploadIntent;
   uploaded?: boolean;
+  sha256?: string;
 };
 function directUpload(
   intent: UploadIntent,
@@ -259,6 +261,8 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
       };
       patch({ status: "uploading", error: undefined });
       try {
+        if (!job.sha256)
+          patch({ sha256: await privateGalleryFileSha256(job.file) });
         if (!job.intent)
           patch({
             intent: await privateApi<UploadIntent>(
@@ -268,6 +272,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
                 filename: job.file.name,
                 mimeType: job.file.type,
                 sizeBytes: job.file.size,
+                sha256: job.sha256!,
                 altText: job.file.name.replace(/\.[^.]+$/, ""),
               },
             ),

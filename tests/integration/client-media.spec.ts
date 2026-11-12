@@ -11,6 +11,8 @@ import { handleClientGalleryUploadApi } from "../../worker/api/client-gallery-up
 import { handlePrivateGalleryRoutes } from "../../worker/client/router";
 import { createClientSession } from "../../worker/client/auth";
 import { servePrivateGalleryImage } from "../../worker/media/private-gallery";
+import { base64Url } from "../../worker/client/passwords";
+import { requireClientSessionSecret } from "../../worker/client/secret";
 
 const PNG = Uint8Array.from(
   atob(
@@ -24,16 +26,40 @@ type Intent = {
   uploadUrl: string;
   requiredHeaders: Record<string, string>;
 };
+async function sha256(bytes: Uint8Array) {
+  const data = new Uint8Array(bytes.byteLength);
+  data.set(bytes);
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", data.buffer))]
+    .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+function sha256Bytes(hex: string) {
+  return Uint8Array.from(hex.match(/.{2}/g) ?? [], part => Number.parseInt(part, 16));
+}
+async function legacyV2Token(row: {
+  id: string; galleryId: string; imageId: string; storageKey: string;
+  expectedMime: string; expectedSize: number; expiresAt: string;
+}) {
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(requireClientSessionSecret(env)),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const payload = JSON.stringify([
+    "private-gallery-direct-v2", row.id, row.galleryId, row.imageId,
+    row.storageKey, row.expectedMime, row.expectedSize, row.expiresAt,
+  ]);
+  return base64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
+}
 async function intent(
   gallery: string,
   sizeBytes = PNG.length,
   mimeType = "image/png",
+  bytes = PNG,
 ) {
   return exports.default.fetch(
     privateRequest(
       "/admin/api/albuns-privados/" + gallery + "/uploads/intents",
       "POST",
-      { filename: "pilot.png", mimeType, sizeBytes },
+      { filename: "pilot.png", mimeType, sizeBytes, sha256: await sha256(bytes) },
     ),
   );
 }
@@ -97,6 +123,9 @@ describe("isolated private uploads", () => {
     const response = await intent(gallery);
     expect(response.status).toBe(201);
     const value = (await response.json()) as Intent;
+    expect(await env.DB.prepare(
+      "SELECT sha256,upload_token_version AS version FROM client_gallery_upload_intents WHERE id=?",
+    ).bind(value.intentId).first()).toEqual({ sha256: await sha256(PNG), version: 3 });
     expect(JSON.stringify(value)).not.toContain("client-galleries/");
     expect(
       (
@@ -172,7 +201,11 @@ describe("isolated private uploads", () => {
     const value = (await (await intent(gallery)).json()) as Intent;
     const row = await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
       .bind(value.imageId).first<{ key: string }>();
-    await env.ORIGINALS.put(row!.key, PNG, { httpMetadata: { contentType: "image/png" } });
+    await env.ORIGINALS.put(row!.key, PNG, {
+      sha256: sha256Bytes(await sha256(PNG)),
+      httpMetadata: { contentType: "image/png" },
+      customMetadata: { sha256: await sha256(PNG) },
+    });
     const different = PNG.slice();
     different[different.length - 1] ^= 1;
     expect((await upload(value, different)).status).toBe(409);
@@ -221,6 +254,7 @@ describe("isolated private uploads", () => {
     const corrupted = PNG.slice();
     corrupted[corrupted.length - 1] ^= 1;
     await env.ORIGINALS.put(key, corrupted, {
+      sha256: sha256Bytes(await sha256(corrupted)),
       httpMetadata: { contentType: "image/png" }, customMetadata: { sha256: legitimate! },
     });
     const url = `/admin/api/albuns-privados/${gallery}/images/${value.imageId}/download`;
@@ -278,13 +312,25 @@ describe("isolated private uploads", () => {
       .bind(value.imageId).first()).toEqual({status:"pending",original_sha256:null});
   });
 
-  it("requires an authenticated byte-for-byte retry for pre-migration uploaded intents without SHA", async () => {
+  it("requires an authenticated byte-for-byte retry for pre-migration uploaded v2 intents without SHA", async () => {
     const gallery = await seedGallery(await seedClient(), "draft");
     const value = (await (await intent(gallery)).json()) as Intent;
-    expect((await upload(value)).status).toBe(200);
     const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
       .bind(value.imageId).first<{key:string}>())!.key;
-    await env.DB.prepare("UPDATE client_gallery_upload_intents SET sha256=NULL WHERE id=?")
+    const row = await env.DB.prepare(`SELECT id,gallery_id AS galleryId,image_id AS imageId,
+      storage_key AS storageKey,expected_mime AS expectedMime,expected_size AS expectedSize,
+      expires_at AS expiresAt FROM client_gallery_upload_intents WHERE id=?`)
+      .bind(value.intentId).first<{
+        id:string; galleryId:string; imageId:string; storageKey:string;
+        expectedMime:string; expectedSize:number; expiresAt:string;
+      }>();
+    const token = await legacyV2Token(row!);
+    const legacyValue = {
+      ...value,
+      requiredHeaders: { ...value.requiredHeaders, "X-Upload-Token": token },
+    };
+    await env.ORIGINALS.put(key, PNG, { httpMetadata: { contentType: "image/png" } });
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET status='uploaded',sha256=NULL,upload_token_version=2 WHERE id=?")
       .bind(value.intentId).run();
     const completePath = `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`;
     const unverified = await exports.default.fetch(privateRequest(completePath, "POST"));
@@ -293,7 +339,7 @@ describe("isolated private uploads", () => {
       .bind(value.imageId).first()).toEqual({status:"pending", original_sha256:null});
     expect((await env.ORIGINALS.head(key))?.size).toBe(PNG.length);
     // A signed retry re-attests the actual bytes without overwriting the R2 object.
-    expect((await upload(value)).status).toBe(200);
+    expect((await upload(legacyValue)).status).toBe(200);
     expect((await exports.default.fetch(privateRequest(completePath, "POST"))).status).toBe(200);
     expect((await env.DB.prepare("SELECT original_sha256 FROM client_gallery_images WHERE id=?")
       .bind(value.imageId).first<{original_sha256:string}>())?.original_sha256).toMatch(/^[a-f0-9]{64}$/);
@@ -371,6 +417,12 @@ describe("isolated private uploads", () => {
     const tampered = new Uint8Array(PNG.length);
     tampered.fill(65);
     expect((await upload(value, tampered)).status).toBe(400);
+    const checksumMismatch = PNG.slice();
+    checksumMismatch[checksumMismatch.length - 1] ^= 1;
+    expect((await upload(value, checksumMismatch)).status).toBe(409);
+    const key = (await env.DB.prepare("SELECT storage_key AS key FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first<{key:string}>())!.key;
+    expect(await env.ORIGINALS.head(key)).toBeNull();
     await env.DB.prepare(
       "UPDATE client_gallery_upload_intents SET expires_at='2000-01-01T00:00:00Z' WHERE id=?",
     )
@@ -394,7 +446,7 @@ describe("isolated private uploads", () => {
       (c) => c.charCodeAt(0),
     );
     const value = (await (
-      await intent(gallery, corrupt.length)
+      await intent(gallery, corrupt.length, "image/png", corrupt)
     ).json()) as Intent;
     expect((await upload(value, corrupt)).status).toBe(200);
     expect(
