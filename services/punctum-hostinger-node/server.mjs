@@ -10,7 +10,7 @@ if (process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === '1') {
     throw new Error('Managed bootstrap is restricted to the existing synthetic QA destination');
   }
   process.umask(0o077);
-  const receipt = await prepareManagedQaDatabase(process.env.PUNCTUM_QA_DB_FILE);
+  const receipt = await prepareManagedQaDatabase(process.env.PUNCTUM_QA_DB_FILE, {verifyTransactions:true});
   console.log('PUNCTUM_MANAGED_QA ' + JSON.stringify(receipt));
 }
 

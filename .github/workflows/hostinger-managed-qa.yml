@@ -19,8 +19,10 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
+        timeout-minutes: 3
         with:
           ref: ${{ github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 24

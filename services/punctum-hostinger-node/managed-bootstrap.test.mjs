@@ -9,7 +9,8 @@ import { prepareManagedQaDatabase } from './managed-bootstrap.mjs';
 test('managed bootstrap preserves existing synthetic edits and verifies snapshots across boots', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'punctum-managed-bootstrap-'));
   const file = join(directory, 'application.sqlite');
-  const first = await prepareManagedQaDatabase(file);
+  const first = await prepareManagedQaDatabase(file, {verifyTransactions:true});
+  assert.equal(first.transactionChecks.status,'PASS');
   assert.equal(first.manifest.integrity, 'ok');
   assert.equal(Object.keys(first.manifest.tables).length, 23);
   const sql = new DatabaseSync(file);
