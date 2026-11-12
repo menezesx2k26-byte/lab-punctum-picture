@@ -5,7 +5,7 @@ import { mkdtemp,rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
-import { createZoomBrowser,readBrowserZoom } from './browser-zoom-evidence.mjs';
+import { createZoomBrowser,readBrowserZoom,captureZoomViewport } from './browser-zoom-evidence.mjs';
 
 test('disposable Chromium uses actual 200 percent browser zoom with no pinch or viewport override',async()=>{
   const directory=await mkdtemp(join(tmpdir(),'punctum-zoom-test-'));
@@ -23,6 +23,9 @@ test('disposable Chromium uses actual 200 percent browser zoom with no pinch or 
     assert.ok(Math.abs(evidence.cssWidth-640)<=1);
     assert.equal(evidence.innerWidth,evidence.cssWidth);
     assert.ok(evidence.scrollWidth<=evidence.innerWidth);
+    const screenshot=await captureZoomViewport(page);
+    assert.equal(screenshot.readUInt32BE(16),1280,'capture must include the full native viewport, not its CSS-sized top-left crop');
+    assert.ok(screenshot.readUInt32BE(20)>800);
   } finally {
     await context?.close();
     await new Promise(resolve=>server.close(resolve));

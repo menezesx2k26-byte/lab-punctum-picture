@@ -28,3 +28,15 @@ export async function readBrowserZoom(page) {
       cssHeight:metrics.cssLayoutViewport.clientHeight,...dom};
   } finally { await session.detach(); }
 }
+
+export async function captureZoomViewport(page) {
+  const session=await page.context().newCDPSession(page);
+  try {
+    // Playwright supplies a CSS-sized clip which crops a native zoomed page.
+    // Let Chromium capture its full native viewport without any clip override.
+    const result=await session.send('Page.captureScreenshot',{
+      format:'png',fromSurface:true,captureBeyondViewport:false,
+    });
+    return Buffer.from(result.data,'base64');
+  } finally { await session.detach(); }
+}

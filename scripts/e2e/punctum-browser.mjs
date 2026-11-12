@@ -14,7 +14,7 @@ import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
 import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
-import { createZoomBrowser, readBrowserZoom } from "./browser-zoom-evidence.mjs";
+import { createZoomBrowser, readBrowserZoom, captureZoomViewport } from "./browser-zoom-evidence.mjs";
 
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 const buildDirectory = resolve(process.env.PUNCTUM_E2E_DIST || "dist");
@@ -407,8 +407,11 @@ try {
     assert.equal(sample.outerWidth,1280);
     assert.ok(Math.abs(sample.cssWidth-640)<=1);
     await noHorizontalOverflow(zoomPage);
-    await zoomPage.screenshot({path:join(reportDirectory,'zoom-200-'+label+'.png'),fullPage:false});
-    report.screenshotModes['zoom-200-'+label+'.png']='viewport';
+    const capture=await captureZoomViewport(zoomPage);
+    sample.screenshotPixels={width:capture.readUInt32BE(16),height:capture.readUInt32BE(20)};
+    assert.equal(sample.screenshotPixels.width,sample.outerWidth,'zoom screenshot must include the whole native viewport');
+    await writeFile(join(reportDirectory,'zoom-200-'+label+'.png'),capture);
+    report.screenshotModes['zoom-200-'+label+'.png']='nativeViewport';
   };
   await zoomPage.goto(origin+'/albuns');
   await zoomPage.getByRole('heading',{name:'Álbum sintético B'}).waitFor();
