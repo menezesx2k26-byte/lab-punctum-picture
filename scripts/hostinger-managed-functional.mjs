@@ -4,6 +4,9 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import sharp from 'sharp';
 import { takeEvidenceScreenshot } from './e2e/screenshot-evidence.mjs';
 
+let stage = 'setup';
+const network = [];
+async function runFunctional() {
 const origin = 'https://aliceblue-locust-999458.hostingersite.com';
 assert.equal(process.env.PUNCTUM_QA_ORIGIN, origin);
 const phase = process.argv[2];
@@ -65,15 +68,21 @@ if (phase !== 'archive') {
   report.checks.push('persisted album SSR and Sharp media');
 }
 if (phase === 'browser') {
+  stage = 'browser.launch';
   const {chromium} = await import('playwright'); const browser = await chromium.launch();
   try {
     report.viewports = [];
     for(const [width,height] of [[390,844],[1440,920]]) {
       const page = await browser.newPage({viewport:{width,height}}); const failures=[];
       page.on('pageerror',()=>failures.push('pageerror'));
+      page.on('requestfailed', request => network.push({width,path:new URL(request.url()).pathname,type:request.resourceType(),error:request.failure()?.errorText}));
+      page.on('response', response => {if(response.status() >= 400) network.push({width,path:new URL(response.url()).pathname,status:response.status()});});
+      stage = `browser.navigation.${width}`;
       const response=await page.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:30000});
       check(response?.status() === 200,'managed browser navigation');
+      stage = `browser.screenshot.${width}`;
       const capture = await takeEvidenceScreenshot(page,new URL(`managed-${width}.png`,output).pathname,{fullPage:true});
+      stage = `browser.metrics.${width}`;
       const dimensions=await page.evaluate(()=>({viewport:innerWidth,body:document.documentElement.scrollWidth,css:document.styleSheets.length}));
       check(dimensions.body <= dimensions.viewport && dimensions.css > 0 && !failures.length,'managed browser layout');
       report.viewports.push({width,height,...dimensions,pageErrors:failures.length,capture}); await page.close();
@@ -90,3 +99,18 @@ check(logout.status===200 && /Max-Age=0/.test(logout.headers.getSetCookie()[0] |
 report.status='PASS';
 await writeFile(new URL(`report-${phase}.json`,output),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));
+}
+
+try { await runFunctional(); }
+catch (error) {
+  let message = String(error.message || error.name).slice(0,1500);
+  for (const [key,value] of Object.entries(process.env)) {
+    if (value && /PASSWORD|SECRET|TOKEN|AUTH|API_KEY|HASH/.test(key)) message = message.replaceAll(value,'[REDACTED]');
+  }
+  const failure = {phase:process.argv[2],stage,errorName:error.name,message,network:network.slice(0,40)};
+  const directory = new URL('../outputs/hostinger-managed-functional/',import.meta.url);
+  await mkdir(directory,{recursive:true});
+  await writeFile(new URL(`failure-${process.argv[2]}.json`,directory),JSON.stringify(failure,null,2)+'\n');
+  console.error(JSON.stringify(failure));
+  process.exitCode = 1;
+}

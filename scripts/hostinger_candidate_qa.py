@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import secrets
 import subprocess
 import time
@@ -114,6 +115,11 @@ def runtime_receipts(operation, phase):
                     receipt.get('manifest',{}).get('scope') == 'SYNTHETIC_QA_ONLY'):
                     receipts.append(receipt)
         operation.report.setdefault('runtimeReceipts',{})[phase] = receipts
+        content = '\n'.join(strings)
+        operation.report.setdefault('runtimeSignals',{})[phase] = {
+            'outOfMemory':any(x in content.lower() for x in ('out of memory','heap limit','sigkill','enomem')),
+            'errorKinds':sorted(set(re.findall(r'\b(?:[A-Za-z]+Error|ERR_[A-Z_]+)\b',content)))[:20],
+        }
     except (RequestFailure,ValueError,TypeError):
         operation.report.setdefault('runtimeReceipts',{})[phase] = {'status':'NOT_VERIFIED'}
     operation.save()
@@ -134,6 +140,9 @@ def functional(operation, root, phase, environment):
         operation.report['functionalFailure'] = {'phase':phase,'exitCode':completed.returncode,
             'check':next((label for label in known if label in completed.stderr),'UNCLASSIFIED'),
             'stderrSha256':digest(completed.stderr.encode())}
+        failure_file = root / 'outputs/hostinger-managed-functional' / ('failure-' + phase + '.json')
+        if failure_file.is_file():
+            operation.report['functionalFailure']['diagnostic'] = json.loads(failure_file.read_text())
         raise ValueError('Managed functional QA failed')
     report = json.loads(completed.stdout.strip().splitlines()[-1])
     operation.report.setdefault('functional',{})[phase] = report
@@ -179,8 +188,8 @@ def execute_candidate(root, request):
         ready(operation,'candidateReady')
         functional_env = {**environment,'PUNCTUM_QA_TEST_PASSWORD':password}
         initial = functional(operation,root,'exercise',functional_env)
-        functional(operation,root,'browser',functional_env)
         runtime_receipts(operation,'initial')
+        functional(operation,root,'browser',functional_env)
         operation.api('candidateRestart',SITE + '/server/restart',{})
         ready(operation,'candidateAfterRestart')
         after_restart = functional(operation,root,'after-restart',functional_env)
@@ -207,6 +216,7 @@ def execute_candidate(root, request):
         operation.report['status'] = 'BLOCKED_OR_FAILED'
         operation.report['failure'] = {'type':type(error).__name__}
         if isinstance(error,RequestFailure): operation.report['failure'].update(operation=error.label,status=error.status)
+        if modified: runtime_receipts(operation,'beforeRollback')
     finally:
         if failed and modified:
             try:

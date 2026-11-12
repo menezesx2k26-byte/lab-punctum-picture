@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-node-managed-qa-20261112-05",
+  "request_id": "candidate-browser-evidence-20261112-06",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d1b1-959d-71ec-84d8-b6eeea606b1e",
+  "expected_build_uuid": "01a1d1bf-9d0d-72bc-a2f1-125a78ea8a3b",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }
