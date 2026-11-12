@@ -7,13 +7,30 @@ import { takeEvidenceScreenshot } from './e2e/screenshot-evidence.mjs';
 let stage = 'setup';
 const network = [];
 const browserHttpProbes = [];
+const requestTrace = [];
+function routeLabel(path) {
+  return path.replace(/\/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '/:id')
+    .replace(/\/\d+(?=\/|$)/g, '/:id');
+}
 async function runFunctional() {
 const origin = 'https://aliceblue-locust-999458.hostingersite.com';
 assert.equal(process.env.PUNCTUM_QA_ORIGIN, origin);
 const phase = process.argv[2];
 const output = new URL('../outputs/hostinger-managed-functional/', import.meta.url);
 await mkdir(output, {recursive:true});
-const get = (path, init) => fetch(origin + path, {redirect:'manual', signal:AbortSignal.timeout(30000), ...init});
+const get = async (path, init) => {
+  const started = performance.now();
+  const route = routeLabel(path);
+  const method = init?.method || 'GET';
+  try {
+    const response = await fetch(origin + path, {redirect:'manual', signal:AbortSignal.timeout(30000), ...init});
+    requestTrace.push({route,method,status:response.status,ms:Math.round(performance.now()-started)});
+    return response;
+  } catch (error) {
+    requestTrace.push({route,method,errorName:error.name,ms:Math.round(performance.now()-started)});
+    throw error;
+  }
+};
 const check = (condition, label) => { if (!condition) throw new Error(label); };
 const login = await get('/admin/api/session', {method:'POST', headers:{origin,'content-type':'application/json'},
   body:JSON.stringify({email:process.env.PUNCTUM_QA_ADMIN_EMAIL,password:process.env.PUNCTUM_QA_TEST_PASSWORD})});
@@ -114,7 +131,7 @@ catch (error) {
   for (const [key,value] of Object.entries(process.env)) {
     if (value && /PASSWORD|SECRET|TOKEN|AUTH|API_KEY|HASH/.test(key)) message = message.replaceAll(value,'[REDACTED]');
   }
-  const failure = {phase:process.argv[2],stage,errorName:error.name,message,browserHttpProbes,network:network.slice(0,40)};
+  const failure = {phase:process.argv[2],stage,errorName:error.name,message,browserHttpProbes,requestTrace:requestTrace.slice(-40),network:network.slice(0,40)};
   const directory = new URL('../outputs/hostinger-managed-functional/',import.meta.url);
   await mkdir(directory,{recursive:true});
   await writeFile(new URL(`failure-${process.argv[2]}.json`,directory),JSON.stringify(failure,null,2)+'\n');
