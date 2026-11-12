@@ -3580,6 +3580,11 @@
         "axeRulesPassed": 148,
         "axeViolations": 0,
         "axeIncompleteCandidates": 3,
+        "axeIncompleteNodes": {
+          "privateGalleryDetailNonTextGlyphs": 10,
+          "publicHomeImageGradientOverlap": 50,
+          "publicHomeCollagePseudoGradientImage": 57
+        },
         "fullPageScreenshots": 5,
         "pageErrors": 0,
         "consoleWarnings": 0,
