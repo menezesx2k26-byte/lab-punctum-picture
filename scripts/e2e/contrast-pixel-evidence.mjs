@@ -10,7 +10,8 @@ export async function measureConservativeContrast(page,selector,capturePath) {
   const locator=page.locator(selector);
   if(await locator.count()!==1)return {status:'UNSUPPORTED_COMPOSITING',reason:'selector is not unique'};
   await locator.scrollIntoViewIfNeeded();
-  const style=await locator.evaluate(root=>{
+  await page.evaluate(()=>document.fonts.ready);
+  const inspect=root=>{
     const nodes=[];
     const rect=root.getBoundingClientRect();
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
@@ -55,8 +56,12 @@ export async function measureConservativeContrast(page,selector,capturePath) {
       const s=getComputedStyle(el);
       return {size:parseFloat(s.fontSize),weight:parseInt(s.fontWeight,10)};
     });
-    return {color,threshold:sizes.every(s=>s.size>=24||(s.size>=18.6667&&s.weight>=700))?3:4.5};
-  });
+    const captureBox={x:rect.left+scrollX,y:rect.top+scrollY,width:rect.width,height:rect.height};
+    if(devicePixelRatio!==1||visualViewport.scale!==1||captureBox.x<0||captureBox.y<0||rect.width<=0||rect.height<=0)
+      return {reason:'noncanonical capture metrics'};
+    return {color,captureBox,threshold:sizes.every(s=>s.size>=24||(s.size>=18.6667&&s.weight>=700))?3:4.5};
+  };
+  const style=await locator.evaluate(inspect);
   if(style.reason)return {status:'UNSUPPORTED_COMPOSITING',...style};
   // Hold only temporary inline style values in the page. Restore priorities
   // and missing properties exactly, even if screenshot or decoding fails.
@@ -72,7 +77,16 @@ export async function measureConservativeContrast(page,selector,capturePath) {
     });
   });
   let screenshot;
-  try { screenshot=await locator.screenshot({animations:'disabled',timeout:15000}); }
+  try {
+    const session=await page.context().newCDPSession(page);
+    try {
+      // Capture the inspected rectangle directly. Locator screenshot's scroll/
+      // animation stabilization can alter ancestor layout after inspection.
+      const captured=await session.send('Page.captureScreenshot',{format:'png',fromSurface:true,
+        captureBeyondViewport:true,clip:{...style.captureBox,scale:1}});
+      screenshot=Buffer.from(captured.data,'base64');
+    } finally {await session.detach();}
+  }
   finally {
     await locator.evaluate((root,entries)=>{
       const elements=[root,...root.querySelectorAll('*')];
@@ -82,6 +96,9 @@ export async function measureConservativeContrast(page,selector,capturePath) {
       }
     },saved);
   }
+  const after=await locator.evaluate(inspect);
+  if(JSON.stringify(after)!==JSON.stringify(style))
+    return {status:'UNSUPPORTED_COMPOSITING',reason:'paint or geometry changed during capture'};
   if(capturePath)await writeFile(capturePath,screenshot);
   const measured=await page.evaluate(async({base64,color})=>{
     const numbers=color.match(/[\d.]+/g)?.map(Number);
