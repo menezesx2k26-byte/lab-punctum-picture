@@ -113,6 +113,31 @@ class RecoveryContractTests(unittest.TestCase):
             self.assertEqual(received, archive)
             self.assertEqual(recovery.report["acknowledgedArchives"][0]["bytes"], len(archive))
 
+    def test_uncertain_tus_patch_reconciles_offset_without_replaying_accepted_bytes(self):
+        chunk = 4 * 1024 * 1024
+        archive = b"q" * (chunk + 13)
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            received = bytearray()
+            methods = []
+            def fake_api(label, path, payload=None):
+                return {"url": "https://srv2282-files.hstgr.io/files", "auth_key": "fake", "rest_auth_key": "fake"}
+            def fake_request(label, url, method="GET", headers=None, body=None):
+                methods.append(method)
+                if method == "POST": return 201, {}, b""
+                if method == "HEAD": return 200, {"Upload-Offset": str(len(received))}, b""
+                if method == "PATCH":
+                    self.assertEqual(int(headers["Upload-Offset"]), len(received))
+                    received.extend(body)
+                    if len(received) == chunk:
+                        raise qa.RequestFailure(label)
+                    return 204, {"Upload-Offset": str(len(received))}, b""
+                self.fail("Unexpected method " + method)
+            with patch.object(recovery, "api", side_effect=fake_api), patch.object(recovery, "request", side_effect=fake_request):
+                recovery.upload_archive(archive, "punctum-node-candidate-")
+            self.assertEqual(methods, ["POST", "PATCH", "HEAD", "PATCH"])
+            self.assertEqual(received, archive)
+
     def test_runtime_log_query_includes_provider_required_period_and_limit(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "expected")
