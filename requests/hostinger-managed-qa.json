@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-resume-after-cancelled-checkout-20261112-07",
+  "request_id": "candidate-instrumented-browser-20261112-08",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d1bf-9d0d-72bc-a2f1-125a78ea8a3b",
+  "expected_build_uuid": "01a1d1d2-bb3b-7022-8bbb-78a187b57e72",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }
