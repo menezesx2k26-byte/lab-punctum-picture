@@ -4,8 +4,8 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AA code45d9984 CI43102450821 success33/33, browser22 checks/7axe/zero violations, exact clean SHA. Documentary closure requires its own CI readback in PR/Drive. G05/G17 FAIL; five gates BLOCKED_EXTERNAL; NO_GO_PRODUCTION.",
-  "updatedAt": "2026-11-11",
+  "statusScope": "Cycle AB local code SHA 397d1077b713e2852b722b83c31fcb6ce9c5ae98 based on PR remote HEAD f591706 before push. Vitest 308/308, Node 116/116, Collage 7/7, build/lint/typecheck PASS, npm audit zero; local browser E2E 22 checks, 7 axe audits, 0 violations, 3 incomplete. Current gates: 15 PASS_HISTORICAL, G05/G17 FAIL, G01/G15/G19/G20/G22/G23/G24 BLOCKED_EXTERNAL. No remote QA, production mutation, merge or deploy. NO_GO_PRODUCTION.",
+  "updatedAt": "2026-11-12",
   "branch": "fix/punctum-albums-r4-completion-20261107",
   "baseBranch": "agent/hst-001-hostinger-qa-20261028",
   "baseSha": "50e8fc4b2c1dd43a10bd8f56b4127cd3a108a1dd",
@@ -3477,5 +3477,170 @@
       "axeIncompleteNodes": 117,
       "fullPageScreenshots": 5
     }
+  },
+  "currentCycle20261112AB": {
+    "dateUtc": "2026-11-12",
+    "baselineRemoteSha": "f591706114ace01aeb4881b00c490ba8de289c54",
+    "currentCodeSha": "397d1077b713e2852b722b83c31fcb6ce9c5ae98",
+    "currentCodeTree": "8366b743a0f5c8c1a6b26ae2b320a415bec5c72d",
+    "currentCodeParent": "2af0da04c066912534d88ade31c35dbb55018e42",
+    "evidenceManifest": {
+      "path": "evidence/cycle-ab-20261112/manifest.json",
+      "sha256": "74f5913a59ad4beb300782b2eaae15357f386e1c2d52b16a93fb7c693939e6f8",
+      "files": 33
+    },
+    "localEvidenceBundle": {
+      "path": "/home/desktop/Documents/punctum-r4-evidence-bundles/cycle-ab-20261112-evidence.zip",
+      "bytes": 17551172,
+      "sha256": "e24e15696bb536ed9c491854c7167b087b2cad5709de18124fec92968d446180",
+      "uploadedToDrive": false
+    },
+    "baselinePr32": {
+      "state": "OPEN",
+      "draft": true,
+      "merged": false,
+      "branch": "fix/punctum-albums-r4-completion-20261107"
+    },
+    "baselineCi": {
+      "runId": 43103417146,
+      "sha": "f591706114ace01aeb4881b00c490ba8de289c54",
+      "conclusion": "success",
+      "jobStepsSucceeded": 33,
+      "artifactId": 13892503811,
+      "artifactDigest": "sha256:f5f221448236adb1591e9ff25e20ef6184a365544634fadc60523215a86df6b4",
+      "artifactSizeBytes": 6114694
+    },
+    "worktree": "/home/desktop/Documents/punctum-r4-takeover-f591",
+    "readback": {
+      "documents": [
+        "35-handoff-completo-2026-11-08.md",
+        "36-goal-definition-of-done-2026-11-08.md",
+        "16-original-g01-g24-reconciliation.md",
+        "execution-state.json",
+        "reports 25-34 and 60-64"
+      ],
+      "historicalGateCounts": {
+        "PASS": 17,
+        "FAIL": 2,
+        "BLOCKED_EXTERNAL": 5
+      }
+    },
+    "originalSpecReadback": {
+      "filename": "PUNCTUM_SPEC_R4_ALBUNS_PRIVADOS.txt",
+      "expectedBytes": 40541,
+      "expectedSha256": "2989e0ba18982658570dc699842393b3f980c9a5312237af33ab02292d10ecfb",
+      "status": "NOT_FOUND_IN_CURRENT_TAKEOVER",
+      "searched": [
+        "current repository tracked files and all reachable Git objects",
+        "/home/desktop local files",
+        "ChatGPT Library semantic search",
+        "Google Drive sgtmenezes and primary account searches"
+      ],
+      "historicalStateClaim": "execution-state.json.originalSpec.source says the file was previously retrieved and hash-verified; that historical claim is preserved but could not be independently verified or re-read in this takeover."
+    },
+    "changes": [
+      "CPU ephemeral QA now records the exact deployed version and X-QA-Version response header, performs twelve isolated cache-purged MISS requests, and correlates Cloudflare per-invocation cpuTimeMs telemetry to each request.",
+      "CPU qualification fails closed unless all twelve requests are version-matched HTML MISSes, each has complete telemetry in one analytics second, and every invocation is at or below 10ms. A passing CPU measurement still does not mark G17 PASS while producer and cost proof remain open.",
+      "Rollback read-only preflight now distinguishes Workers Free from an existing R2 Paid subscription and always marks incremental cost unverified; it never authorizes rollback.",
+      "G05 transport v3 binds client SHA-256 into HMAC v3, streams through FixedLengthStream, uses R2 native SHA-256 and conditional onlyIf writes, and preserves v2 legacy intents. Worker-1 commit 4c2e8a29 has the same patch-id as already-integrated 0e4f5b7; no duplicate cherry-pick is needed.",
+      "The effective UI/API upload limit is explicitly 20,000,000 bytes; the original 26,214,400-byte (25 MiB) requirement is preserved separately as CLIENT_SPEC_MAX_UPLOAD_BYTES. The 20–25 MiB range is rejected before D1 reservation or R2 access.",
+      "A LEFT JOIN dangling-pointer regression test now proves fail-closed fallback without bootstrap writes when the referenced published version is absent.",
+      "The local public-home profiler now seeds one valid published-config pointer through the synthetic /api/public/site route before measuring SSR, snapshot-miss and snapshot-hit; 15 fixtures were verified, five per variant."
+    ],
+    "localValidation": {
+      "node": "24.22.2",
+      "focusedTests": "26/26 PASS (client upload contract/config)",
+      "workerIntegration": "20/20 PASS (includes dangling LEFT JOIN pointer)",
+      "vitest": "308/308 PASS across 59 files",
+      "nodeOperational": "116/116 PASS",
+      "collageVitest": "7/7 PASS",
+      "build": "PASS",
+      "lint": "PASS",
+      "typecheck": "PASS",
+      "npmAudit": "0 vulnerabilities",
+      "scriptSyntax": "PASS",
+      "profile": "15/15 synthetic D1 fixtures valid; local workerd/V8 only; not billable CPU",
+      "browserE2e": {
+        "status": "PASS_LOCAL",
+        "sourceSha": "397d1077b713e2852b722b83c31fcb6ce9c5ae98",
+        "checkoutDirtyAtRun": false,
+        "browser": "Google Chrome 157.0.8103.38",
+        "checks": 22,
+        "axeAudits": 7,
+        "axeRulesPassed": 148,
+        "axeViolations": 0,
+        "axeIncompleteCandidates": 3,
+        "fullPageScreenshots": 5,
+        "pageErrors": 0,
+        "consoleWarnings": 0,
+        "consoleErrors": 0,
+        "serverErrors": 0,
+        "remoteQaTouched": false,
+        "productionTouched": false,
+        "temporaryStorageRemoved": true,
+        "evidence": "evidence/cycle-ab-20261112/browser-e2e-final/report.json"
+      }
+    },
+    "g05": {
+      "status": "FAIL",
+      "operationalUploadLimitBytes": 20000000,
+      "originalSpecLimitBytes": 26214400,
+      "originalSpecLimitLabel": "25 MiB",
+      "reason": "25 MiB original requirement remains incompatible with the 20 MB Images Binding input limit; the UI/API effective limit remains 20,000,000 bytes and the 20–25 MiB range is explicitly rejected before D1/R2. No secure zero-cost end-to-end alternative has been proven.",
+      "next": "Keep blocked until a private, full-raster-validating, zero-cost 25 MiB pipeline is proven or the requirement is explicitly changed."
+    },
+    "g17": {
+      "status": "FAIL",
+      "snapshotProducer": "NONE_FOUND_IN_PRODUCTION_CALLERS",
+      "noSnapshotBehavior": "SSR fallback on first access/MISS/purge; no CPU qualification is inferred from cache HIT or HTTP latency.",
+      "localProfile": {
+        "path": "evidence/cycle-ab-20261112/local-ssr-profile-seeded-20261112.json",
+        "sha256": "be240ac19c45a76aa0ff09249e1fb28982a787eb46f2bbfed2aa7ceb5b4e8cb6",
+        "fixtures": 15,
+        "ssrColdP50P95Ms": [221.736, 585.84],
+        "snapshotMissColdP50P95Ms": [174.034, 330.199],
+        "snapshotHitColdP50P95Ms": [7.153, 11.661],
+        "snapshotHitWarmP50P95Ms": [4.896, 8.621],
+        "billableCpu": false
+      },
+      "coldCpuQa": "PREPARED_BUT_NOT_EXECUTED; previous D1 API returned 401",
+      "freeCpuGatePassed": false
+    },
+    "g23": {
+      "status": "BLOCKED_EXTERNAL",
+      "subgateA": "PARTIAL",
+      "evidence": "resume-post-recovery-browser.json: Chromium GET /api/client/me 404; private download GET and HEAD 404 with zero bytes on version e05a3001-3c78-4703-8055-acf3026bd450.",
+      "remaining": [
+        "unauthenticated /albuns/entrar and /api/client/galleries route checks",
+        "pre/post exact Worker version and effective configuration comparison",
+        "complete D1/R2 object and hash preservation evidence",
+        "authorized synthetic re-entry under a fresh session",
+        "public, Studio draft and Colagem no-regression smoke after return",
+        "independent visual-only Collage preset rollback preserving drafts"
+      ],
+      "r2PaidSubscriptionPresent": true,
+      "incrementalCostVerified": false,
+      "rollbackAuthorized": false
+    },
+    "humanGates": "G01 original SPEC §23 unavailable; G15 physical TalkBack/VoiceOver; G19 independent security signoff; G20 studio LGPD approval; G22 specific release authorization; G24 Engram/PersistFlow checkpoint unavailable remain BLOCKED_EXTERNAL.",
+    "currentGateCounts": {
+      "PASS_HISTORICAL": 15,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 7
+    },
+    "currentGateMatrix": "evidence/cycle-ab-20261112/gate-register-current.json",
+    "cloudflareWrites": {
+      "production": 0,
+      "d1": 0,
+      "r2": 0,
+      "ephemeralWorkerQa": "NOT_RUN; D1 API scope previously returned 401; no Worker deployment attempted"
+    },
+    "ciAfterPush": "PENDING",
+    "driveCheckpoint": "PENDING_CREATE_NEW_DOCUMENT_IN_PUNCTUM_PICTURE_FOLDER; preserve cycle-AA document",
+    "engram": "NO_APPLICABLE_ENGRAM_TOOL_FOUND_AFTER_COMPOSIO_AND_PLUGIN_SEARCH; MEM0_IS_NOT_ENGRAM_AND_WAS_NOT_SUBSTITUTED",
+    "persistflow": "CUSTOM_GABRIEL_REMOTE_MCP_ATUAL_TOOLKIT_FOUND_BUT_NO_ACTIVE_CONNECTION; USER_AUTHENTICATION_REQUIRED",
+    "production": "NO_GO_PRODUCTION",
+    "privateGalleriesEnabled": "false in versioned configuration; production runtime unverified",
+    "costIncrementAuthorized": "R$ 0,00"
   }
 }

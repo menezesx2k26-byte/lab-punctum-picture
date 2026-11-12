@@ -1,0 +1,4 @@
+
+> punctum-picture@0.1.0 lint
+> eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern node_modules.partial
+
