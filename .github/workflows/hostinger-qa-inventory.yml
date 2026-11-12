@@ -4,9 +4,6 @@ on:
   pull_request:
     branches: [fix/punctum-albums-r4-completion-20261107]
     paths: [.github/workflows/hostinger-qa-inventory.yml]
-  push:
-    branches: [agent/hostinger-node-migration-20261112]
-    paths: [.github/workflows/hostinger-qa-inventory.yml]
 
 permissions: {}
 
@@ -152,6 +149,12 @@ jobs:
                       return data
               except urllib.error.HTTPError as error:
                   report["checks"][label] = {"status": error.code}
+                  if error.code == 422:
+                      try:
+                          fields = json.loads(error.read(4096)).get("errors", {})
+                          report["checks"][label]["invalidFields"] = sorted(set(fields) & {"domain", "is_assigned", "per_page", "directory", "path"}) if isinstance(fields, dict) else []
+                      except (ValueError, OSError):
+                          pass
               except (OSError, ValueError):
                   report["checks"][label] = {"error": "READ_UNAVAILABLE"}
               return None
@@ -179,7 +182,7 @@ jobs:
               report["checks"]["documentRoot"].update({"totalItems": files.get("total_items"),
                   "returnedItems": len(rows), "entryTypes": [x.get("type") for x in rows if isinstance(x, dict)],
                   "probeFiles": sorted(x.get("name") for x in rows if isinstance(x, dict) and x.get("name") in ("app.mjs", "server.mjs", "package.json", "README.md"))})
-          dbs = read("assignedDatabases", f"/accounts/{username}/databases?" + urllib.parse.urlencode({"domain": domain, "is_assigned": "true", "per_page": 100}))
+          dbs = read("assignedDatabases", f"/accounts/{username}/databases?" + urllib.parse.urlencode({"domain": domain, "is_assigned": "true", "per_page": 25}))
           if isinstance(dbs, list):
               report["checks"]["assignedDatabases"]["count"] = len(dbs)
           builds = read("builds", site + "/builds")
