@@ -64,6 +64,41 @@ class RecoveryContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 qa.Recovery(Path('.'), 'inspect-upload', 'expected', name)
 
+    def test_restore_keeps_proven_entrypoint_when_autodetection_suggests_the_wrong_one(self):
+        name = 'punctum-recovery-v2-' + 'a' * 32 + '.zip'
+        build_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            root = Path(directory)
+            shutil.copytree(Path(__file__).resolve().parents[1] / 'services/punctum-hostinger-qa', root / 'services/punctum-hostinger-qa')
+            recovery = qa.Recovery(root, 'restore-probe', 'expected', name)
+            posts = []
+            def api(label, path, payload=None):
+                if payload is not None:
+                    posts.append((path, payload))
+                    return {'uuid': build_id}
+                if label in ('settingsBefore', 'settingsAfter'):
+                    return dict(qa.PROBE_SETTINGS)
+                if label in ('environmentBefore', 'environmentAfter'):
+                    return []
+                if label == 'buildsBefore':
+                    return [{'uuid': 'expected', 'state': 'completed'}]
+                if label == 'uploadedFileInventory':
+                    return {'items': [{'name': name}]}
+                if label == 'archiveDetection':
+                    return {'node_version': 22, 'entry_file': 'app.mjs'}
+                if label == 'restoreBuildState':
+                    return {'uuid': build_id, 'state': 'completed', 'options': posts[0][1]}
+                if label == 'restoreBuildLogs':
+                    return []
+                self.fail('Unexpected API operation: ' + label)
+            with patch.object(recovery, 'api', side_effect=api), patch.object(recovery, 'health'):
+                recovery.run()
+            self.assertEqual(len(posts), 1)
+            self.assertEqual(posts[0][1]['node_version'], 24)
+            self.assertEqual(posts[0][1]['entry_file'], 'server.mjs')
+            self.assertEqual(posts[0][1]['source_options']['archive_path'], name)
+            self.assertEqual(recovery.report['status'], 'IDENTICAL_PROBE_RECOVERY_VERIFIED_IN_PLACE')
+
 
 if __name__ == "__main__":
     unittest.main()

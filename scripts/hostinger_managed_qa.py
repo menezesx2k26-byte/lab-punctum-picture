@@ -165,36 +165,31 @@ class Recovery:
             rows = files.get("items", files.get("files", [])) if isinstance(files, dict) else files
             matches = [row for row in rows if isinstance(row, dict) and row.get("name") == name] if isinstance(rows, list) else []
             self.report["uploadedFile"] = {"listed": bool(matches), "matches": len(matches)}
-            detected = self.api("archiveDetection", SITE + "/builds/settings/from-archive?" + urllib.parse.urlencode({"archive_path": name}))
-            if not isinstance(detected, dict):
-                raise ValueError("Provider could not inspect the recovery archive")
-            self.report["detectedSettings"] = {k: detected.get(k) for k in PROBE_SETTINGS}
-            self.report["status"] = "RECOVERY_ARCHIVE_PREPARED_NOT_DEPLOYED"
-            self.health("healthUnchanged")
-            return
-
-        # Mint short-lived upload credentials for this existing QA site only.
-        credentials = self.api("uploadCredentials", "/files/upload-urls", {"username": USERNAME, "domain": DOMAIN})
-        base = upload_base(credentials["url"])
-        upload_headers = {"X-Auth": credentials["auth_key"], "X-Auth-Rest": credentials["rest_auth_key"],
-                          "Tus-Resumable": "1.0.0", "User-Agent": "Punctum QA recovery/1.0"}
-        name = "punctum-recovery-v2-" + uuid.uuid4().hex + ".zip"
-        target = base + "/" + name + "?override=true"
-        status = self.request("uploadCreate", target, "POST",
-                              {**upload_headers, "Upload-Length": str(len(archive)), "Upload-Offset": "0"}, b"")[0]
-        if status != 201:
-            raise ValueError("Upload creation was not acknowledged")
-        status, headers, _ = self.request("uploadBytes", target, "PATCH",
-                                         {**upload_headers, "Content-Type": "application/offset+octet-stream", "Upload-Offset": "0"}, archive)
-        if status != 204 or int(headers.get("Upload-Offset", "-1")) != len(archive):
-            raise ValueError("The complete recovery archive was not acknowledged")
+            if len(matches) != 1:
+                raise ValueError("Previously acknowledged recovery archive is not uniquely listed")
+        else:
+            # Mint short-lived upload credentials for this existing QA site only.
+            credentials = self.api("uploadCredentials", "/files/upload-urls", {"username": USERNAME, "domain": DOMAIN})
+            base = upload_base(credentials["url"])
+            upload_headers = {"X-Auth": credentials["auth_key"], "X-Auth-Rest": credentials["rest_auth_key"],
+                              "Tus-Resumable": "1.0.0", "User-Agent": "Punctum QA recovery/1.0"}
+            name = "punctum-recovery-v2-" + uuid.uuid4().hex + ".zip"
+            target = base + "/" + name + "?override=true"
+            status = self.request("uploadCreate", target, "POST",
+                                  {**upload_headers, "Upload-Length": str(len(archive)), "Upload-Offset": "0"}, b"")[0]
+            if status != 201:
+                raise ValueError("Upload creation was not acknowledged")
+            status, headers, _ = self.request("uploadBytes", target, "PATCH",
+                                             {**upload_headers, "Content-Type": "application/offset+octet-stream", "Upload-Offset": "0"}, archive)
+            if status != 204 or int(headers.get("Upload-Offset", "-1")) != len(archive):
+                raise ValueError("The complete recovery archive was not acknowledged")
         self.report["archiveName"] = name
         detected = self.api("archiveDetection", SITE + "/builds/settings/from-archive?" + urllib.parse.urlencode({"archive_path": name}))
         if not isinstance(detected, dict):
             raise ValueError("Provider could not inspect the newly uploaded recovery archive")
         self.report["detectedSettings"] = {k: detected.get(k) for k in PROBE_SETTINGS}
         self.save()
-        if self.action == "prepare":
+        if self.action in ("prepare", "inspect-upload"):
             self.report["status"] = "RECOVERY_ARCHIVE_PREPARED_NOT_DEPLOYED"
             self.health("healthUnchanged")
             return
@@ -213,6 +208,11 @@ class Recovery:
         while time.monotonic() < deadline:
             state = self.api("restoreBuildState", SITE + "/builds/" + build_id)
             if state.get("state") == "completed":
+                options = state.get("options", {})
+                check_probe_settings(options, [])
+                if options.get("source_type") != "archive" or options.get("source_options", {}).get("archive_path") != name:
+                    raise ValueError("Completed build source differs from the recovery request")
+                self.report["completedBuild"] = {"uuid": build_id, "state": "completed", "options": payload}
                 break
             if state.get("state") == "failed":
                 raise ValueError("Managed recovery build failed; existing version must be reconciled")
@@ -222,6 +222,8 @@ class Recovery:
         self.health("healthRestored")
         after = self.api("settingsAfter", SITE + "/builds/settings")
         check_probe_settings(after, self.api("environmentAfter", SITE + "/builds/settings/env"))
+        logs = self.api("restoreBuildLogs", SITE + "/builds/" + build_id + "/logs")
+        self.report["buildLogSha256"] = digest(json.dumps(logs, sort_keys=True, separators=(",", ":")).encode())
         self.report["status"] = "IDENTICAL_PROBE_RECOVERY_VERIFIED_IN_PLACE"
 
 
