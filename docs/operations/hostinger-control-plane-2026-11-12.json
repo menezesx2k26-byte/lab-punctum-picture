@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-12",
+  "target": "aliceblue-locust-999458.hostingersite.com",
+  "scope": "authenticated-hpanel-observations",
+  "authentication": "CONFIRMED_TARGET_PRESENT",
+  "plan": {
+    "displayName": "Premium Web Hosting",
+    "diskGB": 20,
+    "ramMB": 2048,
+    "cpuCores": 1,
+    "inodes": 400000,
+    "websitesMax": 3,
+    "processesMax": 80,
+    "phpWorkersMax": 40,
+    "bandwidthLabel": "Ilimitado"
+  },
+  "nodeQuota": {
+    "secondAppAttempt": "BLOCKED_BY_PROVIDER",
+    "heading": "Você atingiu o limite de aplicações web em Node.js",
+    "message": "Você pode adicionar até 1 aplicações web na Hospedagem Business. Remova as aplicações que você não usa ou mude para um plano de hospedagem Cloud.",
+    "activeNodeApps": 1,
+    "planLabelDiscrepancy": "Current plan is labelled Premium; limit message refers to Business. No plan change inferred.",
+    "newAppCreated": false,
+    "upgradeStarted": false
+  },
+  "filesystem": {
+    "fileManagerOpened": true,
+    "accountMatches": true,
+    "homeListed": true,
+    "domainsDirectory": "You don't have permissions to access this.",
+    "domainScopedManagerHomeListed": true,
+    "privateDirectoryCreated": false,
+    "privatePersistenceVerified": false
+  },
+  "ssh": {
+    "status": "INACTIVE",
+    "enabled": false,
+    "newKeyAdded": false,
+    "passwordChanged": false
+  },
+  "deployment": {
+    "historyItems": 2,
+    "activeBuild": "01a1847b-73bf-71a9-8bd4-59a2836a1b1a",
+    "source": "punctum-hostinger-qa-probe-v2.zip",
+    "settingsPageOpened": true,
+    "usePreviousFilesOptionPresent": true,
+    "nodeMajor": 24,
+    "buildScript": "build",
+    "entryFile": "server.mjs",
+    "root": "./",
+    "output": "none",
+    "environmentCount": 0,
+    "saveAndRedeployClicked": false,
+    "managedRestoreVerified": false
+  },
+  "productionMutations": 0,
+  "providerBuildsStarted": 0,
+  "incrementalCostBRL": 0,
+  "decision": "PARTIAL_VERIFIED / NO_GO_MANAGED_DEPLOY / NO_GO_PRODUCTION / NO_GO_R4",
+  "nextGateDependency": "Provider-supported isolated Node recovery target within existing entitlement, plus usable private filesystem access in the same account. Login alone does not resolve either requirement."
+}
