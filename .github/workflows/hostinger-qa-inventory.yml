@@ -1,6 +1,9 @@
 name: Hostinger QA read-only inventory
 
 on:
+  pull_request:
+    branches: [fix/punctum-albums-r4-completion-20261107]
+    paths: [.github/workflows/hostinger-qa-inventory.yml]
   push:
     branches: [agent/hostinger-node-migration-20261112]
     paths: [.github/workflows/hostinger-qa-inventory.yml]
@@ -9,6 +12,10 @@ permissions: {}
 
 jobs:
   inventory:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.head_ref == 'agent/hostinger-node-migration-20261112')
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
