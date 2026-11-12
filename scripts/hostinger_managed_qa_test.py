@@ -7,7 +7,7 @@ import zipfile
 from pathlib import Path
 
 import hostinger_managed_qa as qa
-from hostinger_candidate_qa import candidate_archive
+from hostinger_candidate_qa import candidate_archive, runtime_receipts
 
 
 class RecoveryContractTests(unittest.TestCase):
@@ -64,6 +64,18 @@ class RecoveryContractTests(unittest.TestCase):
                 qa.check_probe_settings(settings, [])
         with self.assertRaises(ValueError):
             qa.check_probe_settings(dict(qa.PROBE_SETTINGS), [{"name": "UNEXPECTED_ENV"}])
+
+    def test_runtime_log_query_includes_provider_required_period_and_limit(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            paths = []
+            def fake_api(label, path, payload=None):
+                paths.append(path)
+                return {"logs": []}
+            with patch.object(recovery, "api", side_effect=fake_api):
+                runtime_receipts(recovery, "initial")
+            self.assertEqual(paths, [qa.SITE + "/runtime-logs?period=1h&limit=1000"])
+            self.assertEqual(recovery.report["runtimeReceipts"]["initial"], [])
 
     def test_transient_read_is_retried_but_a_build_post_is_never_retried(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
