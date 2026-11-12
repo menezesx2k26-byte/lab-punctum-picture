@@ -95,6 +95,18 @@ test("Node serves request-time Punctum HTML, protected Studio and persisted data
     assert.match(response.headers.get("x-robots-tag"), /noindex/u);
     assert.match(await response.text(), /<h1[\s>]/u);
   }
+  // Regression for intermittent managed /arquivo stalls: the QA runtime must
+  // finish repeat SSR responses without its own streaming compression layer.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const archive = await get("/arquivo", {
+      headers: { "Accept-Encoding": "gzip, br" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    assert.equal(archive.status, 200, `archive SSR attempt ${attempt + 1}`);
+    assert.equal(archive.headers.get("content-encoding"), null,
+      "Hostinger CDN owns compression, not the Node SSR streaming pipeline");
+    assert.match(await archive.text(), /<h1[\\s>]/u);
+  }
   const seo = await get("/sitemap.xml");
   assert.equal(seo.status, 200);
   assert.match(await seo.text(), /<urlset/u);
