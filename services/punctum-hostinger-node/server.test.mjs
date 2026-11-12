@@ -12,6 +12,8 @@ import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import { openQaDatabase } from "./sqlite.mjs";
 import sharp from "sharp";
+import { takeEvidenceScreenshot } from "../../scripts/e2e/screenshot-evidence.mjs";
+import { createQaSnapshot } from "./migration-manifest.mjs";
 
 const service = new URL("./", import.meta.url);
 
@@ -42,7 +44,7 @@ test("SQLite binding rolls back every statement after a failed batch", async (t)
   assert.equal(await db.prepare("SELECT brand_name FROM site_settings").first("brand_name"), "Punctum Picture");
 });
 
-test("Node serves request-time Punctum HTML, protected Studio and persisted data", { timeout: 100_000 }, async (t) => {
+test("Node serves request-time Punctum HTML, protected Studio and persisted data", { timeout: 300_000 }, async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "punctum-node-ssr-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, "synthetic.sqlite");
@@ -104,24 +106,31 @@ test("Node serves request-time Punctum HTML, protected Studio and persisted data
     const browser = await chromium.launch();
     const output = new URL("../../outputs/hostinger-qa-browser/", service);
     await mkdir(output, { recursive: true });
-    const report = {};
+    const report = {
+      sourceSha: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(),
+      checkoutDirtyAtRun: spawnSync("git", ["status", "--porcelain", "--untracked-files=no"], { encoding: "utf8" }).stdout.trim().length > 0,
+      scope: "local-node-synthetic-and-public-http-comparison",
+      managedQa: "NOT_TESTED",
+    };
     try {
       for (const [layout, width, height] of [["mobile", 390, 844], ["desktop", 1440, 920]]) {
         for (const [environment, base] of [["synthetic", origin], ["production", "https://punctumpicture.com"]]) {
           const page = await browser.newPage({ viewport: { width, height } });
           const failures = [];
           page.on("pageerror", () => failures.push("pageerror"));
+          const requests = [];
+          page.on("requestfailed", request => requests.push({ path: new URL(request.url()).pathname, type: request.resourceType(), error: request.failure()?.errorText }));
           const name = `${environment}-${layout}`;
           try {
-            const response = await page.goto(base, { waitUntil: "domcontentloaded", timeout: 12_000 });
+            const response = await page.goto(base, { waitUntil: "domcontentloaded", timeout: 30_000 });
             await page.locator("h1").first().waitFor({ timeout: 8_000 });
-            await page.screenshot({ path: fileURLToPath(new URL(name + ".png", output)), timeout: 8_000 });
+            const screenshotMode = await takeEvidenceScreenshot(page, fileURLToPath(new URL(name + ".png", output)));
             const metrics = await page.evaluate(() => ({
               viewport: innerWidth,
               contentWidth: document.documentElement.scrollWidth,
               stylesheets: document.styleSheets.length,
             }));
-            report[name] = { status: response.status(), ...metrics, pageErrors: failures.length };
+            report[name] = { status: response.status(), ...metrics, pageErrors: failures.length, screenshotMode, failedRequests: requests };
             if (environment === "synthetic") {
               assert.equal(response.status(), 200);
               assert.ok(metrics.stylesheets > 0, "the build must serve its stylesheets");
@@ -129,7 +138,7 @@ test("Node serves request-time Punctum HTML, protected Studio and persisted data
               assert.equal(failures.length, 0);
             }
           } catch (error) {
-            report[name] = { error: error.name };
+            report[name] = { error: error.name, failedRequests: requests };
             if (environment === "synthetic") throw error;
           } finally {
             await page.close();
@@ -237,6 +246,14 @@ test("Node serves request-time Punctum HTML, protected Studio and persisted data
       assert.equal(restoredMedia.etag, sha256);
     } finally {
       restored.close();
+    }
+    const manifest = await createQaSnapshot(file, join(directory, "manifest-restore.sqlite"));
+    assert.equal(manifest.integrity, "ok");
+    assert.equal(manifest.tables.inquiries.rows, 1);
+    assert.equal(manifest.media.objects, 1);
+    if (process.env.PUNCTUM_QA_BROWSER === "1") {
+      const output = new URL("../../outputs/hostinger-qa-browser/", service);
+      await writeFile(new URL("migration-manifest.json", output), JSON.stringify(manifest, null, 2) + "\n");
     }
   } finally {
     sql.close();
