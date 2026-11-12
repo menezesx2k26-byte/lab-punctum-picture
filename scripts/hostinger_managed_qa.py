@@ -144,7 +144,7 @@ class Recovery:
         return health, headers
 
     def upload_archive(self, archive, prefix):
-        if prefix not in ('punctum-recovery-v2-', 'punctum-storage-qa-'):
+        if prefix not in ('punctum-recovery-v2-', 'punctum-storage-qa-', 'punctum-node-candidate-'):
             raise ValueError('Unexpected archive profile')
         credentials = self.api('uploadCredentials', '/files/upload-urls', {'username':USERNAME, 'domain':DOMAIN})
         base = upload_base(credentials['url'])
@@ -246,6 +246,10 @@ def main():
     if request['action'] == 'persistence':
         from hostinger_persistence_qa import execute_persistence
         execute_persistence(root, request)
+        return
+    if request['action'] == 'candidate':
+        from hostinger_candidate_qa import execute_candidate
+        execute_candidate(root, request)
         return
     operation = Recovery(root, request["action"], request["expected_build_uuid"], request.get("existing_archive"))
     try:

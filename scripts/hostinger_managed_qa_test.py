@@ -7,9 +7,32 @@ import zipfile
 from pathlib import Path
 
 import hostinger_managed_qa as qa
+from hostinger_candidate_qa import candidate_archive
 
 
 class RecoveryContractTests(unittest.TestCase):
+    def test_candidate_source_excludes_environment_databases_and_operational_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            paths = ['services/punctum-hostinger-node/server.mjs','app/page.tsx','app/.env','public/state.sqlite','outputs/report.json','.git/config']
+            for path in paths:
+                target = root / path
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_text('fixture')
+            archive, files = candidate_archive(root, paths)
+            with zipfile.ZipFile(io.BytesIO(archive)) as source:
+                self.assertEqual(set(source.namelist()), {'services/punctum-hostinger-node/server.mjs','app/page.tsx'})
+            self.assertEqual(len(files),2)
+
+    def test_candidate_source_never_follows_a_tracked_symlink(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root/'app').mkdir()
+            (root/'private.txt').write_text('private fixture')
+            (root/'app/leak.ts').symlink_to(root/'private.txt')
+            with self.assertRaisesRegex(ValueError,'symlink'):
+                candidate_archive(root,['app/leak.ts'])
+
     def test_recovery_archive_matches_the_verified_drive_backup(self):
         archive = qa.probe_archive(Path(__file__).resolve().parents[1])
         self.assertEqual(len(archive), 2384)

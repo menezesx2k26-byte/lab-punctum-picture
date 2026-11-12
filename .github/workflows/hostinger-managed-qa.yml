@@ -16,7 +16,7 @@ jobs:
   recovery:
     if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -27,6 +27,36 @@ jobs:
       - run: python3 -m unittest discover -s scripts -p hostinger_managed_qa_test.py
       - run: node --test services/punctum-hostinger-qa/server.test.mjs
       - run: node --test services/punctum-hostinger-node/persistence-probe.test.mjs
+      - name: Read bounded operation type
+        id: operation
+        run: |
+          python3 - <<'PY'
+          import json, os
+          with open('requests/hostinger-managed-qa.json') as source:
+              request = json.load(source)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('candidate=' + str(request.get('action') == 'candidate').lower(), file=output)
+          PY
+      - name: Validate candidate build before provider changes
+        if: steps.operation.outputs.candidate == 'true'
+        run: |
+          npm ci
+          node --test services/punctum-hostinger-node/managed-bootstrap.test.mjs
+          npx playwright install --with-deps chromium
+          python3 - <<'PY'
+          import io, pathlib, subprocess, sys, tempfile, zipfile
+          sys.path.insert(0, 'scripts')
+          from hostinger_candidate_qa import candidate_archive
+          root = pathlib.Path.cwd()
+          tracked = subprocess.check_output(['git','ls-files','-z']).decode().strip('\0').split('\0')
+          archive, files = candidate_archive(root, tracked)
+          with tempfile.TemporaryDirectory(prefix='punctum-candidate-package-') as directory:
+              target = pathlib.Path(directory)
+              zipfile.ZipFile(io.BytesIO(archive)).extractall(target)
+              (target / 'node_modules').symlink_to(root / 'node_modules', target_is_directory=True)
+              subprocess.run(['npm','run','build:hostinger:qa'], cwd=target, check=True)
+          print({'sourceFiles': len(files), 'archiveBytes':len(archive), 'packagedBuild':'PASS'})
+          PY
       - name: Prepare or recover the identical disposable probe
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
@@ -35,6 +65,8 @@ jobs:
         if: always()
         with:
           name: hostinger-existing-qa-recovery
-          path: outputs/hostinger-managed-recovery/
+          path: |
+            outputs/hostinger-managed-recovery/
+            outputs/hostinger-managed-functional/
           if-no-files-found: warn
           retention-days: 14

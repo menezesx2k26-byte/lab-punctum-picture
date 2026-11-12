@@ -51,7 +51,7 @@ A opção visual não transforma o 404 anterior da autodetecção REST em recupe
 |---|---|
 | A | PASS — conta e serviço corretos reconciliados |
 | B | PASS — restauração idêntica no próprio probe, run 43310427100; segundo Node dispensado |
-| C | NOT_VERIFIED — acesso do gerenciador falhou; capacidade do runtime de persistir fora do deploy ainda precisa de prova |
+| C | PASS no escopo sintético — run 43311462641: diretório 0700, DB 0600, SQLite/mídia/snapshot íntegros após restart e rebuild |
 | D | PARTIAL_VERIFIED — CPU/RAM/disco/processos agora conhecidos; limite de 1 Node comprovado; candidato nativo ainda não homologado |
 | E | NOT_TESTED — nenhum deploy do candidato no provedor |
 | F/G | PARTIAL_VERIFIED — provas sintéticas e matriz R4 preservadas |
@@ -62,3 +62,9 @@ O próximo passo executável é preparar o ZIP de recuperação na própria apli
 Custo incremental R$ 0. Restauração e ensaios limitados ao probe QA existente. Nenhuma alteração de DNS, escrita de produção, contratação, upgrade ou merge. Código Node/SSR/SQLite/Sharp/Studio/R4 e os artefatos da CI anterior permanecem intactos.
 
 Evidência estruturada: [hostinger-control-plane-2026-11-12.json](hostinger-control-plane-2026-11-12.json). Não contém credenciais, URLs de sessão, dados de login ou conteúdo de arquivos privados.
+
+## Prova gerenciada de persistência
+
+Run 43311462641 success no SHA 462e459e6f43895f3bbe9731c9a37908c6c911c6. Boots 2 → 3 → 5 com boot IDs distintos e hash de fixture constante 6994f5b704f7c216adf1568dba987b519a9e7abad3276c2fa856f8c410e88895. Integridade e restauração de snapshot passaram em todos. Probe original recuperado ao final no build 01a1d1b1-959d-71ec-84d8-b6eeea606b1e. A CI integral 43311475260 também passou. Evidência: hostinger-managed-persistence-2026-11-12.json.
+
+A etapa seguinte é o candidato existente, após build de sua projeção de arquivos no runner. O bootstrap usa somente SQLite QA marcado e inicialização exclusiva, preserva edições entre boots e cria snapshot privado. Credenciais sintéticas são geradas em memória e gravadas apenas no ambiente gerenciado, nunca no ZIP ou nos artefatos. Falha no QA aciona recuperação do probe e limpeza do ambiente QA criado nesta operação.

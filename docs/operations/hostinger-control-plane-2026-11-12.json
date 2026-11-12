@@ -32,9 +32,9 @@
     "homeListed": true,
     "domainsDirectory": "You don't have permissions to access this.",
     "domainScopedManagerHomeListed": true,
-    "privateDirectoryCreated": false,
-    "privatePersistenceVerified": false,
-    "managedPersistenceRunInProgress": 43311462641
+    "privateDirectoryCreated": true,
+    "privatePersistenceVerified": true,
+    "managedPersistenceRun": 43311462641
   },
   "ssh": {
     "status": "INACTIVE",
@@ -44,7 +44,7 @@
   },
   "deployment": {
     "historyItems": 2,
-    "activeBuild": "01a1847b-73bf-71a9-8bd4-59a2836a1b1a",
+    "activeBuild": "01a1d1b1-959d-71ec-84d8-b6eeea606b1e",
     "source": "punctum-hostinger-qa-probe-v2.zip",
     "settingsPageOpened": true,
     "usePreviousFilesOptionPresent": true,
@@ -60,9 +60,9 @@
     "recoveryRun": 43310427100
   },
   "productionMutations": 0,
-  "providerBuildsStarted": 1,
+  "providerBuildsStarted": 4,
   "incrementalCostBRL": 0,
   "decision": "PARTIAL_VERIFIED / NO_GO_MANAGED_DEPLOY / NO_GO_PRODUCTION / NO_GO_R4",
-  "nextGateDependency": "Finish runtime private storage/restart/rebuild proof on the existing QA probe, then validate the full candidate; second Node app is not required.",
+  "nextGateDependency": "Run packaged-build preflight and managed synthetic candidate QA on the same existing Node destination; production remains NO_GO.",
   "correction": "User confirmed the existing probe itself is the migration destination; quota does not block its replacement."
 }
