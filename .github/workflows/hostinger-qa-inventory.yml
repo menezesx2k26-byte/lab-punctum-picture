@@ -185,6 +185,9 @@ jobs:
           dbs = read("assignedDatabases", f"/accounts/{username}/databases?" + urllib.parse.urlencode({"domain": domain, "is_assigned": "true", "per_page": 25}))
           if isinstance(dbs, list):
               report["checks"]["assignedDatabases"]["count"] = len(dbs)
+          account_dbs = read("accountDatabases", f"/accounts/{username}/databases")
+          if isinstance(account_dbs, list):
+              report["checks"]["accountDatabases"]["count"] = len(account_dbs)
           builds = read("builds", site + "/builds")
           build_summaries = []
           for row in (builds or [])[:2]:
@@ -203,6 +206,12 @@ jobs:
                   summary["logs"] = {"lines": logs.get("lines"), "sha256": hashlib.sha256(content.encode()).hexdigest(),
                       "mentionsHbuilds": "hbuilds" in content, "mentionsProbe": "probe" in content.lower(),
                       "mentionsBuildSuccess": bool(re.search(r"build.{0,30}(success|complet)", content, re.I))}
+              if not build_summaries and options.get("source_type") == "archive":
+                  archive = (options.get("source_options") or {}).get("archive_path")
+                  if isinstance(archive, str) and re.fullmatch(r"[A-Za-z0-9_./-]{1,240}", archive) and not archive.startswith("/") and ".." not in archive.split("/"):
+                      detected = read("previousArchiveDetection", site + "/builds/settings/from-archive?" + urllib.parse.urlencode({"archive_path": archive}))
+                      report["checks"]["previousArchiveDetection"]["configurationReadable"] = isinstance(detected, dict)
+                      summary["archiveName"] = pathlib.PurePosixPath(archive).name
               build_summaries.append(summary)
           report["checks"]["builds"]["history"] = build_summaries
           for label, url in (

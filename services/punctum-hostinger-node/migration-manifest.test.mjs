@@ -56,3 +56,16 @@ test("manifest refuses corrupted original bytes and a database without the QA id
   assert.throws(() => inspectQaManifest(file), /synthetic/i);
   sql.close();
 });
+
+test("manifest rejects a ready dynamic image with no original and preserves the source", async (t) => {
+  const { inspectQaManifest, createQaSnapshot } = await import("./migration-manifest.mjs");
+  const { directory, file } = await fixture(t);
+  const sql = new DatabaseSync(file);
+  sql.prepare("UPDATE images SET original_key = ? WHERE id = 'static-p001'").run("missing-synthetic-original");
+  sql.close();
+  const before = await readFile(file);
+  assert.throws(() => inspectQaManifest(file), /missing original/i);
+  await assert.rejects(createQaSnapshot(file, join(directory, "rejected.sqlite")), /missing original/i);
+  assert.deepEqual(await readFile(file), before);
+  await assert.rejects(stat(join(directory, "rejected.sqlite")), { code: "ENOENT" });
+});
