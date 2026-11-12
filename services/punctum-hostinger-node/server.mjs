@@ -29,4 +29,6 @@ await startProdServer({
   port,
   host: origin.protocol === "http:" ? origin.hostname : "0.0.0.0",
   outDir: fileURLToPath(output),
+  // Hostinger's CDN handles content encoding; avoid extra streamed SSR compression in Node.
+  noCompression: true,
 });
