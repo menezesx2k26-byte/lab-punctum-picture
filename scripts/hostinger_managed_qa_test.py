@@ -85,6 +85,34 @@ class RecoveryContractTests(unittest.TestCase):
                 runtime_receipts(recovery, "initial")
             self.assertTrue(recovery.report["runtimeSignals"]["initial"]["outOfMemory"])
 
+    def test_candidate_upload_is_chunked_with_verified_offsets(self):
+        chunk = 4 * 1024 * 1024
+        archive = b"x" * (2 * chunk + 7)
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            received = bytearray()
+            patches = []
+            def fake_api(label, path, payload=None):
+                self.assertEqual(label, "uploadCredentials")
+                return {"url": "https://srv2282-files.hstgr.io/files", "auth_key": "fake", "rest_auth_key": "fake"}
+            def fake_request(label, url, method="GET", headers=None, body=None):
+                if method == "POST":
+                    self.assertEqual(headers["Upload-Length"], str(len(archive)))
+                    return 201, {}, b""
+                if method == "PATCH":
+                    self.assertLessEqual(len(body), chunk)
+                    self.assertEqual(int(headers["Upload-Offset"]), len(received))
+                    received.extend(body)
+                    patches.append(len(body))
+                    return 204, {"Upload-Offset": str(len(received))}, b""
+                self.fail("Unexpected method " + method)
+            with patch.object(recovery, "api", side_effect=fake_api), patch.object(recovery, "request", side_effect=fake_request):
+                name = recovery.upload_archive(archive, "punctum-node-candidate-")
+            self.assertTrue(name.startswith("punctum-node-candidate-"))
+            self.assertEqual(patches, [chunk, chunk, 7])
+            self.assertEqual(received, archive)
+            self.assertEqual(recovery.report["acknowledgedArchives"][0]["bytes"], len(archive))
+
     def test_runtime_log_query_includes_provider_required_period_and_limit(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "expected")
