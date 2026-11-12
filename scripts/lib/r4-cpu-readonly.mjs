@@ -4,6 +4,11 @@ const SOURCE_ID='2e7710f3-dc92-4aeb-976a-5f15d8c5262c';
 const SOURCE_NAME='punctum-picture-r4-qa-20261028';
 const COLD_CPU_REQUIRED_SAMPLES=12;
 const FREE_CPU_LIMIT_MS=10;
+
+export function delayUntilNextCpuSample(nowMs){
+  if(!Number.isSafeInteger(nowMs)||nowMs<0)throw new RangeError('Expected epoch milliseconds');
+  return (Math.floor(nowMs/1000)+1)*1000+150-nowMs;
+}
 export function cpuQaEligibility({subscriptions,workers,databases,name}) {
   const plan=summarizeSubscriptions(subscriptions);
   const subscriptionIds=Array.isArray(subscriptions)
@@ -39,7 +44,7 @@ export function cpuQaWorkerConfig(name,origin,token) {
     compatibility_date:'2026-11-07',compatibility_flags:['nodejs_compat'],
     exports:{default:{type:'worker',cache:{enabled:false}},PublicHome:{type:'worker',cache:{enabled:true}}},
     workers_dev:true,preview_urls:false,routes:[],triggers:{crons:[]},
-    observability:{enabled:true,logs:{head_sampling_rate:1}},
+    observability:{enabled:true,logs:{invocation_logs:true,head_sampling_rate:1}},
     assets:{directory:'../client',binding:'ASSETS',
       not_found_handling:'single-page-application',run_worker_first:['/*']},
     vars:{R4_CPU_PROBE_TOKEN:token,PUBLIC_HOME_CACHE_ENABLED:'true',
@@ -51,7 +56,23 @@ export function cpuQaWorkerConfig(name,origin,token) {
   };
 }
 
-/** Correlate Cloudflare per-invocation telemetry with one isolated HTTP MISS. */
+const validCpu=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
+const rayId=value=>typeof value==='string'&&/^[a-f0-9]{16}(?:-[a-z]+)?$/i.test(value)
+  ? value.split('-')[0].toLowerCase() : null;
+
+/** Keep invalid CPU values visible: filtering them out could approve partial telemetry. */
+export function cpuTelemetryRecords(events,versionId){
+  return (Array.isArray(events)?events:[]).filter(event=>
+    event?.$workers?.scriptVersion?.id===versionId&&event?.$metadata?.type==='cf-worker-event')
+    .map(event=>({timestamp:event.timestamp,cpuTimeMs:event.$workers.cpuTimeMs??null,
+      wallTimeMs:event.$workers.wallTimeMs??null,versionId:event.$workers.scriptVersion.id,
+      requestId:event.$workers.requestId??event.$metadata.requestId??null,
+      rayId:event.$metadata.rayId??null,
+      entrypoint:event.$workers.entrypoint??(event.$workers.eventType==='fetch'?'default':null),
+      outcome:event.$workers.outcome??null}));
+}
+
+/** Correlate both entrypoint invocations, without approving time-window-only evidence. */
 export function correlateColdCpuSamples(requestSamples,telemetryRecords){
   const records=Array.isArray(telemetryRecords)?telemetryRecords:[];
   // Cloudflare Observability returns `timestamp` as Unix epoch milliseconds
@@ -63,15 +84,23 @@ export function correlateColdCpuSamples(requestSamples,telemetryRecords){
   return (Array.isArray(requestSamples)?requestSamples:[]).map(request=>{
     const started=Date.parse(request?.startedAt);
     const finished=Date.parse(request?.finishedAt);
-    const withinSingleSecond=Number.isFinite(started)&&Number.isFinite(finished)&&
+    const withinSingleSecond=Number.isFinite(started)&&Number.isFinite(finished)&&finished>=started&&
       Math.floor(started/1000)===Math.floor(finished/1000);
     const matching=Number.isFinite(started)&&Number.isFinite(finished)?records.filter(event=>{
       const timestamp=epochMs(event?.timestamp);
       return Number.isFinite(timestamp)&&timestamp>=started-500&&timestamp<=finished+500;
     }):[];
-    const cpuTimes=matching.map(event=>event?.cpuTimeMs).filter(value=>
-      typeof value==='number'&&Number.isFinite(value)&&value>=0);
-    return {...request,withinSingleSecond,telemetryEvents:matching.length,
+    const cpuTimes=matching.map(event=>event?.cpuTimeMs).filter(validCpu);
+    const invocationEvidenceComplete=matching.length===2&&
+      typeof request.versionId==='string'&&request.versionId.length>0&&rayId(request.rayId)!==null&&
+      matching.every(event=>validCpu(event.cpuTimeMs)&&event.versionId===request.versionId&&
+        rayId(event.rayId)===rayId(request.rayId)&&event.outcome==='ok'&&
+        typeof event.requestId==='string'&&event.requestId.length>0)&&
+      new Set(matching.map(event=>event.requestId)).size===2&&
+      matching.some(event=>event.entrypoint==='default')&&
+      matching.some(event=>event.entrypoint==='PublicHome');
+    return {...request,withinSingleSecond,invocationEvidenceComplete,telemetryEvents:matching.length,
+      invalidCpuEvents:matching.length-cpuTimes.length,
       cpuTimeMsMax:cpuTimes.length?Math.max(...cpuTimes):null};
   });
 }
@@ -79,14 +108,13 @@ export function correlateColdCpuSamples(requestSamples,telemetryRecords){
 /** Twelve isolated MISSes with exact per-request telemetry are required. */
 export function summarizeColdCpuMeasurement(samples){
   const rows=Array.isArray(samples)?samples:[];
-  const missingTelemetrySamples=rows.filter(sample=>sample.telemetryEvents<1||
-    !Number.isSafeInteger(sample.telemetryEvents)||!Number.isFinite(sample.cpuTimeMsMax)).length;
+  const missingTelemetrySamples=rows.filter(sample=>sample.invocationEvidenceComplete!==true||
+    sample.telemetryEvents!==2||!validCpu(sample.cpuTimeMsMax)).length;
   const overLimitSamples=rows.filter(sample=>Number.isFinite(sample.cpuTimeMsMax)&&
     sample.cpuTimeMsMax>FREE_CPU_LIMIT_MS).length;
   const unqualifiedSamples=rows.filter(sample=>sample.status!==200||sample.validHtml!==true||
     !['MISS','EXPIRED'].includes(sample.cacheStatus)||sample.withinSingleSecond!==true||
-    !Number.isSafeInteger(sample.telemetryEvents)||sample.telemetryEvents<1||
-    sample.telemetryEvents>2||!Number.isFinite(sample.cpuTimeMsMax)||
+    sample.invocationEvidenceComplete!==true||sample.telemetryEvents!==2||!validCpu(sample.cpuTimeMsMax)||
     sample.cpuTimeMsMax>FREE_CPU_LIMIT_MS).length;
   const cpuTimes=rows.map(sample=>sample.cpuTimeMsMax).filter(value=>
     typeof value==='number'&&Number.isFinite(value));
@@ -103,8 +131,8 @@ export function summarizeFirstRequestCpu(sample){
   const cpuTimeMsMax=sample?.cpuTimeMsMax;
   const requestValid=sample?.status===200&&sample?.validHtml===true&&
     ['MISS','EXPIRED'].includes(sample?.cacheStatus);
-  const telemetryComplete=Number.isSafeInteger(telemetryEvents)&&
-    telemetryEvents>=1&&telemetryEvents<=2&&Number.isFinite(cpuTimeMsMax);
+  const telemetryComplete=sample?.withinSingleSecond===true&&sample?.invocationEvidenceComplete===true&&
+    telemetryEvents===2&&validCpu(cpuTimeMsMax);
   const overLimit=Number.isFinite(cpuTimeMsMax)&&cpuTimeMsMax>FREE_CPU_LIMIT_MS;
   return {qualified:requestValid&&telemetryComplete&&!overLimit,requestValid,
     telemetryComplete,overLimit,telemetryEvents:Number.isSafeInteger(telemetryEvents)?telemetryEvents:0,

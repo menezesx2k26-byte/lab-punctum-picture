@@ -55,6 +55,13 @@ Coverage:
 - Local Studio publication of Colagem Autoral and public responsive rendering.
 - Runtime restart with persisted local D1/R2 and consistent-storage rollback.
 - Logout revocation with the other client remaining authorized.
+- Actual 200% Chromium page zoom in a disposable HostZoomMap profile: library,
+  gallery, lightbox keyboard/Escape/focus, private admin and public home. CDP
+  `cssVisualViewport.zoom=2`, pinch `scale=1`, native window width and CSS layout
+  are recorded for every page. No CSS zoom, device-scale or viewport override is
+  used. Five additional screenshots are explicitly viewport-only. This is a
+  headless desktop browser check; physical Android/iOS and assistive tools remain
+  separate pending tests.
 - Unhandled browser exceptions, console warnings/errors and HTTP 5xx checks.
 
 The session cookies are synthesized from **new local test secrets** for exercising

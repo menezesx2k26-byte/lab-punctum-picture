@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cpuQaEligibility,cpuQaFixtureEligibility,cpuQaWorkerConfig,summarizePublicCacheProbe,
-  correlateColdCpuSamples,summarizeColdCpuMeasurement,summarizeFirstRequestCpu} from './lib/r4-cpu-readonly.mjs';
+  correlateColdCpuSamples,summarizeColdCpuMeasurement,summarizeFirstRequestCpu,cpuTelemetryRecords,
+  delayUntilNextCpuSample} from './lib/r4-cpu-readonly.mjs';
 import {cpuProbeFetch} from './r4-cpu-guard.mjs';
 
 const good={subscriptions:[{id:'free'},{id:'r2_paid'}],workers:[{id:'other'}],
@@ -47,6 +48,7 @@ test('ephemeral CPU worker excludes real routes, R2, Images, and background jobs
   assert.equal(config.images,undefined);
   assert.deepEqual(config.d1_databases.map(x=>x.database_id),[good.databases[0].uuid]);
   assert.equal(config.assets.directory,'../client');
+  assert.deepEqual(config.observability.logs,{invocation_logs:true,head_sampling_rate:1});
   assert.ok(!('secrets_store_secrets' in config));
 });
 
@@ -93,15 +95,17 @@ test('cache QA does not promote a warm hit when HTML or CPU cold misses are unpr
 function coldRequests(){
   return Array.from({length:12},(_,index)=>{
     const start=Date.UTC(2026,10,12,1,0,index*3+1);
-    return {index:index+1,startedAt:new Date(start).toISOString(),
+    return {index:index+1,versionId:'version-1',rayId:(index+1).toString(16).padStart(16,'0')+'-GRU',startedAt:new Date(start).toISOString(),
       finishedAt:new Date(start+120).toISOString(),status:200,cacheStatus:'MISS',validHtml:true};
   });
 }
 
 function coldEvents(requests,cpuTimeMs=8.5){
   return requests.flatMap(sample=>[
-    {timestamp:sample.startedAt,cpuTimeMs,versionId:'version-1'},
-    {timestamp:new Date(Date.parse(sample.startedAt)+20).toISOString(),cpuTimeMs:4.2,versionId:'version-1'},
+    {timestamp:sample.startedAt,cpuTimeMs,versionId:'version-1',rayId:sample.rayId,
+      requestId:'root-'+sample.index,entrypoint:'default',outcome:'ok'},
+    {timestamp:new Date(Date.parse(sample.startedAt)+20).toISOString(),cpuTimeMs:4.2,versionId:'version-1',
+      rayId:sample.rayId.split('-')[0],requestId:'home-'+sample.index,entrypoint:'PublicHome',outcome:'ok'},
   ]);
 }
 
@@ -135,8 +139,8 @@ test('Cloudflare Observability numeric epoch-millisecond timestamps correlate to
 
 test('first authenticated request requires an exact cache MISS and per-invocation CPU under 10ms',()=>{
   const request={...coldRequests()[0],cacheStatus:'MISS'};
-  const event={timestamp:Date.parse(request.startedAt),cpuTimeMs:9.9};
-  const correlated=correlateColdCpuSamples([request],[event])[0];
+  const events=coldEvents([request],9.9);
+  const correlated=correlateColdCpuSamples([request],events)[0];
   assert.equal(summarizeFirstRequestCpu(correlated).qualified,true);
   assert.equal(summarizeFirstRequestCpu({...correlated,cpuTimeMsMax:10.001}).overLimit,true);
   assert.equal(summarizeFirstRequestCpu({...correlated,telemetryEvents:0,cpuTimeMsMax:null}).qualified,false);
@@ -183,4 +187,61 @@ test('scoped synthetic purge is authenticated and cannot mutate private routes',
   assert.equal(accepted.status,200);
   assert.equal(purges,1);
   assert.equal(appCalls,0);
+});
+
+test('CPU evidence rejects a missing or invalid invocation instead of keeping only the valid maximum',()=>{
+  const requests=coldRequests();
+  for(const invalid of [undefined,null,-1,NaN,Infinity,'8']){
+    const events=coldEvents(requests).map((event,index)=>index===0?{...event,cpuTimeMs:invalid}:event);
+    assert.equal(summarizeColdCpuMeasurement(correlateColdCpuSamples(requests,events)).qualified,false,
+      'partial or invalid CPU must not qualify: '+String(invalid));
+  }
+  assert.equal(summarizeFirstRequestCpu({...requests[0],telemetryEvents:1,cpuTimeMsMax:-1}).qualified,false);
+});
+
+test('CPU evidence rejects a lone default invocation and cannot qualify an inverted first-request window',()=>{
+  const requests=coldRequests();
+  const rootOnly=coldEvents(requests).filter((_,index)=>index%2===0);
+  assert.equal(summarizeColdCpuMeasurement(correlateColdCpuSamples(requests,rootOnly)).qualified,false);
+  const request={...requests[0],finishedAt:new Date(Date.parse(requests[0].startedAt)-100).toISOString()};
+  assert.equal(summarizeFirstRequestCpu(correlateColdCpuSamples([request],coldEvents([request]))[0]).qualified,false);
+});
+
+test('CPU evidence requires both distinct invocations from the same Ray, deployed version and successful outcome',()=>{
+  const requests=coldRequests();
+  for(const mutation of [
+    {versionId:'other-version'}, {rayId:'ffffffffffffffff'}, {rayId:null},
+    {requestId:'root-1'}, {requestId:''}, {entrypoint:'default'}, {outcome:'exceededCpu'},
+  ]){
+    const events=coldEvents(requests).map((event,index)=>index===1?{...event,...mutation}:event);
+    assert.equal(summarizeColdCpuMeasurement(correlateColdCpuSamples(requests,events)).qualified,false,
+      JSON.stringify(mutation));
+  }
+  const unidentified=requests.map((request,index)=>index===0?{...request,rayId:null}:request);
+  assert.equal(summarizeColdCpuMeasurement(correlateColdCpuSamples(unidentified,coldEvents(requests))).qualified,false);
+});
+
+test('Observability extraction preserves incomplete invocations and excludes custom logs and other versions',()=>{
+  const make=(worker={},metadata={})=>({timestamp:1794492000000,
+    $metadata:{type:'cf-worker-event',rayId:'0000000000000001-GRU',...metadata},
+    $workers:{scriptVersion:{id:'version-1'},eventType:'fetch',requestId:'r1',outcome:'ok',cpuTimeMs:2,...worker}});
+  const records=cpuTelemetryRecords([make(),make({cpuTimeMs:undefined,entrypoint:'PublicHome',requestId:'r2'}),
+    make({}, {type:'cf-worker-log'}),make({scriptVersion:{id:'other'}})],'version-1');
+  assert.equal(records.length,2);
+  assert.equal(records[0].entrypoint,'default');
+  assert.equal(records[1].entrypoint,'PublicHome');
+  assert.equal(records[1].cpuTimeMs,null);
+  const request={...coldRequests()[0],startedAt:new Date(1794492000000).toISOString(),
+    finishedAt:new Date(1794492000100).toISOString()};
+  const partial=correlateColdCpuSamples([request],records)[0];
+  assert.equal(partial.invalidCpuEvents,1);
+  assert.equal(summarizeFirstRequestCpu(partial).qualified,false);
+});
+
+test('CPU sample waits until the next second plus 150ms even when current second is past that point',()=>{
+  assert.equal(delayUntilNextCpuSample(1000),1150);
+  assert.equal(delayUntilNextCpuSample(1150),1000);
+  assert.equal(delayUntilNextCpuSample(1999),151);
+  assert.equal(delayUntilNextCpuSample(2000),1150);
+  for(const invalid of [-1,NaN,Infinity,null,'1999'])assert.throws(()=>delayUntilNextCpuSample(invalid));
 });

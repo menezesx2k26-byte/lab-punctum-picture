@@ -6,7 +6,7 @@ import {mkdir,writeFile,copyFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {cpuQaEligibility,cpuQaFixtureEligibility,cpuQaWorkerConfig,summarizePublicCacheProbe,
-  correlateColdCpuSamples,summarizeFirstRequestCpu} from './lib/r4-cpu-readonly.mjs';
+  correlateColdCpuSamples,summarizeFirstRequestCpu,cpuTelemetryRecords,delayUntilNextCpuSample} from './lib/r4-cpu-readonly.mjs';
 
 const ACCOUNT='257bca437616da74ece1ce4bbaf0bd89';
 const SOURCE_ID='2e7710f3-dc92-4aeb-976a-5f15d8c5262c';
@@ -19,8 +19,7 @@ assert.ok(token,'Account-scoped token missing');
 const name='punctum-r4-cpu-probe-'+runId;
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const waitForNextSecond=async()=>{
-  const target=Math.floor(Date.now()/1000)*1000+150;
-  await pause(Math.max(0,target-Date.now()));
+  await pause(delayUntilNextCpuSample(Date.now()));
 };
 const report={observedAt:new Date().toISOString(),sha:process.env.GITHUB_SHA,
   name,mode:'PUBLIC_READONLY_EPHEMERAL',productionTouched:false,
@@ -124,6 +123,7 @@ try {
     'Synthetic D1 binding absent');
   assert.ok(!bindings.some(b=>['ORIGINALS','BACKUPS','IMAGES'].includes(b.name)),
     'Unexpected media or image binding');
+  await waitForNextSecond();
   const firstStartedAt=new Date().toISOString();
   const firstStarted=performance.now();
   const firstResponse=await fetch(origin+'/',{headers:{Accept:'text/html','X-R4-CPU-Probe':probeToken},
@@ -132,6 +132,7 @@ try {
   const firstFinishedAt=new Date().toISOString();
   const firstVersionMatches=firstResponse.headers.get('X-QA-Version')===version.versionId;
   const firstSample={index:0,startedAt:firstStartedAt,finishedAt:firstFinishedAt,status:firstResponse.status,
+    versionId:version.versionId,rayId:firstResponse.headers.get('CF-Ray'),
     cacheStatus:firstResponse.headers.get('CF-Cache-Status'),latencyMs:Math.round(performance.now()-firstStarted),
     validHtml:firstBody.includes('</html>')&&firstVersionMatches,versionMatches:firstVersionMatches};
   report.firstRequest=firstSample;
@@ -206,6 +207,7 @@ try {
     const htmlValid=body.includes('</html>');
     const versionMatches=response.headers.get('X-QA-Version')===version.versionId;
     const sample={index:i+1,startedAt,finishedAt,status:response.status,
+      versionId:version.versionId,rayId:response.headers.get('CF-Ray'),
       cacheStatus:response.headers.get('CF-Cache-Status'),latencyMs:Math.round(performance.now()-started),
       validHtml:htmlValid&&versionMatches,versionMatches};
     coldSamples.push(sample);
@@ -237,14 +239,11 @@ try {
     parameters:{datasets:[],filters:[{key:'$metadata.service',operation:'eq',type:'string',value:name}]}
   }});
   const events=logs.result?.events?.events??[];
-  const telemetryRecords=events.filter(event=>event.$workers?.scriptVersion?.id===version.versionId&&
-    Number.isFinite(event.$workers?.cpuTimeMs)).map(event=>({timestamp:event.timestamp,
-      cpuTimeMs:event.$workers.cpuTimeMs,wallTimeMs:event.$workers.wallTimeMs,
-      versionId:event.$workers.scriptVersion.id}));
+  const telemetryRecords=cpuTelemetryRecords(events,version.versionId);
   report.cpuTelemetry={http:logs.status,success:logs.ok,returnedEvents:events.length,
     versionFilteredSamples:telemetryRecords.length,
-    cpuMs:summary(telemetryRecords.map(record=>record.cpuTimeMs)),
-    wallMs:summary(telemetryRecords.map(record=>record.wallTimeMs)),records:telemetryRecords};
+    cpuMs:summary(telemetryRecords.map(record=>record.cpuTimeMs).filter(value=>Number.isFinite(value)&&value>=0)),
+    wallMs:summary(telemetryRecords.map(record=>record.wallTimeMs).filter(value=>Number.isFinite(value)&&value>=0)),records:telemetryRecords};
   report.coldCpuSamples=correlateColdCpuSamples(coldSamples,telemetryRecords);
   const firstLogs=await api('/workers/observability/telemetry/query',{method:'POST',body:{
     queryId:'r4-cpu-first-'+runId,dry:true,
@@ -253,10 +252,7 @@ try {
     parameters:{datasets:[],filters:[{key:'$metadata.service',operation:'eq',type:'string',value:name}]}
   }});
   const firstEvents=firstLogs.result?.events?.events??[];
-  const firstTelemetryRecords=firstEvents.filter(event=>event.$workers?.scriptVersion?.id===version.versionId&&
-    Number.isFinite(event.$workers?.cpuTimeMs)).map(event=>({timestamp:event.timestamp,
-      cpuTimeMs:event.$workers.cpuTimeMs,wallTimeMs:event.$workers.wallTimeMs,
-      versionId:event.$workers.scriptVersion.id}));
+  const firstTelemetryRecords=cpuTelemetryRecords(firstEvents,version.versionId);
   report.firstRequestTelemetry={http:firstLogs.status,success:firstLogs.ok,returnedEvents:firstEvents.length,
     versionFilteredSamples:firstTelemetryRecords.length,records:firstTelemetryRecords};
   report.firstRequestCpu=correlateColdCpuSamples([firstSample],firstTelemetryRecords)[0];

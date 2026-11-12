@@ -14,6 +14,7 @@ import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
 import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
+import { createZoomBrowser, readBrowserZoom } from "./browser-zoom-evidence.mjs";
 
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 const buildDirectory = resolve(process.env.PUNCTUM_E2E_DIST || "dist");
@@ -90,7 +91,7 @@ const options = convertV4MiniflareOptions({
 });
 options.resourcePersistencePath = storage;
 options.telemetry = { enabled: false };
-let mf, browser;
+let mf, browser, zoomBrowser;
 const contexts = [];
 const expectedDenialPaths = new Set();
 const start = async () => { mf = new Miniflare(options); await mf.ready; };
@@ -376,6 +377,65 @@ try {
   assert.equal(logout.status(), 200); assert.equal((await a.request.get(origin + "/api/client/me")).status(), 401);
   assert.equal((await b.request.get(origin + "/api/client/me")).status(), 200);
   record("logout revokes client A while client B remains authorized");
+  // Finish with a second disposable browser, using Chromium's native zoom
+  // preference and its actual CSS-to-DIP zoom readback. No viewport/CSS/pinch
+  // emulation is used. Reuse only the still-valid synthetic B/admin cookies.
+  const zoomCookies=[...await b.cookies(),...await admin.cookies()];
+  await browser.close(); browser=undefined;
+  zoomBrowser=await createZoomBrowser(playwright.chromium,join(temporary,'zoom-profile'),process.env.CHROMIUM_EXECUTABLE||undefined);
+  await zoomBrowser.addCookies(zoomCookies);
+  await zoomBrowser.route('**/*',route=>{
+    const url=new URL(route.request().url());
+    return url.origin===origin||url.protocol==='data:'?route.continue():route.abort('blockedbyclient');
+  });
+  const zoomPage=zoomBrowser.pages()[0];
+  zoomPage.on('pageerror',error=>report.pageErrors.push(error.message));
+  zoomPage.on('console',message=>{
+    if(['warning','warn'].includes(message.type()))report.consoleWarnings.push(message.text());
+    if(message.type()==='error')report.consoleErrors.push({message:message.text(),
+      path:message.location().url?new URL(message.location().url).pathname:null});
+  });
+  zoomPage.on('response',response=>{
+    if(response.status()>=500)report.serverErrors.push({path:new URL(response.url()).pathname,status:response.status()});
+  });
+  report.browserZoom={method:'Chromium HostZoomMap preference in disposable profile',physicalDevice:false,samples:[]};
+  const verifyZoom=async label=>{
+    const sample={label,...await readBrowserZoom(zoomPage)};
+    report.browserZoom.samples.push(sample);
+    assert.equal(sample.zoom,2,'actual browser zoom must be 200 percent');
+    assert.equal(sample.visualScale,1,'pinch scale must remain unchanged');
+    assert.equal(sample.outerWidth,1280);
+    assert.ok(Math.abs(sample.cssWidth-640)<=1);
+    await noHorizontalOverflow(zoomPage);
+    await zoomPage.screenshot({path:join(reportDirectory,'zoom-200-'+label+'.png'),fullPage:false});
+    report.screenshotModes['zoom-200-'+label+'.png']='viewport';
+  };
+  await zoomPage.goto(origin+'/albuns');
+  await zoomPage.getByRole('heading',{name:'Álbum sintético B'}).waitFor();
+  await verifyZoom('library');
+  await zoomPage.getByRole('link',{name:/Álbum sintético B/}).click();
+  await zoomPage.getByRole('heading',{name:'Álbum sintético B',exact:true}).waitFor();
+  await verifyZoom('gallery');
+  const zoomOpener=zoomPage.getByRole('button',{name:'Abrir Fotografia sintética B 1',exact:true});
+  await zoomOpener.click();
+  const zoomDialog=zoomPage.getByRole('dialog',{name:'Visualização da fotografia'});
+  await zoomDialog.waitFor();
+  await verifyZoom('lightbox');
+  await zoomPage.keyboard.press('ArrowRight');
+  await zoomDialog.getByText('Fotografia sintética B 2',{exact:true}).waitFor();
+  await zoomPage.keyboard.press('Escape');
+  await zoomDialog.waitFor({state:'hidden'});
+  assert.ok(await zoomOpener.evaluate(el=>el===document.activeElement),'zoomed lightbox restores focus');
+  await zoomPage.goto(origin+'/admin/albuns-privados/'+browserGalleryId);
+  await zoomPage.getByRole('button',{name:'Salvar alterações',exact:true}).waitFor();
+  await verifyZoom('admin');
+  assert.ok(await zoomPage.locator('.pga-editor-form .pga-actions .button').evaluateAll(buttons=>buttons.every(button=>button.scrollWidth<=button.clientWidth+1)),
+    'private admin action text is clipped at real browser zoom');
+  await zoomPage.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:90_000});
+  await zoomPage.locator('h1').first().waitFor();
+  await verifyZoom('public-home');
+  report.actualBrowserZoomTested=true;
+  record('actual 200 percent Chromium browser zoom: library, gallery, keyboard lightbox, admin and public home; no horizontal overflow');
   assert.deepEqual(report.pageErrors, [], "unhandled browser exceptions");
   assert.deepEqual(report.serverErrors, [], "unexpected HTTP5xx in rendered pages");
   assert.deepEqual(report.consoleWarnings, [], "browser console warnings");
@@ -385,7 +445,7 @@ try {
   report.status = "FAILED"; report.error = error.message; process.exitCode = 1;
   console.error(error);
 } finally {
-  await browser?.close(); await mf?.dispose();
+  await zoomBrowser?.close(); await browser?.close(); await mf?.dispose();
   await rm(temporary, { recursive: true, force: true });
   report.completedUtc = new Date().toISOString(); report.temporaryStorageRemoved = true;
   await writeFile(join(reportDirectory, "report.json"), JSON.stringify(report, null, 2) + "\n");
