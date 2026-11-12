@@ -26,9 +26,11 @@ jobs:
         run: |
           set +x
           python3 - <<'PY'
+          import hashlib
           import json
           import os
           import urllib.error
+          import urllib.parse
           import urllib.request
 
           class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -47,7 +49,11 @@ jobs:
               "website": f"/websites?domain={domain}",
               "build_settings": f"{site}/builds/settings",
               "build_history": f"{site}/builds",
+              "env_inventory": f"{site}/builds/settings/env",
           }
+          for file in ("app.mjs", "server.mjs", "package.json", "README.md"):
+              path = urllib.parse.urlencode({"path": file, "max_lines": 500})
+              checks["probe_" + file] = f"/accounts/{username}/domains/{domain}/files/content?{path}"
           opener = urllib.request.build_opener(NoRedirect())
           settings_fields = {
               "app_type", "node_version", "root_directory", "output_directory",
@@ -70,10 +76,22 @@ jobs:
                               for row in data
                           )
                       if name == "build_settings" and isinstance(data, dict):
-                          result["recognized_fields"] = sorted(settings_fields.intersection(data))
-                          result["node_version"] = data.get("node_version") if isinstance(data.get("node_version"), int) else None
+                          result["settings"] = {key: data[key] for key in sorted(settings_fields.intersection(data))
+                                                if data[key] is None or isinstance(data[key], int) or
+                                                (isinstance(data[key], str) and len(data[key]) <= 100 and
+                                                 all(char.isalnum() or char in "/_-.:" for char in data[key]))}
                       if name == "build_history" and isinstance(data, list):
                           result["page_items"] = len(data)
+                          result["states"] = [row.get("status") for row in data if isinstance(row, dict)]
+                      if name == "env_inventory" and isinstance(data, list):
+                          result["variables"] = len(data)
+                      if name.startswith("probe_") and isinstance(data, dict):
+                          content = data.get("content")
+                          if isinstance(content, str):
+                              content = content.replace("\r\n", "\n").rstrip("\n") + "\n"
+                              result["sha256_normalized"] = hashlib.sha256(content.encode()).hexdigest()
+                          else:
+                              result["has_text"] = False
                       print(name, json.dumps(result))
               except urllib.error.HTTPError as error:
                   print(name, json.dumps({
