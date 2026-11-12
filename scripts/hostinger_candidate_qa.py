@@ -115,7 +115,10 @@ def runtime_receipts(operation, phase):
                     receipt.get('manifest',{}).get('scope') == 'SYNTHETIC_QA_ONLY'):
                     receipts.append(receipt)
         operation.report.setdefault('runtimeReceipts',{})[phase] = receipts
-        content = '\n'.join(strings)
+        # Synthetic QA receipts include a successful SIGKILL regression case.
+        # Exclude receipt lines before classifying actual process failures.
+        content = '\n'.join(line for value in strings for line in value.splitlines()
+                            if 'PUNCTUM_MANAGED_QA ' not in line)
         operation.report.setdefault('runtimeSignals',{})[phase] = {
             'outOfMemory':any(x in content.lower() for x in ('out of memory','heap limit','sigkill','enomem')),
             'errorKinds':sorted(set(re.findall(r'\b(?:[A-Za-z]+Error|ERR_[A-Z_]+)\b',content)))[:20],
