@@ -1,0 +1,74 @@
+name: Hostinger QA read-only inventory
+
+on:
+  push:
+    branches: [agent/hostinger-node-migration-20261112]
+    paths: [.github/workflows/hostinger-qa-inventory.yml]
+
+permissions: {}
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check access to the existing QA website and its Node builds
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        shell: bash
+        run: |
+          set +x
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+
+          token = os.environ.get("HOSTINGER_API")
+          if not token:
+              raise SystemExit("HOSTINGER_API is unavailable in this workflow context.")
+
+          base = "https://api.hostinger.com/api/hosting/v1"
+          domain = "aliceblue-locust-999458.hostingersite.com"
+          username = "u571409090"
+          site = f"/accounts/{username}/websites/{domain}/nodejs"
+          checks = {
+              "website": f"/websites?domain={domain}",
+              "build_settings": f"{site}/builds/settings",
+              "build_history": f"{site}/builds",
+          }
+          opener = urllib.request.build_opener(NoRedirect())
+          settings_fields = {
+              "app_type", "node_version", "root_directory", "output_directory",
+              "build_script", "entry_file", "package_manager",
+          }
+          for name, path in checks.items():
+              req = urllib.request.Request(base + path, headers={
+                  "Authorization": f"Bearer {token}", "Accept": "application/json",
+              })
+              try:
+                  with opener.open(req, timeout=12) as response:
+                      payload = json.loads(response.read(512_000))
+                      data = payload.get("data", payload) if isinstance(payload, dict) else payload
+                      result = {"status": response.status}
+                      if name == "website" and isinstance(data, list):
+                          result["target_present"] = any(
+                              isinstance(row, dict) and row.get("domain") == domain
+                              and row.get("username") == username and row.get("website_type") == "nodejs"
+                              for row in data
+                          )
+                      if name == "build_settings" and isinstance(data, dict):
+                          result["recognized_fields"] = sorted(settings_fields.intersection(data))
+                          result["node_version"] = data.get("node_version") if isinstance(data.get("node_version"), int) else None
+                      if name == "build_history" and isinstance(data, list):
+                          result["page_items"] = len(data)
+                      print(name, json.dumps(result))
+              except urllib.error.HTTPError as error:
+                  print(name, json.dumps({"status": error.code}))
+              except (ValueError, OSError) as error:
+                  print(name, json.dumps({"error": type(error).__name__}))
+          PY
