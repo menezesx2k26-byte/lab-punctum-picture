@@ -1,8 +1,7 @@
 {
-  "request_id": "restore-identical-probe-in-place-20261112-03",
+  "request_id": "private-storage-restart-rebuild-20261112-04",
   "domain": "aliceblue-locust-999458.hostingersite.com",
-  "action": "restore-probe",
-  "expected_build_uuid": "01a1847b-73bf-71a9-8bd4-59a2836a1b1a",
-  "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca",
-  "existing_archive": "punctum-recovery-v2-27788e9b549f40cab80d40d8ade42c84.zip"
+  "action": "persistence",
+  "expected_build_uuid": "01a1d1a8-cc2a-7124-9aa0-8c2cc220904c",
+  "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }

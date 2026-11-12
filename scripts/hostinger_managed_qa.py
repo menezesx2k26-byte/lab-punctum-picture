@@ -133,14 +133,36 @@ class Recovery:
 
     def health(self, label):
         nonce = str(uuid.uuid4())
-        raw = self.request(label, f"https://{DOMAIN}/health?nonce={nonce}",
-                           headers={"User-Agent": "Punctum QA recovery/1.0"})[2]
+        _, headers, raw = self.request(label, f"https://{DOMAIN}/health?nonce={nonce}",
+                                      headers={"User-Agent": "Punctum QA recovery/1.0"})
         health = json.loads(raw)
         if (health.get("service") != "punctum-hostinger-qa-probe" or health.get("version") != VERSION or
                 health.get("nonce") != nonce or health.get("production") is not False or
                 health.get("ssrValidated") is not False):
             raise ValueError("The current service is not the expected disposable v2 probe")
         self.report["checks"][label].update({k: health.get(k) for k in ("service", "version", "node", "production", "ssrValidated")})
+        return health, headers
+
+    def upload_archive(self, archive, prefix):
+        if prefix not in ('punctum-recovery-v2-', 'punctum-storage-qa-'):
+            raise ValueError('Unexpected archive profile')
+        credentials = self.api('uploadCredentials', '/files/upload-urls', {'username':USERNAME, 'domain':DOMAIN})
+        base = upload_base(credentials['url'])
+        headers = {'X-Auth':credentials['auth_key'], 'X-Auth-Rest':credentials['rest_auth_key'],
+                   'Tus-Resumable':'1.0.0', 'User-Agent':'Punctum QA recovery/1.0'}
+        name = prefix + uuid.uuid4().hex + '.zip'
+        target = base + '/' + name + '?override=true'
+        status = self.request('uploadCreate', target, 'POST',
+                              {**headers, 'Upload-Length':str(len(archive)), 'Upload-Offset':'0'}, b'')[0]
+        if status != 201:
+            raise ValueError('Upload creation was not acknowledged')
+        status, received, _ = self.request('uploadBytes', target, 'PATCH',
+                                          {**headers, 'Content-Type':'application/offset+octet-stream', 'Upload-Offset':'0'}, archive)
+        if status != 204 or int(received.get('Upload-Offset', '-1')) != len(archive):
+            raise ValueError('Complete archive upload was not acknowledged')
+        self.report.setdefault('acknowledgedArchives', []).append({'name':name, 'bytes':len(archive), 'sha256':digest(archive)})
+        self.save()
+        return name
 
     def run(self):
         archive = probe_archive(self.root)
@@ -168,21 +190,7 @@ class Recovery:
             if len(matches) != 1:
                 raise ValueError("Previously acknowledged recovery archive is not uniquely listed")
         else:
-            # Mint short-lived upload credentials for this existing QA site only.
-            credentials = self.api("uploadCredentials", "/files/upload-urls", {"username": USERNAME, "domain": DOMAIN})
-            base = upload_base(credentials["url"])
-            upload_headers = {"X-Auth": credentials["auth_key"], "X-Auth-Rest": credentials["rest_auth_key"],
-                              "Tus-Resumable": "1.0.0", "User-Agent": "Punctum QA recovery/1.0"}
-            name = "punctum-recovery-v2-" + uuid.uuid4().hex + ".zip"
-            target = base + "/" + name + "?override=true"
-            status = self.request("uploadCreate", target, "POST",
-                                  {**upload_headers, "Upload-Length": str(len(archive)), "Upload-Offset": "0"}, b"")[0]
-            if status != 201:
-                raise ValueError("Upload creation was not acknowledged")
-            status, headers, _ = self.request("uploadBytes", target, "PATCH",
-                                             {**upload_headers, "Content-Type": "application/offset+octet-stream", "Upload-Offset": "0"}, archive)
-            if status != 204 or int(headers.get("Upload-Offset", "-1")) != len(archive):
-                raise ValueError("The complete recovery archive was not acknowledged")
+            name = self.upload_archive(archive, 'punctum-recovery-v2-')
         self.report["archiveName"] = name
         detected = self.api("archiveDetection", SITE + "/builds/settings/from-archive?" + urllib.parse.urlencode({"archive_path": name}))
         if not isinstance(detected, dict):
@@ -235,6 +243,10 @@ def main():
     request = json.loads(Path(args.request).read_text())
     if request.get("domain") != DOMAIN or request.get("backup_sha256") != BACKUP_DIGEST:
         raise ValueError("Recovery request target or backup is not authorized")
+    if request['action'] == 'persistence':
+        from hostinger_persistence_qa import execute_persistence
+        execute_persistence(root, request)
+        return
     operation = Recovery(root, request["action"], request["expected_build_uuid"], request.get("existing_archive"))
     try:
         operation.run()

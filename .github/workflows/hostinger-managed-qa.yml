@@ -16,7 +16,7 @@ jobs:
   recovery:
     if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -26,6 +26,7 @@ jobs:
           node-version: 24
       - run: python3 -m unittest discover -s scripts -p hostinger_managed_qa_test.py
       - run: node --test services/punctum-hostinger-qa/server.test.mjs
+      - run: node --test services/punctum-hostinger-node/persistence-probe.test.mjs
       - name: Prepare or recover the identical disposable probe
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
