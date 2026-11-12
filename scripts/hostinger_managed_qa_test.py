@@ -65,6 +65,26 @@ class RecoveryContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             qa.check_probe_settings(dict(qa.PROBE_SETTINGS), [{"name": "UNEXPECTED_ENV"}])
 
+    def test_expected_sigkill_regression_receipt_is_not_reported_as_runtime_oom(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only", "GITHUB_SHA": "test-sha"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            receipt = {"schema": 1, "sourceSha": "test-sha",
+                       "manifest": {"scope": "SYNTHETIC_QA_ONLY"},
+                       "transactionChecks": {"cases": ["SIGKILL/uncommitted rollback/integrity/FK"]}}
+            lines = {"logs": [{"message": "PUNCTUM_MANAGED_QA " + qa.json.dumps(receipt)}]}
+            with patch.object(recovery, "api", return_value=lines):
+                runtime_receipts(recovery, "initial")
+            self.assertEqual(len(recovery.report["runtimeReceipts"]["initial"]), 1)
+            self.assertFalse(recovery.report["runtimeSignals"]["initial"]["outOfMemory"])
+
+    def test_actual_runtime_oom_line_remains_detectable(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            lines = {"logs": [{"message": "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"}]}
+            with patch.object(recovery, "api", return_value=lines):
+                runtime_receipts(recovery, "initial")
+            self.assertTrue(recovery.report["runtimeSignals"]["initial"]["outOfMemory"])
+
     def test_runtime_log_query_includes_provider_required_period_and_limit(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "expected")
