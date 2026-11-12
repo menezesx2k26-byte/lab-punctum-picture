@@ -140,7 +140,7 @@ jobs:
                     "scope": "read-only-provider-and-public-http", "managedQa": "NOT_TESTED",
                     "writesAttempted": 0, "checks": {}}
           def read(label, path):
-              req = urllib.request.Request(base + path, headers={"Authorization": "Bearer " + token, "Accept": "application/json"})
+              req = urllib.request.Request(base + path, headers={"Authorization": "Bearer " + token, "Accept": "application/json", "Content-Type": "application/json", "User-Agent": "Punctum QA inventory/1.0"})
               try:
                   with opener.open(req, timeout=12) as response:
                       raw = response.read(2000001)
@@ -219,7 +219,7 @@ jobs:
                       report["checks"][label] = result
               except urllib.error.HTTPError as error:
                   report["checks"][label] = {"status": error.code,
-                      "loginRedirect": str(error.headers.get("Location", "")).startswith("/acesso")}
+                      "loginRedirect": urllib.parse.urlsplit(urllib.parse.urljoin(url, error.headers.get("Location", ""))).path == "/acesso"}
               except (OSError, ValueError):
                   report["checks"][label] = {"error": "READ_UNAVAILABLE"}
           path = pathlib.Path("outputs/hostinger-takeover/inventory.json")
