@@ -156,9 +156,35 @@ class Recovery:
                               {**headers, 'Upload-Length':str(len(archive)), 'Upload-Offset':'0'}, b'')[0]
         if status != 201:
             raise ValueError('Upload creation was not acknowledged')
-        status, received, _ = self.request('uploadBytes', target, 'PATCH',
-                                          {**headers, 'Content-Type':'application/offset+octet-stream', 'Upload-Offset':'0'}, archive)
-        if status != 204 or int(received.get('Upload-Offset', '-1')) != len(archive):
+        # TUS chunks: never send the entire 65+ MB candidate in one 25s request.
+        # Every next PATCH starts only after the previous offset was acknowledged.
+        chunk_size = 4 * 1024 * 1024
+        offset = 0
+        reconciliations = 0
+        while offset < len(archive):
+            chunk = archive[offset:offset + chunk_size]
+            next_offset = offset + len(chunk)
+            try:
+                status, received, _ = self.request('uploadBytes', target, 'PATCH',
+                    {**headers, 'Content-Type':'application/offset+octet-stream',
+                     'Upload-Offset':str(offset)}, chunk)
+            except RequestFailure:
+                # A failed PATCH may already have committed bytes. Read the
+                # server offset; never replay unknown bytes or start a new build.
+                if reconciliations >= 3:
+                    raise
+                head_status, head_headers, _ = self.request('uploadOffsetReconcile',
+                    target, 'HEAD', headers)
+                remote = int(head_headers.get('Upload-Offset', '-1'))
+                if head_status not in (200, 204) or not (offset <= remote <= next_offset):
+                    raise ValueError('TUS offset cannot be safely reconciled')
+                offset = remote
+                reconciliations += 1
+                continue
+            if status != 204 or int(received.get('Upload-Offset', '-1')) != next_offset:
+                raise ValueError('Archive upload offset acknowledgment mismatch')
+            offset = next_offset
+        if offset != len(archive):
             raise ValueError('Complete archive upload was not acknowledged')
         self.report.setdefault('acknowledgedArchives', []).append({'name':name, 'bytes':len(archive), 'sha256':digest(archive)})
         self.save()
