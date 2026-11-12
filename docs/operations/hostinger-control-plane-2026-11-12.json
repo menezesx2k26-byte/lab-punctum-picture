@@ -22,7 +22,9 @@
     "activeNodeApps": 1,
     "planLabelDiscrepancy": "Current plan is labelled Premium; limit message refers to Business. No plan change inferred.",
     "newAppCreated": false,
-    "upgradeStarted": false
+    "upgradeStarted": false,
+    "blocksReplacingExistingApp": false,
+    "secondAppRequired": false
   },
   "filesystem": {
     "fileManagerOpened": true,
@@ -58,5 +60,6 @@
   "providerBuildsStarted": 0,
   "incrementalCostBRL": 0,
   "decision": "PARTIAL_VERIFIED / NO_GO_MANAGED_DEPLOY / NO_GO_PRODUCTION / NO_GO_R4",
-  "nextGateDependency": "Provider-supported isolated Node recovery target within existing entitlement, plus usable private filesystem access in the same account. Login alone does not resolve either requirement."
+  "nextGateDependency": "Prepare and validate the identical recovery ZIP, then rehearse restoration on the existing disposable probe. Prove private runtime persistence across restart/rebuild before the candidate. No second Node app is required.",
+  "correction": "User confirmed the existing probe itself is the migration destination; quota does not block its replacement."
 }

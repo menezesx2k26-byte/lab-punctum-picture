@@ -1,0 +1,39 @@
+name: Hostinger existing QA recovery
+
+on:
+  push:
+    branches: [agent/hostinger-node-migration-20261112]
+    paths: [requests/hostinger-managed-qa.json]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-existing-hostinger-qa
+  cancel-in-progress: false
+
+jobs:
+  recovery:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: python3 -m unittest discover -s scripts -p hostinger_managed_qa_test.py
+      - run: node --test services/punctum-hostinger-qa/server.test.mjs
+      - name: Prepare or recover the identical disposable probe
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: python3 scripts/hostinger_managed_qa.py --request requests/hostinger-managed-qa.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: hostinger-existing-qa-recovery
+          path: outputs/hostinger-managed-recovery/
+          if-no-files-found: warn
+          retention-days: 14

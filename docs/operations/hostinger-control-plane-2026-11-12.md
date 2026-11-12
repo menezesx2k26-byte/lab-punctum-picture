@@ -19,7 +19,7 @@ A autenticação no hPanel foi concluída e o domínio exato do probe foi locali
 
 Esses valores foram lidos na página de detalhes do plano da própria aplicação, não inferidos da oferta comercial atual. A lista de sites mostrou o probe Node e o site existente do criador visual. O uso agregado exibido foi 9%; isso não é teste de carga nem comprovação de folga do candidato.
 
-## Bloqueio real da recuperação isolada
+## Limite de uma aplicação e correção do destino
 
 O fluxo **Criar site → App web em Node.js**, dentro do plano existente, foi aberto para verificar um destino segregado de recuperação, sem substituir a instância ativa. O provedor respondeu:
 
@@ -28,6 +28,8 @@ O fluxo **Criar site → App web em Node.js**, dentro do plano existente, foi ab
 O texto informa limite de **1 aplicação Node**, já ocupado. A mensagem chama o plano de Business, embora a conta e os detalhes estejam identificados como Premium. Essa divergência foi preservada no JSON; não se inferiu upgrade, mudança contratual nem capacidade adicional.
 
 O modal foi cancelado. Nenhuma aplicação nova foi criada, nenhuma existente removida e nenhum upgrade iniciado.
+
+**Correção após esclarecimento do usuário:** o destino autorizado é o próprio probe existente. O limite de uma aplicação impede um segundo serviço, mas não impede a substituição desse probe. Um segundo Node não é pré-requisito da migração. A restauração deve ser ensaiada no mesmo destino descartável, após preparar e validar o ZIP idêntico ao backup; Cloudflare continua sendo a produção preservada.
 
 ## Arquivos e acesso administrativo
 
@@ -41,21 +43,21 @@ O histórico mantém dois deployments. Os detalhes do build ativo 01a1847b-73bf-
 
 A página **Configurações e reimplantação** foi inspecionada e oferece **Usar arquivos anteriores**. Selecionar essa opção preservou o nome do ZIP, mas não forneceu os bytes nem comprovou uma restauração. O botão **Salvar e reimplantar não foi acionado**. A tupla segue Node 24, npm run build, server.mjs, raiz ./, sem output personalizado e sem variáveis na UI.
 
-A opção visual não transforma o 404 anterior da autodetecção REST em recuperação aprovada. A cópia de recuperação do Drive permanece íntegra, porém sem ensaio gerenciado autorizado e segregado.
+A opção visual não transforma o 404 anterior da autodetecção REST em recuperação aprovada. A cópia de recuperação do Drive permanece íntegra. O ensaio gerenciado no próprio destino existente ainda precisa ser executado e comprovado antes do candidato.
 
 ## Decisão e continuidade
 
 | Gate | Resultado após acesso ao hPanel |
 |---|---|
 | A | PASS — conta e serviço corretos reconciliados |
-| B | BLOCKED_EXTERNAL — o plano recusou o segundo destino Node; restauração gerenciada segue sem prova |
-| C | BLOCKED_EXTERNAL — arquivo privado/deploy não acessível pelo gerenciador; SSH inativo; restart/rebuild não homologados |
+| B | NOT_VERIFIED — restauração do ZIP idêntico na própria instância existente; segundo Node dispensado |
+| C | NOT_VERIFIED — acesso do gerenciador falhou; capacidade do runtime de persistir fora do deploy ainda precisa de prova |
 | D | PARTIAL_VERIFIED — CPU/RAM/disco/processos agora conhecidos; limite de 1 Node comprovado; candidato nativo ainda não homologado |
 | E | NOT_TESTED — nenhum deploy do candidato no provedor |
 | F/G | PARTIAL_VERIFIED — provas sintéticas e matriz R4 preservadas |
 | H | BLOCKED_EXTERNAL — sem cutover e sem autorização específica |
 
-O acesso foi desbloqueado até o limite que a própria conta permite. O passo dependente é disponibilizar um **destino de recuperação isolado suportado pelo provedor dentro do custo zero** e acesso utilizável ao filesystem privado da mesma conta. A ação de substituir o único probe antes dessa prova contrariaria o gate herdado; foi preservada a instância ativa.
+O próximo passo executável é preparar o ZIP de recuperação na própria aplicação existente pela API autenticada. O workflow `hostinger-managed-qa.yml` só é acionado por alteração explícita do arquivo de solicitação, fixa conta/domínio, compara o SHA-256 do backup e verifica a identidade, configuração, ambiente vazio e histórico do probe antes de qualquer build. A primeira solicitação é somente `prepare`: upload exclusivo e leitura do arquivo pelo provedor, sem reimplantação. O resultado será registrado antes de solicitar o ensaio de restauração idêntica. A cota de uma aplicação não é classificada como bloqueio de migração.
 
 Custo incremental R$ 0. Nenhum deploy/restart, alteração de settings/env/DNS, escrita de produção, contratação, upgrade ou merge. Código Node/SSR/SQLite/Sharp/Studio/R4 e os artefatos da CI anterior permanecem intactos.
 

@@ -1,0 +1,7 @@
+{
+  "request_id": "prepare-identical-probe-20261112-01",
+  "domain": "aliceblue-locust-999458.hostingersite.com",
+  "action": "prepare",
+  "expected_build_uuid": "01a1847b-73bf-71a9-8bd4-59a2836a1b1a",
+  "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
+}
