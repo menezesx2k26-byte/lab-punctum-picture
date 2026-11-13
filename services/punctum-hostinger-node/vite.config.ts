@@ -20,7 +20,13 @@ export default defineConfig({
   publicDir,
   define: { __PUNCTUM_QA_PUBLIC_PATHS__: JSON.stringify(publicPaths) },
   resolve: {
-    alias: { "cloudflare:workers": fileURLToPath(new URL("bindings.ts", service)) },
+    alias: [
+      { find: "cloudflare:workers", replacement: fileURLToPath(new URL("bindings.ts", service)) },
+      {
+        find: "./admin-session-crypto.mjs",
+        replacement: fileURLToPath(new URL("admin-session-crypto.mjs", service)),
+      },
+    ],
   },
   plugins: [
     vinext({

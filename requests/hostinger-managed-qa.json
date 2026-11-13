@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-boot-and-stalls-20261113-23",
+  "request_id": "candidate-native-session-hmac-20261113-24",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d52d-1f64-7163-b27b-6dcab75568eb",
+  "expected_build_uuid": "01a1d537-3f94-731f-928a-623cb5d2f65a",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }

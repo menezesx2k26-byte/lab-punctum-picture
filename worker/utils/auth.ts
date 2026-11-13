@@ -1,6 +1,7 @@
 import { assertSeparateAccessAudiences } from "../client/audience";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { AppError } from "./errors";
+import { createAdminSessionKey } from "./admin-session-crypto.mjs";
 import { envString, requiredEnvString } from "./env";
 
 const ADMIN_SESSION_COOKIE = "punctum_admin_session";
@@ -70,7 +71,7 @@ function fromBase64Url(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-async function hmacKey(env: Env): Promise<CryptoKey> {
+async function hmacKey(env: Env) {
   const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
   // Bind password-auth cookies to the current credential revision. A password
   // rotation changes this signing key and invalidates previously copied cookies.
@@ -79,12 +80,8 @@ async function hmacKey(env: Env): Promise<CryptoKey> {
   const credentialRevision = stored
     ? "d1:" + stored.passwordHash
     : "env:" + requiredEnvString(env, "ADMIN_PASSWORD_HASH");
-  return crypto.subtle.importKey(
-    "raw",
+  return createAdminSessionKey(
     new TextEncoder().encode(secret + "\u0000" + credentialRevision),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
   );
 }
 
@@ -102,11 +99,9 @@ async function verifyPasswordSession(
   try {
     const key = await hmacKey(env);
     mark?.("session-key-ready");
-    const valid = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      new Uint8Array(fromBase64Url(encodedSignature)).buffer,
+    const valid = await key.verify(
       new TextEncoder().encode(encodedPayload),
+      fromBase64Url(encodedSignature),
     );
     mark?.("session-verified");
     if (!valid) return null;
@@ -140,13 +135,8 @@ export async function createAdminSession(email: string, env: Env): Promise<strin
       }),
     ),
   );
-  const signature = new Uint8Array(
-    await crypto.subtle.sign(
-      "HMAC",
-      await hmacKey(env),
-      new TextEncoder().encode(payload),
-    ),
-  );
+  const key = await hmacKey(env);
+  const signature = await key.sign(new TextEncoder().encode(payload));
   return `${payload}.${toBase64Url(signature)}`;
 }
 
