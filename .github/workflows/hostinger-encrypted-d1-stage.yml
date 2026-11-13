@@ -66,7 +66,7 @@ jobs:
           CERT_EXPECTED: ${{ steps.intent.outputs.fingerprint }}
         run: |
           set -euo pipefail
-          cert=config/hostinger-stage-d1-recipient-20261113.crt
+          cert=config/hostinger/recipient-20261113.crt
           test -s "$cert"
           openssl x509 -in "$cert" -checkend 3600 -noout
           actual=$(openssl x509 -in "$cert" -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]')
@@ -109,7 +109,7 @@ jobs:
           test -s "$plain"
           mkdir -m 700 -p outputs/hostinger-encrypted-d1-stage
           export PUNCTUM_D1_STAGE_INPUT_SQL="$plain"
-          export PUNCTUM_D1_STAGE_RECIPIENT_CERT=config/hostinger-stage-d1-recipient-20261113.crt
+          export PUNCTUM_D1_STAGE_RECIPIENT_CERT=config/hostinger/recipient-20261113.crt
           export PUNCTUM_D1_STAGE_OUTPUT_DIR=outputs/hostinger-encrypted-d1-stage
           node scripts/hostinger-encrypt-d1-stage.mjs
           rm -f "$plain"
