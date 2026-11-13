@@ -8,6 +8,7 @@ import { AppError } from "../../worker/utils/errors";
 import { publicPaths } from "./public-files";
 import { markQaMediaPhase } from "./worker-phase-trace.mjs";
 import { sha256Hex } from "./admin-session-crypto.mjs";
+import { qaProvidedSha256Matches } from "./r2-checksum.mjs";
 
 const maxUploadBytes = 26_214_400;
 const managedSharpWorker = () => process.env.PUNCTUM_QA_SHARP_WORKER;
@@ -111,8 +112,7 @@ export function qaOriginals(db: D1Database) {
       const bytes = body instanceof Uint8Array ? Buffer.from(body) : await boundedBytes(body);
       if (bytes.byteLength > maxUploadBytes) throw new Error("QA_ORIGINAL_TOO_LARGE");
       const etag = sha256Hex(bytes);
-      if (options.sha256 && (!(options.sha256 instanceof ArrayBuffer) ||
-          !Buffer.from(new Uint8Array(options.sha256)).equals(Buffer.from(etag,"hex"))))
+      if (options.sha256 && !qaProvidedSha256Matches(options.sha256, etag))
         throw new Error("QA_ORIGINAL_NATIVE_CHECKSUM_MISMATCH");
       const result = await db.prepare("INSERT INTO node_qa_media (key, bytes, mime, etag) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO NOTHING")
         .bind(key, bytes, mime, etag).run();
