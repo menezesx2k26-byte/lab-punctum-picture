@@ -6,6 +6,7 @@
 import { createHash } from 'node:crypto';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
 export function summarizeParity(images, intents, objects, pages) {
   if (![images, intents, objects].every(Array.isArray) || !Number.isSafeInteger(pages) || pages < 1)
@@ -162,5 +163,5 @@ async function main() {
   await writeFile(output, JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });
   console.log(JSON.stringify(report));
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) === fileURLToPath(new URL('file://' + process.argv[1].replaceAll('\\', '/'))))
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
   await main();
