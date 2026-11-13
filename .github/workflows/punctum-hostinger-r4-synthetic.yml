@@ -29,7 +29,7 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npx vitest run tests/unit/hostinger-r4-image-provider.spec.ts tests/unit/core.spec.ts
-      - run: node --test services/punctum-hostinger-node/node-r4-stream-compat.test.mjs
+      - run: node --test services/punctum-hostinger-node/node-r4-stream-compat.test.mjs services/punctum-hostinger-node/r2-checksum.test.mjs
       - run: npm run typecheck
       - run: npm run build:hostinger:qa
       - run: node --test services/punctum-hostinger-node/server.test.mjs services/punctum-hostinger-node/isolated-sharp.test.mjs
