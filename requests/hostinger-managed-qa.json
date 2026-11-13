@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-isolate-sharp-20261113-28",
+  "request_id": "candidate-gpt6-managed-regression-20261113-29",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d560-e9f6-712a-84f4-aed127d4289a",
+  "expected_build_uuid": "01a1d5b0-8223-7318-9f76-037194cf0ee6",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }
