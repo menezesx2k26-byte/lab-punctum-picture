@@ -45,6 +45,9 @@ describe("utilitários centrais", () => {
     expect(isImagePreset("9999x9999")).toBe(false);
     expect(IMAGE_PRESETS.thumb.width).toBe(320);
     expect(negotiateImageFormat("image/avif,image/webp")).toBe("image/avif");
+    expect(negotiateImageFormat("image/avif,image/webp", true)).toBe("image/webp");
+    expect(negotiateImageFormat("image/avif", true)).toBe("image/avif");
+    expect(negotiateImageFormat("image/jpeg", true)).toBe("image/jpeg");
     expect(negotiateImageFormat("image/webp")).toBe("image/webp");
     expect(negotiateImageFormat(null)).toBe("image/jpeg");
   });
