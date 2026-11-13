@@ -60,3 +60,23 @@ test('published report never includes original keys, customer identifiers, URLs 
   assert.equal(json.includes('private-etag'), false);
   assert.equal(result.listingDigest.length, 64);
 });
+
+test('static bundle files are never mistaken for missing R2 originals', () => {
+  const result = summarizeParity(
+    [image('static:/photos/a.jpg'), image('originals/b/2.jpg', 5, 'pending')],
+    [intent('originals/b/pending.jpg', 'pending')],
+    [], 1);
+  assert.equal(result.staticReferences, 1);
+  assert.equal(result.missingReadyImages, 0);
+  assert.equal(result.missingNonReadyImages, 1);
+  assert.equal(result.missingCompletedIntents, 0);
+  assert.equal(result.status, 'METADATA_PARITY_ONLY');
+});
+
+test('completed upload intents and ready images require present R2 objects', () => {
+  const result = summarizeParity(
+    [image('originals/a/1.jpg')], [intent('originals/b/2.jpg', 'completed')], [], 1);
+  assert.equal(result.missingReadyImages, 1);
+  assert.equal(result.missingCompletedIntents, 1);
+  assert.equal(result.status, 'BLOCKED_MISSING_OR_CONFLICTING_REFERENCES');
+});
