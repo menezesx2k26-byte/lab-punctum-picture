@@ -167,7 +167,8 @@ export async function serveMedia(
   headers.set("Content-Type", format);
   headers.set("Content-Disposition", "inline");
   headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("ETag", `"${imageId}-${presetName}-v1"`);
+  headers.set("Vary", "Accept");
+  headers.set("ETag", `"${imageId}-${presetName}-${format.slice(6)}-v2"`);
   headers.delete("Set-Cookie");
   return new Response(transformed.body, {
     status: transformed.status,
