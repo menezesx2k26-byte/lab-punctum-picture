@@ -17,7 +17,8 @@ test("strict patch targets the installed, pinned Vinext and preserves syntax",t=
   assert.ok(after.includes('"ERR_STREAM_UNABLE_TO_PIPE"'));
   assert.ok(after.includes("res.destroyed === true"));
   assert.ok(after.includes("res.writableEnded === true"));
-  assert.equal(after.split('console.error("[vinext] Server error:"').length-1,1);
+  assert.equal(after.split('console.error("[vinext] Server error:"').length,
+    before.split('console.error("[vinext] Server error:"').length);
   assert.throws(()=>guardedVinextSource(after),/UNKNOWN_OR_ALREADY_APPLIED/);
   const dir=mkdtempSync(join(tmpdir(),"punctum-vinext-patch-"));
   t.after(()=>rmSync(dir,{recursive:true,force:true}));
