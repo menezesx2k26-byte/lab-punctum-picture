@@ -23,6 +23,7 @@ import { requireClientSessionSecret } from "../client/secret";
 import { privateJson } from "../client/response";
 import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
 import { requireDb, requireOriginals } from "../utils/env";
+import { providerImageInputLimit } from "../media/provider-input-limit";
 import { AppError } from "../utils/errors";
 import { parseJson } from "../client/validation";
 import { writeAudit } from "../utils/audit";
@@ -265,7 +266,7 @@ export async function handleClientGalleryUploadApi(
     // rate-limit D1 write, gallery reservation, or any R2 access. The public
     // product/schema maximum remains the canonical 25 MiB requirement.
     intentInput = await parseJson(request, clientImageIntentSchema);
-    if (intentInput.sizeBytes > IMAGES_BINDING_MAX_INPUT_BYTES)
+    if (intentInput.sizeBytes > providerImageInputLimit(env))
       throw new AppError(413, "UPLOAD_IMAGE_LIMIT", IMAGES_BINDING_LIMIT_MESSAGE);
   }
   const db = requireDb(env);
@@ -370,7 +371,7 @@ export async function handleClientGalleryUploadApi(
   if (!Number.isSafeInteger(intent.expectedSize) || intent.expectedSize < 1 ||
       intent.expectedSize > CLIENT_SPEC_MAX_UPLOAD_BYTES)
     throw new AppError(413, "UPLOAD_SIZE", "O tamanho do envio excede o requisito de 25 MiB.");
-  if (intent.expectedSize > IMAGES_BINDING_MAX_INPUT_BYTES)
+  if (intent.expectedSize > providerImageInputLimit(env))
     throw new AppError(413, "UPLOAD_IMAGE_LIMIT", IMAGES_BINDING_LIMIT_MESSAGE);
   if (!["image/jpeg", "image/png", "image/webp"].includes(intent.expectedMime))
     throw new AppError(409, "UPLOAD_TYPE", "O tipo do envio não é suportado.");
