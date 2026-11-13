@@ -14,6 +14,10 @@ openProductionStageDatabase(config.dbFile).close();
 privateOriginals(config.originalsRoot);
 process.env.PUNCTUM_QA_SHARP_WORKER = fileURLToPath(
   new URL("../punctum-hostinger-node/sharp-worker.mjs", import.meta.url));
+// Real read-only staging serves the 329-photo archive; keep transforms isolated,
+// but bound their pool and queuing independently from the managed synthetic QA.
+process.env.PUNCTUM_HOSTINGER_SHARP_POOL = "3";
+process.env.PUNCTUM_HOSTINGER_SHARP_TIMEOUT_MS = "60000";
 const out = new URL("../../dist/hostinger-production/", import.meta.url);
 process.env.PUNCTUM_QA_CLIENT_DIRECTORY = fileURLToPath(new URL("client/", out));
 await startProdServer({
