@@ -5,6 +5,7 @@ on:
     branches: [agent/punctum-hostinger-real-stage-20261113]
     paths:
       - "services/punctum-hostinger-production/**"
+      - "scripts/hostinger-vinext-client-abort-patch*"
       - "package.json"
       - ".github/workflows/punctum-hostinger-real-stage.yml"
   workflow_dispatch:
