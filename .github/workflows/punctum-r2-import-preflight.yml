@@ -6,6 +6,8 @@ on:
     paths:
       - "scripts/punctum-r2-import-private-stage.mjs"
       - "scripts/punctum-r2-import-private-stage.test.mjs"
+      - "scripts/punctum-r2-extract-verified.py"
+      - "scripts/punctum-r2-extract-verified.test.py"
       - "scripts/punctum-r2-encrypted-stage.mjs"
       - "scripts/punctum-r2-encrypted-stage.test.mjs"
       - ".github/workflows/punctum-r2-import-preflight.yml"
@@ -27,3 +29,4 @@ jobs:
           node-version: '24'
       - run: node --test scripts/punctum-r2-encrypted-stage.test.mjs scripts/punctum-r2-import-private-stage.test.mjs
       - run: node --test services/punctum-hostinger-production/originals.test.mjs
+      - run: python3 scripts/punctum-r2-extract-verified.test.py
