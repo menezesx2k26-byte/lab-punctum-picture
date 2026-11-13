@@ -91,6 +91,7 @@ async function hmacKey(env: Env): Promise<CryptoKey> {
 async function verifyPasswordSession(
   request: Request,
   env: Env,
+  mark?: (phase: string) => void,
 ): Promise<AdminIdentity | null> {
   const token = parseCookies(request).get(ADMIN_SESSION_COOKIE);
   if (!token) return null;
@@ -99,12 +100,15 @@ async function verifyPasswordSession(
   if (!encodedPayload || !encodedSignature || extra) return null;
 
   try {
+    const key = await hmacKey(env);
+    mark?.("session-key-ready");
     const valid = await crypto.subtle.verify(
       "HMAC",
-      await hmacKey(env),
+      key,
       new Uint8Array(fromBase64Url(encodedSignature)).buffer,
       new TextEncoder().encode(encodedPayload),
     );
+    mark?.("session-verified");
     if (!valid) return null;
 
     const payload = JSON.parse(
@@ -270,12 +274,15 @@ export async function requireAdmin(
   request: Request,
   env: Env,
   jwksOverride?: JWTVerifyGetKey,
+  mark?: (phase: string) => void,
 ): Promise<AdminIdentity> {
   if (isLocalRequest(request, env)) {
     return { email: "maria.helena@local.dev", roles: ["admin"] };
   }
 
-  const passwordIdentity = await verifyPasswordSession(request, env);
+  mark?.("session-start");
+  const passwordIdentity = await verifyPasswordSession(request, env, mark);
+  mark?.("session-end");
   if (passwordIdentity) return passwordIdentity;
 
   const assertion = request.headers.get("cf-access-jwt-assertion");

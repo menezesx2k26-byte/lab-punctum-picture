@@ -33,7 +33,7 @@ export default async function fetchQaRequest(request: Request): Promise<Response
   const normalized = traceQaLoginBody(new Request(target, request), traceOptions);
   const result = await traceQaWorker(
     url.pathname,
-    () => punctum.fetch(normalized, env, context),
+    (mark: ((phase: string) => void) | undefined) => punctum.fetch(normalized, env, context, mark),
     traceOptions,
   );
   const headers = new Headers(result.headers);

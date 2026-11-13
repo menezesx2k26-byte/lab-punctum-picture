@@ -135,7 +135,7 @@ def ready(operation, phase):
 
 TRACED_ROUTES = (
     '/api/health', '/admin/api/session', '/arquivo', '/',
-    '/admin', '/admin/studio', '/admin/api/studio',
+    '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me',
 )
 
 
@@ -197,7 +197,12 @@ def runtime_receipts(operation, phase):
                 phase_name = event.get('phase')
                 start_phase = phase_name in ('start', 'body-start')
                 if phase_name not in ('start', 'returned', 'error'):
-                    if event['route'] != '/admin/api/session' or phase_name not in ('body-start', 'body-read', 'body-error'):
+                    body_phase = event['route'] == '/admin/api/session' and phase_name in (
+                        'body-start', 'body-read', 'body-error')
+                    studio_phase = event['route'] in ('/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me') and phase_name in (
+                        'session-start', 'session-key-ready', 'session-verified', 'session-end',
+                        'studio-draft-start', 'studio-draft-end', 'studio-history-end', 'render-start', 'render-end')
+                    if not body_phase and not studio_phase:
                         continue
                 record = {'phase':event['phase'],'route':event['route']}
                 if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
@@ -205,8 +210,11 @@ def runtime_receipts(operation, phase):
                 if not start_phase and type(event.get('ms')) is int and 0 <= event['ms'] <= 120000:
                     record['ms'] = event['ms']
                 if not start_phase and 'ms' not in record: continue
+                loop_busy = event.get('loopBusyPct')
+                if phase_name in ('returned', 'error') and type(loop_busy) is int and 0 <= loop_busy <= 100:
+                    record['loopBusyPct'] = loop_busy
                 worker_phase.append(record)
-        operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-40:]
+        operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-100:]
         # Synthetic QA receipts include a successful SIGKILL regression case.
         # Exclude receipt lines before classifying actual process failures.
         content = '\n'.join(line for value in strings for line in value.splitlines()

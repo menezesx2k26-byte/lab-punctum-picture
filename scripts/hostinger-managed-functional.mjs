@@ -51,9 +51,13 @@ if (phase === 'exercise') {
   check(/Disallow: \//.test(await (await get('/robots.txt')).text()), 'managed robots');
   check((await get('/sitemap.xml')).status === 200, 'managed sitemap');
   check((await get('/admin/studio')).status === 303, 'anonymous Studio denied');
-  // Diagnose whether authentication/API or the heavier admin SSR path stalls.
+  stage = 'exercise.admin-session';
+  check((await get('/admin/api/me',{headers:{cookie}})).status === 200, 'authenticated Admin session');
+  stage = 'exercise.studio-api';
   check((await get('/admin/api/studio',{headers:{cookie}})).status === 200, 'authenticated Studio API');
+  stage = 'exercise.admin-shell';
   check((await get('/admin',{headers:{cookie}})).status === 200, 'authenticated Admin shell');
+  stage = 'exercise.studio-page';
   check((await get('/admin/studio',{headers:{cookie}})).status === 200, 'authenticated Studio');
   for(const path of ['/albuns/entrar','/studio-preview-internal','/application.sqlite','/capability.sqlite','/synthetic-media.bin'])
     check((await get(path)).status === 404, 'private/R4 route denied ' + path);

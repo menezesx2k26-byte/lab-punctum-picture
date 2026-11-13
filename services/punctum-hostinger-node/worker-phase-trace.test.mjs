@@ -64,3 +64,18 @@ test('managed login traces JSON consumption without recording credentials', asyn
   assert.deepEqual(events.map(({ phase }) => phase), ['body-start', 'body-read']);
   assert.doesNotMatch(messages.join(' '), /NEVER_LOG|password/);
 });
+
+test('managed Studio records only allowlisted phase markers and elapsed time', async () => {
+  const messages = [];
+  await traceQaWorker('/admin/api/studio', async (mark) => {
+    assert.equal(typeof mark, 'function');
+    mark('session-start');
+    mark('session-cookie-is-private');
+    mark('session-end');
+    return new Response(null, { status: 200 });
+  }, { enabled: true, emit: (message) => messages.push(message) });
+  const events = messages.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
+  assert.deepEqual(events.map(({ phase }) => phase), ['start', 'session-start', 'session-end', 'returned']);
+  assert.ok(events.slice(1).every(({ ms }) => Number.isSafeInteger(ms) && ms >= 0));
+  assert.doesNotMatch(messages.join(' '), /cookie-is-private/);
+});

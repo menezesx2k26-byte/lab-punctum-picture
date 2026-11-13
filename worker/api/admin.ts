@@ -966,9 +966,12 @@ async function getSettings(db: D1Database): Promise<Response> {
   return json({ settings: settings ?? SITE_DEFAULTS }, { admin: true });
 }
 
-async function getStudio(db: D1Database): Promise<Response> {
+async function getStudio(db: D1Database, mark?: (phase: string) => void): Promise<Response> {
+  mark?.("studio-draft-start");
   const state = await readDraftSiteConfigState(db);
+  mark?.("studio-draft-end");
   const history = await listPublishedSiteConfigVersions(db);
+  mark?.("studio-history-end");
   return json(
     {
       siteConfig: state.config,
@@ -1229,12 +1232,13 @@ export async function handleAdminApi(
   request: Request,
   url: URL,
   env: Env,
+  mark?: (phase: string) => void,
 ): Promise<Response | null> {
   if (!url.pathname.startsWith("/admin/api/")) {
     return null;
   }
 
-  const identity = await requireAdmin(request, env);
+  const identity = await requireAdmin(request, env, undefined, mark);
   assertAllowedOrigin(request, env);
   const db = requireDb(env);
   if (["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
@@ -1314,7 +1318,7 @@ export async function handleAdminApi(
     if (request.method === "PATCH") return updateSettings(request, db, identity);
   }
   if (url.pathname === "/admin/api/studio") {
-    if (request.method === "GET") return getStudio(db);
+    if (request.method === "GET") return getStudio(db, mark);
     if (request.method === "PATCH") return updateStudio(request, db, identity);
   }
   if (url.pathname === "/admin/api/studio/photos" && request.method === "GET") {

@@ -25,6 +25,7 @@ async function routeRequest(
   request: Request,
   env: Env,
   ctx: ExecutionContext,
+  mark?: (phase: string) => void,
 ): Promise<Response> {
   const url = new URL(request.url);
 
@@ -98,7 +99,7 @@ async function routeRequest(
     return siteMediaResponse;
   }
 
-  const adminResponse = await handleAdminApi(request, url, env);
+  const adminResponse = await handleAdminApi(request, url, env, mark);
   if (adminResponse) {
     return adminResponse;
   }
@@ -143,7 +144,7 @@ async function routeRequest(
 
   if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
     try {
-      await requireAdmin(request, env);
+      await requireAdmin(request, env, undefined, mark);
     } catch (error) {
       if (
         error instanceof AppError &&
@@ -174,7 +175,9 @@ async function routeRequest(
     const snapshot = await readPublicHomeSnapshot(env.DB, envString(env, "PUBLIC_HOME_SNAPSHOT_BUILD_ID") ?? "");
     if (snapshot) return withSecurityHeaders(snapshot);
   }
+  mark?.("render-start");
   const response = await handler.fetch(request, env, ctx);
+  mark?.("render-end");
   return isPrivateGalleryPath(url.pathname) ? privateResponse(response) : withSecurityHeaders(response);
 }
 
@@ -207,7 +210,7 @@ export class PublicHome extends WorkerEntrypoint<Env> {
   }
 }
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext, mark?: (phase: string) => void): Promise<Response> {
     const requestId = request.headers.get("cf-ray") ?? crypto.randomUUID();
     let snapshotInvalidated = false;
     let finishSnapshotMutation: (() => Promise<void>) | undefined;
@@ -228,7 +231,7 @@ export default {
         finishSnapshotMutation = await beginPublicHomeSnapshotMutation(env.DB);
         snapshotInvalidated = true;
       }
-      const response = await routeRequest(request, env, ctx);
+      const response = await routeRequest(request, env, ctx, mark);
       if (envString(env, "PUBLIC_HOME_CACHE_ENABLED") === "true" && shouldPurgePublicHome(request, response)) {
         const entrypoint = (ctx as ExecutionContext & {
           exports?: { PublicHome?: { purgeCache(): Promise<boolean> } }

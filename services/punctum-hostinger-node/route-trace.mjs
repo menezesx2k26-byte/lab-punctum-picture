@@ -4,7 +4,7 @@ import { performance } from 'node:perf_hooks';
 // read or emitted, including on stalled/aborted requests.
 const TRACED_ROUTES = new Set([
   '/api/health', '/admin/api/session', '/arquivo', '/',
-  '/admin', '/admin/studio', '/admin/api/studio',
+  '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me',
 ]);
 
 export function isTracedQaRoute(route) {
