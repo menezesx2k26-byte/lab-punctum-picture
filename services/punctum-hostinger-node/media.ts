@@ -30,6 +30,20 @@ type MediaRow = {
   etag: string;
 };
 
+function nativeQaChecksum(sha256: string): ArrayBuffer {
+  if (!/^[a-f0-9]{64}$/.test(sha256)) throw new Error("QA_MEDIA_CHECKSUM_INVALID");
+  return Uint8Array.from(Buffer.from(sha256, "hex")).buffer;
+}
+
+function qaObjectFields(row: { size: number; mime: string; etag: string }) {
+  return {
+    size: row.size, etag: row.etag,
+    checksums: { sha256: nativeQaChecksum(row.etag) },
+    customMetadata: { sha256: row.etag },
+    httpMetadata: { contentType: row.mime },
+  };
+}
+
 async function boundedBytes(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
@@ -70,21 +84,22 @@ export function qaOriginals(db: D1Database) {
     async head(key: string) {
       const row = await db.prepare("SELECT length(bytes) AS size, mime, etag FROM node_qa_media WHERE key = ?")
         .bind(key).first<{ size: number; mime: string; etag: string }>();
-      return row && { size: row.size, etag: row.etag, httpMetadata: { contentType: row.mime } };
+      return row && qaObjectFields(row);
     },
     async get(key: string) {
       markQaMediaPhase("media-original-start");
       const row = await db.prepare("SELECT bytes, mime, etag FROM node_qa_media WHERE key = ?")
         .bind(key).first<MediaRow>();
       markQaMediaPhase("media-original-end");
+      if (row && sha256Hex(row.bytes) !== row.etag)
+        throw new Error("QA_MEDIA_STORED_BYTES_CHECKSUM_MISMATCH");
       return row && {
-        size: row.bytes.byteLength,
-        etag: row.etag,
+        ...qaObjectFields({size:row.bytes.byteLength,mime:row.mime,etag:row.etag}),
         body: new Response(row.bytes as Uint8Array<ArrayBuffer>).body,
-        httpMetadata: { contentType: row.mime },
+        arrayBuffer: async () => new Uint8Array(row.bytes).buffer,
       };
     },
-    async put(key: string, body: ReadableStream<Uint8Array>, options: R2PutOptions) {
+    async put(key: string, body: ReadableStream<Uint8Array> | Uint8Array, options: R2PutOptions) {
       const onlyIf = options.onlyIf;
       const mime = options.httpMetadata instanceof Headers
         ? options.httpMetadata.get("Content-Type")
@@ -93,11 +108,14 @@ export function qaOriginals(db: D1Database) {
           !mime || !Object.hasOwn(imageFormats, mime)) {
         throw new Error("QA originals require a conditional image insert");
       }
-      const bytes = await boundedBytes(body);
+      const bytes = body instanceof Uint8Array ? Buffer.from(body) : await boundedBytes(body);
+      if (bytes.byteLength > maxUploadBytes) throw new Error("QA_ORIGINAL_TOO_LARGE");
       const etag = sha256Hex(bytes);
+      if (options.sha256 && !Buffer.from(options.sha256).equals(Buffer.from(etag,"hex")))
+        throw new Error("QA_ORIGINAL_NATIVE_CHECKSUM_MISMATCH");
       const result = await db.prepare("INSERT INTO node_qa_media (key, bytes, mime, etag) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO NOTHING")
         .bind(key, bytes, mime, etag).run();
-      return result.meta.changes ? { etag, size: bytes.byteLength, httpMetadata: { contentType: mime } } : null;
+      return result.meta.changes ? qaObjectFields({etag,size:bytes.byteLength,mime}) : null;
     },
   };
 }
