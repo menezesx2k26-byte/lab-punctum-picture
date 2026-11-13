@@ -138,6 +138,24 @@ class RecoveryContractTests(unittest.TestCase):
             self.assertEqual(methods, ["POST", "PATCH", "HEAD", "PATCH"])
             self.assertEqual(received, archive)
 
+    def test_runtime_route_trace_includes_only_bounded_allowlisted_metadata(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            logs = {"logs": [
+                {"message": 'PUNCTUM_QA_TRACE {"event":"start","route":"/admin/studio"}'},
+                {"message": 'PUNCTUM_QA_TRACE {"event":"finish","route":"/admin/studio","status":200,"ms":305}'},
+                {"message": 'PUNCTUM_QA_TRACE {"event":"start","route":"/admin/studio?cookie=SECRET"}'},
+                {"message": 'PUNCTUM_QA_TRACE {"event":"start","route":"/secret-path"}'}
+            ]}
+            with patch.object(recovery, "api", return_value=logs):
+                runtime_receipts(recovery, "initial")
+            trace = recovery.report["runtimeRouteTrace"]["initial"]
+            self.assertEqual(trace, [
+                {"event":"start","route":"/admin/studio"},
+                {"event":"finish","route":"/admin/studio","status":200,"ms":305}
+            ])
+            self.assertNotIn("SECRET", qa.json.dumps(recovery.report))
+
     def test_runtime_log_query_includes_provider_required_period_and_limit(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "expected")
