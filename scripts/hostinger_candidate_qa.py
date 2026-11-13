@@ -133,6 +133,24 @@ def runtime_receipts(operation, phase):
                     record['ms'] = event['ms']
                 safe_trace.append(record)
         operation.report.setdefault('runtimeRouteTrace',{})[phase] = safe_trace[-60:]
+        worker_phase = []
+        for chunk in strings:
+            for line in chunk.splitlines():
+                prefix = 'PUNCTUM_QA_PHASE '
+                index = line.find(prefix)
+                if index < 0: continue
+                try: event = json.JSONDecoder().raw_decode(line[index+len(prefix):])[0]
+                except ValueError: continue
+                if not isinstance(event,dict) or event.get('route') != '/admin/api/studio': continue
+                if event.get('phase') not in ('start','returned','error'): continue
+                record = {'phase':event['phase'],'route':'/admin/api/studio'}
+                if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
+                    record['status'] = event['status']
+                if event['phase'] != 'start' and type(event.get('ms')) is int and 0 <= event['ms'] <= 120000:
+                    record['ms'] = event['ms']
+                if event['phase'] != 'start' and 'ms' not in record: continue
+                worker_phase.append(record)
+        operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-40:]
         # Synthetic QA receipts include a successful SIGKILL regression case.
         # Exclude receipt lines before classifying actual process failures.
         content = '\n'.join(line for value in strings for line in value.splitlines()

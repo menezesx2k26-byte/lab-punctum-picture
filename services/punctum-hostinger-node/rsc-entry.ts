@@ -2,6 +2,7 @@ import punctum from "../../worker/index";
 import { env } from "./bindings";
 import { qaOrigin } from "./runtime.mjs";
 import { publicPaths } from "./public-files";
+import { traceQaWorker } from "./worker-phase-trace.mjs";
 
 const context = {
   waitUntil(task: Promise<unknown>) {
@@ -29,7 +30,11 @@ export default async function fetchQaRequest(request: Request): Promise<Response
   target.pathname = url.pathname;
   target.search = url.search;
   const normalized = new Request(target, request);
-  const result = await punctum.fetch(normalized, env, context);
+  const result = await traceQaWorker(
+    url.pathname,
+    () => punctum.fetch(normalized, env, context),
+    { enabled: process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === '1' },
+  );
   const headers = new Headers(result.headers);
   headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   headers.set("Cache-Control", "private, no-store");

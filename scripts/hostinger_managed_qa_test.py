@@ -156,6 +156,24 @@ class RecoveryContractTests(unittest.TestCase):
             ])
             self.assertNotIn("SECRET", qa.json.dumps(recovery.report))
 
+    def test_worker_phase_trace_distinguishes_handler_wait_from_http_delivery(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            logs = {"logs": [
+                {"message": 'PUNCTUM_QA_PHASE {"phase":"start","route":"/admin/api/studio"}'},
+                {"message": 'PUNCTUM_QA_PHASE {"phase":"returned","route":"/admin/api/studio","status":200,"ms":129}'},
+                {"message": 'PUNCTUM_QA_PHASE {"phase":"returned","route":"/admin/api/studio?token=SECRET","status":200,"ms":100}'},
+                {"message": 'PUNCTUM_QA_PHASE {"phase":"returned","route":"/admin/api/albums","status":200,"ms":99}'},
+                {"message": 'PUNCTUM_QA_PHASE {"phase":"returned","route":"/admin/api/studio","status":200,"ms":-1}'},
+            ]}
+            with patch.object(recovery, "api", return_value=logs):
+                runtime_receipts(recovery, "initial")
+            self.assertEqual(recovery.report["runtimeWorkerPhase"]["initial"], [
+                {"phase":"start","route":"/admin/api/studio"},
+                {"phase":"returned","route":"/admin/api/studio","status":200,"ms":129}
+            ])
+            self.assertNotIn("SECRET", qa.json.dumps(recovery.report))
+
     def test_runtime_log_query_includes_provider_required_period_and_limit(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "expected")
