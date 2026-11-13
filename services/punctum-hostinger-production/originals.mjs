@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const hex = /^[a-f0-9]{64}$/;
 const mimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]);
 const maxBytes = 26_214_400;
+const projectRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 const sha = data => createHash("sha256").update(data).digest("hex");
 function validateKey(key) {
@@ -17,6 +19,9 @@ function validateRoot(root) {
   const canonical = realpathSync(root);
   const info = lstatSync(root);
   const actual = statSync(canonical);
+  if (canonical === projectRoot.slice(0,-1) || canonical.startsWith(projectRoot)) {
+    throw Error("ORIGINALS_MUST_BE_OUTSIDE_PROJECT");
+  }
   if (info.isSymbolicLink() || !actual.isDirectory() || (actual.mode & 0o077) ||
       /(?:^|[\\/])(?:public_html|hbuilds|public|dist)(?:[\\/]|$)/i.test(canonical)) {
     throw Error("PRIVATE_ORIGINALS_STORAGE_REQUIRED");
@@ -28,6 +33,14 @@ function paths(root, key) {
   const partition = join(root,id.slice(0,2));
   return { partition, data:join(partition,id+".blob"), meta:join(partition,id+".json") };
 }
+function ensurePrivatePartition(path) {
+  if (!existsSync(path)) return false;
+  const info=lstatSync(path);
+  if (info.isSymbolicLink() || !info.isDirectory() || (info.mode & 0o077)) {
+    throw Error("UNSAFE_ORIGINAL_PARTITION");
+  }
+  return true;
+}
 function ensurePrivateFile(path) {
   const info = lstatSync(path);
   if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1 || (info.mode & 0o077)) {
@@ -37,6 +50,7 @@ function ensurePrivateFile(path) {
 }
 function metadata(root,key) {
   const p=paths(root,key);
+  if(!ensurePrivatePartition(p.partition)) return null;
   if(!existsSync(p.meta))return null;
   ensurePrivateFile(p.meta);
   const meta=JSON.parse(readFileSync(p.meta,"utf8"));
@@ -92,8 +106,7 @@ export function stageOriginal(root, key, bytes, contentType, expectedSha256) {
       !(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > maxBytes ||
       sha(bytes)!==expectedSha256)throw Error("STAGED_ORIGINAL_INVALID");
   mkdirSync(p.partition,{recursive:true,mode:0o700});
-  const partition=statSync(p.partition);
-  if((partition.mode & 0o077) || lstatSync(p.partition).isSymbolicLink()) throw Error("UNSAFE_ORIGINAL_PARTITION");
+  ensurePrivatePartition(p.partition);
   if(existsSync(p.data)||existsSync(p.meta))throw Error("STAGED_ORIGINAL_ALREADY_EXISTS");
   // Never publish the metadata commit-marker unless the immutable bytes exist.
   let blobCreated=false;
