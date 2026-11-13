@@ -149,6 +149,7 @@ def ready(operation, phase, previous_boot=None):
 TRACED_ROUTES = (
     '/api/health', '/admin/api/session', '/portfolio', '/arquivo', '/contato', '/',
     '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me', '/media/:id/card', '/ensaios/:qa',
+    '/admin/api/uploads/:id/complete',
 )
 
 
@@ -215,12 +216,17 @@ def runtime_receipts(operation, phase):
                     studio_phase = event['route'] in ('/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me') and phase_name in (
                         'session-start', 'session-key-ready', 'session-verified', 'session-end',
                         'studio-draft-start', 'studio-draft-end', 'studio-history-end', 'render-start', 'render-end')
-                    media_phase = event['route'] == '/media/:id/card' and phase_name in (
+                    media_phase = event['route'] in ('/media/:id/card', '/admin/api/uploads/:id/complete') and phase_name in (
                         'media-original-start', 'media-original-end', 'media-body-start',
-                        'media-body-end', 'media-sharp-start', 'media-sharp-end')
+                        'media-body-end', 'media-sharp-start', 'media-sharp-end',
+                        'media-metadata-start', 'media-metadata-end', 'media-decode-start', 'media-decode-end')
                     public_render_phase = event['route'] in ('/', '/portfolio', '/arquivo', '/contato', '/ensaios/:qa') and phase_name in (
                         'render-start', 'render-end')
-                    if not body_phase and not studio_phase and not media_phase and not public_render_phase:
+                    upload_phase = event['route'] == '/admin/api/uploads/:id/complete' and phase_name in (
+                        'session-start', 'session-key-ready', 'session-verified', 'session-end',
+                        'rate-limit-start', 'rate-limit-end', 'upload-json-start', 'upload-json-end',
+                        'upload-validation-start', 'upload-validation-end', 'upload-commit-start', 'upload-commit-end')
+                    if not (body_phase or studio_phase or media_phase or public_render_phase or upload_phase):
                         continue
                 record = {'phase':event['phase'],'route':event['route']}
                 if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:

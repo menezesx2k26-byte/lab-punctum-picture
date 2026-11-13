@@ -103,10 +103,16 @@ export function qaOriginals(db: D1Database) {
 
 export const qaImages = {
   async info(body: ReadableStream<Uint8Array>) {
+    markQaMediaPhase("media-body-start");
     const bytes = await boundedBytes(body);
+    markQaMediaPhase("media-body-end");
     const image = sharp(bytes, imageLimits);
+    markQaMediaPhase("media-metadata-start");
     const { width, height, format } = await image.metadata();
+    markQaMediaPhase("media-metadata-end");
+    markQaMediaPhase("media-decode-start");
     await image.stats(); // Decode the pixels before marking the upload valid.
+    markQaMediaPhase("media-decode-end");
     return { width, height, format, fileSize: bytes.length };
   },
   input(body: ReadableStream<Uint8Array>) {

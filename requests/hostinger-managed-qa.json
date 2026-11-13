@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-native-hashes-drained-http-20261113-25",
+  "request_id": "candidate-trace-upload-complete-20261113-26",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d541-5322-7279-875e-6dbc742d9744",
+  "expected_build_uuid": "01a1d54b-ec69-7148-99ee-519dbdceaaac",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }

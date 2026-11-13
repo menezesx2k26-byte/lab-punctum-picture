@@ -6,6 +6,7 @@ const mediaPhase = new AsyncLocalStorage();
 const mediaPhases = new Set([
   'media-original-start', 'media-original-end',
   'media-body-start', 'media-body-end', 'media-sharp-start', 'media-sharp-end',
+  'media-metadata-start', 'media-metadata-end', 'media-decode-start', 'media-decode-end',
 ]);
 
 export function markQaMediaPhase(phase) {
@@ -15,8 +16,13 @@ export function markQaMediaPhase(phase) {
 const studioRoutes = new Set(['/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me']);
 const publicSsrRoutes = new Set(['/', '/portfolio', '/arquivo', '/contato', '/ensaios/:qa']);
 const renderPhases = new Set(['render-start', 'render-end']);
+const sessionPhases = ['session-start', 'session-key-ready', 'session-verified', 'session-end'];
+const uploadPhases = new Set([
+  ...sessionPhases, 'rate-limit-start', 'rate-limit-end', 'upload-json-start', 'upload-json-end',
+  'upload-validation-start', 'upload-validation-end', 'upload-commit-start', 'upload-commit-end',
+]);
 const studioPhases = new Set([
-  'session-start', 'session-key-ready', 'session-verified', 'session-end',
+  ...sessionPhases,
   'studio-draft-start', 'studio-draft-end', 'studio-history-end',
   ...renderPhases,
 ]);
@@ -32,7 +38,8 @@ export async function traceQaWorker(path, execute, {
   const report = (phase, extra = {}) => emit('PUNCTUM_QA_PHASE ' + JSON.stringify({
     route, phase, ...extra,
   }));
-  const mediaRoute = route === '/media/:id/card';
+  const uploadRoute = route === '/admin/api/uploads/:id/complete';
+  const mediaRoute = uploadRoute || route === '/media/:id/card';
   const loopStart = performance.eventLoopUtilization();
   const cpuStart = process.cpuUsage();
   const runtimeMetrics = () => {
@@ -49,15 +56,13 @@ export async function traceQaWorker(path, execute, {
   }), 5000);
   timer.unref();
   try {
-    const mark = (studioRoutes.has(route) || publicSsrRoutes.has(route))
-      ? (phase) => {
-          if (studioRoutes.has(route) ? studioPhases.has(phase) : renderPhases.has(phase)) {
-            report(phase, { ms: Math.round(performance.now() - started) });
-          }
-        }
-      : undefined;
+    const allowed = uploadRoute ? uploadPhases : studioRoutes.has(route) ? studioPhases :
+      publicSsrRoutes.has(route) ? renderPhases : null;
+    const mark = allowed ? (phase) => {
+      if (allowed.has(phase)) report(phase, { ms: Math.round(performance.now() - started) });
+    } : undefined;
     const response = mediaRoute
-      ? await mediaPhase.run((phase) => report(phase, { ms: Math.round(performance.now() - started) }), execute)
+      ? await mediaPhase.run((phase) => report(phase, { ms: Math.round(performance.now() - started) }), () => execute(mark))
       : await execute(mark);
     report('returned', {
       status: response.status,

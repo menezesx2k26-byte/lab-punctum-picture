@@ -12,6 +12,9 @@ export function tracedQaRoute(path) {
   if (/^\/media\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/card$/i.test(path)) {
     return '/media/:id/card';
   }
+  if (/^\/admin\/api\/uploads\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/complete$/i.test(path)) {
+    return '/admin/api/uploads/:id/complete';
+  }
   if (/^\/ensaios\/hostinger-synthetic-qa-[0-9]+(?:-[0-9]+)?$/.test(path)) return '/ensaios/:qa';
 }
 

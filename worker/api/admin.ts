@@ -722,8 +722,11 @@ async function completeUpload(
   db: D1Database,
   identity: AdminIdentity,
   intentId: string,
+  mark?: (phase: string) => void,
 ): Promise<Response> {
+  mark?.("upload-json-start");
   const input = await parseJson(request, uploadCompleteSchema);
+  mark?.("upload-json-end");
   const intent = await getIntent(db, intentId);
   if (intent.status === "completed") {
     throw new AppError(409, "INTENT_ALREADY_COMPLETED", "Este envio já foi finalizado.");
@@ -751,7 +754,9 @@ async function completeUpload(
   if (!object) throw new AppError(409, "OBJECT_NOT_FOUND", "O original não foi encontrado.");
   let info: Awaited<ReturnType<ImagesBinding["info"]>>;
   try {
+    mark?.("upload-validation-start");
     info = await env.IMAGES.info(object.body);
+    mark?.("upload-validation-end");
   } catch {
     // Never mark invalid/unreadable bytes ready, even when R2 metadata matches.
     // Preserve R2 and D1 pending/uploaded state for an exclusive recovery path.
@@ -769,6 +774,7 @@ async function completeUpload(
   const height = info.height;
 
   const now = new Date().toISOString();
+  mark?.("upload-commit-start");
   const changes = await db.batch([
     db
       .prepare(
@@ -805,6 +811,7 @@ async function completeUpload(
         intent.imageId, intent.albumId, intent.objectKey,
         intent.expectedMime, intent.expectedSize, now),
   ]);
+  mark?.("upload-commit-end");
   if (changes[0].meta.changes !== 1 || changes[1].meta.changes !== 1) {
     throw new AppError(409, "UPLOAD_STATE_CHANGED", "O envio mudou durante a validação.");
   }
@@ -1242,6 +1249,7 @@ export async function handleAdminApi(
   assertAllowedOrigin(request, env);
   const db = requireDb(env);
   if (["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+    mark?.("rate-limit-start");
     await assertRateLimit(
       request,
       db,
@@ -1249,6 +1257,7 @@ export async function handleAdminApi(
       envNumber(env, "ADMIN_RATE_LIMIT_MAX", 60),
       envNumber(env, "ADMIN_RATE_LIMIT_WINDOW_SECONDS", 60),
     );
+    mark?.("rate-limit-end");
   }
 
   if (request.method === "GET" && url.pathname === "/admin/api/me") {
@@ -1295,7 +1304,7 @@ export async function handleAdminApi(
   if (uploadMatch) {
     const intentId = decodeURIComponent(uploadMatch[1]);
     if (request.method === "POST" && uploadMatch[2] === "complete") {
-      return completeUpload(request, env, db, identity, intentId);
+      return completeUpload(request, env, db, identity, intentId, mark);
     }
     if (request.method === "PUT" && uploadMatch[2] === "direct") {
       return directUpload(request, env, db, intentId);

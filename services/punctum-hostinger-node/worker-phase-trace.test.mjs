@@ -123,3 +123,25 @@ test('pending contact requests emit bounded runtime metrics and clear their time
   assert.ok(events.slice(1).every(({ ms, cpuMs }) => Number.isSafeInteger(ms) && Number.isSafeInteger(cpuMs)));
   assert.equal(cleared, true);
 });
+
+test('managed upload confirmation measures auth and image validation without recording intent IDs', async () => {
+  const messages = [];
+  const id = 'f82e03b1-132a-42c6-8b71-1d596448dcc4';
+  const path = '/admin/api/uploads/' + id + '/complete';
+  await traceQaWorker(path, async (mark) => {
+    mark('session-start');
+    mark('rate-limit-end');
+    markQaMediaPhase('media-metadata-start');
+    markQaMediaPhase('media-metadata-end');
+    markQaMediaPhase('media-decode-start');
+    markQaMediaPhase('media-decode-end');
+    return new Response(null, { status: 200 });
+  }, { enabled: true, emit: (message) => messages.push(message) });
+  const events = messages.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
+  assert.deepEqual(events.map(({ phase }) => phase), [
+    'start', 'session-start', 'rate-limit-end', 'media-metadata-start', 'media-metadata-end',
+    'media-decode-start', 'media-decode-end', 'returned',
+  ]);
+  assert.ok(events.every(({ route }) => route === '/admin/api/uploads/:id/complete'));
+  assert.doesNotMatch(messages.join(' '), /f82e03b1/);
+});
