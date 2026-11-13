@@ -1,13 +1,9 @@
 {
   "scope": "PUNCTUM_D1_ENCRYPTED_STAGING_ONLY",
-  "action": "selftest",
+  "action": "inventory-only",
   "dnsTouched": false,
   "productionDataImported": false,
   "sourceDatabase": "punctum-picture",
-  "observedPublicCounts": {
-    "photos": 329,
-    "dynamicPhotos": 217,
-    "albums": 19
-  },
-  "note": "Synthetic cryptographic selftest only; does not contact Cloudflare or Hostinger."
+  "sourceDatabaseId": "22697f13-7484-41e3-9441-f7b902c6577a",
+  "note": "Fetch schema and table counts only. Never materialize or upload private table records."
 }
