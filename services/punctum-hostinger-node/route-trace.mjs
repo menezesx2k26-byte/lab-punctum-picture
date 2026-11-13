@@ -12,7 +12,7 @@ export function tracedQaRoute(path) {
   if (/^\/media\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/card$/i.test(path)) {
     return '/media/:id/card';
   }
-  if (/^\/ensaios\/hostinger-synthetic-qa-[0-9]+$/.test(path)) return '/ensaios/:qa';
+  if (/^\/ensaios\/hostinger-synthetic-qa-[0-9]+(?:-[0-9]+)?$/.test(path)) return '/ensaios/:qa';
 }
 
 export function traceQaRequests(server, { enabled = false, emit = console.log } = {}) {

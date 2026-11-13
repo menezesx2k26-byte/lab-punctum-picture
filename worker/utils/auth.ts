@@ -1,7 +1,7 @@
 import { assertSeparateAccessAudiences } from "../client/audience";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { AppError } from "./errors";
-import { createAdminSessionKey } from "./admin-session-crypto.mjs";
+import { createAdminSessionKey, sha256Hex } from "./admin-session-crypto.mjs";
 import { envString, requiredEnvString } from "./env";
 
 const ADMIN_SESSION_COOKIE = "punctum_admin_session";
@@ -246,12 +246,7 @@ export async function verifyAdminPassword(
   }
 
   const expected = requiredEnvString(env, "ADMIN_PASSWORD_HASH").toLowerCase();
-  const digest = Array.from(
-    new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password)),
-    ),
-    (byte) => byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const digest = await sha256Hex(new TextEncoder().encode(password));
   if (digest.length !== expected.length) return false;
   let difference = 0;
   for (let index = 0; index < digest.length; index += 1) {

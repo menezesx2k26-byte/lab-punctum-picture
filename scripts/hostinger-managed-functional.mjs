@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import sharp from 'sharp';
 import { takeEvidenceScreenshot } from './e2e/screenshot-evidence.mjs';
+import { responseStatus } from './hostinger-managed-http.mjs';
 
 let stage = 'setup';
 const network = [];
@@ -32,9 +33,10 @@ const get = async (path, init) => {
   }
 };
 const check = (condition, label) => { if (!condition) throw new Error(label); };
+const getStatus = (path, init) => responseStatus(get(path, init));
 const login = await get('/admin/api/session', {method:'POST', headers:{origin,'content-type':'application/json'},
   body:JSON.stringify({email:process.env.PUNCTUM_QA_ADMIN_EMAIL,password:process.env.PUNCTUM_QA_TEST_PASSWORD})});
-check(login.status === 200, 'managed authentication status');
+check(await responseStatus(login) === 200, 'managed authentication status');
 const session = login.headers.getSetCookie()[0] || '';
 check(/HttpOnly/.test(session) && /SameSite=Strict/.test(session) && /Secure/.test(session), 'managed cookie flags');
 const cookie = session.split(';',1)[0];
@@ -49,34 +51,41 @@ if (phase === 'exercise') {
     check(/frame-ancestors 'none'/.test(response.headers.get('content-security-policy') || ''), 'managed CSP ' + path);
   }
   check(/Disallow: \//.test(await (await get('/robots.txt')).text()), 'managed robots');
-  check((await get('/sitemap.xml')).status === 200, 'managed sitemap');
-  check((await get('/admin/studio')).status === 303, 'anonymous Studio denied');
+  check(await getStatus('/sitemap.xml') === 200, 'managed sitemap');
+  check(await getStatus('/admin/studio') === 303, 'anonymous Studio denied');
   stage = 'exercise.admin-session';
-  check((await get('/admin/api/me',{headers:{cookie}})).status === 200, 'authenticated Admin session');
+  check(await getStatus('/admin/api/me',{headers:{cookie}}) === 200, 'authenticated Admin session');
   stage = 'exercise.studio-api';
-  check((await get('/admin/api/studio',{headers:{cookie}})).status === 200, 'authenticated Studio API');
+  check(await getStatus('/admin/api/studio',{headers:{cookie}}) === 200, 'authenticated Studio API');
   stage = 'exercise.admin-shell';
-  check((await get('/admin',{headers:{cookie}})).status === 200, 'authenticated Admin shell');
+  check(await getStatus('/admin',{headers:{cookie}}) === 200, 'authenticated Admin shell');
   stage = 'exercise.studio-page';
-  check((await get('/admin/studio',{headers:{cookie}})).status === 200, 'authenticated Studio');
+  check(await getStatus('/admin/studio',{headers:{cookie}}) === 200, 'authenticated Studio');
+  stage = 'exercise.private-routes';
   for(const path of ['/albuns/entrar','/studio-preview-internal','/application.sqlite','/capability.sqlite','/synthetic-media.bin'])
-    check((await get(path)).status === 404, 'private/R4 route denied ' + path);
-  const title = 'Hostinger synthetic QA ' + process.env.GITHUB_RUN_ID;
+    check(await getStatus(path) === 404, 'private/R4 route denied ' + path);
+  stage = 'exercise.create-album';
+  const title = 'Hostinger synthetic QA ' + process.env.GITHUB_RUN_ID + '-' + process.env.GITHUB_RUN_ATTEMPT;
   const created = await mutate('/admin/api/albums',{title}); check(created.status === 201,'create synthetic draft');
   const {album} = await created.json(); check(album.status === 'draft','draft state');
   const original = await sharp({create:{width:640,height:480,channels:3,background:'navy'}}).png().toBuffer();
+  stage = 'exercise.upload-intent';
   const intentResponse = await mutate('/admin/api/uploads/intents',{albumId:album.id,filename:'synthetic.png',mimeType:'image/png',sizeBytes:original.length});
   check(intentResponse.status === 201,'managed upload intent'); const intent = await intentResponse.json();
+  stage = 'exercise.upload-bytes';
   const upload = await get(new URL(intent.uploadUrl).pathname,{method:'PUT',headers:{cookie,origin,'content-type':'image/png'},body:original});
-  check(upload.status === 200,'managed original upload');
-  check((await mutate(`/admin/api/uploads/${intent.intentId}/complete`,{})).status === 200,'managed upload complete');
-  check((await mutate(`/admin/api/albums/${album.id}/cover`,{imageId:intent.imageId})).status === 200,'managed cover');
-  check((await get(`/media/${intent.imageId}/card`)).status === 404,'unpublished original denied');
-  check((await mutate(`/admin/api/albums/${album.id}/publish`,{})).status === 200,'publish synthetic fixture');
+  check(await responseStatus(upload) === 200,'managed original upload');
+  stage = 'exercise.upload-complete';
+  check(await responseStatus(mutate(`/admin/api/uploads/${intent.intentId}/complete`,{})) === 200,'managed upload complete');
+  stage = 'exercise.publish';
+  check(await responseStatus(mutate(`/admin/api/albums/${album.id}/cover`,{imageId:intent.imageId})) === 200,'managed cover');
+  check(await getStatus(`/media/${intent.imageId}/card`) === 404,'unpublished original denied');
+  check(await responseStatus(mutate(`/admin/api/albums/${album.id}/publish`,{})) === 200,'publish synthetic fixture');
   state = {albumId:album.id,slug:album.slug,imageId:intent.imageId,title,originalSha256:createHash('sha256').update(original).digest('hex')};
   await writeFile(new URL('fixture.json',output),JSON.stringify(state,null,2)+'\n');
+  stage = 'exercise.contact-submit';
   const contact = await mutate('/api/public/inquiries',{name:'QA fixture',email:'contact@example.test',message:'Synthetic managed Node QA inquiry.'});
-  check(contact.status === 201,'managed contact create');
+  check(await responseStatus(contact) === 201,'managed contact create');
   report.checks.push('HTML/SEO/security/Studio/upload/cover/publication/contact');
 } else {
   state = JSON.parse(await readFile(new URL('fixture.json',output),'utf8'));
@@ -123,12 +132,12 @@ if (phase === 'browser') {
   } finally {await browser.close();}
 }
 if (phase === 'archive') {
-  check((await mutate(`/admin/api/albums/${state.albumId}/archive`,{})).status === 200,'managed archive');
-  check((await get(`/media/${state.imageId}/card`)).status === 404,'archived media denied');
+  check(await responseStatus(mutate(`/admin/api/albums/${state.albumId}/archive`,{})) === 200,'managed archive');
+  check(await getStatus(`/media/${state.imageId}/card`) === 404,'archived media denied');
   report.checks.push('archive/media denial');
 }
 const logout=await get('/admin/api/session',{method:'DELETE',headers:{cookie}});
-check(logout.status===200 && /Max-Age=0/.test(logout.headers.getSetCookie()[0] || ''),'managed logout');
+check(await responseStatus(logout)===200 && /Max-Age=0/.test(logout.headers.getSetCookie()[0] || ''),'managed logout');
 report.status='PASS';
 await writeFile(new URL(`report-${phase}.json`,output),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));

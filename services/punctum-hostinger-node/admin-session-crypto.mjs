@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 // Session payloads are small. Compute their HMAC without queueing a libuv job.
 export function createAdminSessionKey(material) {
@@ -10,4 +10,8 @@ export function createAdminSessionKey(material) {
       return signature.byteLength === expected.byteLength && timingSafeEqual(expected, signature);
     },
   };
+}
+
+export function sha256Hex(bytes) {
+  return createHash('sha256').update(bytes).digest('hex');
 }

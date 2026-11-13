@@ -6,6 +6,7 @@ import sharp from "sharp";
 import { AppError } from "../../worker/utils/errors";
 import { publicPaths } from "./public-files";
 import { markQaMediaPhase } from "./worker-phase-trace.mjs";
+import { sha256Hex } from "./admin-session-crypto.mjs";
 
 const maxUploadBytes = 26_214_400;
 const imageLimits = { limitInputPixels: 40_000_000, failOn: "warning" } as const;
@@ -92,8 +93,7 @@ export function qaOriginals(db: D1Database) {
         throw new Error("QA originals require a conditional image insert");
       }
       const bytes = await boundedBytes(body);
-      const digest = await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes));
-      const etag = Buffer.from(digest).toString("hex");
+      const etag = sha256Hex(bytes);
       const result = await db.prepare("INSERT INTO node_qa_media (key, bytes, mime, etag) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO NOTHING")
         .bind(key, bytes, mime, etag).run();
       return result.meta.changes ? { etag, size: bytes.byteLength, httpMetadata: { contentType: mime } } : null;

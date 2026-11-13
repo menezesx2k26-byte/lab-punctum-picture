@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-native-session-hmac-20261113-24",
+  "request_id": "candidate-native-hashes-drained-http-20261113-25",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d537-3f94-731f-928a-623cb5d2f65a",
+  "expected_build_uuid": "01a1d541-5322-7279-875e-6dbc742d9744",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }

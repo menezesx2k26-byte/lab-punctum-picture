@@ -12,3 +12,8 @@ export async function createAdminSessionKey(material) {
     },
   };
 }
+
+export async function sha256Hex(bytes) {
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return Array.from(hash, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}

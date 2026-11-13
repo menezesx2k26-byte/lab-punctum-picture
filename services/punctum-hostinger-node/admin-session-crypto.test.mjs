@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import { test } from 'node:test';
-import { createAdminSessionKey } from './admin-session-crypto.mjs';
+import { createAdminSessionKey, sha256Hex } from './admin-session-crypto.mjs';
 
 const encoder = new TextEncoder();
 const material = encoder.encode('synthetic-secret\u0000env:synthetic-credential-revision');
@@ -25,4 +25,12 @@ test('Node signs and verifies the existing WebCrypto session format without a wo
   assert.equal(nodeKey.verify(encoder.encode('changed payload'), webSignature), false);
   const rotated = createAdminSessionKey(encoder.encode('synthetic-secret\u0000env:rotated-revision'));
   assert.equal(rotated.verify(payload, webSignature), false);
+});
+
+test('the Node digest preserves rate-limit and legacy credential hashes', async () => {
+  for (const value of ['admin-mutation:unknown', 'synthetic-ação', '']) {
+    const bytes = encoder.encode(value);
+    const expected = Buffer.from(await webcrypto.subtle.digest('SHA-256', bytes)).toString('hex');
+    assert.equal(sha256Hex(bytes), expected);
+  }
 });
