@@ -157,9 +157,10 @@ export async function run() {
     if (statSync(encrypted,{throwIfNoEntry:false})) throw Error("R2_CIPHERTEXT_ALREADY_EXISTS");
     exec("openssl",["cms","-encrypt","-binary","-aes-256-gcm","-outform","DER",
       "-in",tar,"-out",encrypted,"-recip",cert,"-keyopt","rsa_padding_mode:oaep"],240000);
-    const structure=exec("openssl",["cms","-cmsout","-print","-inform","DER","-in",encrypted],30000);
-    if (!structure.includes("aes-256-gcm") || !structure.includes("rsaesOaep"))
-      throw Error("R2_CIPHER_ALGORITHM_INVALID");
+    // Never print the huge CMS encrypted content to logs while validating format.
+    // Algorithm options are pinned in the invocation; decryption at the VPS receiver authenticates it.
+    if (statSync(encrypted).size < total || statSync(encrypted).size > MAX_TOTAL + 10000000)
+      throw Error("R2_CIPHERTEXT_SIZE_INVALID");
     const receipt={schema:"punctum-r2-encrypted-stage-v1",status:"ENCRYPTED_ONLY",
       bucket,objectsCount:entries.length,objectsBytes:total,
       sourceInventoryExpectedObjects:request.expectedObjects,
