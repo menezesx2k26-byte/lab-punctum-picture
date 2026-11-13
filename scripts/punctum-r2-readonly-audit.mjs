@@ -24,25 +24,36 @@ export function summarizeParity(images, intents, objects, pages) {
   const imageKeys = new Set();
   const intentKeys = new Set();
   const imageStatuses = {};
-  let missingImages = 0, sizeMismatch = 0, malformedImages = 0, duplicateImages = 0;
+  let missingImages = 0, missingReadyImages = 0, missingNonReadyImages = 0, staticReferences = 0;
+  let sizeMismatch = 0, malformedImages = 0, duplicateImages = 0;
+  const imageCategories = {};
   for (const row of images) {
     const key = row?.original_key;
     if (typeof key !== 'string' || !key) { malformedImages++; continue; }
     if (imageKeys.has(key)) duplicateImages++;
+    const category = row.kind || 'album';
+    imageCategories[category] = (imageCategories[category] || 0) + 1;
     imageKeys.add(key);
     const status = typeof row.status === 'string' ? row.status : 'unknown';
     imageStatuses[status] = (imageStatuses[status] || 0) + 1;
+    if (key.startsWith('static:')) { staticReferences++; continue; }
     const object = byKey.get(key);
-    if (!object) missingImages++;
-    else if (Number.isSafeInteger(Number(row.size_bytes)) && object.size !== Number(row.size_bytes))
+    if (!object) {
+      missingImages++;
+      if (status === 'ready') missingReadyImages++;
+      else missingNonReadyImages++;
+    } else if (Number.isSafeInteger(Number(row.size_bytes)) && object.size !== Number(row.size_bytes))
       sizeMismatch++;
   }
-  let missingIntents = 0, malformedIntents = 0;
+  let missingIntents = 0, missingCompletedIntents = 0, malformedIntents = 0;
   for (const row of intents) {
     const key = row?.object_key;
     if (typeof key !== 'string' || !key) { malformedIntents++; continue; }
     intentKeys.add(key);
-    if (!byKey.has(key)) missingIntents++;
+    if (!byKey.has(key)) {
+      missingIntents++;
+      if (row.status === 'completed') missingCompletedIntents++;
+    }
   }
   const referenced = new Set([...imageKeys, ...intentKeys]);
   const unreferenced = objects.filter(o => !referenced.has(o.key)).length;
@@ -56,15 +67,16 @@ export function summarizeParity(images, intents, objects, pages) {
     objects.map(o => [o.key, o.size, o.etag ?? ''].join('\t')).sort().join('\n')
   ).digest('hex');
   const schemaOk = malformedImages === 0 && malformedIntents === 0 && duplicateImages === 0 && duplicateObjects === 0;
-  const referencedPresent = missingImages === 0 && sizeMismatch === 0;
+  const referencedPresent = missingReadyImages === 0 && missingCompletedIntents === 0 && sizeMismatch === 0;
   return {
     schemaVersion: 1,
     scope: 'PUNCTUM_D1_R2_METADATA_READ_ONLY',
     status: schemaOk && referencedPresent ? 'METADATA_PARITY_ONLY' : 'BLOCKED_MISSING_OR_CONFLICTING_REFERENCES',
-    imagesCount: images.length, imageStatuses,
+    imagesCount: images.length, imageStatuses, imageCategories, staticReferences,
     intentsCount: intents.length, distinctIntentKeys: intentKeys.size,
     objectsCount: objects.length, r2Pages: pages, totalR2Bytes: bytes,
-    prefixes, missingImages, missingIntents, sizeMismatch,
+    prefixes, missingImages, missingReadyImages, missingNonReadyImages,
+    missingIntents, missingCompletedIntents, sizeMismatch,
     malformedImages, malformedIntents, duplicateImages, duplicateObjects, unreferenced,
     listingDigest, d1AndR2AtomicSnapshot: false,
     byteSha256Verified: false, privateAlbumAuthVerified: false,
@@ -115,8 +127,23 @@ export async function collectAudit({ accountId, d1Token, r2Token, databaseName =
       throw new Error('d1_query_incomplete');
     return result.results;
   };
-  const images = await query('SELECT original_key, size_bytes, status FROM images');
+  const tables = new Set((await query("SELECT name FROM sqlite_master WHERE type='table'")).map(row => row.name));
+  const images = (await query('SELECT original_key, size_bytes, status FROM images'))
+    .map(row => ({ ...row, kind: 'album' }));
   const intents = await query('SELECT object_key, status FROM upload_intents');
+  // Additional physical R2 references must be considered without disclosing private keys.
+  if (tables.has('site_media')) {
+    for (const row of await query('SELECT storage_key AS original_key, size_bytes, status FROM site_media'))
+      images.push({ ...row, kind: 'hero' });
+  }
+  if (tables.has('client_gallery_images')) {
+    for (const row of await query('SELECT storage_key AS original_key, size_bytes, status FROM client_gallery_images'))
+      images.push({ ...row, kind: 'private' });
+  }
+  if (tables.has('client_gallery_upload_intents')) {
+    for (const row of await query('SELECT storage_key AS object_key, status FROM client_gallery_upload_intents'))
+      intents.push(row);
+  }
   const objects = [];
   let cursor = null, pages = 0;
   const seen = new Set();
