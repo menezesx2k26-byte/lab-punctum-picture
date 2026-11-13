@@ -14,3 +14,10 @@ export async function responseStatus(pendingResponse) {
   }
   return response.status;
 }
+
+// Eliminate connection reuse as a variable in the managed HTTP diagnostics.
+export function requestQa(url, init = {}) {
+  const headers = new Headers(init.headers);
+  headers.set('Connection', 'close');
+  return fetch(url, { ...init, headers });
+}

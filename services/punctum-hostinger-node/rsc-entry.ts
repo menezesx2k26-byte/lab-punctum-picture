@@ -32,7 +32,10 @@ export default async function fetchQaRequest(request: Request): Promise<Response
   const target = new URL(origin);
   target.pathname = url.pathname;
   target.search = url.search;
-  const traceOptions = { enabled: process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === "1" };
+  const traceOptions = {
+    enabled: process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === "1",
+    requestId: request.headers.get("X-Punctum-QA-Request") ?? undefined,
+  };
   const normalized = traceQaLoginBody(new Request(target, request), traceOptions);
   const result = await traceQaWorker(
     url.pathname,

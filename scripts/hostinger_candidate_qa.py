@@ -153,6 +153,13 @@ TRACED_ROUTES = (
 )
 
 
+def trace_correlation(event):
+    request_id = event.get('requestId')
+    if isinstance(request_id, str) and re.fullmatch(r'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}', request_id):
+        return {'requestId': request_id}
+    return {}
+
+
 def runtime_receipts(operation, phase):
     try:
         logs = operation.api(phase + 'RuntimeLogs', SITE + '/runtime-logs?period=1h&limit=1000')
@@ -197,8 +204,9 @@ def runtime_receipts(operation, phase):
                     for field in ('requestComplete', 'requestReadableEnded'):
                         if type(event.get(field)) is bool:
                             record[field] = event[field]
+                record.update(trace_correlation(event))
                 safe_trace.append(record)
-        operation.report.setdefault('runtimeRouteTrace',{})[phase] = safe_trace[-60:]
+        operation.report.setdefault('runtimeRouteTrace',{})[phase] = safe_trace[-140:]
         worker_phase = []
         for chunk in strings:
             for line in chunk.splitlines():
@@ -240,6 +248,7 @@ def runtime_receipts(operation, phase):
                 cpu_ms = event.get('cpuMs')
                 if phase_name in ('returned', 'error', 'pending') and type(cpu_ms) is int and 0 <= cpu_ms <= 120000:
                     record['cpuMs'] = cpu_ms
+                record.update(trace_correlation(event))
                 worker_phase.append(record)
         operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-200:]
         # Synthetic QA receipts include a successful SIGKILL regression case.

@@ -1,7 +1,7 @@
 import { performance } from 'node:perf_hooks';
 
-// Only report fixed QA routes. Querystrings, credentials and headers are never
-// read or emitted, including on stalled/aborted requests.
+// Only report fixed QA routes and an optional synthetic correlation UUID.
+export const qaRequestIdPattern = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const TRACED_ROUTES = new Set([
   '/api/health', '/admin/api/session', '/portfolio', '/arquivo', '/contato', '/',
   '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me',
@@ -24,7 +24,11 @@ export function traceQaRequests(server, { enabled = false, emit = console.log } 
     const route = tracedQaRoute(String(request.url ?? '').split('?', 1)[0]);
     if (!route) return;
     const started = performance.now();
-    const output = (event, extra = {}) => emit('PUNCTUM_QA_TRACE ' + JSON.stringify({event,route,...extra}));
+    const requestId = request.headers?.['x-punctum-qa-request'];
+    const correlation = typeof requestId === 'string' && qaRequestIdPattern.test(requestId) ? { requestId } : {};
+    const output = (event, extra = {}) => emit('PUNCTUM_QA_TRACE ' + JSON.stringify({
+      event, route, ...correlation, ...extra,
+    }));
     let finished = false;
     output('start');
     response.once('finish', () => {

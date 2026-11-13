@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { tracedQaRoute } from './route-trace.mjs';
+import { qaRequestIdPattern, tracedQaRoute } from './route-trace.mjs';
 
 const mediaPhase = new AsyncLocalStorage();
 const mediaPhases = new Set([
@@ -30,13 +30,14 @@ const studioPhases = new Set([
 // This runner is bundled only into the disposable Node QA target. Never print
 // response bodies, request headers, cookie values, stack traces or query strings.
 export async function traceQaWorker(path, execute, {
-  enabled = false, emit = console.log, setTimer = setTimeout, clearTimer = clearTimeout,
+  enabled = false, emit = console.log, requestId, setTimer = setTimeout, clearTimer = clearTimeout,
 } = {}) {
   const route = enabled && tracedQaRoute(path);
   if (!route) return execute();
   const started = performance.now();
+  const correlation = typeof requestId === 'string' && qaRequestIdPattern.test(requestId) ? { requestId } : {};
   const report = (phase, extra = {}) => emit('PUNCTUM_QA_PHASE ' + JSON.stringify({
-    route, phase, ...extra,
+    route, phase, ...correlation, ...extra,
   }));
   const uploadRoute = route === '/admin/api/uploads/:id/complete';
   const mediaRoute = uploadRoute || route === '/media/:id/card';

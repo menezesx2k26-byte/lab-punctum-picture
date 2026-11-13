@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import sharp from 'sharp';
 import { takeEvidenceScreenshot } from './e2e/screenshot-evidence.mjs';
-import { responseStatus } from './hostinger-managed-http.mjs';
+import { requestQa, responseStatus } from './hostinger-managed-http.mjs';
 
 let stage = 'setup';
 const network = [];
@@ -23,12 +23,21 @@ const get = async (path, init) => {
   const started = performance.now();
   const route = routeLabel(path);
   const method = init?.method || 'GET';
+  const requestId = randomUUID();
+  const headers = new Headers(init?.headers);
+  headers.set('X-Punctum-QA-Request', requestId);
   try {
-    const response = await fetch(origin + path, {redirect:'manual', signal:AbortSignal.timeout(30000), ...init});
-    requestTrace.push({route,method,status:response.status,ms:Math.round(performance.now()-started)});
+    const response = await requestQa(origin + path, {
+      redirect: 'manual', signal: AbortSignal.timeout(30000), ...init, headers,
+    });
+    const edgeId = response.headers.get('x-hcdn-request-id');
+    requestTrace.push({route, method, requestId, status: response.status,
+      ms: Math.round(performance.now() - started),
+      ...(edgeId && /^[a-z0-9-]{8,80}$/i.test(edgeId) && { edgeId }),
+    });
     return response;
   } catch (error) {
-    requestTrace.push({route,method,errorName:error.name,ms:Math.round(performance.now()-started)});
+    requestTrace.push({route, method, requestId, errorName: error.name, ms: Math.round(performance.now() - started)});
     throw error;
   }
 };
