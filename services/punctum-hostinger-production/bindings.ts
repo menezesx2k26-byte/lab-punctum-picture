@@ -16,6 +16,7 @@ function stageOriginals() {
 export const env = {
   ENVIRONMENT: "preview",
   PRIVATE_GALLERIES_ENABLED: "false",
+  HOSTINGER_PREFER_WEBP: "true",
   PUBLIC_HOME_CACHE_ENABLED: "false",
   PUBLIC_HOME_SNAPSHOT_ENABLED: "false",
   get SITE_ORIGIN() { return stageConfig().origin.origin; },
