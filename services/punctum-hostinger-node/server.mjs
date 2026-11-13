@@ -3,6 +3,7 @@ import { startProdServer } from "vinext/server/prod-server";
 import { qaDatabasePath, qaOrigin } from "./runtime.mjs";
 import { openQaDatabase } from "./sqlite.mjs";
 import { ensureManagedQaDatabase } from './managed-bootstrap.mjs';
+import { traceQaRequests } from './route-trace.mjs';
 
 if (process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === '1') {
   if (process.env.PUNCTUM_QA_ORIGIN !== 'https://aliceblue-locust-999458.hostingersite.com' ||
@@ -26,10 +27,12 @@ const output = new URL("../../dist/hostinger-qa/", import.meta.url);
 process.env.PUNCTUM_QA_CLIENT_DIRECTORY = fileURLToPath(new URL("client/", output));
 
 // The managed loader imports this module. Listen on import, as in the live probe.
-await startProdServer({
+const qaServer = await startProdServer({
   port,
   host: origin.protocol === "http:" ? origin.hostname : "0.0.0.0",
   outDir: fileURLToPath(output),
   // Hostinger's CDN handles content encoding; avoid extra streamed SSR compression in Node.
   noCompression: true,
 });
+
+traceQaRequests(qaServer.server, { enabled: process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === '1' });
