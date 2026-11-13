@@ -51,8 +51,10 @@ if (phase === 'exercise') {
   check(/Disallow: \//.test(await (await get('/robots.txt')).text()), 'managed robots');
   check((await get('/sitemap.xml')).status === 200, 'managed sitemap');
   check((await get('/admin/studio')).status === 303, 'anonymous Studio denied');
-  check((await get('/admin/studio',{headers:{cookie}})).status === 200, 'authenticated Studio');
+  // Diagnose whether authentication/API or the heavier admin SSR path stalls.
   check((await get('/admin/api/studio',{headers:{cookie}})).status === 200, 'authenticated Studio API');
+  check((await get('/admin',{headers:{cookie}})).status === 200, 'authenticated Admin shell');
+  check((await get('/admin/studio',{headers:{cookie}})).status === 200, 'authenticated Studio');
   for(const path of ['/albuns/entrar','/studio-preview-internal','/application.sqlite','/capability.sqlite','/synthetic-media.bin'])
     check((await get(path)).status === 404, 'private/R4 route denied ' + path);
   const title = 'Hostinger synthetic QA ' + process.env.GITHUB_RUN_ID;
