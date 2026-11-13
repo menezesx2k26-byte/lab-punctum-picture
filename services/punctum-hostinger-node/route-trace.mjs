@@ -25,7 +25,13 @@ export function traceQaRequests(server, { enabled = false, emit = console.log } 
       output('finish',{status:response.statusCode,ms:Math.round(performance.now() - started)});
     });
     response.once('close', () => {
-      if (!finished) output('abort',{ms:Math.round(performance.now() - started)});
+      if (!finished) output('abort', {
+        ms: Math.round(performance.now() - started),
+        ...(route === '/admin/api/session' && request.method === 'POST' && {
+          requestComplete: request.complete === true,
+          requestReadableEnded: request.readableEnded === true,
+        }),
+      });
     });
   });
 }

@@ -22,3 +22,23 @@ export async function traceQaWorker(route, execute, { enabled = false, emit = co
     throw error;
   }
 }
+
+export function traceQaLoginBody(request, { enabled = false, emit = console.log } = {}) {
+  const route = new URL(request.url).pathname;
+  if (!enabled || route !== '/admin/api/session' || request.method !== 'POST') return request;
+  const readJson = request.json.bind(request);
+  request.json = async () => {
+    const started = performance.now();
+    const report = (phase, extra = {}) => emit('PUNCTUM_QA_PHASE ' + JSON.stringify({ route, phase, ...extra }));
+    report('body-start');
+    try {
+      const data = await readJson();
+      report('body-read', { ms: Math.round(performance.now() - started) });
+      return data;
+    } catch (error) {
+      report('body-error', { ms: Math.round(performance.now() - started) });
+      throw error;
+    }
+  };
+  return request;
+}

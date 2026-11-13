@@ -179,6 +179,10 @@ def runtime_receipts(operation, phase):
                     record['status'] = event['status']
                 if event['event'] != 'start' and type(event.get('ms')) is int and 0 <= event['ms'] <= 120000:
                     record['ms'] = event['ms']
+                if event['route'] == '/admin/api/session' and event['event'] == 'abort':
+                    for field in ('requestComplete', 'requestReadableEnded'):
+                        if type(event.get(field)) is bool:
+                            record[field] = event[field]
                 safe_trace.append(record)
         operation.report.setdefault('runtimeRouteTrace',{})[phase] = safe_trace[-60:]
         worker_phase = []
@@ -190,13 +194,17 @@ def runtime_receipts(operation, phase):
                 try: event = json.JSONDecoder().raw_decode(line[index+len(prefix):])[0]
                 except ValueError: continue
                 if not isinstance(event,dict) or event.get('route') not in TRACED_ROUTES: continue
-                if event.get('phase') not in ('start','returned','error'): continue
+                phase_name = event.get('phase')
+                start_phase = phase_name in ('start', 'body-start')
+                if phase_name not in ('start', 'returned', 'error'):
+                    if event['route'] != '/admin/api/session' or phase_name not in ('body-start', 'body-read', 'body-error'):
+                        continue
                 record = {'phase':event['phase'],'route':event['route']}
                 if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
                     record['status'] = event['status']
-                if event['phase'] != 'start' and type(event.get('ms')) is int and 0 <= event['ms'] <= 120000:
+                if not start_phase and type(event.get('ms')) is int and 0 <= event['ms'] <= 120000:
                     record['ms'] = event['ms']
-                if event['phase'] != 'start' and 'ms' not in record: continue
+                if not start_phase and 'ms' not in record: continue
                 worker_phase.append(record)
         operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-40:]
         # Synthetic QA receipts include a successful SIGKILL regression case.

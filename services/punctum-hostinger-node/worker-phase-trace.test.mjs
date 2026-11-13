@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { traceQaWorker } from './worker-phase-trace.mjs';
+import { traceQaLoginBody, traceQaWorker } from './worker-phase-trace.mjs';
 
 test('the synthetic Studio handler is measured without logging its response, cookies or URL query', async () => {
   const messages = [];
@@ -50,4 +50,17 @@ test('managed worker trace measures readiness, login, archive and home', async (
   const events = output.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
   assert.deepEqual(events.filter(({ phase }) => phase === 'returned').map(({ route }) => route),
     ['/api/health', '/admin/api/session', '/arquivo', '/']);
+});
+
+test('managed login traces JSON consumption without recording credentials', async () => {
+  const messages = [];
+  const request = new Request('https://qa.example.test/admin/api/session', {
+    method: 'POST',
+    body: JSON.stringify({ password: 'NEVER_LOG' }),
+  });
+  const result = traceQaLoginBody(request, { enabled: true, emit: (message) => messages.push(message) });
+  assert.deepEqual(await result.json(), { password: 'NEVER_LOG' });
+  const events = messages.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
+  assert.deepEqual(events.map(({ phase }) => phase), ['body-start', 'body-read']);
+  assert.doesNotMatch(messages.join(' '), /NEVER_LOG|password/);
 });
