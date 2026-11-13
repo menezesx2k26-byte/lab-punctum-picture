@@ -7,10 +7,98 @@ import zipfile
 from pathlib import Path
 
 import hostinger_managed_qa as qa
-from hostinger_candidate_qa import candidate_archive, runtime_receipts
+from hostinger_candidate_qa import candidate_archive, runtime_receipts, recover_candidate_probe
 
 
 class RecoveryContractTests(unittest.TestCase):
+    def test_candidate_failure_before_build_restores_stored_settings_without_redeploy(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            recovery.report["environmentKeys"] = ["PUNCTUM_QA_ORIGIN"]
+            settings = {**qa.PROBE_SETTINGS, "build_script": "build:hostinger:qa"}
+            recovery.report["candidateSettings"] = dict(settings)
+            history = [{"uuid": "baseline", "state": "completed"}]
+            calls = []
+            def api(label, path, payload=None):
+                if label == "historyBeforeRollback": return history
+                if "settings/env" in path: return []
+                if "settings" in path: return settings
+                raise AssertionError(label)
+            def put_settings(operation, label, path, payload):
+                calls.append(label)
+                self.assertEqual(label, "rollbackSettings")
+                settings.update(payload)
+            with patch.object(recovery, "api", side_effect=api), patch.object(recovery, "health", return_value=({"service":"probe"},{})) as health, patch("hostinger_candidate_qa.put", side_effect=put_settings), patch("hostinger_candidate_qa.build") as build:
+                recover_candidate_probe(recovery, Path(directory))
+            self.assertEqual(calls, ["rollbackSettings"])
+            health.assert_called_once()
+            build.assert_not_called()
+            self.assertEqual(recovery.report["probeRollback"]["status"], "VERIFIED")
+            self.assertEqual(recovery.report["probeRollback"]["mode"], "NO_REBUILD_REQUIRED")
+
+    def test_candidate_recovery_reconciles_ambiguous_500_with_verified_readback(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            recovery.report["environmentKeys"] = ["PUNCTUM_QA_ORIGIN"]
+            env = [{"key":"PUNCTUM_QA_ORIGIN","value":"********"}]
+            settings = {**qa.PROBE_SETTINGS, "build_script": "build:hostinger:qa"}
+            recovery.report["candidateSettings"] = dict(settings)
+            def api(label, path, payload=None):
+                if label == "historyBeforeRollback": return [{"uuid":"baseline","state":"completed"}]
+                if path.endswith("/settings/env"): return env
+                if path.endswith("/settings"): return settings
+                raise AssertionError(label)
+            def ambiguous_put(operation, label, path, payload):
+                if label == "rollbackEnvironment":
+                    env.clear()
+                    raise qa.RequestFailure(label, 500)
+                if label == "rollbackSettings":
+                    settings.update(payload)
+                    raise qa.RequestFailure(label, 500)
+                raise AssertionError(label)
+            with patch.object(recovery, "api", side_effect=api), patch.object(recovery, "health", return_value=({},{})), patch("hostinger_candidate_qa.put", side_effect=ambiguous_put), patch("hostinger_candidate_qa.build") as build:
+                recover_candidate_probe(recovery, Path(directory))
+            build.assert_not_called()
+            self.assertEqual(recovery.report["probeRollback"]["status"], "VERIFIED")
+
+    def test_candidate_recovery_refuses_to_delete_unrelated_environment(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            recovery.report["environmentKeys"] = ["PUNCTUM_QA_ORIGIN"]
+            def api(label, path, payload=None):
+                if label == "historyBeforeRollback": return [{"uuid":"baseline","state":"completed"}]
+                if path.endswith("/settings/env"): return [{"key":"UNRELATED_ENV"}]
+                raise AssertionError(label)
+            with patch.object(recovery, "api", side_effect=api), patch("hostinger_candidate_qa.put") as put_mock:
+                with self.assertRaisesRegex(ValueError, "environment"):
+                    recover_candidate_probe(recovery, Path(directory))
+            put_mock.assert_not_called()
+
+    def test_candidate_recovery_rebuilds_probe_only_for_an_acknowledged_candidate(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            recovery.report["managedBuilds"] = [{"phase":"candidate","uuid":"candidate"}]
+            def api(label, path, payload=None):
+                if label == "historyBeforeRollback": return [{"uuid":"candidate","state":"completed"}]
+                if path.endswith("/settings/env"): return []
+                if path.endswith("/settings"): return dict(qa.PROBE_SETTINGS)
+                raise AssertionError(label)
+            with patch.object(recovery, "api", side_effect=api), patch.object(recovery, "health", return_value=({},{})), patch.object(recovery, "upload_archive", return_value="recovery.zip") as upload, patch("hostinger_candidate_qa.probe_archive", return_value=b"backup"), patch("hostinger_candidate_qa.build", return_value="restored-build") as build:
+                recover_candidate_probe(recovery, Path(directory))
+            upload.assert_called_once_with(b"backup","punctum-recovery-v2-")
+            build.assert_called_once()
+            self.assertEqual(recovery.report["probeRollback"], {
+                "status":"VERIFIED","mode":"REBUILD","build":"restored-build"})
+
+    def test_candidate_recovery_refuses_unknown_concurrent_deployment(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            recovery.report["managedBuilds"] = [{"phase":"candidate","uuid":"candidate"}]
+            with patch.object(recovery, "api", return_value=[{"uuid":"someone-else","state":"completed"}]), patch("hostinger_candidate_qa.put") as put_mock, patch("hostinger_candidate_qa.build") as build:
+                with self.assertRaisesRegex(ValueError, "unknown build"):
+                    recover_candidate_probe(recovery, Path(directory))
+            put_mock.assert_not_called()
+            build.assert_not_called()
     def test_candidate_source_excludes_environment_databases_and_operational_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

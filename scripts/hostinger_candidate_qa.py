@@ -189,6 +189,75 @@ def functional(operation, root, phase, environment):
     return report
 
 
+def recover_candidate_probe(operation, root):
+    """Recover only the known QA probe; verify PUTs even after ambiguous 500s.
+
+    A failed settings write can be committed despite an HTTP 500. Always read
+    back the final state. Do not spend another build when the original probe
+    never changed, and never overwrite an unknown third-party deployment.
+    """
+    history = operation.api('historyBeforeRollback',SITE + '/builds')
+    if not isinstance(history,list) or not history or any(
+            row.get('state') in ('pending','running') for row in history):
+        raise ValueError('Build history is unavailable or still active')
+    current = history[0]
+    known_builds = {row['uuid'] for row in operation.report.get('managedBuilds',[])
+                    if row.get('phase') in ('candidate','candidateRebuild')}
+    if current.get('uuid') != operation.expected_build and current.get('uuid') not in known_builds:
+        raise ValueError('An unknown build replaced the probe; manual reconciliation required')
+
+    environment_before = operation.api('rollbackEnvironmentBefore',SITE + '/builds/settings/env')
+    if not isinstance(environment_before,list):
+        raise ValueError('Cannot inspect QA environment before rollback')
+    actual_keys = sorted(row.get('key') for row in environment_before)
+    if actual_keys and actual_keys != sorted(operation.report.get('environmentKeys',[])):
+        raise ValueError('Unexpected environment keys; refusing destructive replacement')
+    if environment_before:
+        try:
+            put(operation,'rollbackEnvironment',SITE + '/builds/settings/env',{'env_vars':[]})
+        except RequestFailure as error:
+            if error.status not in (None,500,502,503,504):
+                raise
+            operation.report['rollbackEnvironmentWriteUncertain'] = error.status
+    environment_after = operation.api('rollbackEnvironmentVerified',SITE + '/builds/settings/env')
+    if not isinstance(environment_after,list) or environment_after:
+        raise ValueError('QA environment rollback was not verified')
+
+    settings_before = operation.api('rollbackSettingsBefore',SITE + '/builds/settings')
+    candidate_settings = operation.report.get('candidateSettings')
+    if (not isinstance(settings_before,dict) or
+            (any(settings_before.get(k) != v for k,v in PROBE_SETTINGS.items()) and
+             (not isinstance(candidate_settings,dict) or
+              any(settings_before.get(k) != v for k,v in candidate_settings.items())))):
+        raise ValueError('Unknown build settings; refusing replacement')
+    if any(settings_before.get(k) != v for k,v in PROBE_SETTINGS.items()):
+        try:
+            put(operation,'rollbackSettings',SITE + '/builds/settings',PROBE_SETTINGS)
+        except RequestFailure as error:
+            if error.status not in (None,500,502,503,504):
+                raise
+            operation.report['rollbackSettingsWriteUncertain'] = error.status
+    check_probe_settings(operation.api('rollbackSettingsVerified',SITE + '/builds/settings'),
+                         environment_after)
+
+    if current.get('uuid') == operation.expected_build:
+        if current.get('state') != 'completed':
+            raise ValueError('Original probe build is not complete')
+        operation.health('probeRestored')
+        operation.report['probeRollback'] = {
+            'status':'VERIFIED','mode':'NO_REBUILD_REQUIRED','build':current['uuid']}
+        return
+
+    if current.get('state') not in ('completed','failed'):
+        raise ValueError('Candidate build is not in a recoverable terminal state')
+    name = operation.upload_archive(probe_archive(root),'punctum-recovery-v2-')
+    identifier = build(operation,name,PROBE_SETTINGS,'probeRollback')
+    operation.health('probeRestored')
+    check_probe_settings(operation.api('rollbackSettingsVerifiedAfterBuild',SITE + '/builds/settings'),
+                         operation.api('rollbackEnvironmentVerifiedAfterBuild',SITE + '/builds/settings/env'))
+    operation.report['probeRollback'] = {'status':'VERIFIED','mode':'REBUILD','build':identifier}
+
+
 def execute_candidate(root, request):
     operation = Recovery(root,'prepare',request['expected_build_uuid'])
     operation.report['action'] = 'candidate'
@@ -259,17 +328,7 @@ def execute_candidate(root, request):
     finally:
         if failed and modified:
             try:
-                history = operation.api('historyBeforeRollback',SITE + '/builds')
-                if any(row.get('state') in ('pending','running') for row in history):
-                    raise ValueError('Build still active; no competing rollback is submitted')
-                put(operation,'rollbackEnvironment',SITE + '/builds/settings/env',{'env_vars':[]})
-                put(operation,'rollbackSettings',SITE + '/builds/settings',PROBE_SETTINGS)
-                name = operation.upload_archive(probe_archive(root),'punctum-recovery-v2-')
-                identifier = build(operation,name,PROBE_SETTINGS,'probeRollback')
-                operation.health('probeRestored')
-                check_probe_settings(operation.api('rollbackSettingsVerified',SITE + '/builds/settings'),
-                                     operation.api('rollbackEnvironmentVerified',SITE + '/builds/settings/env'))
-                operation.report['probeRollback'] = {'status':'VERIFIED','build':identifier}
+                recover_candidate_probe(operation, root)
             except (RequestFailure,ValueError,KeyError,TypeError) as error:
                 operation.report['probeRollback'] = {'status':'NOT_VERIFIED','type':type(error).__name__}
                 if isinstance(error,RequestFailure): operation.report['probeRollback'].update(operation=error.label,httpStatus=error.status)
