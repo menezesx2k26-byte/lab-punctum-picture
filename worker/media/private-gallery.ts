@@ -13,7 +13,7 @@ import {
 } from "../client/gallery-integrity";
 import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import { requireAdmin } from "../utils/auth";
-import { requireDb, requireOriginals } from "../utils/env";
+import { envString, requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { IMAGE_PRESETS, negotiateImageFormat } from "./presets";
 
@@ -102,7 +102,7 @@ export async function servePrivateGalleryImage(
             "Content-Disposition": `attachment; filename="foto-${image.id}.${image.mimeType === "image/png" ? "png" : image.mimeType === "image/webp" ? "webp" : "jpg"}"`,
           }
         : {
-            "Content-Type": negotiateImageFormat(request.headers.get("Accept")),
+            "Content-Type": negotiateImageFormat(request.headers.get("Accept"), envString(env, "HOSTINGER_PREFER_WEBP") === "true"),
             "Content-Disposition": "inline",
           };
     return privateResponse(new Response(null, { status: 200, headers }));
@@ -148,7 +148,7 @@ export async function servePrivateGalleryImage(
       "A prévia desta foto está temporariamente indisponível.",
     );
   const size = IMAGE_PRESETS[preset];
-  const format = negotiateImageFormat(request.headers.get("Accept"));
+  const format = negotiateImageFormat(request.headers.get("Accept"), envString(env, "HOSTINGER_PREFER_WEBP") === "true");
   let transformed: Response;
   try {
     transformed = (
