@@ -40,7 +40,8 @@ export function openProductionStageDatabase(path) {
   const forbidden = () => { throw Error("PRODUCTION_STAGE_SQL_WRITES_DISABLED"); };
   const prepare = (sql, args = []) => {
     const statement = db.prepare(sql);
-    if (!statement.readOnly) throw Error("PRODUCTION_STAGE_SQL_WRITES_DISABLED");
+    if (typeof statement.readOnly === "boolean" && !statement.readOnly)
+      throw Error("PRODUCTION_STAGE_SQL_WRITES_DISABLED");
     return {
       bind: (...values) => prepare(sql, values),
       first: async (column) => {
