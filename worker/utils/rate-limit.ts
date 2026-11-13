@@ -1,10 +1,5 @@
 import { AppError } from "./errors";
-
-async function digest(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
+import { sha256Hex } from "./admin-session-crypto.mjs";
 
 export async function assertRateLimit(
   request: Request,
@@ -19,7 +14,7 @@ export async function assertRateLimit(
     "unknown";
   const now = new Date();
   const expires = new Date(now.getTime() + windowSeconds * 1000);
-  const bucketKey = await digest(`${scope}:${ip}`);
+  const bucketKey = await sha256Hex(new TextEncoder().encode(`${scope}:${ip}`));
 
   const bucket = await db
     .prepare(

@@ -1,6 +1,7 @@
 import { assertSeparateAccessAudiences } from "../client/audience";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { AppError } from "./errors";
+import { createAdminSessionKey, sha256Hex } from "./admin-session-crypto.mjs";
 import { envString, requiredEnvString } from "./env";
 
 const ADMIN_SESSION_COOKIE = "punctum_admin_session";
@@ -70,7 +71,7 @@ function fromBase64Url(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-async function hmacKey(env: Env): Promise<CryptoKey> {
+async function hmacKey(env: Env) {
   const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
   // Bind password-auth cookies to the current credential revision. A password
   // rotation changes this signing key and invalidates previously copied cookies.
@@ -79,18 +80,15 @@ async function hmacKey(env: Env): Promise<CryptoKey> {
   const credentialRevision = stored
     ? "d1:" + stored.passwordHash
     : "env:" + requiredEnvString(env, "ADMIN_PASSWORD_HASH");
-  return crypto.subtle.importKey(
-    "raw",
+  return createAdminSessionKey(
     new TextEncoder().encode(secret + "\u0000" + credentialRevision),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
   );
 }
 
 async function verifyPasswordSession(
   request: Request,
   env: Env,
+  mark?: (phase: string) => void,
 ): Promise<AdminIdentity | null> {
   const token = parseCookies(request).get(ADMIN_SESSION_COOKIE);
   if (!token) return null;
@@ -99,12 +97,13 @@ async function verifyPasswordSession(
   if (!encodedPayload || !encodedSignature || extra) return null;
 
   try {
-    const valid = await crypto.subtle.verify(
-      "HMAC",
-      await hmacKey(env),
-      new Uint8Array(fromBase64Url(encodedSignature)).buffer,
+    const key = await hmacKey(env);
+    mark?.("session-key-ready");
+    const valid = await key.verify(
       new TextEncoder().encode(encodedPayload),
+      fromBase64Url(encodedSignature),
     );
+    mark?.("session-verified");
     if (!valid) return null;
 
     const payload = JSON.parse(
@@ -136,13 +135,8 @@ export async function createAdminSession(email: string, env: Env): Promise<strin
       }),
     ),
   );
-  const signature = new Uint8Array(
-    await crypto.subtle.sign(
-      "HMAC",
-      await hmacKey(env),
-      new TextEncoder().encode(payload),
-    ),
-  );
+  const key = await hmacKey(env);
+  const signature = await key.sign(new TextEncoder().encode(payload));
   return `${payload}.${toBase64Url(signature)}`;
 }
 
@@ -252,12 +246,7 @@ export async function verifyAdminPassword(
   }
 
   const expected = requiredEnvString(env, "ADMIN_PASSWORD_HASH").toLowerCase();
-  const digest = Array.from(
-    new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password)),
-    ),
-    (byte) => byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const digest = await sha256Hex(new TextEncoder().encode(password));
   if (digest.length !== expected.length) return false;
   let difference = 0;
   for (let index = 0; index < digest.length; index += 1) {
@@ -270,12 +259,15 @@ export async function requireAdmin(
   request: Request,
   env: Env,
   jwksOverride?: JWTVerifyGetKey,
+  mark?: (phase: string) => void,
 ): Promise<AdminIdentity> {
   if (isLocalRequest(request, env)) {
     return { email: "maria.helena@local.dev", roles: ["admin"] };
   }
 
-  const passwordIdentity = await verifyPasswordSession(request, env);
+  mark?.("session-start");
+  const passwordIdentity = await verifyPasswordSession(request, env, mark);
+  mark?.("session-end");
   if (passwordIdentity) return passwordIdentity;
 
   const assertion = request.headers.get("cf-access-jwt-assertion");

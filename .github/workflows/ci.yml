@@ -49,3 +49,29 @@ jobs:
           name: r4-browser-evidence
           path: outputs/browser-e2e/
           retention-days: 14
+
+  hostinger-node-qa:
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/hostinger-node-migration-20261112'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:hostinger:qa
+      - run: npx playwright install --with-deps chromium
+      - run: node --test services/punctum-hostinger-node/*.test.mjs
+        env:
+          PUNCTUM_QA_BROWSER: "1"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-hostinger-node-browser
+          path: outputs/hostinger-qa-browser/
+          if-no-files-found: warn
+          retention-days: 14
