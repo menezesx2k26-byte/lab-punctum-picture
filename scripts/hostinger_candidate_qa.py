@@ -44,6 +44,24 @@ def put(operation, label, path, payload):
     operation.request(label, API + path, 'PUT', headers, json.dumps(payload).encode())
 
 
+def confirm_environment_keys(operation, label, expected, permitted):
+    # An acknowledged GET can briefly lag a PUT that returned an ambiguous 500.
+    # Poll only reads, and fail immediately on any unrelated or duplicate key.
+    for delay in (0, 2, 5, 10):
+        if delay:
+            time.sleep(delay)
+        rows = operation.api(label, SITE + '/builds/settings/env')
+        if not isinstance(rows, list):
+            raise ValueError('Invalid environment key readback')
+        keys = [row.get('key') for row in rows if isinstance(row, dict)]
+        if len(keys) != len(rows) or len(set(keys)) != len(keys) or not set(keys) <= permitted:
+            raise ValueError('Unexpected environment key readback')
+        operation.report.setdefault('environmentReadbackCounts', {}).setdefault(label, []).append(len(keys))
+        if set(keys) == expected:
+            return rows
+    raise ValueError('Expected environment key readback did not converge')
+
+
 def write_candidate_environment(operation, environment):
     """Handle the provider's ambiguous HTTP 500 after a full env replacement.
 
@@ -58,11 +76,8 @@ def write_candidate_environment(operation, environment):
     except RequestFailure as error:
         if error.status not in (None,500,502,503,504):
             raise
-        readback = operation.api('candidateEnvironmentReadbackAfterHttpError',
-                                 SITE + '/builds/settings/env')
-        if (not isinstance(readback,list) or
-            sorted(row.get('key') for row in readback) != sorted(environment)):
-            raise ValueError('Candidate environment key readback is incomplete or unexpected')
+        keys = set(environment)
+        readback = confirm_environment_keys(operation, 'candidateEnvironmentReadbackAfterHttpError', keys, keys)
         operation.report['candidateEnvironmentAcceptance'] = 'PROVISIONAL_KEYS_ONLY'
         operation.report['candidateEnvironmentKeyCount'] = len(readback)
         operation.report['candidateEnvironmentHttpError'] = error.status
@@ -252,9 +267,7 @@ def recover_candidate_probe(operation, root):
             if error.status not in (None,500,502,503,504):
                 raise
             operation.report['rollbackEnvironmentWriteUncertain'] = error.status
-    environment_after = operation.api('rollbackEnvironmentVerified',SITE + '/builds/settings/env')
-    if not isinstance(environment_after,list) or environment_after:
-        raise ValueError('QA environment rollback was not verified')
+    environment_after = confirm_environment_keys(operation, 'rollbackEnvironmentVerified', set(), set(actual_keys))
 
     settings_before = operation.api('rollbackSettingsBefore',SITE + '/builds/settings')
     candidate_settings = operation.report.get('candidateSettings')
