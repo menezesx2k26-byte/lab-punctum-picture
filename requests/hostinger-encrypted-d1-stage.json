@@ -1,0 +1,13 @@
+{
+  "scope": "PUNCTUM_D1_ENCRYPTED_STAGING_ONLY",
+  "action": "selftest",
+  "dnsTouched": false,
+  "productionDataImported": false,
+  "sourceDatabase": "punctum-picture",
+  "observedPublicCounts": {
+    "photos": 329,
+    "dynamicPhotos": 217,
+    "albums": 19
+  },
+  "note": "Synthetic cryptographic selftest only; does not contact Cloudflare or Hostinger."
+}
