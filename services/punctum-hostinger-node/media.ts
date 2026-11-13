@@ -5,6 +5,7 @@ import { Readable } from "node:stream";
 import sharp from "sharp";
 import { AppError } from "../../worker/utils/errors";
 import { publicPaths } from "./public-files";
+import { markQaMediaPhase } from "./worker-phase-trace.mjs";
 
 const maxUploadBytes = 26_214_400;
 const imageLimits = { limitInputPixels: 40_000_000, failOn: "warning" } as const;
@@ -70,8 +71,10 @@ export function qaOriginals(db: D1Database) {
       return row && { size: row.size, etag: row.etag, httpMetadata: { contentType: row.mime } };
     },
     async get(key: string) {
+      markQaMediaPhase("media-original-start");
       const row = await db.prepare("SELECT bytes, mime, etag FROM node_qa_media WHERE key = ?")
         .bind(key).first<MediaRow>();
+      markQaMediaPhase("media-original-end");
       return row && {
         size: row.bytes.byteLength,
         etag: row.etag,
@@ -113,7 +116,9 @@ export const qaImages = {
           async output({ format, quality }: ImageOutputOptions) {
             const output = imageFormats[format as keyof typeof imageFormats];
             if (!output) throw new Error("Unsupported QA image output");
+            markQaMediaPhase("media-body-start");
             const bytes = await boundedBytes(body);
+            markQaMediaPhase("media-body-end");
             const image = sharp(bytes, imageLimits).autoOrient().resize({
               width,
               height,
@@ -121,7 +126,9 @@ export const qaImages = {
               position: gravity === "auto" ? "attention" : "centre",
               withoutEnlargement: fit === "scale-down" || fit === "crop",
             });
+            markQaMediaPhase("media-sharp-start");
             const resized = await image.toFormat(output, { quality }).toBuffer();
+            markQaMediaPhase("media-sharp-end");
             return {
               response: () => new Response(Uint8Array.from(resized), { headers: { "Content-Type": format } }),
             };

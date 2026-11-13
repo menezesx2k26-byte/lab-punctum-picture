@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { traceQaLoginBody, traceQaWorker } from './worker-phase-trace.mjs';
+import { markQaMediaPhase, traceQaLoginBody, traceQaWorker } from './worker-phase-trace.mjs';
 
 test('the synthetic Studio handler is measured without logging its response, cookies or URL query', async () => {
   const messages = [];
@@ -78,4 +78,26 @@ test('managed Studio records only allowlisted phase markers and elapsed time', a
   assert.deepEqual(events.map(({ phase }) => phase), ['start', 'session-start', 'session-end', 'returned']);
   assert.ok(events.slice(1).every(({ ms }) => Number.isSafeInteger(ms) && ms >= 0));
   assert.doesNotMatch(messages.join(' '), /cookie-is-private/);
+});
+
+test('media tracing scopes concurrent callbacks to an allowlisted route without exposing the image ID', async () => {
+  const messages = [];
+  const id = '02fed4e1-47c8-47e5-825f-947f75b710b7';
+  const path = '/media/' + id + '/card';
+  const execute = async () => {
+    await Promise.resolve();
+    markQaMediaPhase('media-sharp-start');
+    markQaMediaPhase('not-a-media-phase');
+    markQaMediaPhase('media-sharp-end');
+    return new Response(null, { status: 200 });
+  };
+  await Promise.all([
+    traceQaWorker(path, execute, { enabled: true, emit: (message) => messages.push(message) }),
+    traceQaWorker('/admin/api/studio', execute, { enabled: false, emit: (message) => messages.push(message) }),
+  ]);
+  const events = messages.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
+  assert.deepEqual(events.map(({ phase }) => phase), ['start', 'media-sharp-start', 'media-sharp-end', 'returned']);
+  assert.ok(events.every(({ route }) => route === '/media/:id/card'));
+  assert.ok(Number.isSafeInteger(events.at(-1).cpuMs));
+  assert.doesNotMatch(messages.join(' '), /02fed4e1|not-a-media-phase/);
 });

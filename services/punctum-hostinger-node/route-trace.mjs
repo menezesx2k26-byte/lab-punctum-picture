@@ -7,15 +7,18 @@ const TRACED_ROUTES = new Set([
   '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me',
 ]);
 
-export function isTracedQaRoute(route) {
-  return TRACED_ROUTES.has(route);
+export function tracedQaRoute(path) {
+  if (TRACED_ROUTES.has(path)) return path;
+  if (/^\/media\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/card$/i.test(path)) {
+    return '/media/:id/card';
+  }
 }
 
 export function traceQaRequests(server, { enabled = false, emit = console.log } = {}) {
   if (!enabled) return;
   server.prependListener('request', (request, response) => {
-    const route = String(request.url ?? '').split('?', 1)[0];
-    if (!isTracedQaRoute(route)) return;
+    const route = tracedQaRoute(String(request.url ?? '').split('?', 1)[0]);
+    if (!route) return;
     const started = performance.now();
     const output = (event, extra = {}) => emit('PUNCTUM_QA_TRACE ' + JSON.stringify({event,route,...extra}));
     let finished = false;

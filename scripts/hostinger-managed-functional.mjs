@@ -82,10 +82,13 @@ if (phase === 'exercise') {
   state = JSON.parse(await readFile(new URL('fixture.json',output),'utf8'));
 }
 if (phase !== 'archive') {
+  stage = `${phase}.album`;
   const published = await get('/ensaios/' + state.slug);
   check(published.status === 200 && (await published.text()).includes(state.title), 'request-time synthetic album SSR');
+  stage = `${phase}.thumbnail-headers`;
   const image = await get(`/media/${state.imageId}/card`,{headers:{accept:'image/webp'}});
   check(image.status === 200,'published media');
+  stage = `${phase}.thumbnail-body`;
   const bytes = Buffer.from(await image.arrayBuffer()); const metadata = await sharp(bytes).metadata();
   check(metadata.format === 'webp' && metadata.width > 0 && metadata.height > 0,'managed native Sharp WebP');
   report.thumbnailSha256 = createHash('sha256').update(bytes).digest('hex');

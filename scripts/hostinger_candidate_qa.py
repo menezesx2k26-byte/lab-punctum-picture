@@ -135,7 +135,7 @@ def ready(operation, phase):
 
 TRACED_ROUTES = (
     '/api/health', '/admin/api/session', '/arquivo', '/',
-    '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me',
+    '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me', '/media/:id/card',
 )
 
 
@@ -202,7 +202,10 @@ def runtime_receipts(operation, phase):
                     studio_phase = event['route'] in ('/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me') and phase_name in (
                         'session-start', 'session-key-ready', 'session-verified', 'session-end',
                         'studio-draft-start', 'studio-draft-end', 'studio-history-end', 'render-start', 'render-end')
-                    if not body_phase and not studio_phase:
+                    media_phase = event['route'] == '/media/:id/card' and phase_name in (
+                        'media-original-start', 'media-original-end', 'media-body-start',
+                        'media-body-end', 'media-sharp-start', 'media-sharp-end')
+                    if not body_phase and not studio_phase and not media_phase:
                         continue
                 record = {'phase':event['phase'],'route':event['route']}
                 if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
@@ -213,6 +216,9 @@ def runtime_receipts(operation, phase):
                 loop_busy = event.get('loopBusyPct')
                 if phase_name in ('returned', 'error') and type(loop_busy) is int and 0 <= loop_busy <= 100:
                     record['loopBusyPct'] = loop_busy
+                cpu_ms = event.get('cpuMs')
+                if event['route'] == '/media/:id/card' and phase_name in ('returned', 'error') and type(cpu_ms) is int and 0 <= cpu_ms <= 120000:
+                    record['cpuMs'] = cpu_ms
                 worker_phase.append(record)
         operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-100:]
         # Synthetic QA receipts include a successful SIGKILL regression case.
