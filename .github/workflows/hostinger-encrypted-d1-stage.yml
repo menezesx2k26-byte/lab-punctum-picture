@@ -2,7 +2,7 @@ name: Punctum Hostinger — D1 encrypted staging
 
 on:
   push:
-    branches: [agent/hostinger-encrypted-d1-stage-20261113]
+    branches: [agent/hostinger-encrypted-d1-stage-20261113, agent/hostinger-production-import-preflight-20261113]
     paths: [requests/hostinger-encrypted-d1-stage.json]
   workflow_dispatch:
 
