@@ -1,0 +1,34 @@
+name: Punctum Hostinger — isolated synthetic R4 security QA
+
+on:
+  push:
+    branches: [agent/punctum-hostinger-r4-synthetic-20261113]
+    paths:
+      - "services/punctum-hostinger-node/**"
+      - "worker/api/client-gallery-upload.ts"
+      - "worker/media/**"
+      - "tests/unit/hostinger-r4-image-provider.spec.ts"
+      - ".github/workflows/punctum-hostinger-r4-synthetic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx vitest run tests/unit/hostinger-r4-image-provider.spec.ts tests/unit/core.spec.ts
+      - run: node --test services/punctum-hostinger-node/server.test.mjs services/punctum-hostinger-node/isolated-sharp.test.mjs
+      - run: npm run typecheck
+      - run: npm run build:hostinger:qa
