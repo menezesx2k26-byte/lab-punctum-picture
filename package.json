@@ -28,7 +28,8 @@
     "build:hostinger:real-stage": "vite build --config services/punctum-hostinger-production/vite.config.ts",
     "start:hostinger:real-stage": "node services/punctum-hostinger-production/server.mjs",
     "build:hostinger:mutable-sandbox": "vite build --config services/punctum-hostinger-production/sandbox-vite.config.ts",
-    "start:hostinger:mutable-sandbox": "node services/punctum-hostinger-production/sandbox-server.mjs"
+    "start:hostinger:mutable-sandbox": "node services/punctum-hostinger-production/sandbox-server.mjs",
+    "build:hostinger:scheduled": "node scripts/hostinger-build-scheduled.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
