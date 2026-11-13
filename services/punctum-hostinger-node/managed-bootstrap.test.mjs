@@ -4,7 +4,7 @@ import { mkdtempSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { prepareManagedQaDatabase } from './managed-bootstrap.mjs';
+import { prepareManagedQaDatabase, ensureManagedQaDatabase } from './managed-bootstrap.mjs';
 
 test('managed bootstrap preserves existing synthetic edits and verifies snapshots across boots', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'punctum-managed-bootstrap-'));
@@ -24,3 +24,15 @@ test('managed bootstrap preserves existing synthetic edits and verifies snapshot
   finally { reopened.close(); }
   assert.equal(readdirSync(directory).filter(name => name.startsWith('application-snapshot-')).length, 2);
 });
+
+test('managed server startup initializes QA SQLite without blocking on snapshots or transactional self-tests', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'punctum-fast-bootstrap-'));
+  const file = join(directory, 'application.sqlite');
+  ensureManagedQaDatabase(file);
+  const db = new DatabaseSync(file, {readOnly:true});
+  try {
+    assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
+  } finally { db.close(); }
+  assert.equal(readdirSync(directory).filter(name => name.startsWith('application-snapshot-')).length, 0);
+});
+
