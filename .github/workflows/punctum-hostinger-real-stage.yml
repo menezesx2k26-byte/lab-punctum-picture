@@ -33,6 +33,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Prove production snapshot origin and D1 write gates
         run: node --test services/punctum-hostinger-production/staging.test.mjs services/punctum-hostinger-production/originals.test.mjs
+      - name: Test bounded isolated Sharp pool and image error recovery
+        run: node --test services/punctum-hostinger-production/sharp-pool.test.mjs
       - name: Verify fail-closed Vinext client-abort handling without mutating dependency
         run: node --test scripts/hostinger-vinext-client-abort-patch.test.mjs
       - name: Build production staging app separately from QA
