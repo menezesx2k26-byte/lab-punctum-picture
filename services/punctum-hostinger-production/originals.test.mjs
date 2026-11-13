@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { chmodSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, statSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, statSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { privateOriginals, stageOriginal } from "./originals.mjs";
@@ -56,4 +56,18 @@ test("world-readable origins are forbidden on POSIX",()=>{
     assert.throws(()=>privateOriginals(f.root),/PRIVATE_ORIGINALS_STORAGE_REQUIRED/);
     assert.throws(()=>stageOriginal(f.root,f.key,f.bytes,"image/jpeg",f.digest),/PRIVATE_ORIGINALS_STORAGE_REQUIRED/);
   }finally{chmodSync(f.root,0o700);rmSync(f.root,{recursive:true,force:true});}
+});
+
+test("refuses a symlinked hash partition even for a valid key",async()=>{
+  if(process.platform==="win32")return;
+  const f=fixture();
+  const outside=mkdtempSync(join(tmpdir(),"punctum-symlink-test-"));
+  try {
+    symlinkSync(outside,join(f.root,hash(Buffer.from(f.key)).slice(0,2)),"dir");
+    await assert.rejects(privateOriginals(f.root).head(f.key),/UNSAFE_ORIGINAL_PARTITION/);
+    assert.throws(()=>stageOriginal(f.root,f.key,f.bytes,"image/jpeg",f.digest),/UNSAFE_ORIGINAL_PARTITION/);
+  } finally {
+    rmSync(f.root,{recursive:true,force:true});
+    rmSync(outside,{recursive:true,force:true});
+  }
 });
