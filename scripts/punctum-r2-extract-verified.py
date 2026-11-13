@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 import re
-import stat
 import tarfile
 
 EXPECTED_COUNT = 230
@@ -65,7 +64,8 @@ def extract_verified(archive_path, output_path, expected_count=EXPECTED_COUNT,
                 not isinstance(obj.get("key"), str) or not obj["key"] or
                 len(obj["key"].encode()) > 2048 or obj["key"] in seen_keys or
                 not DIGEST.fullmatch(str(obj.get("sha256", ""))) or
-                obj.get("size") != names.get(name, None).size if name in names else True):
+                name not in names or not isinstance(obj.get("size"), int) or
+                obj["size"] != names[name].size):
                 raise ValueError("INVALID_PRIVATE_IMAGE_MANIFEST")
             seen_keys.add(obj["key"])
             total += obj["size"]
