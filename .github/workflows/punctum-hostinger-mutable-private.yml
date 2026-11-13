@@ -31,7 +31,7 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - name: Private R2 and D1 gates, rollback and atomicity
-        run: node --test services/punctum-hostinger-production/writable-originals.test.mjs services/punctum-hostinger-production/writable-sqlite.test.mjs services/punctum-hostinger-production/staging.test.mjs
+        run: node --test services/punctum-hostinger-production/writable-originals.test.mjs services/punctum-hostinger-production/writable-sqlite.test.mjs services/punctum-hostinger-production/sandbox-runtime.test.mjs services/punctum-hostinger-production/staging.test.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Compile standalone synthetic writable sandbox
