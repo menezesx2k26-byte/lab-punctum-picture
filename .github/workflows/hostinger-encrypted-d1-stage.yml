@@ -34,17 +34,31 @@ jobs:
           import fs from 'node:fs';
           const p=JSON.parse(fs.readFileSync('requests/hostinger-encrypted-d1-stage.json','utf8'));
           if(p.scope!=='PUNCTUM_D1_ENCRYPTED_STAGING_ONLY' || p.dnsTouched!==false) throw Error('INVALID_SCOPE');
-          if(p.action!=='selftest' && p.action!=='encrypt-d1') throw Error('INVALID_ACTION');
+          if(!['selftest','inventory-only','encrypt-d1'].includes(p.action)) throw Error('INVALID_ACTION');
           if(p.action==='encrypt-d1' && (p.databaseId!=='22697f13-7484-41e3-9441-f7b902c6577a' ||
              !/^[a-fA-F0-9]{64}$/.test(p.recipientCertFingerprintSha256||'') ||
              p.productionDataImported!==false)) throw Error('INVALID_ENCRYPTION_REQUEST');
           fs.appendFileSync(process.env.GITHUB_OUTPUT,'encrypt='+String(p.action==='encrypt-d1')+'\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,'inventory='+String(p.action==='inventory-only')+'\n');
           if(p.action==='encrypt-d1') {
             fs.appendFileSync(process.env.GITHUB_OUTPUT,'fingerprint='+p.recipientCertFingerprintSha256.toLowerCase()+'\n');
             fs.appendFileSync(process.env.GITHUB_OUTPUT,'databaseId='+p.databaseId+'\n');
           }
           console.log(JSON.stringify({action:p.action,sourceDataReadOnly:true,dnsTouched:false}));
           NODE
+      - name: Read current Cloudflare D1 schema and counts only
+        if: steps.intent.outputs.inventory == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+        run: node scripts/hostinger-d1-readonly-inventory.mjs
+      - uses: actions/upload-artifact@v6
+        if: steps.intent.outputs.inventory == 'true' && success()
+        with:
+          name: punctum-d1-readonly-inventory
+          path: outputs/hostinger-d1-readonly/inventory.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify real staging certificate before Cloudflare access
         if: steps.intent.outputs.encrypt == 'true'
         shell: bash
