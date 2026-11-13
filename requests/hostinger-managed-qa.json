@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-studio-api-ssr-trace-20261112-14",
+  "request_id": "candidate-studio-worker-phase-20261113-15",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d251-3e18-73ec-ae12-764e3a30438a",
+  "expected_build_uuid": "01a1d263-162b-724e-8366-3755ff11953c",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }
