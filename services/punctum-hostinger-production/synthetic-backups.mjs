@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {mkdirSync,lstatSync,realpathSync,statSync,writeFileSync,readFileSync,readdirSync,unlinkSync} from "node:fs";
+import {existsSync,mkdirSync,lstatSync,realpathSync,statSync,writeFileSync,readFileSync,readdirSync,unlinkSync} from "node:fs";
 import {isAbsolute,join,relative,resolve,sep} from "node:path";
 
 const KEY=/^backups\/d1\/(daily|weekly|monthly)\/(\d{4}-\d{2}(?:-\d{2})?)\/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.json$/;
@@ -58,7 +58,7 @@ export function syntheticLocalBackups(rootPath){
    let dir=root;
    for(const segment of parts.slice(0,-1)){
     dir=join(dir,segment);
-    mkdirSync(dir,{recursive:false,mode:0o700});
+    if(!existsSync(dir))mkdirSync(dir,{recursive:false,mode:0o700});
     const st=lstatSync(dir);
     if(st.isSymbolicLink()||!st.isDirectory()||(st.mode&0o077))
       throw Error("SYNTHETIC_BACKUP_PARENT_UNSAFE");
