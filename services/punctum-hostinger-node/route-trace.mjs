@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks';
 // Only report fixed QA routes. Querystrings, credentials and headers are never
 // read or emitted, including on stalled/aborted requests.
 const TRACED_ROUTES = new Set([
-  '/api/health', '/admin/api/session', '/arquivo', '/',
+  '/api/health', '/admin/api/session', '/portfolio', '/arquivo', '/contato', '/',
   '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me',
 ]);
 
@@ -12,6 +12,7 @@ export function tracedQaRoute(path) {
   if (/^\/media\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/card$/i.test(path)) {
     return '/media/:id/card';
   }
+  if (/^\/ensaios\/hostinger-synthetic-qa-[0-9]+$/.test(path)) return '/ensaios/:qa';
 }
 
 export function traceQaRequests(server, { enabled = false, emit = console.log } = {}) {

@@ -13,15 +13,19 @@ export function markQaMediaPhase(phase) {
 }
 
 const studioRoutes = new Set(['/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me']);
+const publicSsrRoutes = new Set(['/', '/portfolio', '/arquivo', '/contato', '/ensaios/:qa']);
+const renderPhases = new Set(['render-start', 'render-end']);
 const studioPhases = new Set([
   'session-start', 'session-key-ready', 'session-verified', 'session-end',
   'studio-draft-start', 'studio-draft-end', 'studio-history-end',
-  'render-start', 'render-end',
+  ...renderPhases,
 ]);
 
 // This runner is bundled only into the disposable Node QA target. Never print
 // response bodies, request headers, cookie values, stack traces or query strings.
-export async function traceQaWorker(path, execute, { enabled = false, emit = console.log } = {}) {
+export async function traceQaWorker(path, execute, {
+  enabled = false, emit = console.log, setTimer = setTimeout, clearTimer = clearTimeout,
+} = {}) {
   const route = enabled && tracedQaRoute(path);
   if (!route) return execute();
   const started = performance.now();
@@ -29,19 +33,27 @@ export async function traceQaWorker(path, execute, { enabled = false, emit = con
     route, phase, ...extra,
   }));
   const mediaRoute = route === '/media/:id/card';
-  const loopStart = (mediaRoute || studioRoutes.has(route)) ? performance.eventLoopUtilization() : undefined;
-  const cpuStart = mediaRoute ? process.cpuUsage() : undefined;
-  const runtimeMetrics = () => loopStart
-    ? {
-        loopBusyPct: Math.round(performance.eventLoopUtilization(loopStart).utilization * 100),
-        ...(cpuStart && { cpuMs: Math.round(Object.values(process.cpuUsage(cpuStart)).reduce((sum, value) => sum + value, 0) / 1000) }),
-      }
-    : {};
+  const loopStart = performance.eventLoopUtilization();
+  const cpuStart = process.cpuUsage();
+  const runtimeMetrics = () => {
+    const { user, system } = process.cpuUsage(cpuStart);
+    return {
+      loopBusyPct: Math.round(performance.eventLoopUtilization(loopStart).utilization * 100),
+      cpuMs: Math.round((user + system) / 1000),
+    };
+  };
   report('start');
+  const timer = setTimer(() => report('pending', {
+    ms: Math.round(performance.now() - started),
+    ...runtimeMetrics(),
+  }), 5000);
+  timer.unref();
   try {
-    const mark = studioRoutes.has(route)
+    const mark = (studioRoutes.has(route) || publicSsrRoutes.has(route))
       ? (phase) => {
-          if (studioPhases.has(phase)) report(phase, { ms: Math.round(performance.now() - started) });
+          if (studioRoutes.has(route) ? studioPhases.has(phase) : renderPhases.has(phase)) {
+            report(phase, { ms: Math.round(performance.now() - started) });
+          }
         }
       : undefined;
     const response = mediaRoute
@@ -56,6 +68,8 @@ export async function traceQaWorker(path, execute, { enabled = false, emit = con
   } catch (error) {
     report('error', { ...runtimeMetrics(), ms: Math.round(performance.now() - started) });
     throw error;
+  } finally {
+    clearTimer(timer);
   }
 }
 

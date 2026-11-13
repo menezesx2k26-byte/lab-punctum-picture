@@ -101,3 +101,25 @@ test('media tracing scopes concurrent callbacks to an allowlisted route without 
   assert.ok(Number.isSafeInteger(events.at(-1).cpuMs));
   assert.doesNotMatch(messages.join(' '), /02fed4e1|not-a-media-phase/);
 });
+
+test('pending contact requests emit bounded runtime metrics and clear their timer', async () => {
+  const messages = [];
+  let fire;
+  let cleared = false;
+  const setTimer = (callback, delay) => {
+    assert.equal(delay, 5000);
+    fire = callback;
+    return { unref() {} };
+  };
+  const clearTimer = () => { cleared = true; };
+  const response = await traceQaWorker('/contato', async () => {
+    assert.equal(typeof fire, 'function');
+    fire();
+    return new Response(null, { status: 200 });
+  }, { enabled: true, emit: (message) => messages.push(message), setTimer, clearTimer });
+  assert.equal(response.status, 200);
+  const events = messages.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
+  assert.deepEqual(events.map(({ phase }) => phase), ['start', 'pending', 'returned']);
+  assert.ok(events.slice(1).every(({ ms, cpuMs }) => Number.isSafeInteger(ms) && Number.isSafeInteger(cpuMs)));
+  assert.equal(cleared, true);
+});

@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-media-phases-20261113-22",
+  "request_id": "candidate-boot-and-stalls-20261113-23",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d524-69c5-7054-b239-d7e10fed7e47",
+  "expected_build_uuid": "01a1d52d-1f64-7163-b27b-6dcab75568eb",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }

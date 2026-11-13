@@ -7,10 +7,33 @@ import zipfile
 from pathlib import Path
 
 import hostinger_managed_qa as qa
-from hostinger_candidate_qa import candidate_archive, runtime_receipts, recover_candidate_probe, write_candidate_environment
+from hostinger_candidate_qa import candidate_archive, runtime_receipts, recover_candidate_probe, write_candidate_environment, ready
 
 
 class RecoveryContractTests(unittest.TestCase):
+    def test_candidate_readiness_requires_the_expected_source_and_a_new_boot(self):
+        source = "a" * 40
+        old_boot = "627eb824-111e-4fe8-9f0d-97ee3d3d4dca"
+        new_boot = "7c2edb21-c397-4200-b8c2-99575c53b29d"
+
+        def response(revision, boot):
+            headers = {
+                "X-Robots-Tag": "noindex, nofollow, noarchive",
+                "X-Punctum-QA-Source": revision,
+                "X-Punctum-QA-Boot": boot,
+            }
+            return 200, headers, b'{"ok":true,"service":"punctum-picture"}'
+
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+                qa.os.environ, {"HOSTINGER_API": "test-only", "GITHUB_SHA": source}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            with patch.object(recovery, "request", side_effect=[
+                    response("b" * 40, new_boot), response(source, old_boot),
+                    response(source, new_boot)]) as request, patch("hostinger_candidate_qa.time.sleep"):
+                self.assertEqual(ready(recovery, "afterRestart", previous_boot=old_boot), new_boot)
+            self.assertEqual(request.call_count, 3)
+            self.assertEqual(recovery.report["candidateBoots"]["afterRestart"], new_boot)
+
     def test_environment_http_500_can_proceed_only_with_exact_qa_key_readback(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "baseline")

@@ -7,6 +7,7 @@ import re
 import secrets
 import subprocess
 import time
+import uuid
 import zipfile
 from hostinger_managed_qa import API, SITE, DOMAIN, Recovery, RequestFailure, PROBE_SETTINGS, check_probe_settings, probe_archive, digest
 
@@ -119,23 +120,35 @@ def build(operation, name, settings, phase):
     raise ValueError('Managed candidate build deadline exceeded; reconcile without a competing build')
 
 
-def ready(operation, phase):
+def ready(operation, phase, previous_boot=None):
+    source = operation.report.get('sourceSha')
+    if not isinstance(source, str) or not re.fullmatch(r'[a-f0-9]{40}', source):
+        raise ValueError('Managed readiness requires the deployed source SHA')
     deadline = time.monotonic() + 90
     while time.monotonic() < deadline:
         try:
-            status, headers, raw = operation.request(phase, 'https://' + DOMAIN + '/api/health')
-            if status == 200 and 'noindex' in headers.get('X-Robots-Tag',''):
-                return
+            status, headers, raw = operation.request(
+                phase, 'https://' + DOMAIN + '/api/health?check=' + uuid.uuid4().hex,
+                headers={'Cache-Control': 'no-cache'},
+            )
+            boot = headers.get('X-Punctum-QA-Boot', '')
+            if (status == 200 and 'noindex' in headers.get('X-Robots-Tag', '') and
+                    headers.get('X-Punctum-QA-Source') == source and boot != previous_boot and
+                    re.fullmatch(r'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}', boot)):
+                health = json.loads(raw)
+                if isinstance(health, dict) and health.get('ok') is True and health.get('service') == 'punctum-picture':
+                    operation.report.setdefault('candidateBoots', {})[phase] = boot
+                    return boot
         except RequestFailure as error:
-            if error.status not in (None,404,502,503,504):
+            if error.status not in (None, 404, 502, 503, 504):
                 raise
         time.sleep(3)
-    raise ValueError('Managed candidate did not become ready')
+    raise ValueError('Managed source and runtime boot were not verified')
 
 
 TRACED_ROUTES = (
-    '/api/health', '/admin/api/session', '/arquivo', '/',
-    '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me', '/media/:id/card',
+    '/api/health', '/admin/api/session', '/portfolio', '/arquivo', '/contato', '/',
+    '/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me', '/media/:id/card', '/ensaios/:qa',
 )
 
 
@@ -196,7 +209,7 @@ def runtime_receipts(operation, phase):
                 if not isinstance(event,dict) or event.get('route') not in TRACED_ROUTES: continue
                 phase_name = event.get('phase')
                 start_phase = phase_name in ('start', 'body-start')
-                if phase_name not in ('start', 'returned', 'error'):
+                if phase_name not in ('start', 'returned', 'error', 'pending'):
                     body_phase = event['route'] == '/admin/api/session' and phase_name in (
                         'body-start', 'body-read', 'body-error')
                     studio_phase = event['route'] in ('/admin', '/admin/studio', '/admin/api/studio', '/admin/api/me') and phase_name in (
@@ -205,7 +218,9 @@ def runtime_receipts(operation, phase):
                     media_phase = event['route'] == '/media/:id/card' and phase_name in (
                         'media-original-start', 'media-original-end', 'media-body-start',
                         'media-body-end', 'media-sharp-start', 'media-sharp-end')
-                    if not body_phase and not studio_phase and not media_phase:
+                    public_render_phase = event['route'] in ('/', '/portfolio', '/arquivo', '/contato', '/ensaios/:qa') and phase_name in (
+                        'render-start', 'render-end')
+                    if not body_phase and not studio_phase and not media_phase and not public_render_phase:
                         continue
                 record = {'phase':event['phase'],'route':event['route']}
                 if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
@@ -214,13 +229,13 @@ def runtime_receipts(operation, phase):
                     record['ms'] = event['ms']
                 if not start_phase and 'ms' not in record: continue
                 loop_busy = event.get('loopBusyPct')
-                if phase_name in ('returned', 'error') and type(loop_busy) is int and 0 <= loop_busy <= 100:
+                if phase_name in ('returned', 'error', 'pending') and type(loop_busy) is int and 0 <= loop_busy <= 100:
                     record['loopBusyPct'] = loop_busy
                 cpu_ms = event.get('cpuMs')
-                if event['route'] == '/media/:id/card' and phase_name in ('returned', 'error') and type(cpu_ms) is int and 0 <= cpu_ms <= 120000:
+                if phase_name in ('returned', 'error', 'pending') and type(cpu_ms) is int and 0 <= cpu_ms <= 120000:
                     record['cpuMs'] = cpu_ms
                 worker_phase.append(record)
-        operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-100:]
+        operation.report.setdefault('runtimeWorkerPhase',{})[phase] = worker_phase[-200:]
         # Synthetic QA receipts include a successful SIGKILL regression case.
         # Exclude receipt lines before classifying actual process failures.
         content = '\n'.join(line for value in strings for line in value.splitlines()
@@ -360,20 +375,22 @@ def execute_candidate(root, request):
         operation.report['settingsWrites'] += 1
         write_candidate_environment(operation,environment)
         build(operation,name,settings,'candidate')
-        ready(operation,'candidateReady')
+        initial_boot = ready(operation,'candidateReady')
         functional_env = {**environment,'PUNCTUM_QA_TEST_PASSWORD':password}
         initial = functional(operation,root,'exercise',functional_env)
         runtime_receipts(operation,'initial')
         functional(operation,root,'browser',functional_env)
         operation.api('candidateRestart',SITE + '/server/restart',{})
-        ready(operation,'candidateAfterRestart')
+        restarted_boot = ready(operation,'candidateAfterRestart', previous_boot=initial_boot)
         after_restart = functional(operation,root,'after-restart',functional_env)
         if after_restart['thumbnailSha256'] != initial['thumbnailSha256']:
             raise ValueError('Managed media changed after restart')
         runtime_receipts(operation,'afterRestart')
         name = operation.upload_archive(archive,'punctum-node-candidate-')
         build(operation,name,settings,'candidateRebuild')
-        ready(operation,'candidateAfterRebuild')
+        rebuilt_boot = ready(operation,'candidateAfterRebuild', previous_boot=restarted_boot)
+        if rebuilt_boot == initial_boot:
+            raise ValueError('Rebuild returned the original runtime boot')
         after_rebuild = functional(operation,root,'after-rebuild',functional_env)
         if after_rebuild['thumbnailSha256'] != initial['thumbnailSha256']:
             raise ValueError('Managed media changed after rebuild')

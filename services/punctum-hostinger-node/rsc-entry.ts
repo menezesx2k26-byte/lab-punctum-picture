@@ -1,8 +1,11 @@
+import { randomUUID } from "node:crypto";
 import punctum from "../../worker/index";
 import { env } from "./bindings";
 import { qaOrigin } from "./runtime.mjs";
 import { publicPaths } from "./public-files";
 import { traceQaLoginBody, traceQaWorker } from "./worker-phase-trace.mjs";
+
+const bootId = randomUUID();
 
 const context = {
   waitUntil(task: Promise<unknown>) {
@@ -39,6 +42,12 @@ export default async function fetchQaRequest(request: Request): Promise<Response
   const headers = new Headers(result.headers);
   headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   headers.set("Cache-Control", "private, no-store");
+  const sourceSha = process.env.PUNCTUM_QA_SOURCE_SHA;
+  if (traceOptions.enabled && request.method === "GET" && url.pathname === "/api/health" &&
+      result.ok && sourceSha && /^[a-f0-9]{40}$/.test(sourceSha)) {
+    headers.set("X-Punctum-QA-Source", sourceSha);
+    headers.set("X-Punctum-QA-Boot", bootId);
+  }
   return new Response(result.body, {
     status: result.status,
     statusText: result.statusText,
