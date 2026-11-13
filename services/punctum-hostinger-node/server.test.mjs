@@ -60,6 +60,7 @@ test("Node serves request-time Punctum HTML, protected Studio and persisted data
       PORT: String(port),
       PUNCTUM_QA_ORIGIN: origin,
       PUNCTUM_QA_DB_FILE: file,
+      PUNCTUM_QA_SHARP_WORKER: fileURLToPath(new URL("sharp-worker.mjs", service)),
       PUNCTUM_QA_ADMIN_EMAIL: email,
       PUNCTUM_QA_ADMIN_PASSWORD_HASH: createHash("sha256").update(password).digest("hex"),
       PUNCTUM_QA_ADMIN_SESSION_SECRET: randomBytes(32).toString("hex"),

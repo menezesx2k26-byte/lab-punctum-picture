@@ -11,6 +11,7 @@ if (process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === '1') {
     throw new Error('Managed bootstrap is restricted to the existing synthetic QA destination');
   }
   process.umask(0o077);
+  process.env.PUNCTUM_QA_SHARP_WORKER = fileURLToPath(new URL('./sharp-worker.mjs', import.meta.url));
   // Only validate the owner-only QA database before the provider's 3s listen gate.
   // Heavy stress tests and snapshot backups run only as explicit QA operations.
   ensureManagedQaDatabase(process.env.PUNCTUM_QA_DB_FILE);

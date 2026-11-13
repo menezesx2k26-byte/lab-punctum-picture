@@ -2,14 +2,15 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Readable } from "node:stream";
-import sharp from "sharp";
+import { runIsolatedSharp } from "./isolated-sharp.mjs";
+import { readImageInfo, transformImage } from "./sharp-worker.mjs";
 import { AppError } from "../../worker/utils/errors";
 import { publicPaths } from "./public-files";
 import { markQaMediaPhase } from "./worker-phase-trace.mjs";
 import { sha256Hex } from "./admin-session-crypto.mjs";
 
 const maxUploadBytes = 26_214_400;
-const imageLimits = { limitInputPixels: 40_000_000, failOn: "warning" } as const;
+const managedSharpWorker = () => process.env.PUNCTUM_QA_SHARP_WORKER;
 const imageFormats = {
   "image/jpeg": "jpeg",
   "image/png": "png",
@@ -106,14 +107,12 @@ export const qaImages = {
     markQaMediaPhase("media-body-start");
     const bytes = await boundedBytes(body);
     markQaMediaPhase("media-body-end");
-    const image = sharp(bytes, imageLimits);
-    markQaMediaPhase("media-metadata-start");
-    const { width, height, format } = await image.metadata();
-    markQaMediaPhase("media-metadata-end");
-    markQaMediaPhase("media-decode-start");
-    await image.stats(); // Decode the pixels before marking the upload valid.
-    markQaMediaPhase("media-decode-end");
-    return { width, height, format, fileSize: bytes.length };
+    const worker = managedSharpWorker();
+    if (!worker) return readImageInfo(bytes, markQaMediaPhase);
+    markQaMediaPhase("media-sharp-start");
+    const result = await runIsolatedSharp(worker, "info", bytes);
+    markQaMediaPhase("media-sharp-end");
+    return JSON.parse(result.toString());
   },
   input(body: ReadableStream<Uint8Array>) {
     return {
@@ -125,15 +124,22 @@ export const qaImages = {
             markQaMediaPhase("media-body-start");
             const bytes = await boundedBytes(body);
             markQaMediaPhase("media-body-end");
-            const image = sharp(bytes, imageLimits).autoOrient().resize({
-              width,
-              height,
-              fit: fit === "cover" || fit === "crop" ? "cover" : "inside",
-              position: gravity === "auto" ? "attention" : "centre",
-              withoutEnlargement: fit === "scale-down" || fit === "crop",
-            });
+            const options = {
+              resize: {
+                width,
+                height,
+                fit: fit === "cover" || fit === "crop" ? "cover" : "inside",
+                position: gravity === "auto" ? "attention" : "centre",
+                withoutEnlargement: fit === "scale-down" || fit === "crop",
+              },
+              format: output,
+              quality,
+            };
+            const worker = managedSharpWorker();
             markQaMediaPhase("media-sharp-start");
-            const resized = await image.toFormat(output, { quality }).toBuffer();
+            const resized = worker
+              ? await runIsolatedSharp(worker, "transform", bytes, options)
+              : await transformImage(bytes, options);
             markQaMediaPhase("media-sharp-end");
             return {
               response: () => new Response(Uint8Array.from(resized), { headers: { "Content-Type": format } }),

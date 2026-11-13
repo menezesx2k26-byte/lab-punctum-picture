@@ -1,7 +1,7 @@
 {
-  "request_id": "candidate-correlate-fresh-http-20261113-27",
+  "request_id": "candidate-isolate-sharp-20261113-28",
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "candidate",
-  "expected_build_uuid": "01a1d555-f9de-7053-a5ac-bdaf2ebae981",
+  "expected_build_uuid": "01a1d560-e9f6-712a-84f4-aed127d4289a",
   "backup_sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
 }
