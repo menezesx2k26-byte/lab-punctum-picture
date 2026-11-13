@@ -7,7 +7,9 @@ import { createHash } from 'node:crypto';
 import { privateQaDatabasePath } from './runtime.mjs';
 import { createQaSnapshot } from './migration-manifest.mjs';
 
-export async function prepareManagedQaDatabase(file, {verifyTransactions=false} = {}) {
+// Must complete before the provider's three-second listen() watchdog.
+// Never run transaction stress tests or snapshots on the server's startup path.
+export function ensureManagedQaDatabase(file) {
   if (!file || !isAbsolute(file)) throw new Error('Absolute private QA database required');
   const directory = dirname(file);
   const parent = lstatSync(directory);
@@ -17,7 +19,12 @@ export async function prepareManagedQaDatabase(file, {verifyTransactions=false} 
     const seeded = spawnSync(process.execPath, [fileURLToPath(new URL('./seed.mjs', import.meta.url)), file], {encoding:'utf8'});
     if (seeded.status !== 0) throw new Error('Exclusive synthetic QA initialization failed');
   }
-  privateQaDatabasePath(file);
+  return privateQaDatabasePath(file);
+}
+
+export async function prepareManagedQaDatabase(file, {verifyTransactions=false} = {}) {
+  const validatedFile = ensureManagedQaDatabase(file);
+  const directory = dirname(validatedFile);
   const bootId = randomUUID();
   let transactionChecks;
   if (verifyTransactions) {
