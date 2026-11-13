@@ -16,6 +16,7 @@ const send = [
   "\telse pipeline(nodeStream, res, () => {});",
 ].join("\n");
 const catcher = [
+  "\t\t\tawait sendWebResponse(response, req, res, compress);",
   "\t\t} catch (e) {",
   '\t\t\tconsole.error("[vinext] Server error:", e);',
   "\t\t\tif (!res.headersSent) {",
@@ -64,6 +65,7 @@ export function guardedVinextSource(source) {
     "\t}",
   ].join("\n"),"PIPE");
   patched=replaceOnce(patched,catcher,[
+    "\t\t\tawait sendWebResponse(response, req, res, compress);",
     "\t\t} catch (e) {",
     "\t\t\t// Only an already-aborted HTTP response is an expected disconnect.",
     "\t\t\tif ("+isClosed+" &&",
