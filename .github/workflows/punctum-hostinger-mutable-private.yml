@@ -1,0 +1,38 @@
+name: Punctum Hostinger — synthetic mutable private Node preflight
+
+on:
+  push:
+    branches: [agent/punctum-hostinger-mutable-private-20261113]
+    paths:
+      - "services/punctum-hostinger-production/**"
+      - "package.json"
+      - ".github/workflows/punctum-hostinger-mutable-private.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-mutable-private-only
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Private R2 and D1 gates, rollback and atomicity
+        run: node --test services/punctum-hostinger-production/writable-originals.test.mjs services/punctum-hostinger-production/writable-sqlite.test.mjs services/punctum-hostinger-production/sandbox-runtime.test.mjs services/punctum-hostinger-production/staging.test.mjs
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Compile standalone synthetic writable sandbox
+        run: npm run build:hostinger:mutable-sandbox

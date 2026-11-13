@@ -1,0 +1,46 @@
+name: Punctum Hostinger — encrypted R2 original transfer staging
+
+on:
+  push:
+    branches: [agent/punctum-r2-encrypted-stage-20261113]
+    paths:
+      - "requests/punctum-r2-encrypted-stage.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-r2-encrypted-stage
+  cancel-in-progress: false
+
+jobs:
+  encrypt:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Test fail-closed request, MIME and bytes
+        run: node --test scripts/punctum-r2-encrypted-stage.test.mjs
+      - name: Export R2 originals and encrypt to verified VPS recipient before artifact
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node scripts/punctum-r2-encrypted-stage.mjs
+      - name: Publish ciphertext and sanitized receipt only
+        if: success()
+        uses: actions/upload-artifact@v6
+        with:
+          name: punctum-r2-originals-encrypted-for-hostinger
+          path: |
+            outputs/punctum-r2-encrypted-stage/punctum-r2-originals.cms
+            outputs/punctum-r2-encrypted-stage/punctum-r2-stage-receipt.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7

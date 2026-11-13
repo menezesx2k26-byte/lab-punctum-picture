@@ -1,0 +1,20 @@
+# Private pre-cutover validation only. Does not publish ports or configure DNS.
+# The pinned QA base already contains the exact npm dependency tree and Node 24.
+FROM punctum-picture-vps-qa:aa90c8a-20261113
+
+USER root
+WORKDIR /work
+
+# Source archive must contain no D1/R2 bytes, credentials or public key material.
+COPY . /work
+
+RUN test -d /app/node_modules/vinext && \
+    if test ! -e /work/node_modules; then ln -s /app/node_modules /work/node_modules; fi && \
+    node scripts/hostinger-vinext-client-abort-patch.mjs && \
+    node --check /app/node_modules/vinext/dist/server/prod-server.js && \
+    test -f dist/hostinger-production/server/index.js && \
+    test -d dist/hostinger-production/client
+
+ENV NODE_ENV=production
+EXPOSE 3019
+CMD ["node", "services/punctum-hostinger-production/server.mjs"]

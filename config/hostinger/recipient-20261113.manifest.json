@@ -1,0 +1,11 @@
+﻿{
+    "schema":  "punctum-hostinger-import-recipient-v1",
+    "purpose":  "AES-256-GCM/CMS production D1 staging only",
+    "target":  "VPS Hostinger 2135319",
+    "publicCertificate":  "recipient-20261113.crt",
+    "certificateFingerprintSha256":  "084d9c304632758f673a920930a388dc45300878d7ecf4fecc3be2fd873fd1d0",
+    "certificateFileSha256":  "3b3160f6234c1e92fcd830bcb8cf2f2512db717db95100ef0d3f3e756cb32f77",
+    "notAfterUtc":  "2026-11-27T18:06:15Z",
+    "privateKeyStatus":  "retained on VPS only, never copied",
+    "cutoverAuthorized":  false
+}

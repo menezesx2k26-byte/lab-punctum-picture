@@ -1,8 +1,16 @@
 import { spawn } from 'node:child_process';
 
 const maximumOutput = 40_000_000;
-const timeoutMs = 23_000;
-let active;
+const qaTimeoutMs = 23_000;
+const active = new Set();
+
+// QA keeps its historical one-process/23s limit. The isolated real-data staging
+// can explicitly allow three image workers to avoid starving a full archive page.
+function limits() {
+  const pool = process.env.PUNCTUM_HOSTINGER_SHARP_POOL === '3' ? 3 : 1;
+  const timeoutMs = process.env.PUNCTUM_HOSTINGER_SHARP_TIMEOUT_MS === '60000' ? 60_000 : qaTimeoutMs;
+  return { pool, timeoutMs };
+}
 
 /**
  * @param {string} worker
@@ -12,13 +20,15 @@ let active;
  */
 export async function runIsolatedSharp(worker, action, input, options = null) {
   const queued = performance.now();
-  while (active) {
+  const { pool, timeoutMs } = limits();
+  while (active.size >= pool) {
     const remaining = timeoutMs - (performance.now() - queued);
     if (remaining <= 0) throw new Error('The QA image process did not become available');
-    await waitForSlot(active, remaining);
+    await waitForSlot(Promise.race(active), remaining);
   }
   let release;
-  active = new Promise((resolve) => { release = resolve; });
+  const slot = new Promise((resolve) => { release = resolve; });
+  active.add(slot);
   try {
     const child = spawn(process.execPath, [worker, '--qa-sharp', action, JSON.stringify(options)], {
       env: { UV_THREADPOOL_SIZE: '2' },
@@ -55,7 +65,7 @@ export async function runIsolatedSharp(worker, action, input, options = null) {
       child.stdin.end(input);
     });
   } finally {
-    active = undefined;
+    active.delete(slot);
     release();
   }
 }

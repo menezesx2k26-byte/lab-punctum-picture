@@ -13,9 +13,10 @@ import {
 } from "../client/gallery-integrity";
 import { privateGalleryStorageKey } from "../client/gallery-storage-key";
 import { requireAdmin } from "../utils/auth";
-import { requireDb, requireOriginals } from "../utils/env";
+import { envString, requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { IMAGE_PRESETS, negotiateImageFormat } from "./presets";
+import { providerImageInputLimit } from "./provider-input-limit";
 
 export async function servePrivateGalleryImage(
   request: Request,
@@ -58,7 +59,7 @@ export async function servePrivateGalleryImage(
   // Historical ready rows can predate today's safe Images Binding limit.
   // Never feed their originals to Images even when a D1 row or its R2 object
   // is inconsistent. Downloads remain a separate authorized R2 operation.
-  if (preset !== "download" && image.sizeBytes > IMAGES_BINDING_MAX_INPUT_BYTES)
+  if (preset !== "download" && image.sizeBytes > providerImageInputLimit(env))
     throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   const bucket = requireOriginals(env);
   if (headOnly) {
@@ -70,7 +71,7 @@ export async function servePrivateGalleryImage(
       );
     const head = await bucket.head(image.storageKey);
     if (!head) throw missing();
-    if (preset !== "download" && head.size > IMAGES_BINDING_MAX_INPUT_BYTES)
+    if (preset !== "download" && head.size > providerImageInputLimit(env))
       throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
     // Even pre-migration ready rows without a D1 digest must never claim
     // success when R2 size or MIME contradicts their D1 original record.
@@ -102,14 +103,14 @@ export async function servePrivateGalleryImage(
             "Content-Disposition": `attachment; filename="foto-${image.id}.${image.mimeType === "image/png" ? "png" : image.mimeType === "image/webp" ? "webp" : "jpg"}"`,
           }
         : {
-            "Content-Type": negotiateImageFormat(request.headers.get("Accept")),
+            "Content-Type": negotiateImageFormat(request.headers.get("Accept"), envString(env, "HOSTINGER_PREFER_WEBP") === "true"),
             "Content-Disposition": "inline",
           };
     return privateResponse(new Response(null, { status: 200, headers }));
   }
   const object = await bucket.get(image.storageKey);
   if (!object) throw missing();
-  if (preset !== "download" && object.size > IMAGES_BINDING_MAX_INPUT_BYTES)
+  if (preset !== "download" && object.size > providerImageInputLimit(env))
     throw new AppError(413, "IMAGE_INPUT_LIMIT", "A prévia desta foto ainda não está disponível.");
   if (object.size !== image.sizeBytes ||
       object.httpMetadata?.contentType !== image.mimeType)
@@ -148,7 +149,7 @@ export async function servePrivateGalleryImage(
       "A prévia desta foto está temporariamente indisponível.",
     );
   const size = IMAGE_PRESETS[preset];
-  const format = negotiateImageFormat(request.headers.get("Accept"));
+  const format = negotiateImageFormat(request.headers.get("Accept"), envString(env, "HOSTINGER_PREFER_WEBP") === "true");
   let transformed: Response;
   try {
     transformed = (

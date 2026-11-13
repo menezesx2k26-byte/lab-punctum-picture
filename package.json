@@ -24,7 +24,11 @@
     "db:seed": "wrangler d1 execute punctum-picture --local --file migrations/0002_seed_settings.sql",
     "backup:d1": "wrangler d1 export punctum-picture --remote --output ./backups/database.sql",
     "restore:d1": "wrangler d1 execute punctum-picture --remote --file ./backups/database.sql",
-    "test:e2e": "node scripts/e2e/punctum-browser.mjs"
+    "test:e2e": "node scripts/e2e/punctum-browser.mjs",
+    "build:hostinger:real-stage": "vite build --config services/punctum-hostinger-production/vite.config.ts",
+    "start:hostinger:real-stage": "node services/punctum-hostinger-production/server.mjs",
+    "build:hostinger:mutable-sandbox": "vite build --config services/punctum-hostinger-production/sandbox-vite.config.ts",
+    "start:hostinger:mutable-sandbox": "node services/punctum-hostinger-production/sandbox-server.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

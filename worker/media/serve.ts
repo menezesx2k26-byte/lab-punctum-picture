@@ -1,4 +1,4 @@
-import { requireDb, requireOriginals } from "../utils/env";
+import { envString, requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
 import {
   IMAGE_PRESETS,
@@ -134,7 +134,7 @@ export async function serveMedia(
   }
 
   const preset = IMAGE_PRESETS[presetName];
-  const format = negotiateImageFormat(request.headers.get("accept"));
+  const format = negotiateImageFormat(request.headers.get("accept"), envString(env, "HOSTINGER_PREFER_WEBP") === "true");
   const transform: ImageTransform = {
     width: preset.width,
     height: preset.height,
@@ -167,7 +167,8 @@ export async function serveMedia(
   headers.set("Content-Type", format);
   headers.set("Content-Disposition", "inline");
   headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("ETag", `"${imageId}-${presetName}-v1"`);
+  headers.set("Vary", "Accept");
+  headers.set("ETag", `"${imageId}-${presetName}-${format.slice(6)}-v2"`);
   headers.delete("Set-Cookie");
   return new Response(transformed.body, {
     status: transformed.status,
