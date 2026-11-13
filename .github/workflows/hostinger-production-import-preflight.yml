@@ -7,6 +7,8 @@ on:
       - "scripts/hostinger-import-sqlite-preflight.mjs"
       - "scripts/hostinger-import-sqlite-preflight.test.mjs"
       - ".github/workflows/hostinger-production-import-preflight.yml"
+      - "services/punctum-hostinger-production/originals.mjs"
+      - "services/punctum-hostinger-production/originals.test.mjs"
   workflow_dispatch:
 
 permissions:
@@ -25,3 +27,4 @@ jobs:
           node-version: 24
       - run: node --test scripts/hostinger-import-sqlite-preflight.test.mjs
       - run: node --test scripts/hostinger-encrypt-d1-stage.test.mjs
+      - run: node --test services/punctum-hostinger-production/originals.test.mjs
