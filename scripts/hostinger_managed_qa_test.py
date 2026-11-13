@@ -7,10 +7,49 @@ import zipfile
 from pathlib import Path
 
 import hostinger_managed_qa as qa
-from hostinger_candidate_qa import candidate_archive, runtime_receipts, recover_candidate_probe
+from hostinger_candidate_qa import candidate_archive, runtime_receipts, recover_candidate_probe, write_candidate_environment
 
 
 class RecoveryContractTests(unittest.TestCase):
+    def test_environment_http_500_can_proceed_only_with_exact_qa_key_readback(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            desired = {"PUNCTUM_QA_ORIGIN":"https://qa.example.test", "PUNCTUM_QA_SOURCE_SHA":"test-sha"}
+            keys = [{"key":name,"value":"********"} for name in desired]
+            with patch("hostinger_candidate_qa.put", side_effect=qa.RequestFailure("candidateEnvironmentWrite",500)) as write, patch.object(recovery, "api", return_value=keys) as readback:
+                write_candidate_environment(recovery, desired)
+            write.assert_called_once()
+            readback.assert_called_once()
+            self.assertEqual(recovery.report["environmentWrites"],0)
+            self.assertEqual(recovery.report["candidateEnvironmentAcceptance"], "PROVISIONAL_KEYS_ONLY")
+            self.assertEqual(recovery.report["candidateEnvironmentKeyCount"],2)
+
+    def test_environment_http_500_rejects_partial_masked_key_readback(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            with patch("hostinger_candidate_qa.put", side_effect=qa.RequestFailure("candidateEnvironmentWrite",500)), patch.object(recovery, "api", return_value=[{"key":"PUNCTUM_QA_ORIGIN"}]):
+                with self.assertRaisesRegex(ValueError, "environment key"):
+                    write_candidate_environment(recovery, {"PUNCTUM_QA_ORIGIN":"synthetic","PUNCTUM_QA_SOURCE_SHA":"test"})
+            self.assertEqual(recovery.report["environmentWrites"],0)
+
+    def test_environment_write_nontransient_error_must_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            with patch("hostinger_candidate_qa.put", side_effect=qa.RequestFailure("candidateEnvironmentWrite",403)), patch.object(recovery, "api") as readback:
+                with self.assertRaises(qa.RequestFailure):
+                    write_candidate_environment(recovery, {"PUNCTUM_QA_ORIGIN":"synthetic"})
+            readback.assert_not_called()
+
+    def test_environment_acknowledged_write_does_not_need_provisional_readback(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "baseline")
+            with patch("hostinger_candidate_qa.put") as write, patch.object(recovery, "api") as readback:
+                write_candidate_environment(recovery, {"PUNCTUM_QA_ORIGIN":"synthetic"})
+            write.assert_called_once()
+            readback.assert_not_called()
+            self.assertEqual(recovery.report["environmentWrites"],1)
+            self.assertEqual(recovery.report["candidateEnvironmentAcceptance"],"ACKNOWLEDGED")
+
     def test_candidate_failure_before_build_restores_stored_settings_without_redeploy(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "baseline")

@@ -44,6 +44,33 @@ def put(operation, label, path, payload):
     operation.request(label, API + path, 'PUT', headers, json.dumps(payload).encode())
 
 
+def write_candidate_environment(operation, environment):
+    """Handle the provider's ambiguous HTTP 500 after a full env replacement.
+
+    A full set of masked keys proves only that the API accepted the shape,
+    NOT that the values are correct. The candidate remains provisional until
+    the real functional login, SSL, persistence and source guards all pass.
+    """
+    payload = {'env_vars':[{'key':k,'value':v} for k,v in environment.items()]}
+    operation.report['candidateEnvironmentAcceptance'] = 'NOT_VERIFIED'
+    try:
+        put(operation,'candidateEnvironmentWrite',SITE + '/builds/settings/env',payload)
+    except RequestFailure as error:
+        if error.status not in (None,500,502,503,504):
+            raise
+        readback = operation.api('candidateEnvironmentReadbackAfterHttpError',
+                                 SITE + '/builds/settings/env')
+        if (not isinstance(readback,list) or
+            sorted(row.get('key') for row in readback) != sorted(environment)):
+            raise ValueError('Candidate environment key readback is incomplete or unexpected')
+        operation.report['candidateEnvironmentAcceptance'] = 'PROVISIONAL_KEYS_ONLY'
+        operation.report['candidateEnvironmentKeyCount'] = len(readback)
+        operation.report['candidateEnvironmentHttpError'] = error.status
+        return
+    operation.report['environmentWrites'] += 1
+    operation.report['candidateEnvironmentAcceptance'] = 'ACKNOWLEDGED'
+
+
 def build(operation, name, settings, phase):
     operation.report['buildRequestAttempted'] = True
     operation.save()
@@ -290,8 +317,7 @@ def execute_candidate(root, request):
         modified = True
         put(operation,'candidateSettingsWrite',SITE + '/builds/settings',settings)
         operation.report['settingsWrites'] += 1
-        put(operation,'candidateEnvironmentWrite',SITE + '/builds/settings/env',{'env_vars':[{'key':k,'value':v} for k,v in environment.items()]})
-        operation.report['environmentWrites'] += 1
+        write_candidate_environment(operation,environment)
         build(operation,name,settings,'candidate')
         ready(operation,'candidateReady')
         functional_env = {**environment,'PUNCTUM_QA_TEST_PASSWORD':password}
