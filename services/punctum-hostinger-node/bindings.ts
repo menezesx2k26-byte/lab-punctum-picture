@@ -16,6 +16,7 @@ export const env = {
   CLIENT_AUTH_MODE: "password",
   CLIENT_PASSWORD_BACKEND: "local",
   HOSTINGER_PREFER_WEBP: "true",
+  HOSTINGER_IMAGE_PROVIDER: "sharp",
   HOSTINGER_IMAGES_MAX_25MIB: process.env.PUNCTUM_QA_R4_ENABLED === "true" ? "true" : "false",
   get CLIENT_SESSION_SECRET() { return process.env.PUNCTUM_QA_CLIENT_SESSION_SECRET; },
   PUBLIC_HOME_CACHE_ENABLED: "false",
