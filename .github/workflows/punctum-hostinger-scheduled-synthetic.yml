@@ -1,0 +1,36 @@
+name: Punctum Hostinger — synthetic scheduled worker preflight
+
+on:
+  push:
+    branches: [agent/punctum-hostinger-cron-synthetic-20261113]
+    paths:
+      - "services/punctum-hostinger-production/synthetic-backups*"
+      - "services/punctum-hostinger-production/sandbox-cron.mjs"
+      - "scripts/hostinger-build-scheduled.mjs"
+      - "package.json"
+      - ".github/workflows/punctum-hostinger-scheduled-synthetic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Verify private backup adapter and fail-closed paths
+        run: node --test services/punctum-hostinger-production/synthetic-backups.test.mjs services/punctum-hostinger-production/sandbox-runtime.test.mjs
+      - name: Compile existing Cloudflare scheduled handler to Node bundle
+        run: npm run build:hostinger:scheduled
+      - name: Verify existing scheduled export is callable
+        run: node --input-type=module -e "import('./dist/hostinger-cron/scheduled.mjs').then(m=>{if(typeof m.handleScheduled!=='function')process.exit(1)})"
+      - run: npm run typecheck
