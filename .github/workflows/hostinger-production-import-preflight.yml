@@ -1,0 +1,27 @@
+name: Punctum Hostinger — isolated production import preflight
+
+on:
+  push:
+    branches: [agent/hostinger-production-import-preflight-20261113]
+    paths:
+      - "scripts/hostinger-import-sqlite-preflight.mjs"
+      - "scripts/hostinger-import-sqlite-preflight.test.mjs"
+      - ".github/workflows/hostinger-production-import-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node --test scripts/hostinger-import-sqlite-preflight.test.mjs
+      - run: node --test scripts/hostinger-encrypt-d1-stage.test.mjs
