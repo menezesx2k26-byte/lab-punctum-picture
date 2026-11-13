@@ -5,5 +5,5 @@
   "productionDataImported": false,
   "sourceDatabase": "punctum-picture",
   "sourceDatabaseId": "22697f13-7484-41e3-9441-f7b902c6577a",
-  "note": "Fetch schema and table counts only. Never materialize or upload private table records."
+  "note": "Read-only D1 grouped status, soft-delete, and R2 reference census; no row values or keys; 2026-11-13 rerun."
 }
