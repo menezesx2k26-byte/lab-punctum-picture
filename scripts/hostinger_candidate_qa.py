@@ -118,6 +118,12 @@ def ready(operation, phase):
     raise ValueError('Managed candidate did not become ready')
 
 
+TRACED_ROUTES = (
+    '/api/health', '/admin/api/session', '/arquivo', '/',
+    '/admin', '/admin/studio', '/admin/api/studio',
+)
+
+
 def runtime_receipts(operation, phase):
     try:
         logs = operation.api(phase + 'RuntimeLogs', SITE + '/runtime-logs?period=1h&limit=1000')
@@ -151,7 +157,7 @@ def runtime_receipts(operation, phase):
                 try: event = json.JSONDecoder().raw_decode(line[index+len(prefix):])[0]
                 except ValueError: continue
                 if not isinstance(event,dict): continue
-                if event.get('route') not in ('/admin','/admin/studio','/admin/api/studio'): continue
+                if event.get('route') not in TRACED_ROUTES: continue
                 if event.get('event') not in ('start','finish','abort'): continue
                 record = {'event':event['event'],'route':event['route']}
                 if event['event'] == 'finish' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
@@ -168,9 +174,9 @@ def runtime_receipts(operation, phase):
                 if index < 0: continue
                 try: event = json.JSONDecoder().raw_decode(line[index+len(prefix):])[0]
                 except ValueError: continue
-                if not isinstance(event,dict) or event.get('route') != '/admin/api/studio': continue
+                if not isinstance(event,dict) or event.get('route') not in TRACED_ROUTES: continue
                 if event.get('phase') not in ('start','returned','error'): continue
-                record = {'phase':event['phase'],'route':'/admin/api/studio'}
+                record = {'phase':event['phase'],'route':event['route']}
                 if event['phase'] == 'returned' and type(event.get('status')) is int and 100 <= event['status'] <= 599:
                     record['status'] = event['status']
                 if event['phase'] != 'start' and type(event.get('ms')) is int and 0 <= event['ms'] <= 120000:

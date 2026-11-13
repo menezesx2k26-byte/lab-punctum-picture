@@ -301,6 +301,20 @@ class RecoveryContractTests(unittest.TestCase):
             ])
             self.assertNotIn("SECRET", qa.json.dumps(recovery.report))
 
+    def test_runtime_receipts_keep_readiness_and_failed_candidate_routes(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
+            recovery = qa.Recovery(Path(directory), "prepare", "expected")
+            routes = ["/api/health", "/admin/api/session", "/arquivo", "/"]
+            logs = {"logs": [
+                {"message": prefix + qa.json.dumps({key: "start", "route": route})}
+                for route in routes
+                for prefix, key in [("PUNCTUM_QA_TRACE ", "event"), ("PUNCTUM_QA_PHASE ", "phase")]
+            ]}
+            with patch.object(recovery, "api", return_value=logs):
+                runtime_receipts(recovery, "beforeRollback")
+            for key in ["runtimeRouteTrace", "runtimeWorkerPhase"]:
+                self.assertEqual([row["route"] for row in recovery.report[key]["beforeRollback"]], routes)
+
     def test_runtime_log_query_includes_provider_required_period_and_limit(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(qa.os.environ, {"HOSTINGER_API": "test-only"}):
             recovery = qa.Recovery(Path(directory), "prepare", "expected")

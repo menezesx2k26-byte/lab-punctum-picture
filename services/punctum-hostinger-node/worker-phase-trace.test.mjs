@@ -39,3 +39,15 @@ test('Studio handler failures are rethrown and recorded without exception messag
   assert.equal(events.at(-1).phase, 'error');
   assert.doesNotMatch(messages.join(' '), /SECRET_EXCEPTION/);
 });
+
+test('managed worker trace measures readiness, login, archive and home', async () => {
+  const output = [];
+  for (const route of ['/api/health', '/admin/api/session', '/arquivo', '/']) {
+    await traceQaWorker(route, async () => new Response(null, { status: 204 }), {
+      enabled: true, emit: (message) => output.push(message),
+    });
+  }
+  const events = output.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_PHASE /, '')));
+  assert.deepEqual(events.filter(({ phase }) => phase === 'returned').map(({ route }) => route),
+    ['/api/health', '/admin/api/session', '/arquivo', '/']);
+});

@@ -35,3 +35,17 @@ test('managed trace ignores unrelated paths and cannot attach outside explicit Q
   response.emit('finish');
   assert.deepEqual(output,[]);
 });
+
+test('managed HTTP trace covers the routes that stalled in the provider', () => {
+  const server = new EventEmitter();
+  const output = [];
+  traceQaRequests(server, { enabled: true, emit: (message) => output.push(message) });
+  for (const route of ['/api/health', '/admin/api/session', '/arquivo', '/']) {
+    const response = new EventEmitter();
+    server.emit('request', { url: route }, response);
+    response.emit('close');
+  }
+  const events = output.map((line) => JSON.parse(line.replace(/^PUNCTUM_QA_TRACE /, '')));
+  assert.deepEqual(events.filter(({ event }) => event === 'abort').map(({ route }) => route),
+    ['/api/health', '/admin/api/session', '/arquivo', '/']);
+});
