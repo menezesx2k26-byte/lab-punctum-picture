@@ -8,6 +8,8 @@ on:
       - "services/punctum-hostinger-node/isolated-sharp.mjs"
       - "app/components/ArchiveGrid.tsx"
       - "app/public.css"
+      - "worker/media/**"
+      - "tests/unit/core.spec.ts"
       - "scripts/hostinger-vinext-client-abort-patch*"
       - "package.json"
       - ".github/workflows/punctum-hostinger-real-stage.yml"
@@ -40,6 +42,8 @@ jobs:
         run: node --test services/punctum-hostinger-production/sharp-pool.test.mjs
       - name: Verify fail-closed Vinext client-abort handling without mutating dependency
         run: node --test scripts/hostinger-vinext-client-abort-patch.test.mjs
+      - name: Verify image-format negotiation without changing Cloudflare defaults
+        run: npx vitest run tests/unit/core.spec.ts
       - name: Build production staging app separately from QA
         run: npm run build:hostinger:real-stage
       - name: Typecheck
