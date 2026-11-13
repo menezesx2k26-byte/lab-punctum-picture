@@ -4,6 +4,10 @@ import { qaDatabasePath, qaOrigin } from "./runtime.mjs";
 import { openQaDatabase } from "./sqlite.mjs";
 import { ensureManagedQaDatabase } from './managed-bootstrap.mjs';
 import { traceQaRequests } from './route-trace.mjs';
+import { installNodeR4StreamCompatibility } from "./node-r4-stream-compat.mjs";
+
+// Only Node.js installs Cloudflare Stream primitives; the Worker build is untouched.
+if (process.env.PUNCTUM_QA_R4_ENABLED === "true") installNodeR4StreamCompatibility();
 
 if (process.env.PUNCTUM_QA_MANAGED_BOOTSTRAP === '1') {
   if (process.env.PUNCTUM_QA_ORIGIN !== 'https://aliceblue-locust-999458.hostingersite.com' ||
