@@ -47,6 +47,32 @@ async function main() {
   }
   const required = ["albums", "images", "site_settings", "categories", "admin_credentials"];
   if (required.some(t => !Object.hasOwn(tableCounts, t))) throw new Error("D1_REQUIRED_SCHEMA_MISSING");
+  // Aggregates only: never return image identifiers, customer fields or R2 keys.
+  async function groupByStatus(table) {
+    const rows = await query("SELECT status, COUNT(*) AS count FROM " + table + " GROUP BY status ORDER BY status");
+    const output = {};
+    for (const row of rows) {
+      if (!/^[a-z_]{1,32}$/.test(row.status || "") ||
+          !Number.isSafeInteger(Number(row.count)) || Number(row.count) < 0) {
+        throw new Error("INVALID_STATUS_AGGREGATE");
+      }
+      output[row.status] = Number(row.count);
+    }
+    return output;
+  }
+  const imageStatuses = await groupByStatus("images");
+  const albumStatuses = await groupByStatus("albums");
+  const referenceTypes = await query(
+    "SELECT CASE WHEN original_key LIKE 'static:%' THEN 'static_git' ELSE 'r2_reference' END AS storage, COUNT(*) AS count FROM images WHERE deleted_at IS NULL GROUP BY storage"
+  );
+  const referencedOriginals = {};
+  for (const row of referenceTypes) {
+    if (!["static_git", "r2_reference"].includes(row.storage) ||
+        !Number.isSafeInteger(Number(row.count)) || Number(row.count) < 0) throw new Error("INVALID_REFERENCES");
+    referencedOriginals[row.storage] = Number(row.count);
+  }
+  const imageDeleted = Number((await query("SELECT COUNT(*) AS count FROM images WHERE deleted_at IS NOT NULL"))[0]?.count);
+  const albumDeleted = Number((await query("SELECT COUNT(*) AS count FROM albums WHERE deleted_at IS NOT NULL"))[0]?.count);
   const schemaHash = createHash("sha256")
     .update(JSON.stringify(tables.map(x => [x.name, x.sql]).sort((a,b) => a[0].localeCompare(b[0]))))
     .digest("hex");
@@ -56,6 +82,9 @@ async function main() {
     databaseName: EXPECTED_NAME,
     databaseId: EXPECTED_ID,
     tableCounts,
+    imageStatuses, albumStatuses,
+    softDeleted: { images: imageDeleted, albums: albumDeleted },
+    activeOriginalReferences: referencedOriginals,
     schemaSha256: schemaHash,
     sourceReadOnly: true,
     copiedPrivateRows: false,
