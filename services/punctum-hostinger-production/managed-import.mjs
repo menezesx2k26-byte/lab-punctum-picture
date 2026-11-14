@@ -126,7 +126,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const privateParent = dirname(destination);
   // The hosting account owns /home/u571409090; never alter its permissions.
   const wrapper = join(privateParent, "punctum-managed-storage");
-  mkdirSync(wrapper, { mode: 0o700 });
+  mkdirSync(wrapper, { mode: 0o700, recursive: true });
   importManagedSeed({
     bundle: fileURLToPath(new URL("./managed-seed.bin", import.meta.url)),
     key: process.env.PUNCTUM_MANAGED_IMPORT_KEY,
