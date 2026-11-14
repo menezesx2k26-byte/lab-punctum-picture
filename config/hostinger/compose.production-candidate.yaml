@@ -1,0 +1,28 @@
+services:
+  punctum-production:
+    image: punctum-hostinger-candidate:20261114-clerk
+    container_name: punctum-production-candidate
+    restart: unless-stopped
+    network_mode: host
+    init: true
+    mem_limit: 1536m
+    cpus: 1.5
+    env_file:
+      - /opt/punctum/private/production/candidate.env
+    environment:
+      PORT: "3025"
+      NODE_ENV: production
+      PUNCTUM_PRODUCTION_CANDIDATE_MODE: private-candidate
+      PUNCTUM_CANDIDATE_TRUSTED_PROXY: caddy
+    volumes:
+      - /opt/punctum/private/production/db:/private/db
+      - /opt/punctum/private/production/originals:/private/originals
+      - /opt/punctum/private/production/backups:/private/backups
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3025/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

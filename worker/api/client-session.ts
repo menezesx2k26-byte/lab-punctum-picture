@@ -5,11 +5,16 @@ import {
   clearClientSessionCookie,
   requireClient,
 } from "../client/auth";
+import {
+  collectClerkRevocationKeys,
+  resolveLinkedClerkClient,
+  revokeClerkSessionKeys,
+} from "../auth/clerk-auth";
 import { hashClientPasswordWithProvider, verifyClientPasswordWithProvider } from "../client/password-provider";
 import { getClientByEmail, getActiveClient } from "../client/repository";
 import { privateJson, privateResponse } from "../client/response";
 import { assertAllowedOrigin } from "../utils/auth";
-import { requireDb } from "../utils/env";
+import { envString, requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { parseJson } from "../client/validation";
 import { writeAudit } from "../utils/audit";
@@ -64,14 +69,46 @@ export async function handleClientSessionApi(
   env: Env,
 ): Promise<Response | null> {
   if (
-    !["/api/client/session", "/api/client/password", "/api/client/me"].includes(
-      url.pathname,
-    )
+    ![
+      "/api/client/session",
+      "/api/client/clerk-session",
+      "/api/client/password",
+      "/api/client/me",
+    ].includes(url.pathname)
   )
     return null;
   assertAllowedOrigin(request, env);
   const db = requireDb(env);
   const mode = clientAuthMode(env);
+  if (url.pathname === "/api/client/clerk-session") {
+    if (mode !== "clerk" && envString(env, "CLERK_AUTH_ENABLED") !== "true") {
+      throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+    }
+    if (request.method !== "POST") {
+      throw new AppError(405, "METHOD_NOT_ALLOWED", "Operação não permitida.");
+    }
+    await loginLimit(request, db, "clerk-session");
+    const linked = await resolveLinkedClerkClient(request, env, db, {
+      requireConfig: true,
+    });
+    const token = await createClientSession(
+      { id: linked.id, sessionVersion: linked.sessionVersion },
+      env,
+      "punctum-client-clerk",
+      linked.revocationKeys,
+    );
+    await writeAudit(
+      db,
+      "client:" + linked.id,
+      "client.clerk_login",
+      "client_account",
+      linked.id,
+    );
+    return privateJson(
+      { ok: true, clientId: linked.id, mustChangePassword: false },
+      { headers: { "Set-Cookie": clientSessionCookie(token) } },
+    );
+  }
   if (url.pathname === "/api/client/session" && request.method === "DELETE") {
     // A cleared browser cookie alone does not revoke a copied HMAC session.
     // This invalidates every current session for this account, across devices.
@@ -86,6 +123,28 @@ export async function handleClientSessionApi(
         )
         .bind(new Date().toISOString(), identity.id, identity.sessionVersion)
         .run();
+      if (identity.authSource === "punctum-client-clerk") {
+        await db
+          .prepare(
+            `UPDATE clerk_pilot_identity_links
+             SET session_version_at_link = session_version_at_link + 1
+             WHERE client_id = ? AND session_version_at_link = ?`,
+          )
+          .bind(identity.id, identity.sessionVersion)
+          .run();
+        const revocationKeys = await collectClerkRevocationKeys(
+          request,
+          identity.clerkRevocationKeys ?? [],
+        );
+        await revokeClerkSessionKeys(db, revocationKeys);
+        await writeAudit(
+          db,
+          "client:" + identity.id,
+          "client.clerk_logout",
+          "client_account",
+          identity.id,
+        );
+      }
     } catch (error) {
       // Preserve idempotent logout for anonymous, expired and revoked cookies.
       if (!(error instanceof AppError && error.status === 401)) throw error;
@@ -98,6 +157,8 @@ export async function handleClientSessionApi(
   if (url.pathname === "/api/client/session" && request.method === "POST") {
     if (mode === "access")
       throw new AppError(405, "METHOD_NOT_ALLOWED", "Use o acesso por e-mail.");
+    if (mode === "clerk")
+      throw new AppError(405, "METHOD_NOT_ALLOWED", "Use a autenticação Clerk.");
     const input = await parseJson(request, loginSchema);
     await loginLimit(request, db, input.email);
     const account = await getClientByEmail(db, input.email);
@@ -116,6 +177,8 @@ export async function handleClientSessionApi(
   }
   if (url.pathname === "/api/client/password" && mode === "access")
     throw new AppError(405, "METHOD_NOT_ALLOWED", "Use o acesso por e-mail.");
+  if (url.pathname === "/api/client/password" && mode === "clerk")
+    throw new AppError(405, "METHOD_NOT_ALLOWED", "Gerencie a senha pelo Clerk.");
   const identity = await requireClient(request, env, db, {
     allowPasswordChange: true,
   });

@@ -3,11 +3,18 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { privateApi, errorMessage } from "./api";
 import { loginErrorMessage } from "./routes";
+import { ClerkClientLogin } from "./ClerkClientLogin";
 
 export function ClientLogin({
   changePassword = false,
+  clerkEnabled = false,
+  clerkOnly = false,
+  publishableKey,
 }: {
   changePassword?: boolean;
+  clerkEnabled?: boolean;
+  clerkOnly?: boolean;
+  publishableKey?: string;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,7 +92,11 @@ export function ClientLogin({
           <h2 id="login-title">
             {changePassword ? "Escolha sua senha" : "Bem-vindo de volta"}
           </h2>
-          <form onSubmit={submit}>
+          {!changePassword && clerkEnabled && publishableKey && (
+            <ClerkClientLogin publishableKey={publishableKey} />
+          )}
+          {(changePassword || !clerkOnly) && (
+            <form onSubmit={submit}>
             {!changePassword && (
               <label>
                 E-mail
@@ -144,10 +155,13 @@ export function ClientLogin({
               <span aria-hidden="true">↗</span>
             </button>
           </form>
+          )}
           <p className="pa-caption">
             {changePassword
               ? "Sua senha é pessoal. Evite reutilizar senhas de outros serviços."
-              : "Primeiro acesso ou esqueceu a senha? Peça uma nova senha temporária ao estúdio."}
+              : clerkOnly
+                ? "Entre com sua conta Clerk vinculada pelo estúdio para abrir os seus álbuns."
+                : "Primeiro acesso ou esqueceu a senha? Peça uma nova senha temporária ao estúdio."}
           </p>
         </section>
       </div>

@@ -1,5 +1,11 @@
 import { assertSeparateAccessAudiences } from "../client/audience";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
+import {
+  hasClerkCredential,
+  resolveLinkedClerkAdmin,
+  type ClerkRequestVerifier,
+  type LinkedClerkAdmin,
+} from "../auth/clerk-auth";
 import { AppError } from "./errors";
 import { createAdminSessionKey, sha256Hex } from "./admin-session-crypto.mjs";
 import { envString, requiredEnvString } from "./env";
@@ -11,14 +17,29 @@ export type AdminIdentity = {
   email: string;
   roles: ["admin"];
   /** The email on a shared-password login is self-declared, not verified identity. */
-  authSource?: "shared-password";
+  authSource?: "shared-password" | "clerk";
+  clerkUserId?: string;
+  sessionVersion?: number;
+  clerkRevocationKeys?: string[];
 };
+
+export function adminAuthMode(env: Env): "legacy" | "hybrid" | "clerk" {
+  const mode = envString(env, "ADMIN_AUTH_MODE");
+  if (mode === "clerk") return "clerk";
+  if (mode === "legacy" || mode === "password") return "legacy";
+  if (envString(env, "CLERK_AUTH_ENABLED") === "true") return "hybrid";
+  return "legacy";
+}
 
 /** Audit attribution must not impersonate an individual through a shared secret. */
 export function auditPrincipal(identity: Pick<AdminIdentity, "email" | "authSource">): string {
-  return identity.authSource === "shared-password"
-    ? "shared-password@punctum.invalid"
-    : identity.email;
+  if (identity.authSource === "shared-password") {
+    return "shared-password@punctum.invalid";
+  }
+  if (identity.authSource === "clerk") {
+    return `clerk:${identity.email}`;
+  }
+  return identity.email;
 }
 
 export function normalizeTeamDomain(value: string): string {
@@ -85,6 +106,13 @@ async function hmacKey(env: Env) {
   );
 }
 
+async function clerkAdminHmacKey(env: Env) {
+  const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
+  return createAdminSessionKey(
+    new TextEncoder().encode(secret + "\u0000clerk-admin"),
+  );
+}
+
 async function verifyPasswordSession(
   request: Request,
   env: Env,
@@ -97,6 +125,83 @@ async function verifyPasswordSession(
   if (!encodedPayload || !encodedSignature || extra) return null;
 
   try {
+    const payload = JSON.parse(
+      new TextDecoder().decode(fromBase64Url(encodedPayload)),
+    ) as {
+      email?: unknown;
+      exp?: unknown;
+      authSource?: unknown;
+      clerkUserId?: unknown;
+      sessionVersion?: unknown;
+      rk?: unknown;
+    };
+    if (typeof payload.email !== "string" || typeof payload.exp !== "number") {
+      return null;
+    }
+    const email = payload.email.toLowerCase();
+    if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    if (!allowedAdminEmails(env).includes(email)) return null;
+
+    const mode = adminAuthMode(env);
+    if (payload.authSource === "clerk") {
+      if (mode === "legacy") return null;
+      if (
+        typeof payload.clerkUserId !== "string" ||
+        !Number.isInteger(payload.sessionVersion) ||
+        !env.DB
+      ) {
+        return null;
+      }
+      const key = await clerkAdminHmacKey(env);
+      const valid = await key.verify(
+        new TextEncoder().encode(encodedPayload),
+        fromBase64Url(encodedSignature),
+      );
+      if (!valid) return null;
+
+      const link = await env.DB.prepare(
+        `SELECT clerk_user_id AS clerkUserId,
+                admin_principal_id AS adminPrincipalId,
+                role,
+                session_version AS sessionVersion,
+                disabled_at AS disabledAt
+         FROM clerk_admin_identity_links
+         WHERE clerk_user_id = ?`,
+      )
+        .bind(payload.clerkUserId)
+        .first<{
+          clerkUserId: string;
+          adminPrincipalId: string;
+          role: string;
+          sessionVersion: number;
+          disabledAt: string | null;
+        }>();
+      if (
+        !link ||
+        link.disabledAt !== null ||
+        link.role !== "admin" ||
+        link.adminPrincipalId.toLowerCase() !== email ||
+        link.sessionVersion !== payload.sessionVersion
+      ) {
+        return null;
+      }
+      return {
+        email,
+        roles: ["admin"],
+        authSource: "clerk",
+        clerkUserId: link.clerkUserId,
+        sessionVersion: link.sessionVersion,
+        ...(Array.isArray(payload.rk)
+          ? {
+              clerkRevocationKeys: payload.rk.filter(
+                (item): item is string => typeof item === "string",
+              ),
+            }
+          : {}),
+      };
+    }
+
+    if (mode === "clerk") return null;
     const key = await hmacKey(env);
     mark?.("session-key-ready");
     const valid = await key.verify(
@@ -105,20 +210,36 @@ async function verifyPasswordSession(
     );
     mark?.("session-verified");
     if (!valid) return null;
-
-    const payload = JSON.parse(
-      new TextDecoder().decode(fromBase64Url(encodedPayload)),
-    ) as { email?: unknown; exp?: unknown };
-    if (typeof payload.email !== "string" || typeof payload.exp !== "number") {
-      return null;
-    }
-    const email = payload.email.toLowerCase();
-    if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
-    if (!allowedAdminEmails(env).includes(email)) return null;
     return { email, roles: ["admin"], authSource: "shared-password" };
   } catch {
     return null;
   }
+}
+
+export async function createClerkAdminSession(
+  link: LinkedClerkAdmin,
+  env: Env,
+): Promise<string> {
+  const normalizedEmail = link.adminPrincipalId.trim().toLowerCase();
+  if (!allowedAdminEmails(env).includes(normalizedEmail)) {
+    throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+  }
+
+  const payload = toBase64Url(
+    new TextEncoder().encode(
+      JSON.stringify({
+        email: normalizedEmail,
+        exp: Math.floor(Date.now() / 1000) + ADMIN_SESSION_TTL_SECONDS,
+        authSource: "clerk",
+        clerkUserId: link.clerkUserId,
+        sessionVersion: link.sessionVersion,
+        ...(link.revocationKeys?.length ? { rk: link.revocationKeys } : {}),
+      }),
+    ),
+  );
+  const key = await clerkAdminHmacKey(env);
+  const signature = await key.sign(new TextEncoder().encode(payload));
+  return `${payload}.${toBase64Url(signature)}`;
 }
 
 export async function createAdminSession(email: string, env: Env): Promise<string> {
@@ -260,6 +381,7 @@ export async function requireAdmin(
   env: Env,
   jwksOverride?: JWTVerifyGetKey,
   mark?: (phase: string) => void,
+  clerkVerifierOverride?: ClerkRequestVerifier,
 ): Promise<AdminIdentity> {
   if (isLocalRequest(request, env)) {
     return { email: "maria.helena@local.dev", roles: ["admin"] };
@@ -269,6 +391,31 @@ export async function requireAdmin(
   const passwordIdentity = await verifyPasswordSession(request, env, mark);
   mark?.("session-end");
   if (passwordIdentity) return passwordIdentity;
+
+  const mode = adminAuthMode(env);
+  if (mode !== "legacy") {
+    if (hasClerkCredential(request)) {
+      const linked = await resolveLinkedClerkAdmin(request, env, {
+        requireConfig: mode === "clerk",
+        verifier: clerkVerifierOverride,
+      });
+      if (linked) {
+        return {
+          email: linked.adminPrincipalId,
+          roles: ["admin"],
+          authSource: "clerk",
+          clerkUserId: linked.clerkUserId,
+          sessionVersion: linked.sessionVersion,
+          clerkRevocationKeys: linked.revocationKeys,
+        };
+      }
+      if (mode === "clerk") {
+        throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+      }
+    } else if (mode === "clerk") {
+      throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+    }
+  }
 
   const assertion = request.headers.get("cf-access-jwt-assertion");
   if (!assertion) {
