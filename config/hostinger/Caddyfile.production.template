@@ -1,0 +1,19 @@
+# Punctum Picture — Hostinger Production Caddyfile Template
+# ATENÇÃO: Não ativar para punctumpicture.com antes do cutover de DNS autorizado.
+# Em staging/pré-cutover, manter apenas em 127.0.0.1 ou domínio de staging com tls internal.
+
+punctumpicture.com, www.punctumpicture.com {
+  encode zstd gzip
+
+  reverse_proxy 127.0.0.1:3025 {
+    # Remove cabeçalhos Cloudflare potencialmente falsificados pelo cliente
+    header_up -CF-Connecting-IP
+    header_up -CF-Ray
+    header_up -CF-Visitor
+
+    # Injeta IP real e protocolo confiável para trusted proxy (candidate-runtime.mjs)
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
+    header_up X-Forwarded-Proto https
+  }
+}

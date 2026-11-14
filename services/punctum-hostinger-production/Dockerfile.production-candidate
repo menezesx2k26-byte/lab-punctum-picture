@@ -1,0 +1,20 @@
+# Private Hostinger Production Candidate runtime (also supports isolated staging).
+# Reuses the pinned Node 24 + Sharp + Vinext dependency base image.
+FROM punctum-picture-vps-qa:aa90c8a-20261113
+
+USER root
+WORKDIR /work
+
+COPY . /work
+
+RUN test -d /app/node_modules/vinext && \
+    if test ! -e /work/node_modules; then ln -s /app/node_modules /work/node_modules; fi && \
+    node scripts/hostinger-vinext-client-abort-patch.mjs && \
+    node --check /app/node_modules/vinext/dist/server/prod-server.js && \
+    test -f dist/hostinger-candidate/server/index.js && \
+    test -d dist/hostinger-candidate/client && \
+    test -f dist/hostinger-cron/scheduled.mjs
+
+ENV NODE_ENV=production
+EXPOSE 3025
+CMD ["node", "services/punctum-hostinger-production/candidate-server.mjs"]

@@ -29,6 +29,8 @@
     "start:hostinger:real-stage": "node services/punctum-hostinger-production/server.mjs",
     "build:hostinger:mutable-sandbox": "vite build --config services/punctum-hostinger-production/sandbox-vite.config.ts",
     "start:hostinger:mutable-sandbox": "node services/punctum-hostinger-production/sandbox-server.mjs",
+    "build:hostinger:candidate": "vite build --config services/punctum-hostinger-production/candidate-vite.config.ts",
+    "start:hostinger:candidate": "node services/punctum-hostinger-production/candidate-server.mjs",
     "build:hostinger:scheduled": "node scripts/hostinger-build-scheduled.mjs"
   },
   "dependencies": {
