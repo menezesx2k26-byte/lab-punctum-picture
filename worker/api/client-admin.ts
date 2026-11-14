@@ -24,6 +24,10 @@ import { assertRateLimit } from "../utils/rate-limit";
 import { parseJson } from "../client/validation";
 import { clientAuthMode } from "../client/auth-mode";
 import { loadSanitizedTitularExport } from "../client/lgpd";
+import {
+  linkClerkClientAccount,
+  unlinkClerkClientAccount,
+} from "../auth/clerk-auth";
 
 const accountColumns =
   "id,name,email,disabled_at AS disabledAt,must_change_password AS mustChangePassword,created_at AS createdAt";
@@ -41,7 +45,7 @@ export async function handleClientAdminApi(
   const mode = clientAuthMode(env);
   await assertRateLimit(request, db, "client-admin", 200, 60);
   const match = url.pathname.match(
-    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password|lgpd-export))?)?$/,
+    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password|lgpd-export|clerk-link))?)?$/,
   );
   if (!match) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   const id = match[1];
@@ -175,6 +179,50 @@ export async function handleClientAdminApi(
       id,
     );
     return privateJson({ temporaryPassword });
+  }
+  if (match[2] === "clerk-link") {
+    if (request.method === "GET") {
+      const link = await db
+        .prepare(
+          `SELECT clerk_user_id AS clerkUserId, session_version_at_link AS sessionVersionAtLink, created_at AS createdAt
+           FROM clerk_pilot_identity_links WHERE client_id=?`,
+        )
+        .bind(id)
+        .first<{
+          clerkUserId: string;
+          sessionVersionAtLink: number;
+          createdAt: string;
+        }>();
+      return privateJson({ linked: Boolean(link), link: link ?? null });
+    }
+    if (request.method === "PUT") {
+      const input = await parseJson(
+        request,
+        z.object({ clerkUserId: z.string().trim().min(5).max(200) }).strict(),
+      );
+      const linked = await linkClerkClientAccount(db, id, input.clerkUserId);
+      await writeAudit(
+        db,
+        auditPrincipal(actor),
+        "client.clerk_linked",
+        "client_account",
+        id,
+        { clerkUserId: linked.clerkUserId, sessionVersion: linked.sessionVersion },
+      );
+      return privateJson({ ok: true, ...linked });
+    }
+    if (request.method === "DELETE") {
+      const result = await unlinkClerkClientAccount(db, id);
+      await writeAudit(
+        db,
+        auditPrincipal(actor),
+        "client.clerk_unlinked",
+        "client_account",
+        id,
+        { unlinked: result.unlinked },
+      );
+      return privateJson({ ok: true, ...result });
+    }
   }
   if (!match[2] && request.method === "PATCH") {
     const input = await parseJson(

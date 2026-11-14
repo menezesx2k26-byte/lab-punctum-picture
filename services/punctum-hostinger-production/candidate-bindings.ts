@@ -14,7 +14,85 @@ export const env = {
     return config().environment;
   },
   PRIVATE_GALLERIES_ENABLED: "true",
-  CLIENT_AUTH_MODE: "password",
+  get CLIENT_AUTH_MODE() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE ||
+      process.env.CLIENT_AUTH_MODE ||
+      "password"
+    );
+  },
+  get ADMIN_AUTH_MODE() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_ADMIN_AUTH_MODE ||
+      process.env.ADMIN_AUTH_MODE ||
+      undefined
+    );
+  },
+  get CLERK_AUTH_ENABLED() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_AUTH_ENABLED ||
+      process.env.CLERK_AUTH_ENABLED ||
+      undefined
+    );
+  },
+  get CLERK_PILOT_ENABLED() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_PILOT_ENABLED ||
+      process.env.CLERK_PILOT_ENABLED ||
+      undefined
+    );
+  },
+  get CLERK_PUBLISHABLE_KEY() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_PUBLISHABLE_KEY ||
+      process.env.CLERK_PUBLISHABLE_KEY ||
+      undefined
+    );
+  },
+  get NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+      process.env.PUNCTUM_CANDIDATE_CLERK_PUBLISHABLE_KEY ||
+      process.env.CLERK_PUBLISHABLE_KEY ||
+      undefined
+    );
+  },
+  get CLERK_SECRET_KEY() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_SECRET_KEY ||
+      process.env.CLERK_SECRET_KEY ||
+      undefined
+    );
+  },
+  get CLERK_JWT_KEY() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_JWT_KEY ||
+      process.env.CLERK_JWT_KEY ||
+      undefined
+    );
+  },
+  get CLERK_ISSUER() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_ISSUER ||
+      process.env.CLERK_ISSUER ||
+      undefined
+    );
+  },
+  get CLERK_PILOT_ISSUER() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_PILOT_ISSUER ||
+      process.env.CLERK_PILOT_ISSUER ||
+      undefined
+    );
+  },
+  get CLERK_AUTHORIZED_PARTIES() {
+    return (
+      process.env.PUNCTUM_CANDIDATE_CLERK_AUTHORIZED_PARTIES ||
+      process.env.CLERK_AUTHORIZED_PARTIES ||
+      undefined
+    );
+  },
   CLIENT_PASSWORD_BACKEND: "local",
   HOSTINGER_PREFER_WEBP: "true",
   HOSTINGER_IMAGE_PROVIDER: "sharp",

@@ -1,6 +1,6 @@
 services:
   punctum-production:
-    image: punctum-hostinger-candidate:20261113
+    image: punctum-hostinger-candidate:20261114-clerk
     container_name: punctum-production-candidate
     restart: unless-stopped
     network_mode: host
