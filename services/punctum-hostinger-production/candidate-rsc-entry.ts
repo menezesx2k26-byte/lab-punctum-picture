@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import punctum from "../../worker/index";
 import { env } from "./candidate-bindings";
-import { candidateConfig } from "./candidate-runtime.mjs";
+import { candidateConfig, canonicalCandidateUrl } from "./candidate-runtime.mjs";
 import { publicPaths } from "../punctum-hostinger-node/public-files";
 
 const bootId = randomUUID();
@@ -44,6 +44,8 @@ function buildForwardedRequest(request: Request, cfg: ReturnType<typeof candidat
 export default async function fetchCandidate(request: Request): Promise<Response> {
   const cfg = candidateConfig();
   const url = new URL(request.url);
+  const canonical = canonicalCandidateUrl(url, cfg.publicOrigin);
+  if (canonical) return new Response(null, { status: 308, headers: { Location: canonical.href, "Cache-Control": "no-store" } });
   const allowedHosts = new Set([cfg.origin.host, cfg.publicOrigin.host]);
   if (!allowedHosts.has(url.host)) {
     return new Response(null, { status: 421, headers: { "Cache-Control": "no-store" } });
@@ -54,7 +56,7 @@ export default async function fetchCandidate(request: Request): Promise<Response
       "x-vinext-static-file": encodeURIComponent(url.pathname),
       "X-Content-Type-Options": "nosniff",
     };
-    if (cfg.environment !== "production") {
+    if (cfg.noindex) {
       staticHeaders["X-Robots-Tag"] = "noindex, nofollow, noarchive";
     }
     return new Response(null, { headers: staticHeaders });
@@ -76,7 +78,7 @@ export default async function fetchCandidate(request: Request): Promise<Response
   if (cfg.environment === "production" && request.headers.get("x-forwarded-proto") === "https") {
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
-  if (cfg.environment !== "production") {
+  if (cfg.noindex) {
     headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
     if (!headers.has("Cache-Control")) {
       headers.set("Cache-Control", "private, no-store");

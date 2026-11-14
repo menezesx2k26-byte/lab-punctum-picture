@@ -2,6 +2,14 @@ import { lstatSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute } from "node:path";
 import { validatePrivateStageDb } from "./sqlite.mjs";
 
+export function canonicalCandidateUrl(url, publicOrigin) {
+  if (publicOrigin.origin !== "https://punctumpicture.com" || url.hostname !== "www.punctumpicture.com" || url.port) return null;
+  const target = new URL(publicOrigin.origin);
+  target.pathname = url.pathname;
+  target.search = url.search;
+  return target;
+}
+
 function privateDir(path, errCode) {
   if (typeof path !== "string" || !isAbsolute(path)) throw Error(errCode);
   const l = lstatSync(path);
@@ -94,6 +102,7 @@ export function candidateConfig() {
 
   return {
     managed,
+    noindex: environment !== "production" || publicOrigin.hostname === "aliceblue-locust-999458.hostingersite.com",
     environment,
     origin,
     publicOrigin,
