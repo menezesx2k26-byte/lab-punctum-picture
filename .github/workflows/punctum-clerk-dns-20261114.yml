@@ -1,0 +1,74 @@
+name: Publish Punctum Clerk DNS
+
+on:
+  push:
+    branches: [codex/punctum-clerk-dns-20261114]
+    paths: [.github/workflows/punctum-clerk-dns-20261114.yml]
+
+permissions: {}
+
+concurrency:
+  group: punctum-clerk-production-dns
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Compare and add only missing Clerk CNAMEs
+        env:
+          CF_ZONE_READ_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_DNS_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const account = '257bca437616da74ece1ce4bbaf0bd89';
+          const zoneName = 'punctumpicture.com';
+          const records = [
+            ['clerk', 'frontend-api.clerk.services'],
+            ['accounts', 'accounts.clerk.services'],
+            ['clkmail', 'mail.5d5oc5l07g8f.clerk.services'],
+            ['clk._domainkey', 'dkim1.5d5oc5l07g8f.clerk.services'],
+            ['clk2._domainkey', 'dkim2.5d5oc5l07g8f.clerk.services'],
+          ].map(([name, content]) => ({ type: 'CNAME', name: name + '.' + zoneName, content, proxied: false, ttl: 1 }));
+
+          async function call(path, token, data) {
+            assert(token, 'Required Cloudflare secret is missing');
+            const reply = await fetch('https://api.cloudflare.com/client/v4' + path, {
+              method: data ? 'POST' : 'GET',
+              redirect: 'error',
+              headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+              body: data ? JSON.stringify(data) : undefined,
+              signal: AbortSignal.timeout(15000),
+            });
+            const body = await reply.json();
+            if (!reply.ok || !body.success) {
+              throw Error('Cloudflare HTTP ' + reply.status + '; codes ' + (body.errors ?? []).map(({code}) => code).join(','));
+            }
+            return body.result;
+          }
+
+          const zones = await call('/zones?' + new URLSearchParams({name: zoneName, 'account.id': account}), process.env.CF_ZONE_READ_TOKEN);
+          assert.equal(zones.length, 1, 'Expected exactly one accessible zone');
+          const [zone] = zones;
+          assert(zone.name === zoneName && zone.account?.id === account && zone.status === 'active' && /^[a-f0-9]{32}$/.test(zone.id), 'Zone identity did not match');
+          const path = '/zones/' + zone.id + '/dns_records';
+          const read = (name) => call(path + '?' + new URLSearchParams({ 'name.exact': name }), process.env.CF_DNS_TOKEN);
+          const matches = (found, wanted) => found.name === wanted.name && found.type === wanted.type
+            && found.content.replace(/\.$/, '') === wanted.content && found.proxied === false;
+          const existing = await Promise.all(records.map((record) => read(record.name)));
+          const posts = records.filter((record, index) => {
+            const found = existing[index];
+            if (found.length === 0) return true;
+            assert(found.length === 1 && matches(found[0], record), 'DNS conflict at ' + record.name);
+            return false;
+          });
+          if (posts.length) {
+            await call(path + '/batch', process.env.CF_DNS_TOKEN, {posts});
+          }
+          const verified = await Promise.all(records.map((record) => read(record.name)));
+          assert(verified.every((found, index) => found.length === 1 && matches(found[0], records[index])), 'Readback failed');
+          console.log(JSON.stringify({zone: zoneName, created: posts.length, verified: records.length, names: records.map(({name}) => name)}));
+          NODE
