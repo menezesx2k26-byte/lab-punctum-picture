@@ -1,3 +1,4 @@
+import { assertSeparateAccessAudiences } from "../client/audience";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { AppError } from "./errors";
 import { envString, requiredEnvString } from "./env";
@@ -262,6 +263,7 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminIde
     throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
   }
 
+  assertSeparateAccessAudiences(env);
   const teamDomain = normalizeTeamDomain(requiredEnvString(env, "CLOUDFLARE_TEAM_DOMAIN"));
   const audience = requiredEnvString(env, "CLOUDFLARE_ACCESS_AUD");
   const issuer = `https://${teamDomain}`;

@@ -1,0 +1,31 @@
+{
+  "mission": "punctum-private-albums-r4",
+  "phase": "P12-local-recovery",
+  "branch": "integration/punctum-private-albums-r4-20261027",
+  "baseSha": "a77654281a80be3c9e8857f4aef2744a942a991b",
+  "headSha": null,
+  "featureEnabledInProduction": null,
+  "productionWritesAuthorized": false,
+  "gates": {
+    "baseline": "PASS",
+    "integration": "NOT_RUN",
+    "realOtp": "BLOCKED_EXTERNAL",
+    "securityReview": "BLOCKED_SECURITY",
+    "recovery": "BLOCKED_EXTERNAL",
+    "productionRelease": "BLOCKED_EXTERNAL",
+    "localRecovery": "PASS"
+  },
+  "blockers": [
+    "BLOCKED_REAL_OTP",
+    "BLOCKED_QA_AUTHORITY",
+    "BLOCKED_DEVICE_QA",
+    "BLOCKED_BILLING_READ",
+    "BLOCKED_LGPD_APPROVAL",
+    "QA_RESOURCES_OCCUPIED",
+    "BROWSER_BINARY_DOWNLOAD_INVALID"
+  ],
+  "lastVerifiedAt": "2026-10-27T13:14:34.439845+00:00",
+  "lastValidatedCodeCommit": "3cc4db8c7a936f51d75025226970676a87f89ba7",
+  "lastValidatedCodeCI": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40465566814",
+  "qaResourceWritesPerformed": false
+}
