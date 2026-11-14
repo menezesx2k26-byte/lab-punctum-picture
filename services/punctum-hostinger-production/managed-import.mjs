@@ -12,6 +12,14 @@ import { fileURLToPath } from "node:url";
 import { privateOriginals } from "./originals.mjs";
 import { openProductionStageDatabase } from "./sqlite.mjs";
 
+export function loadD1Snapshot(db, sql) {
+  // D1 exports may insert dependent rows before their referenced table.
+  db.exec("PRAGMA foreign_keys=OFF");
+  try { db.exec(sql); } finally { db.exec("PRAGMA foreign_keys=ON"); }
+  if (db.prepare("PRAGMA integrity_check").get().integrity_check !== "ok" ||
+      db.prepare("PRAGMA foreign_key_check").all().length) throw Error("MANAGED_SOURCE_DATABASE_INVALID");
+}
+
 export function databaseInventory(db) {
   return Object.fromEntries(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(({ name }) => {
     const rows = db.prepare(`SELECT * FROM "${name.replaceAll('"', '""')}"`).all().map((row) => JSON.stringify(row)).sort();

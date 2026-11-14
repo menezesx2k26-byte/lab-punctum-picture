@@ -9,7 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 import { sourceInventory, downloadObject, verifyOriginal } from "./punctum-r2-encrypted-stage.mjs";
 import { stageOriginal } from "../services/punctum-hostinger-production/originals.mjs";
 import { classifyReference } from "../services/punctum-hostinger-production/validate-real-parity.mjs";
-import { databaseInventory } from "../services/punctum-hostinger-production/managed-import.mjs";
+import { databaseInventory, loadD1Snapshot } from "../services/punctum-hostinger-production/managed-import.mjs";
 
 process.umask(0o077);
 const account = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -31,9 +31,7 @@ try {
   const db = new DatabaseSync(dbPath, { enableForeignKeyConstraints: true });
   let objects, adminEmail, sourceTables, tables, sampleImageId;
   try {
-    db.exec(sql.toString("utf8"));
-    assert.equal(db.prepare("PRAGMA integrity_check").get().integrity_check, "ok");
-    assert.equal(db.prepare("PRAGMA foreign_key_check").all().length, 0);
+    loadD1Snapshot(db, sql.toString("utf8"));
     sourceTables = databaseInventory(db);
     const known = new Set(db.prepare("SELECT name FROM d1_migrations").all().map(({ name }) => name));
     for (const file of ["0009_private_client_galleries.sql", "0010_public_home_snapshot.sql", "0011_private_gallery_byte_integrity.sql",

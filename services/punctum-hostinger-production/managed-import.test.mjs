@@ -6,8 +6,17 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, wr
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
-import { importManagedSeed } from "./managed-import.mjs";
+import { importManagedSeed, loadD1Snapshot } from "./managed-import.mjs";
 import { stageOriginal } from "./originals.mjs";
+
+test("D1 restore permits export ordering but rejects an orphaned reference", () => {
+  const db = new DatabaseSync(":memory:", { enableForeignKeyConstraints: true });
+  try {
+    loadD1Snapshot(db, "CREATE TABLE parent(id INTEGER PRIMARY KEY); CREATE TABLE child(parent_id INTEGER REFERENCES parent(id)); INSERT INTO child VALUES(1); INSERT INTO parent VALUES(1);");
+    assert.equal(db.prepare("PRAGMA foreign_keys").get().foreign_keys, 1);
+    assert.throws(() => loadD1Snapshot(db, "INSERT INTO child VALUES(2);"), /MANAGED_SOURCE_DATABASE_INVALID/);
+  } finally { db.close(); }
+});
 
 test("managed import authenticates bytes, preserves original hashes, and reuses edited persistent DB", async (t) => {
   process.umask(0o077);
