@@ -12,7 +12,7 @@ services:
     environment:
       PORT: "3025"
       NODE_ENV: production
-      PUNCTUM_PRODUCTION_CANDIDATE_MODE: hostinger-production-candidate
+      PUNCTUM_PRODUCTION_CANDIDATE_MODE: private-candidate
       PUNCTUM_CANDIDATE_TRUSTED_PROXY: caddy
     volumes:
       - /opt/punctum/private/production/db:/private/db

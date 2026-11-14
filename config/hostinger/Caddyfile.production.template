@@ -2,7 +2,11 @@
 # ATENÇÃO: Não ativar para punctumpicture.com antes do cutover de DNS autorizado.
 # Em staging/pré-cutover, manter apenas em 127.0.0.1 ou domínio de staging com tls internal.
 
-punctumpicture.com, www.punctumpicture.com {
+www.punctumpicture.com {
+  redir https://punctumpicture.com{uri} permanent
+}
+
+punctumpicture.com {
   encode zstd gzip
 
   reverse_proxy 127.0.0.1:3025 {
