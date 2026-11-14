@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
 import { importManagedSeed, loadD1Snapshot } from "./managed-import.mjs";
 import { stageOriginal } from "./originals.mjs";
+import { verifyManagedData } from "./managed-verify.mjs";
 
 test("D1 restore permits export ordering but rejects an orphaned reference", () => {
   const db = new DatabaseSync(":memory:", { enableForeignKeyConstraints: true });
@@ -36,7 +37,7 @@ test("managed import authenticates bytes, preserves original hashes, and reuses 
   db.prepare("INSERT INTO images VALUES (?, 'ready')").run(keyName);
   db.close();
   writeFileSync(join(input, "seed-manifest.json"), JSON.stringify({
-    schema: "punctum-managed-seed-v1", objects: [{ key: keyName, size: image.length, sha256 }],
+    schema: "punctum-managed-seed-v1", sqlSha256: "a".repeat(64), objects: [{ key: keyName, size: image.length, sha256 }],
   }));
   const tar = join(root, "seed.tar.gz");
   execFileSync("tar", ["-czf", tar, "-C", input, "application.sqlite", "originals", "seed-manifest.json"]);
@@ -53,6 +54,9 @@ test("managed import authenticates bytes, preserves original hashes, and reuses 
   const receipt = await importManagedSeed(config);
   assert.equal(receipt.objects, 1);
   assert.equal(receipt.bytes, image.length);
+  const storage = { dbFile: join(destination, "application.sqlite"), originals: join(destination, "originals") };
+  assert.equal((await verifyManagedData(storage, "a".repeat(64))).objects, 1);
+  await assert.rejects(verifyManagedData(storage, "b".repeat(64)), /MANAGED_IMPORTED_SOURCE_MISMATCH/);
   const live = new DatabaseSync(join(destination, "application.sqlite"));
   live.exec("CREATE TABLE new_writes(value TEXT); INSERT INTO new_writes VALUES ('preserve');");
   live.close();

@@ -32,8 +32,8 @@ jobs:
           request = json.loads(pathlib.Path('requests/punctum-managed-production.json').read_text())
           assert request['domain'] == 'aliceblue-locust-999458.hostingersite.com'
           action = request['action']
-          assert action in ('inventory', 'verify-managed', 'prepare-managed')
-          if action == 'prepare-managed':
+          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed')
+          if action in ('prepare-managed', 'resume-managed'):
               verified = request['verified_sha']
               assert re.fullmatch('[a-f0-9]{40}', verified)
               changed = subprocess.check_output(['git','diff','--name-only',verified,'HEAD']).decode().splitlines()
@@ -79,6 +79,13 @@ jobs:
           SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
           PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
         run: python3 scripts/hostinger_managed_production.py
+      - name: Resume and prove the already imported private dataset
+        if: steps.operation.outputs.action == 'resume-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+        run: python3 scripts/hostinger_managed_resume.py
       - name: Inspect the designated existing managed Node website
         if: steps.operation.outputs.action == 'inventory'
         env:

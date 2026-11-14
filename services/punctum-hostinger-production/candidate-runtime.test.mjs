@@ -54,6 +54,8 @@ test("candidateConfig validates isolated private candidate environment and rejec
   process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://aliceblue-locust-999458.hostingersite.com";
   assert.equal(candidateConfig().managed, true);
   assert.equal(candidateConfig().origin.port, "34567");
+  delete process.env.PORT;
+  assert.equal(candidateConfig().origin.port, "3000");
   process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://unrelated.example.com";
   assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
   delete process.env.PUNCTUM_CANDIDATE_PROVIDER;

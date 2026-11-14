@@ -30,7 +30,7 @@ export function candidateConfig() {
   const managed = process.env.PUNCTUM_CANDIDATE_PROVIDER === "hostinger-managed";
   try {
     origin = new URL(managed
-      ? `http://127.0.0.1:${process.env.PORT}`
+      ? `http://127.0.0.1:${process.env.PORT || "3000"}`
       : process.env.PUNCTUM_CANDIDATE_ORIGIN ?? "");
   } catch {
     throw Error("CANDIDATE_LISTEN_ORIGIN_INVALID");
