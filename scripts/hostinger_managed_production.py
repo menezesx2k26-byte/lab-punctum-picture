@@ -113,6 +113,8 @@ def execute(root):
         except RequestFailure as error:
             if error.status != 404:
                 raise
+            subprocess.run(['git', 'fetch', '--no-tags', '--depth=1', 'origin', BASELINE_SOURCE],
+                           cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', BASELINE_SOURCE], cwd=root).decode().splitlines()
             restored, baseline_files = candidate_archive(root, paths, revision=BASELINE_SOURCE)
             baseline_archive = operation.upload_archive(restored, 'punctum-node-candidate-')
