@@ -10,6 +10,7 @@ import {
 import handler from "vinext/server/app-router-entry";
 import { handlePrivateGalleryRoutes, isPrivateGalleryPath } from "./client/router";
 import { privateResponse } from "./client/response";
+import { handleClerkPilotRequest } from "./client/clerk-pilot";
 import { handleAdminApi } from "./api/admin";
 import { handleAdminAuth } from "./api/admin-auth";
 import { handlePublicApi } from "./api/public";
@@ -17,7 +18,9 @@ import { serveMedia } from "./media/serve";
 import { handleScheduled } from "./scheduled";
 import { robots, sitemap } from "./seo";
 import { handleSiteMediaApi } from "./site-media";
-import { assertAllowedOrigin, requireAdmin } from "./utils/auth";
+import { adminAuthMode, assertAllowedOrigin, requireAdmin } from "./utils/auth";
+import { clientAuthMode } from "./client/auth-mode";
+import { isClerkAuthEnabled, resolveClerkRuntimeConfig } from "./auth/clerk-auth";
 import { AppError } from "./utils/errors";
 import { apiError, withSecurityHeaders } from "./utils/response";
 
@@ -36,6 +39,8 @@ async function routeRequest(
     );
     return isPrivateGalleryPath(url.pathname) ? privateResponse(redirect) : redirect;
   }
+  const clerkPilot = await handleClerkPilotRequest(request, env);
+  if (clerkPilot) return clerkPilot;
   const privateResult = await handlePrivateGalleryRoutes(request, url, env);
   if (privateResult) return privateResult;
 
@@ -178,7 +183,11 @@ async function routeRequest(
   mark?.("render-start");
   const response = await handler.fetch(request, env, ctx);
   mark?.("render-end");
-  return isPrivateGalleryPath(url.pathname) ? privateResponse(response) : withSecurityHeaders(response);
+  const clerkLogin = (url.pathname === "/acesso" && adminAuthMode(env) !== "legacy") ||
+    (url.pathname === "/albuns/entrar" && clientAuthMode(env) !== "access" && isClerkAuthEnabled(env));
+  const clerkIssuer = clerkLogin ? resolveClerkRuntimeConfig(request, env)?.issuer : undefined;
+  const options = { clerkIssuer };
+  return isPrivateGalleryPath(url.pathname) ? privateResponse(response, options) : withSecurityHeaders(response, options);
 }
 
 /**

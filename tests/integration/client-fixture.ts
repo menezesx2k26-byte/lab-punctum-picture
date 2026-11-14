@@ -7,7 +7,7 @@ const migrations = import.meta.glob("../../migrations/*.sql", {
 export async function bootstrapPrivateDb() {
   if (
     await env.DB.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='client_accounts'",
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='revoked_clerk_tokens'",
     ).first()
   )
     return;
@@ -16,7 +16,11 @@ export async function bootstrapPrivateDb() {
       .split(";")
       .map((s) => s.trim())
       .filter(Boolean)) {
-      await env.DB.prepare(statement).run();
+      try {
+        await env.DB.prepare(statement).run();
+      } catch (err) {
+        if (!String(err).includes("already exists")) throw err;
+      }
     }
   }
 }

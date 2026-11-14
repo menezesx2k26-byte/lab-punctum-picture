@@ -1,5 +1,5 @@
 import { withSecurityHeaders, json } from "../utils/response";
-export function privateResponse(response: Response): Response {
+export function privateResponse(response: Response, options?: Parameters<typeof withSecurityHeaders>[1]): Response {
   const headers = new Headers(response.headers);
   headers.set("Cache-Control", "private, no-store");
   headers.set("X-Robots-Tag", "noindex, nofollow");
@@ -9,7 +9,7 @@ export function privateResponse(response: Response): Response {
       status: response.status,
       statusText: response.statusText,
       headers,
-    }),
+    }), options,
   );
 }
 export function privateJson(data: unknown, init: ResponseInit = {}) {

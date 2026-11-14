@@ -5,10 +5,10 @@ import { privateApi, errorMessage } from "./api";
 export function ClientHeader() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [authMode, setAuthMode] = useState<"password" | "access" | null>(null);
+  const [authMode, setAuthMode] = useState<"password" | "access" | "clerk" | null>(null);
   useEffect(() => {
     let active = true;
-    void privateApi<{ authMode: "password" | "access" }>("/api/client/me")
+    void privateApi<{ authMode: "password" | "access" | "clerk" }>("/api/client/me")
       .then((data) => { if (active) setAuthMode(data.authMode); })
       .catch(() => undefined);
     return () => { active = false; };

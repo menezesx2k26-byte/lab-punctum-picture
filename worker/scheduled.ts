@@ -1,5 +1,5 @@
 import { envNumber, envString, requireDb } from "./utils/env";
-import { PRIVATE_BACKUP_TABLES, hasPrivateGallerySchema, cleanupPrivateGalleryUploads } from "./client/maintenance";
+import { PRIVATE_BACKUP_TABLES, cleanupPrivateGalleryUploads } from "./client/maintenance";
 
 const BACKUP_TABLES = [
   "site_settings",
@@ -18,6 +18,16 @@ const BACKUP_TABLES = [
   "site_config_pointers",
 ] as const;
 
+const MIGRATED_BACKUP_TABLES = [
+  ...PRIVATE_BACKUP_TABLES,
+  "site_media",
+  "public_home_snapshot",
+  "public_home_snapshot_mutations",
+  "clerk_pilot_identity_links",
+  "clerk_admin_identity_links",
+  "revoked_clerk_tokens",
+] as const;
+
 async function logicalBackup(env: Env): Promise<void> {
   const db = requireDb(env);
   if (!env.BACKUPS) {
@@ -27,9 +37,12 @@ async function logicalBackup(env: Env): Promise<void> {
   const createdAt = new Date();
   const data: Record<string, unknown[]> = {};
   const rowCounts: Record<string, number> = {};
-  const tables=await hasPrivateGallerySchema(db) ? [...BACKUP_TABLES,...PRIVATE_BACKUP_TABLES] : BACKUP_TABLES;
-  for (const table of tables) {
-    const result = await db.prepare(`SELECT * FROM ${table}`).all();
+  const schema = await db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all<{ name: string }>();
+  const existingTables = new Set(schema.results.map(({ name }) => name));
+  const tables = [...BACKUP_TABLES, ...MIGRATED_BACKUP_TABLES.filter((table) => existingTables.has(table))];
+  const snapshot = await db.batch(tables.map((table) => db.prepare(`SELECT * FROM ${table}`)));
+  for (const [index, table] of tables.entries()) {
+    const result = snapshot[index];
     data[table] = result.results;
     rowCounts[table] = result.results.length;
   }

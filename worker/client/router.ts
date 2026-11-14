@@ -65,6 +65,9 @@ export async function handlePrivateGalleryRoutes(
       if (url.pathname === "/albuns/trocar-senha")
         throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
     }
+    if (clientAuthMode(env) === "clerk" && url.pathname === "/albuns/trocar-senha") {
+      throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+    }
     const page = await protectClientPage(request, url, env);
     if (page) return page;
     const session = await handleClientSessionApi(request, url, env);

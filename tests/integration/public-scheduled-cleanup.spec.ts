@@ -32,9 +32,9 @@ async function staleIntent(target: ReturnType<typeof image> extends Promise<infe
   return id;
 }
 
-async function runCron(bindings: Env = env as Env) {
+async function runCron(bindings: Env = env as Env, cron = "0 5 * * *") {
   const promises: Promise<unknown>[] = [];
-  await handleScheduled({ cron: "0 5 * * *" } as ScheduledController, bindings, {
+  await handleScheduled({ cron } as ScheduledController, bindings, {
     waitUntil(promise: Promise<unknown>) { promises.push(promise); },
   } as ExecutionContext);
   await Promise.all(promises);
@@ -42,6 +42,57 @@ async function runCron(bindings: Env = env as Env) {
 
 describe("public editorial upload cleanup preserves original images across restoration races", () => {
   beforeAll(bootstrapPrivateDb);
+
+  it("backs up site media, published snapshots, and Clerk links and revocations", async () => {
+    const prefix = `backup-test/${crypto.randomUUID()}`;
+    await env.DB.prepare(
+      "INSERT INTO revoked_clerk_tokens (revocation_key, expires_at) VALUES ('fixture-key', '2100-01-01')",
+    ).run();
+    await runCron({ ...env, BACKUP_PREFIX: prefix } as Env, "0 3 * * *");
+    const listed = await env.BACKUPS.list({ prefix: `${prefix}/daily/` });
+    expect(listed.objects).toHaveLength(1);
+    const backup = await env.BACKUPS.get(listed.objects[0].key);
+    const snapshot = await backup?.json<{ data: Record<string, unknown[]> }>();
+    const data = snapshot?.data;
+    expect({
+      site_media: data?.site_media,
+      public_home_snapshot: data?.public_home_snapshot,
+      public_home_snapshot_mutations: data?.public_home_snapshot_mutations,
+      clerk_pilot_identity_links: data?.clerk_pilot_identity_links,
+      clerk_admin_identity_links: data?.clerk_admin_identity_links,
+      revoked_clerk_tokens: data?.revoked_clerk_tokens,
+    }).toEqual({
+      site_media: expect.any(Array),
+      public_home_snapshot: expect.any(Array),
+      public_home_snapshot_mutations: expect.any(Array),
+      clerk_pilot_identity_links: expect.any(Array),
+      clerk_admin_identity_links: expect.any(Array),
+      revoked_clerk_tokens: [{ revocation_key: "fixture-key", expires_at: "2100-01-01" }],
+    });
+  });
+
+  it("backs up a database from before the Clerk and R4 migrations", async () => {
+    const prefix = `backup-test/${crypto.randomUUID()}`;
+    const newerTables = [
+      "revoked_clerk_tokens", "clerk_admin_identity_links", "clerk_pilot_identity_links",
+      "client_gallery_upload_intents", "client_gallery_favorites", "client_gallery_images",
+      "client_galleries", "client_accounts",
+    ];
+    await env.DB.batch(newerTables.map((table) =>
+      env.DB.prepare(`ALTER TABLE ${table} RENAME TO test_hidden_${table}`)));
+    try {
+      await runCron({ ...env, BACKUP_PREFIX: prefix } as Env, "0 3 * * *");
+      const listed = await env.BACKUPS.list({ prefix: `${prefix}/daily/` });
+      const object = await env.BACKUPS.get(listed.objects[0].key);
+      const snapshot = await object?.json<{ data: Record<string, unknown[]> }>();
+      expect(snapshot?.data.site_media).toEqual(expect.any(Array));
+      expect(snapshot?.data).not.toHaveProperty("revoked_clerk_tokens");
+      expect(snapshot?.data).not.toHaveProperty("client_accounts");
+    } finally {
+      await env.DB.batch(newerTables.map((table) =>
+        env.DB.prepare(`ALTER TABLE test_hidden_${table} RENAME TO ${table}`)));
+    }
+  });
 
   it("never deletes a ready Studio original pointed to by a forged expired intent from another album", async () => {
     const orphan = await image(await album(), "pending");
