@@ -71,6 +71,18 @@ def smoke(operation, label):
     if previous:
         assert media == previous, 'Managed media changed after restart/rebuild'
     operation.report['media'][label] = media
+    status, auth_headers, _ = operation.request(label + 'Login', 'https://' + DOMAIN + '/admin/api/session', 'POST',
+        {'Origin': 'https://' + DOMAIN, 'Content-Type': 'application/json'},
+        json.dumps({'email': os.environ['SOURCE_ADMIN_EMAIL'], 'password': os.environ['SOURCE_ADMIN_PASSWORD']}).encode())
+    cookie = auth_headers.get('Set-Cookie', '')
+    assert status == 200 and all(flag in cookie for flag in ('HttpOnly', 'Secure', 'SameSite=Strict')), 'Managed legacy authentication failed'
+    session = cookie.split(';', 1)[0]
+    for path in ('/admin/api/me', '/admin/api/studio', '/admin/studio'):
+        assert operation.request(label + 'Authenticated' + path, 'https://' + DOMAIN + path,
+            headers={'Cookie': session})[0] == 200, 'Managed Studio authorization failed'
+    operation.request(label + 'Logout', 'https://' + DOMAIN + '/admin/api/session', 'DELETE',
+        {'Origin': 'https://' + DOMAIN, 'Cookie': session})
+    operation.report.setdefault('authenticatedStudio', {})[label] = True
     operation.save()
 
 

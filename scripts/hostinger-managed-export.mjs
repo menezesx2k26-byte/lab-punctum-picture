@@ -49,12 +49,7 @@ try {
     for (const [name, value] of Object.entries(sourceTables)) {
       if (name !== "d1_migrations") assert.deepEqual(tables[name], value, "Migration changed source data");
     }
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/workers/scripts/punctum-picture-migration/settings`, {
-      headers: { Authorization: "Bearer " + token }, redirect: "error", signal: AbortSignal.timeout(20000),
-    });
-    assert(response.ok, "Source Worker settings unavailable");
-    const settings = await response.json();
-    adminEmail = settings.result?.bindings?.find((b) => b.name === "ADMIN_ALLOWED_EMAILS")?.text?.trim();
+    adminEmail = process.env.SOURCE_ADMIN_EMAIL?.trim().toLowerCase();
     assert(/^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(adminEmail ?? ""), "Source admin allowlist requires review");
     const inventory = await sourceInventory(account, token);
     const originals = join(root, "originals");

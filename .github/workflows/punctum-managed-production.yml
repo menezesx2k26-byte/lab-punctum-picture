@@ -68,12 +68,15 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: '257bca437616da74ece1ce4bbaf0bd89'
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
           PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
         run: node scripts/hostinger-managed-export.mjs
       - name: Prepare and prove the temporary managed origin
         if: steps.operation.outputs.action == 'prepare-managed'
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
           PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
         run: python3 scripts/hostinger_managed_production.py
       - name: Inspect the designated existing managed Node website
