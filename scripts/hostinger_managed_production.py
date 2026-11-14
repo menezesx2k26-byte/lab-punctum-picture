@@ -9,7 +9,7 @@ import subprocess
 import time
 import urllib.parse
 import zipfile
-from hostinger_managed_qa import DOMAIN, SITE, Recovery, digest
+from hostinger_managed_qa import DOMAIN, SITE, Recovery, RequestFailure, digest
 from hostinger_candidate_qa import candidate_archive, put, write_candidate_environment, build, ready
 
 PRIVATE_ROOT = '/home/u571409090/punctum-managed-storage/punctum-managed-private-20261114'
@@ -106,8 +106,20 @@ def execute(root):
         assert settings.get('entry_file') == 'services/punctum-hostinger-node/server.mjs'
         assert settings.get('build_script') == 'build:hostinger:qa'
         baseline = {key: settings.get(key) for key in SETTINGS_KEYS}
-        operation.api('retainedBaselineArchive', SITE + '/builds/settings/from-archive?' +
-                      urllib.parse.urlencode({'archive_path': BASELINE_ARCHIVE}))
+        baseline_archive = BASELINE_ARCHIVE
+        try:
+            operation.api('retainedBaselineArchive', SITE + '/builds/settings/from-archive?' +
+                          urllib.parse.urlencode({'archive_path': baseline_archive}))
+        except RequestFailure as error:
+            if error.status != 404:
+                raise
+            paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', BASELINE_SOURCE], cwd=root).decode().splitlines()
+            restored, baseline_files = candidate_archive(root, paths, revision=BASELINE_SOURCE)
+            baseline_archive = operation.upload_archive(restored, 'punctum-node-candidate-')
+            operation.report['baselineRecoveryArchive'] = {'name': baseline_archive,
+                'sourceSha': BASELINE_SOURCE, 'sha256': digest(restored), 'files': len(baseline_files)}
+            operation.api('reconstructedBaselineArchive', SITE + '/builds/settings/from-archive?' +
+                          urllib.parse.urlencode({'archive_path': baseline_archive}))
         _, headers, _ = operation.request('activeBaseline', 'https://' + DOMAIN + '/api/health')
         assert headers.get('X-Punctum-QA-Source') == BASELINE_SOURCE, 'Concurrent runtime'
         exported = pathlib.Path(os.environ['PUNCTUM_MANAGED_OUTPUT'])
@@ -175,7 +187,7 @@ def execute(root):
                     'PUNCTUM_QA_MANAGED_BOOTSTRAP': '1', 'PUNCTUM_QA_SOURCE_SHA': BASELINE_SOURCE}
                 write_candidate_environment(operation, qa)
                 put(operation, 'rollbackSettings', SITE + '/builds/settings', baseline)
-                build(operation, BASELINE_ARCHIVE, baseline, 'baselineRollback')
+                build(operation, baseline_archive, baseline, 'baselineRollback')
                 operation.report['sourceSha'] = BASELINE_SOURCE
                 ready(operation, 'baselineRestored')
                 operation.report['rollback'] = {'status': 'VERIFIED', 'privateImportedDataPreserved': True,

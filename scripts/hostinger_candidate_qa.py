@@ -9,16 +9,22 @@ import subprocess
 import time
 import uuid
 import zipfile
+from contextlib import nullcontext
 from hostinger_managed_qa import API, SITE, DOMAIN, Recovery, RequestFailure, PROBE_SETTINGS, check_probe_settings, probe_archive, digest
 
 ALLOWED_ROOTS = {'app','build','config','db','drizzle','migrations','public','shared','worker'}
 ALLOWED_FILES = {'package.json','package-lock.json','next.config.ts','tsconfig.json','worker-configuration.d.ts','wrangler.jsonc'}
 
 
-def candidate_archive(root, tracked):
+def candidate_archive(root, tracked, revision=None):
+    if revision is not None and not re.fullmatch(r'[a-f0-9]{40}', revision):
+        raise ValueError('Source archive requires an exact Git revision')
     output = io.BytesIO()
     files = []
-    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
+    snapshot = (subprocess.check_output(['git', '-c', 'core.autocrlf=false', 'archive', '--format=zip', revision], cwd=root)
+                if revision else None)
+    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive, \
+            (zipfile.ZipFile(io.BytesIO(snapshot)) if snapshot else nullcontext()) as historical:
         for path in sorted(tracked):
             parts = path.split('/')
             if (path.startswith('/') or '..' in parts or any(p.startswith('.env') for p in parts) or
@@ -31,9 +37,10 @@ def candidate_archive(root, tracked):
                        path == 'scripts/hostinger-build-scheduled.mjs')
             if not allowed:
                 continue
-            if (root / path).is_symlink():
+            if ((historical.getinfo(path).external_attr >> 16) & 0o170000 == 0o120000
+                    if historical else (root / path).is_symlink()):
                 raise ValueError('Source archive refuses tracked symlinks')
-            data = (root / path).read_bytes()
+            data = historical.read(path) if historical else (root / path).read_bytes()
             archive.writestr(path, data)
             files.append({'path':path,'bytes':len(data),'sha256':digest(data)})
     if not any(f['path'] == 'services/punctum-hostinger-node/server.mjs' for f in files):
