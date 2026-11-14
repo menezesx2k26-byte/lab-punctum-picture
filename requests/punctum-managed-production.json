@@ -1,5 +1,6 @@
 {
   "domain": "aliceblue-locust-999458.hostingersite.com",
   "action": "verify-managed",
+  "verification_source": "53fa72cc833f13ff0930e64278e7b59db79e539f",
   "expected_build_uuid": "01a1d5d8-8a9b-702c-a97d-0a6cddccdbb8"
 }
