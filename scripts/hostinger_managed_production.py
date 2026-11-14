@@ -48,7 +48,7 @@ def smoke(operation, label):
     results = []
     for path, expected in [('/', 200), ('/portfolio', 200), ('/arquivo', 200), ('/contato', 200),
                            ('/fotografia', 200), ('/servicos', 200), ('/robots.txt', 200),
-                           ('/sitemap.xml', 200), ('/admin/studio', 303), ('/admin/api/me', 401),
+                           ('/sitemap.xml', 200), ('/admin/studio', 303), ('/admin/api/me', 403), ('/api/client/me', 401),
                            ('/application.sqlite', 404), ('/managed-seed.bin', 404)]:
         start = time.monotonic()
         try:
