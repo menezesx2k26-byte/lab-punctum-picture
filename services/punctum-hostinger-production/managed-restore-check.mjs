@@ -190,6 +190,19 @@ async function httpBytes(origin, path, type, timeout = 15_000) {
   return bytes;
 }
 
+export function homepageEvidence(html) {
+  if (typeof html !== "string" || html.length > 8 * 1024 * 1024) throw Error("MANAGED_RESTORE_HTML_INVALID");
+  const markup = html.replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
+  // shortcut: compares SSR text without CSS visibility; use a DOM parser if future markup requires it.
+  const text = (value) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;|&#160;|&#x0*a0;/gi, " ").replace(/\s+/g, " ").trim();
+  const title = text(markup.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i)?.[1] ?? "");
+  const headings = [...markup.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1\s*>/gi)].map((match) => text(match[1])).filter(Boolean);
+  const body = text(markup.match(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/i)?.[1] ?? "");
+  if (!title || !headings.length || !body) throw Error("MANAGED_RESTORE_HTML_EVIDENCE_MISSING");
+  return { titleSha256: sha(title), h1Sha256: sha(headings.join("\n")), bodyTextSha256: sha(body) };
+}
+
 async function stopChildGroup(child) {
   if (!child?.pid) return;
   const signal = (value) => {
@@ -212,6 +225,7 @@ export async function proveManagedRestore(config) {
   let saved, child;
   try {
     saved = await createManagedBackup(config);
+    const httpStarted = performance.now();
     const db = new DatabaseSync(join(saved.restoredRoot, "application.sqlite"), { readOnly: true });
     let image;
     try {
@@ -219,7 +233,7 @@ export async function proveManagedRestore(config) {
     } finally { db.close(); }
     if (!image || typeof image.id !== "string") throw Error("MANAGED_RESTORE_PUBLIC_IMAGE_REQUIRED");
     const port = await ephemeralPort(), origin = `http://127.0.0.1:${port}`;
-    const env = { ...process.env, NODE_ENV: "production", PORT: String(port), PUBLIC_SITE_URL: origin, SITE_ORIGIN: origin,
+    const env = { ...process.env, NODE_ENV: "production", PORT: String(port),
       PUNCTUM_PRODUCTION_CANDIDATE_MODE: "private-candidate", PUNCTUM_CANDIDATE_ORIGIN: origin,
       PUNCTUM_CANDIDATE_PUBLIC_URL: origin, PUNCTUM_CANDIDATE_TRUSTED_PROXY: "none",
       PUNCTUM_CANDIDATE_DB_FILE: join(saved.restoredRoot, "application.sqlite"),
@@ -238,13 +252,15 @@ export async function proveManagedRestore(config) {
     if (!homepage) throw Error("MANAGED_RESTORE_CHILD_TIMEOUT");
     const liveOrigin = new URL(config.publicOrigin).origin;
     const liveHome = await httpBytes(liveOrigin, "/", "text/html");
-    if (sha(homepage.toString("utf8").replaceAll(origin, "__ORIGIN__")) !== sha(liveHome.toString("utf8").replaceAll(liveOrigin, "__ORIGIN__"))) throw Error("MANAGED_RESTORE_HOME_MISMATCH");
+    if (JSON.stringify(homepageEvidence(homepage.toString("utf8"))) !== JSON.stringify(homepageEvidence(liveHome.toString("utf8")))) throw Error("MANAGED_RESTORE_HOME_MISMATCH");
     const path = `/media/${encodeURIComponent(image.id)}/card`;
     const liveCard = await httpBytes(liveOrigin, path, "image/webp");
     const restoredCard = await httpBytes(origin, path, "image/webp");
     if (liveCard.length !== restoredCard.length || sha(liveCard) !== sha(restoredCard)) throw Error("MANAGED_RESTORE_CARD_MISMATCH");
+    const httpMs = Math.round(performance.now() - httpStarted);
     return { status: "MANAGED_RESTORE_VERIFIED", archiveFile: saved.archiveFile, archiveSha256: saved.archiveSha256,
-      objects: saved.objects, bytes: saved.bytes, tables: saved.tables, restoreMs: saved.restoreMs };
+      objects: saved.objects, bytes: saved.bytes, tables: saved.tables, restoreMs: saved.restoreMs,
+      httpMs, functionalRestoreMs: saved.restoreMs + httpMs };
   } catch { throw Error("MANAGED_RESTORE_PROOF_FAILED"); }
   finally { try { await stopChildGroup(child); } finally { saved?.cleanup(); } }
 }

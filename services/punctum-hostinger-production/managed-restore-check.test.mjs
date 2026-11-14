@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import { stageOriginal, privateOriginals } from "./originals.mjs";
 import { productionStageApplicationId } from "./sqlite.mjs";
 import { databaseInventory } from "./managed-import.mjs";
-import { createManagedBackup, proveManagedRestore } from "./managed-restore-check.mjs";
+import { createManagedBackup, homepageEvidence, proveManagedRestore } from "./managed-restore-check.mjs";
 
 const linuxOnly = { skip: process.platform !== "linux" && "Requires Linux private storage permissions" };
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aEioAAAAASUVORK5CYII=", "base64");
@@ -52,6 +52,23 @@ test("import has no CLI work and relative storage is rejected without creating f
 
 test("managed HTTP proof refuses unsupported process-group platforms", { skip: process.platform === "linux" }, async () => {
   await assert.rejects(proveManagedRestore({}), /MANAGED_RESTORE_LINUX_REQUIRED/);
+});
+
+test("homepage evidence ignores canonical origins, nonces and hydration but detects title, H1 and body changes", () => {
+  const page = (origin, nonce) => `<!doctype html><html><head><title>Punctum Picture</title>
+    <link rel="canonical" href="${origin}/"><style nonce="${nonce}">body { --request: '${nonce}'; }</style></head>
+    <body><h1 class="${nonce}">Fotografia <em>com alma</em></h1><p>Memorias&nbsp;em imagens</p>
+    <a href="${origin}/albuns">Ver albuns</a><!-- request ${nonce} -->
+    <script nonce="${nonce}">const request = '${origin}/${nonce}'; const markup = '<h1>request data</h1>';</script></body></html>`;
+  const live = page("https://punctumpicture.com", "live-nonce"), restored = page("http://127.0.0.1:45678", "restore-nonce");
+  const evidence = homepageEvidence(live);
+  assert.deepEqual(evidence, homepageEvidence(restored.replace("&nbsp;", "&#160;")));
+  assert.notDeepEqual(evidence, homepageEvidence(restored.replace("Punctum Picture", "Changed title")));
+  assert.notDeepEqual(evidence, homepageEvidence(restored.replace("Fotografia", "Changed heading")));
+  assert.notDeepEqual(evidence, homepageEvidence(restored.replace("Memorias", "Changed content")));
+  for (const invalid of ["", restored.replace("Punctum Picture", " "), restored.replace(/<h1\b[^>]*>[\s\S]*?<\/h1>/, "")]) {
+    assert.throws(() => homepageEvidence(invalid), /MANAGED_RESTORE_HTML_EVIDENCE_MISSING/);
+  }
 });
 
 test("online backup includes committed WAL rows, restores all hashes, and cleanup preserves source and TAR", linuxOnly, async (t) => {
