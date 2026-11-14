@@ -27,8 +27,11 @@ export function candidateConfig() {
     throw Error("CANDIDATE_ENVIRONMENT_INVALID");
   }
   let origin;
+  const managed = process.env.PUNCTUM_CANDIDATE_PROVIDER === "hostinger-managed";
   try {
-    origin = new URL(process.env.PUNCTUM_CANDIDATE_ORIGIN ?? "");
+    origin = new URL(managed
+      ? `http://127.0.0.1:${process.env.PORT}`
+      : process.env.PUNCTUM_CANDIDATE_ORIGIN ?? "");
   } catch {
     throw Error("CANDIDATE_LISTEN_ORIGIN_INVALID");
   }
@@ -50,6 +53,9 @@ export function candidateConfig() {
     publicOrigin = new URL(process.env.PUNCTUM_CANDIDATE_PUBLIC_URL ?? origin.origin);
   } catch {
     throw Error("CANDIDATE_PUBLIC_URL_INVALID");
+  }
+  if (managed && !["https://aliceblue-locust-999458.hostingersite.com", "https://punctumpicture.com"].includes(publicOrigin.origin)) {
+    throw Error("CANDIDATE_MANAGED_HOST_INVALID");
   }
   if (
     (publicOrigin.protocol !== "https:" &&
@@ -81,12 +87,13 @@ export function candidateConfig() {
   if (adminSessionSecret.length < 40 || clientSessionSecret.length < 40) {
     throw Error("CANDIDATE_SESSION_SECRETS_REQUIRED");
   }
-  const trustedProxy = process.env.PUNCTUM_CANDIDATE_TRUSTED_PROXY || "caddy";
+  const trustedProxy = process.env.PUNCTUM_CANDIDATE_TRUSTED_PROXY || (managed ? "none" : "caddy");
   if (!["caddy", "none"].includes(trustedProxy)) {
     throw Error("CANDIDATE_TRUSTED_PROXY_INVALID");
   }
 
   return {
+    managed,
     environment,
     origin,
     publicOrigin,

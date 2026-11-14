@@ -49,6 +49,15 @@ test("candidateConfig validates isolated private candidate environment and rejec
   assert.equal(cfg.publicOrigin.origin, "https://127.0.0.1:8443");
   assert.equal(cfg.trustedProxy, "caddy");
 
+  process.env.PUNCTUM_CANDIDATE_PROVIDER = "hostinger-managed";
+  process.env.PORT = "34567";
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://aliceblue-locust-999458.hostingersite.com";
+  assert.equal(candidateConfig().managed, true);
+  assert.equal(candidateConfig().origin.port, "34567");
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://unrelated.example.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
+  delete process.env.PUNCTUM_CANDIDATE_PROVIDER;
+
   process.env.PUNCTUM_CANDIDATE_ORIGIN = "https://0.0.0.0:3025";
   assert.throws(() => candidateConfig(), /CANDIDATE_LISTEN_ORIGIN_INVALID/);
 });

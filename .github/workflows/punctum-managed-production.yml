@@ -18,12 +18,66 @@ jobs:
   managed:
     if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          fetch-depth: 20
+      - name: Validate the bounded operation
+        id: operation
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, subprocess
+          request = json.loads(pathlib.Path('requests/punctum-managed-production.json').read_text())
+          assert request['domain'] == 'aliceblue-locust-999458.hostingersite.com'
+          action = request['action']
+          assert action in ('inventory', 'verify-managed', 'prepare-managed')
+          if action == 'prepare-managed':
+              verified = request['verified_sha']
+              assert re.fullmatch('[a-f0-9]{40}', verified)
+              changed = subprocess.check_output(['git','diff','--name-only',verified,'HEAD']).decode().splitlines()
+              assert changed == ['requests/punctum-managed-production.json'], 'Deploy code differs from verified revision'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('action=' + action, file=output)
+          PY
+      - uses: actions/setup-node@v7
+        if: steps.operation.outputs.action != 'inventory'
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+        if: steps.operation.outputs.action != 'inventory'
+      - name: Verify managed runtime, private import, and existing POSIX contracts
+        if: steps.operation.outputs.action == 'verify-managed'
+        run: |
+          node --test services/punctum-hostinger-production/*.test.mjs
+          python3 -m unittest discover -s scripts -p 'hostinger_managed*test.py'
+      - name: Verify application integration
+        if: steps.operation.outputs.action == 'verify-managed'
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test -- --reporter=dot
+          npm run build:hostinger:candidate
+          npm run build:hostinger:scheduled
+          npm audit --audit-level=moderate
+      - name: Export and encrypt a fresh read-only source snapshot
+        if: steps.operation.outputs.action == 'prepare-managed'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: '257bca437616da74ece1ce4bbaf0bd89'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
+        run: node scripts/hostinger-managed-export.mjs
+      - name: Prepare and prove the temporary managed origin
+        if: steps.operation.outputs.action == 'prepare-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
+        run: python3 scripts/hostinger_managed_production.py
       - name: Inspect the designated existing managed Node website
+        if: steps.operation.outputs.action == 'inventory'
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
         run: |

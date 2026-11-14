@@ -31,7 +31,8 @@
     "start:hostinger:mutable-sandbox": "node services/punctum-hostinger-production/sandbox-server.mjs",
     "build:hostinger:candidate": "vite build --config services/punctum-hostinger-production/candidate-vite.config.ts",
     "start:hostinger:candidate": "node services/punctum-hostinger-production/candidate-server.mjs",
-    "build:hostinger:scheduled": "node scripts/hostinger-build-scheduled.mjs"
+    "build:hostinger:scheduled": "node scripts/hostinger-build-scheduled.mjs",
+    "build:hostinger:managed": "npm run build:hostinger:candidate && npm run build:hostinger:scheduled && node services/punctum-hostinger-production/managed-import.mjs"
   },
   "dependencies": {
     "@clerk/backend": "3.27.0",

@@ -26,7 +26,9 @@ def candidate_archive(root, tracked):
                 path.endswith(('.sqlite','.db','.pem','.key','.zip'))):
                 continue
             allowed = (parts[0] in ALLOWED_ROOTS or path in ALLOWED_FILES or
-                       path.startswith('services/punctum-hostinger-node/'))
+                       path.startswith('services/punctum-hostinger-node/') or
+                       path.startswith('services/punctum-hostinger-production/') or
+                       path == 'scripts/hostinger-build-scheduled.mjs')
             if not allowed:
                 continue
             if (root / path).is_symlink():

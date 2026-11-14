@@ -1,7 +1,10 @@
+import { randomUUID } from "node:crypto";
 import punctum from "../../worker/index";
 import { env } from "./candidate-bindings";
 import { candidateConfig } from "./candidate-runtime.mjs";
 import { publicPaths } from "../punctum-hostinger-node/public-files";
+
+const bootId = randomUUID();
 
 const context = {
   waitUntil(task: Promise<unknown>) {
@@ -78,6 +81,11 @@ export default async function fetchCandidate(request: Request): Promise<Response
     if (!headers.has("Cache-Control")) {
       headers.set("Cache-Control", "private, no-store");
     }
+  }
+  if (cfg.managed && url.pathname === "/api/health" && response.ok &&
+      /^[a-f0-9]{40}$/.test(process.env.PUNCTUM_QA_SOURCE_SHA ?? "")) {
+    headers.set("X-Punctum-QA-Source", process.env.PUNCTUM_QA_SOURCE_SHA!);
+    headers.set("X-Punctum-QA-Boot", bootId);
   }
 
   return new Response(response.body, {
