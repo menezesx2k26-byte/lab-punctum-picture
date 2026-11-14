@@ -48,7 +48,7 @@ export function apiError(error: unknown, requestId = crypto.randomUUID()): Respo
 
 export function withSecurityHeaders(
   response: Response,
-  options: { studioPreview?: boolean } = {},
+  options: { studioPreview?: boolean; clerkIssuer?: string } = {},
 ): Response {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
@@ -57,10 +57,23 @@ export function withSecurityHeaders(
     }
   }
   const frameAncestors = options.studioPreview ? "'self'" : "'none'";
+  const issuer = options.clerkIssuer ?? "";
+  const clerk = /^https:\/\/[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(issuer);
+  const challenges = "https://challenges.cloudflare.com https://*.protect.clerk.com";
   headers.set("X-Frame-Options", options.studioPreview ? "SAMEORIGIN" : "DENY");
   headers.set(
     "Content-Security-Policy",
-    `default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.r2.cloudflarestorage.com; frame-ancestors ${frameAncestors}; base-uri 'self'; form-action 'self'`,
+    [
+      "default-src 'self'",
+      `img-src 'self' data: blob:${clerk ? " https://img.clerk.com" : ""}`,
+      "style-src 'self' 'unsafe-inline'",
+      `script-src 'self' 'unsafe-inline'${clerk ? ` ${issuer} ${challenges}` : ""}`,
+      `connect-src 'self' https://*.r2.cloudflarestorage.com${clerk ? ` ${issuer} https://*.protect.clerk.com:*` : ""}`,
+      `frame-ancestors ${frameAncestors}`,
+      "base-uri 'self'",
+      "form-action 'self'",
+      ...(clerk ? [`frame-src 'self' ${challenges}`, "worker-src 'self' blob:"] : []),
+    ].join("; "),
   );
   if (options.studioPreview) {
     headers.set("Cache-Control", "private, no-store, max-age=0");

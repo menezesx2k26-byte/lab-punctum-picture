@@ -26,4 +26,22 @@ describe("headers de framing", () => {
       "noindex, nofollow, noarchive",
     );
   });
+
+  it("permite os recursos do Clerk com issuer HTTPS sem liberar framing da página", () => {
+    const response = withSecurityHeaders(new Response("login"), {
+      clerkIssuer: "https://clerk.punctumpicture.com",
+    });
+    const policy = response.headers.get("content-security-policy")!;
+    expect(policy).toMatch(/script-src [^;]+https:\/\/clerk\.punctumpicture\.com/);
+    expect(policy).toMatch(/connect-src [^;]+https:\/\/clerk\.punctumpicture\.com/);
+    expect(policy).toContain("frame-ancestors 'none'");
+    expect(policy).toContain("worker-src 'self' blob:");
+  });
+
+  it("rejeita um issuer que poderia injetar diretivas no CSP", () => {
+    const response = withSecurityHeaders(new Response("login"), {
+      clerkIssuer: "https://clerk.punctumpicture.com; script-src *",
+    });
+    expect(response.headers.get("content-security-policy")).not.toContain("clerk.punctumpicture.com");
+  });
 });
