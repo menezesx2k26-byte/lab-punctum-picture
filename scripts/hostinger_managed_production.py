@@ -58,8 +58,10 @@ def smoke(operation, label):
                 raise
             status, headers, raw = expected, {}, b''
         assert status == expected, 'Managed HTTP contract failed'
-        if expected == 200:
+        if expected == 200 and path != '/robots.txt':
             assert 'noindex' in headers.get('X-Robots-Tag', ''), 'Temporary origin indexing guard absent'
+        if path == '/robots.txt':
+            assert b'Disallow: /' in raw, 'Temporary hostname robots guard absent'
         results.append({'path': path, 'status': status, 'ms': round((time.monotonic() - start) * 1000)})
     operation.report.setdefault('http', {})[label] = results
     image_id = operation.report['sourceSnapshot']['sampleImageId']

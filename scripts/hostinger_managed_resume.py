@@ -25,8 +25,8 @@ def execute(root):
         previous = operation.api('importedBuild', SITE + '/builds/01a1dad6-b4eb-7202-a346-d47c6d506438')
         assert previous.get('state') == 'completed', 'Verified imported build changed'
         environment = operation.api('environmentBeforeResume', SITE + '/builds/settings/env')
-        assert {row['key'] for row in environment} == {'PUNCTUM_QA_' + name for name in
-            ('ORIGIN','DB_FILE','ADMIN_EMAIL','ADMIN_PASSWORD_HASH','ADMIN_SESSION_SECRET','MANAGED_BOOTSTRAP','SOURCE_SHA')}, 'Unknown environment ownership'
+        qa_keys = {'PUNCTUM_QA_' + name for name in
+            ('ORIGIN','DB_FILE','ADMIN_EMAIL','ADMIN_PASSWORD_HASH','ADMIN_SESSION_SECRET','MANAGED_BOOTSTRAP','SOURCE_SHA')}
         current_source = '86e7b8cef792da47f1fce7a92a253ffd2530215b'
         desired = {'PORT': '3000', 'PUNCTUM_PRODUCTION_CANDIDATE_MODE': 'private-candidate',
             'PUNCTUM_CANDIDATE_PROVIDER': 'hostinger-managed', 'PUNCTUM_CANDIDATE_ENVIRONMENT': 'staging',
@@ -40,6 +40,7 @@ def execute(root):
             'PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE': 'password', 'PUNCTUM_HOSTINGER_SHARP_POOL': '1',
             'PUNCTUM_MANAGED_EXPECTED_SQL_SHA256': source['sqlSha256'],
             'PUNCTUM_QA_SOURCE_SHA': current_source}
+        assert {row['key'] for row in environment} in (qa_keys, set(desired)), 'Unknown environment ownership'
         settings = {'app_type': 'other', 'node_version': 24, 'package_manager': 'npm',
             'root_directory': None, 'output_directory': None, 'build_script': 'build:hostinger:managed-runtime',
             'entry_file': 'services/punctum-hostinger-production/candidate-server.mjs'}
