@@ -18,6 +18,7 @@ SETTINGS = {'app_type': 'other', 'node_version': 24, 'package_manager': 'npm',
 MAINTENANCE_KEYS = {'PUNCTUM_MANAGED_E2E_FIXTURE', 'PUNCTUM_MANAGED_MAINTENANCE_MARKER', 'PUNCTUM_MANAGED_MAINTENANCE_MODE'}
 CLERK_LINK_KEYS = {'CLERK_SECRET_KEY', 'CLERK_PUBLISHABLE_KEY', 'SOURCE_ADMIN_EMAIL', 'PUNCTUM_CLERK_ADMIN_EMAIL',
                    'PUNCTUM_CLERK_ADMIN_USER_ID', 'PUNCTUM_CLERK_SESSION_ID', 'PUNCTUM_MANAGED_APPROVED_CLERK_LINK'}
+RECOVERY_EXPORT_KEYS = {'CLOUDFLARE_API_TOKEN', 'PUNCTUM_MANAGED_RECOVERY_KEY', 'PUNCTUM_MANAGED_RECOVERY_PREFIX'}
 
 
 def operations_receipt(value):
@@ -57,9 +58,12 @@ def verify_operations(operation, build_id, label):
 
 def execute(root):
     config = json.loads((root / 'requests/punctum-managed-production.json').read_text())
-    assert config['action'] in ('accept-managed', 'recover-managed', 'link-managed-clerk') and config['domain'] == DOMAIN
+    exporting = config['action'] == 'export-managed-recovery'
+    domain = 'punctumpicture.com' if exporting else DOMAIN
+    assert config['action'] in ('accept-managed', 'recover-managed', 'link-managed-clerk', 'export-managed-recovery') and config['domain'] == domain
     recovery_only = config['action'] == 'recover-managed'
-    operation = Recovery(root, 'prepare', config['expected_build_uuid'])
+    operation = Recovery(root, 'prepare', config['expected_build_uuid'], domain=domain)
+    site = operation.site
     operation.output = root / 'outputs/punctum-managed-production'
     operation.output.mkdir(parents=True, exist_ok=True)
     operation.report.update(action=config['action'], scope='existing-temporary-managed-origin', dnsTouched=False)
@@ -68,7 +72,7 @@ def execute(root):
     operation.report['sourceSnapshot'] = source
     desired = {'PORT': '3000', 'PUNCTUM_PRODUCTION_CANDIDATE_MODE': 'private-candidate',
         'PUNCTUM_CANDIDATE_PROVIDER': 'hostinger-managed', 'PUNCTUM_CANDIDATE_ENVIRONMENT': 'staging',
-        'PUNCTUM_CANDIDATE_PUBLIC_URL': 'https://' + DOMAIN,
+        'PUNCTUM_CANDIDATE_PUBLIC_URL': 'https://' + domain,
         'PUNCTUM_CANDIDATE_DB_FILE': PRIVATE_ROOT + '/application.sqlite',
         'PUNCTUM_CANDIDATE_ORIGINALS': PRIVATE_ROOT + '/originals',
         'PUNCTUM_CANDIDATE_BACKUPS_ROOT': PRIVATE_ROOT + '/backups',
@@ -78,17 +82,45 @@ def execute(root):
         'PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE': 'password', 'PUNCTUM_HOSTINGER_SHARP_POOL': '1',
         'PUNCTUM_MANAGED_EXPECTED_SQL_SHA256': source['sqlSha256'], 'PUNCTUM_QA_SOURCE_SHA': os.environ['GITHUB_SHA']}
     try:
-        history = operation.api('historyBefore', SITE + '/builds')
+        history = operation.api('historyBefore', site + '/builds')
         assert history[0]['uuid'] == config['expected_build_uuid'] and history[0]['state'] in ('completed', 'failed')
         assert not any(row.get('state') in ('pending', 'running') for row in history)
-        saved = operation.api('settingsBefore', SITE + '/builds/settings')
+        saved = operation.api('settingsBefore', site + '/builds/settings')
         assert all(saved.get(key) == value for key, value in SETTINGS.items())
-        current = operation.api('environmentBefore', SITE + '/builds/settings/env')
+        current = operation.api('environmentBefore', site + '/builds/settings/env')
         keys = {row['key'] for row in current}
         assert set(desired) <= keys <= set(desired) | MAINTENANCE_KEYS, 'Unknown managed environment'
         paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().strip('\0').split('\0')
         archive, _ = candidate_archive(root, paths)
         name = operation.upload_archive(archive, 'punctum-node-candidate-')
+        if config['action'] == 'export-managed-recovery':
+            transient = {key: os.environ[key] for key in RECOVERY_EXPORT_KEYS}
+            try:
+                write_candidate_environment(operation, {**desired, **transient}, RECOVERY_EXPORT_KEYS)
+                identifier = build(operation, name, SETTINGS, 'recoveryExport')
+                logs = operation.api('recoveryExportLogs', site + '/builds/' + identifier + '/logs?from_line=0')
+                def export_receipt(value):
+                    if isinstance(value, (dict, list)):
+                        return next((found for item in (value.values() if isinstance(value, dict) else value)
+                                     if (found := export_receipt(item))), None)
+                    if isinstance(value, str):
+                        for line in value.splitlines():
+                            if 'PUNCTUM_MANAGED_RECOVERY ' in line:
+                                parsed = json.JSONDecoder().raw_decode(line.split('PUNCTUM_MANAGED_RECOVERY ', 1)[1])[0]
+                                if parsed.get('status') == 'MANAGED_ENCRYPTED_RECOVERY_EXPORTED': return parsed
+                    return None
+                operation.report['recoveryExport'] = export_receipt(logs)
+                assert operation.report['recoveryExport'], 'Authenticated recovery export receipt missing'
+            finally:
+                write_candidate_environment(operation, desired, RECOVERY_EXPORT_KEYS)
+                saved = operation.api('environmentAfterRecoveryExport', site + '/builds/settings/env')
+                assert {row['key'] for row in saved} == set(desired), 'Temporary recovery credentials remain configured'
+                operation.api('recoveryExportCleanRestart', site + '/server/restart', {})
+            status, headers, raw = operation.request('recoveryExportHttpHealth', 'http://91.108.127.153/api/health', headers={'Host':domain})
+            assert status == 200 and json.loads(raw).get('ok') and headers.get('X-Punctum-QA-Source') == os.environ['GITHUB_SHA']
+            operation.report['publicTlsVerified'] = False
+            operation.report['status'] = 'MANAGED_RECOVERY_EXPORTED_SECRETS_REMOVED'
+            return
         if config['action'] == 'link-managed-clerk':
             transient = {key: os.environ[key] for key in CLERK_LINK_KEYS if key != 'PUNCTUM_MANAGED_APPROVED_CLERK_LINK'}
             transient['PUNCTUM_MANAGED_APPROVED_CLERK_LINK'] = 'operator-approved-existing-user'

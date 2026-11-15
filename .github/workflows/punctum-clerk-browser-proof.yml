@@ -6,6 +6,7 @@ on:
       - .github/workflows/punctum-clerk-browser-proof.yml
       - scripts/hostinger-clerk-browser-proof.mjs
       - scripts/hostinger-clerk-browser-proof.test.mjs
+      - scripts/hostinger-clerk-production-proof*.mjs
 permissions:
   contents: read
 concurrency:

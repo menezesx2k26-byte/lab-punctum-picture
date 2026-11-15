@@ -1,0 +1,65 @@
+name: Punctum encrypted managed recovery export
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-managed-recovery-export.yml]
+permissions:
+  contents: read
+concurrency:
+  group: punctum-existing-hostinger-qa
+  cancel-in-progress: false
+jobs:
+  recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Validate Linux recovery contracts before touching the managed clone
+        run: |
+          node --test services/punctum-hostinger-production/managed-d1-export.test.mjs services/punctum-hostinger-production/managed-recovery-export.test.mjs
+          python3 -m unittest discover -s scripts -p 'hostinger_managed*test.py'
+          npm run build:hostinger:candidate
+          npm run build:hostinger:scheduled
+      - name: Export the connected managed staging dataset into the existing private R2 backup bucket
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          PUNCTUM_MANAGED_RECOVERY_KEY: ${{ secrets.PUNCTUM_MANAGED_RECOVERY_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, sys, uuid
+          sys.path.insert(0,'scripts')
+          from hostinger_managed_qa import Recovery
+          from hostinger_managed_acceptance import execute
+          assert len(os.environ['PUNCTUM_MANAGED_RECOVERY_KEY'])==64
+          domain='punctumpicture.com'
+          op=Recovery(pathlib.Path.cwd(),'prepare',None,domain=domain)
+          websites=op.api('ownership','/websites?domain='+domain)
+          assert any(x.get('domain')==domain and x.get('username')=='u571409090' and x.get('order_id')==1008628483 and x.get('website_type')=='nodejs' for x in websites)
+          history=op.api('existingBuild',op.site+'/builds')
+          assert history[0]['uuid']=='01a1dd1b-a01e-70de-a7d6-fdfc8f06814c' and history[0]['state']=='completed', 'Concurrent deployment or unexpected active build'
+          prefix='managed-recovery/snapshot-'+uuid.uuid4().hex
+          os.environ['PUNCTUM_MANAGED_RECOVERY_PREFIX']=prefix
+          with open(os.environ['GITHUB_ENV'],'a') as output: print('PUNCTUM_MANAGED_RECOVERY_PREFIX='+prefix,file=output)
+          pathlib.Path('requests/punctum-managed-production.json').write_text(json.dumps({'domain':domain,'action':'export-managed-recovery','expected_build_uuid':history[0]['uuid']}))
+          execute(pathlib.Path.cwd())
+          PY
+      - name: Download, decrypt and restore into isolated local D1 with full row and original hashes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PUNCTUM_MANAGED_RECOVERY_KEY: ${{ secrets.PUNCTUM_MANAGED_RECOVERY_KEY }}
+        run: node scripts/hostinger-managed-recovery-download.mjs
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-encrypted-managed-recovery
+          path: outputs/punctum-managed-production/
+          retention-days: 7

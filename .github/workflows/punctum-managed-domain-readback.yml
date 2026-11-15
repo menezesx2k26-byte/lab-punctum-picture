@@ -45,7 +45,8 @@ jobs:
           req=urllib.request.Request('https://developers.hostinger.com/api/dns/v1/zones/punctumpicture.com',headers={'Authorization':'Bearer '+os.environ['HOSTINGER_API'],'User-Agent':'Punctum QA inventory/1.0'})
           try:
               with urllib.request.urlopen(req,timeout=25) as response:
-                  records=json.load(response).get('data',[])
+                  value=json.load(response)
+                  records=value.get('data',[]) if isinstance(value,dict) else value
                   report['hostingerSuggestedRouting']=[x for x in records if x.get('type') in ('A','AAAA','CNAME') and x.get('name') in ('@','www','punctumpicture.com','www.punctumpicture.com')]
           except urllib.error.HTTPError as error: report['hostingerSuggestedRoutingHttp']=error.code
           url='https://api.cloudflare.com/client/v4/zones/561d9796dd104b8563c9ab77fa4fae1d/dns_records?per_page=100'

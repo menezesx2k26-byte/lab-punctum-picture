@@ -60,7 +60,7 @@ def confirm_environment_keys(operation, label, expected, permitted):
     for delay in (0, 2, 5, 10):
         if delay:
             time.sleep(delay)
-        rows = operation.api(label, SITE + '/builds/settings/env')
+        rows = operation.api(label, getattr(operation, 'site', SITE) + '/builds/settings/env')
         if not isinstance(rows, list):
             raise ValueError('Invalid environment key readback')
         keys = [row.get('key') for row in rows if isinstance(row, dict)]
@@ -82,7 +82,7 @@ def write_candidate_environment(operation, environment, previous_keys=()):
     payload = {'env_vars':[{'key':k,'value':v} for k,v in environment.items()]}
     operation.report['candidateEnvironmentAcceptance'] = 'NOT_VERIFIED'
     try:
-        put(operation,'candidateEnvironmentWrite',SITE + '/builds/settings/env',payload)
+        put(operation,'candidateEnvironmentWrite',getattr(operation, 'site', SITE) + '/builds/settings/env',payload)
     except RequestFailure as error:
         if error.status not in (None,500,502,503,504):
             raise
@@ -97,10 +97,11 @@ def write_candidate_environment(operation, environment, previous_keys=()):
 
 
 def build(operation, name, settings, phase):
+    site = getattr(operation, 'site', SITE)
     operation.report['buildRequestAttempted'] = True
     operation.save()
     payload = {**settings,'source_type':'archive','source_options':{'archive_path':name}}
-    result = operation.api(phase + 'Start', SITE + '/builds', payload)
+    result = operation.api(phase + 'Start', site + '/builds', payload)
     identifier = result.get('uuid') if isinstance(result,dict) else None
     if not isinstance(identifier,str) or len(identifier) != 36:
         raise ValueError('Unknown build acknowledgement; do not repeat POST')
@@ -109,14 +110,14 @@ def build(operation, name, settings, phase):
     operation.save()
     deadline = time.monotonic() + 660
     while time.monotonic() < deadline:
-        state = operation.api(phase + 'State', SITE + '/builds/' + identifier)
+        state = operation.api(phase + 'State', site + '/builds/' + identifier)
         if state.get('state') == 'completed':
             options = state.get('options',{})
             if any(options.get(k) != v for k,v in settings.items()):
                 raise ValueError('Completed candidate build has unexpected settings')
             return identifier
         if state.get('state') == 'failed':
-            logs = operation.api(phase + 'Logs', SITE + '/builds/' + identifier + '/logs')
+            logs = operation.api(phase + 'Logs', site + '/builds/' + identifier + '/logs')
             content = json.dumps(logs).lower()
             operation.report['failedBuildDiagnostics'] = {
                 'sha256':digest(json.dumps(logs,sort_keys=True).encode()),
