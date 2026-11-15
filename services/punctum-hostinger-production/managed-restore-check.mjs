@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import {
   chmodSync, closeSync, constants, copyFileSync, createReadStream, existsSync, lstatSync,
-  mkdirSync, mkdtempSync, openSync, readdirSync, realpathSync, rmSync, writeFileSync,
+  mkdirSync, mkdtempSync, openSync, readdirSync, realpathSync, rmSync, writeFileSync, renameSync, unlinkSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { once } from "node:events";
@@ -167,6 +167,31 @@ export async function createManagedBackup(config) {
     try { restored?.cleanup(); } finally { snapshot?.cleanup(); }
     throw Error("MANAGED_BACKUP_RESTORE_FAILED", { cause: error });
   }
+}
+
+export async function dailyManagedBackup(config, now = new Date()) {
+  const date = now.toISOString().slice(0, 10);
+  const saved = await createManagedBackup(config);
+  try {
+    const root = dirname(saved.archiveFile);
+    const destination = join(root, `daily-${date}-${randomUUID()}.tar`);
+    renameSync(saved.archiveFile, destination);
+    const cutoff = now.getTime() - 7 * 86400000;
+    let retained = 0;
+    for (const name of readdirSync(root)) {
+      const match = /^daily-(\d{4}-\d{2}-\d{2})-([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})\.tar$/.exec(name);
+      if (!match) continue;
+      const path = join(root, name), info = privateEntry(path);
+      if (info.uid !== lstatSync(root).uid) throw Error("MANAGED_BACKUP_RETENTION_OWNER_MISMATCH");
+      const created = Date.parse(match[1] + "T00:00:00Z");
+      if (!Number.isFinite(created)) throw Error("MANAGED_BACKUP_RETENTION_DATE_INVALID");
+      if (path !== destination && created < cutoff) unlinkSync(path);
+      else retained++;
+    }
+    return { status: "MANAGED_DAILY_PHYSICAL_BACKUP_VERIFIED", archiveFile: destination,
+      archiveSha256: saved.archiveSha256, objects: saved.objects, bytes: saved.bytes,
+      restoreMs: saved.restoreMs, retainedDailyArchives: retained, retentionDays: 7 };
+  } finally { saved.cleanup(); }
 }
 
 async function responseBytes(response, type) {

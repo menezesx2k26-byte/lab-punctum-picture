@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import { stageOriginal, privateOriginals } from "./originals.mjs";
 import { productionStageApplicationId } from "./sqlite.mjs";
 import { databaseInventory } from "./managed-import.mjs";
-import { createManagedBackup, homepageEvidence, proveManagedRestore } from "./managed-restore-check.mjs";
+import { createManagedBackup, homepageEvidence, proveManagedRestore, dailyManagedBackup } from "./managed-restore-check.mjs";
 
 const linuxOnly = { skip: process.platform !== "linux" && "Requires Linux private storage permissions" };
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aEioAAAAASUVORK5CYII=", "base64");
@@ -109,6 +109,22 @@ test("online backup includes committed WAL rows, restores all hashes, and cleanu
     const second = await createManagedBackup(f);
     try { assert.notEqual(second.archiveFile, saved.archiveFile); } finally { second.cleanup(); }
   } finally { writer.close(); }
+});
+
+test("daily backup retention removes only old daily TARs and preserves golden snapshots", linuxOnly, async (t) => {
+  const f = fixture(t), golden = await createManagedBackup(f);
+  golden.cleanup();
+  const root = dirname(golden.archiveFile);
+  const old = join(root, "daily-2026-01-01-00000000-0000-0000-0000-000000000000.tar");
+  writeFileSync(old, "old fixture", { mode: 0o600 });
+  const result = await dailyManagedBackup(f, new Date("2026-01-10T03:00:00Z"));
+  assert.equal(result.status, "MANAGED_DAILY_PHYSICAL_BACKUP_VERIFIED");
+  assert.equal(existsSync(old), false);
+  assert.equal(existsSync(golden.archiveFile), true);
+  assert.equal(existsSync(result.archiveFile), true);
+  assert.equal(result.archiveSha256, sha(readFileSync(result.archiveFile)));
+  assert.equal(result.objects, 1);
+  assert.equal(result.retentionDays, 7);
 });
 
 test("original enumeration crosses the 1000-object page without omissions", linuxOnly, async (t) => {
