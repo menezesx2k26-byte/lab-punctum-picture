@@ -1,0 +1,68 @@
+name: Punctum release preparatory alias for Node domain connection
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-managed-alias-release.yml]
+permissions:
+  contents: read
+concurrency:
+  group: punctum-existing-hostinger-qa
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Remove only the known unused parked alias
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, sys, urllib.error, urllib.request
+          sys.path.insert(0,'scripts')
+          from hostinger_managed_qa import Recovery, DOMAIN, USERNAME, API
+          op=Recovery(pathlib.Path.cwd(),'prepare',None)
+          report={'dnsTouched':False,'websiteDeleted':False,'filesTouched':False,'aliasRemoved':False}
+          root=f'/accounts/{USERNAME}/websites/{DOMAIN}'
+          websites=op.api('account','/websites?domain='+DOMAIN)
+          assert any(x.get('domain')==DOMAIN and x.get('username')==USERNAME and x.get('order_id')==1008628483 and x.get('website_type')=='nodejs' for x in websites)
+          before=json.loads(urllib.request.urlopen('https://'+DOMAIN+'/api/health',timeout=20).read())
+          assert before.get('ok') is True
+          aliases=op.api('aliasesBefore',root+'/parked-domains')
+          exact=[x for x in aliases if x.get('domain')=='punctumpicture.com']
+          assert len(exact)<=1
+          if exact:
+              alias=exact[0]
+              assert alias.get('parent_domain')==DOMAIN and alias.get('username')==USERNAME
+              assert alias.get('root_directory')==f'/home/{USERNAME}/domains/{DOMAIN}/public_html'
+              ssl=op.api('ssl',f'/accounts/{USERNAME}/websites/punctumpicture.com/ssl/status')
+              assert ssl.get('status') in ('waiting_for_retry','not_installed','failed'), 'Refusing to remove an active domain alias'
+              req=urllib.request.Request(API+root+'/parked-domains/punctumpicture.com',method='DELETE',headers={
+                  'Authorization':'Bearer '+os.environ['HOSTINGER_API'],'Accept':'application/json','User-Agent':'Punctum QA inventory/1.0'})
+              try:
+                  with op.opener.open(req,timeout=25) as response: report['deleteHttp']=response.status
+              except urllib.error.HTTPError as error:
+                  report['deleteHttp']=error.code
+                  if error.code not in (500,502,503,504): raise
+              remaining=op.api('aliasesAfter',root+'/parked-domains')
+              assert not any(x.get('domain')=='punctumpicture.com' for x in remaining), 'Alias removal not verified'
+              report['aliasRemoved']=True
+          after=json.loads(urllib.request.urlopen('https://'+DOMAIN+'/api/health',timeout=20).read())
+          assert after.get('ok') is True
+          report['managedHealth']=True
+          public=urllib.request.urlopen('https://punctumpicture.com/api/health',timeout=20)
+          assert public.status==200 and public.headers.get('CF-Ray'), 'Public Cloudflare production changed'
+          report['publicCloudflarePreserved']=True
+          output=pathlib.Path('alias-release');output.mkdir()
+          (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-managed-alias-release
+          path: alias-release/
+          retention-days: 7
