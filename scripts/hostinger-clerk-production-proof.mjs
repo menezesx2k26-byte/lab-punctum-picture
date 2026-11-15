@@ -211,7 +211,8 @@ async function main() {
     await withProofDatabase(async (db) => {
       const bapi = async (path, method = "GET") => {
         const response = await fetch("https://api.clerk.com/v1" + path, {
-          method, headers: { authorization: "Bearer " + input.secretKey },
+          method, headers: { authorization: "Bearer " + input.secretKey, "content-type": "application/json" },
+          ...(method === "POST" ? { body: "{}" } : {}),
           redirect: "error", signal: AbortSignal.timeout(15_000),
         });
         assert(response.ok);
