@@ -15,7 +15,7 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const LIMIT = "handler-only; no browser, deployed HTTP or live database coverage";
 
 export function proofInputs(env) {
-  const names = ["CLERK_SECRET_KEY", "CLERK_PUBLISHABLE_KEY", "SOURCE_ADMIN_EMAIL", "PUNCTUM_CLERK_ADMIN_USER_ID", "PUNCTUM_CLERK_SESSION_ID"];
+  const names = ["CLERK_SECRET_KEY", "CLERK_PUBLISHABLE_KEY", "SOURCE_ADMIN_EMAIL", "PUNCTUM_CLERK_ADMIN_EMAIL", "PUNCTUM_CLERK_ADMIN_USER_ID", "PUNCTUM_CLERK_SESSION_ID"];
   assert(names.every((name) => typeof env[name] === "string" && env[name].trim().length > 0));
   const secretKey = env.CLERK_SECRET_KEY;
   const publishableKey = env.CLERK_PUBLISHABLE_KEY;
@@ -23,12 +23,14 @@ export function proofInputs(env) {
   assert(/^pk_live_[a-zA-Z0-9+/]+={0,2}$/.test(publishableKey));
   assert(Buffer.from(publishableKey.slice(8), "base64").toString("utf8") === new URL(ISSUER).hostname + "$");
   const email = env.SOURCE_ADMIN_EMAIL.trim().toLowerCase();
+  const clerkEmail = env.PUNCTUM_CLERK_ADMIN_EMAIL.trim().toLowerCase();
   assert(email.length <= 120 && /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(email));
+  assert(clerkEmail.length <= 254 && /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(clerkEmail));
   const userId = env.PUNCTUM_CLERK_ADMIN_USER_ID;
   const sessionId = env.PUNCTUM_CLERK_SESSION_ID;
   assert(/^user_[a-zA-Z0-9_-]{3,180}$/.test(userId));
   assert(/^sess_[a-zA-Z0-9_-]{3,180}$/.test(sessionId));
-  return { secretKey, publishableKey, email, userId, sessionId };
+  return { secretKey, publishableKey, email, clerkEmail, userId, sessionId };
 }
 
 export function assertSelectedIdentity(input, user, session) {
@@ -37,7 +39,7 @@ export function assertSelectedIdentity(input, user, session) {
   assert(typeof user.primary_email_address_id === "string");
   const primary = user.email_addresses.filter((email) => email.id === user.primary_email_address_id);
   assert(primary.length === 1);
-  assert(primary[0].email_address.trim().toLowerCase() === input.email, "CLERK_SELECTED_EMAIL_MISMATCH");
+  assert(primary[0].email_address.trim().toLowerCase() === input.clerkEmail, "CLERK_SELECTED_EMAIL_MISMATCH");
   assert(primary[0].verification?.status === "verified");
   assert(session.id === input.sessionId && session.user_id === input.userId);
   assert(session.status === "active" && session.expire_at > Date.now() && session.abandon_at > Date.now());
@@ -104,6 +106,26 @@ export async function withProofDatabase(run) {
   }
 }
 
+export async function bindApprovedAdmin(db, input) {
+  assert(!await db.prepare("SELECT clerk_user_id FROM clerk_pilot_identity_links WHERE clerk_user_id=?").bind(input.userId).first());
+  const existing = await db.prepare("SELECT admin_principal_id,role,disabled_at FROM clerk_admin_identity_links WHERE clerk_user_id=?").bind(input.userId).first();
+  if (existing) {
+    assert(existing.admin_principal_id === input.email && existing.role === "admin" && existing.disabled_at === null);
+    return { created: false };
+  }
+  assert(!await db.prepare("SELECT clerk_user_id FROM clerk_admin_identity_links WHERE admin_principal_id=?").bind(input.email).first());
+  const now = new Date().toISOString();
+  await db.batch([
+    db.prepare(`INSERT INTO clerk_admin_identity_links
+      (clerk_user_id,admin_principal_id,role,session_version,created_at,updated_at) VALUES (?,?,'admin',1,?,?)`)
+      .bind(input.userId, input.email, now, now),
+    db.prepare(`INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+      VALUES (?,'operator-approved-clerk-admin','admin.clerk_identity_linked','admin',?,NULL,?)`)
+      .bind(crypto.randomUUID(), input.userId, now),
+  ]);
+  return { created: true };
+}
+
 export async function proveHandlers(auth, db, input, jwt, pem, checks) {
   const env = {
     DB: db, ENVIRONMENT: "production", SITE_ORIGIN: ORIGIN, PUBLIC_SITE_URL: ORIGIN,
@@ -129,10 +151,7 @@ export async function proveHandlers(auth, db, input, jwt, pem, checks) {
   assert(await db.prepare("SELECT count(*) AS n FROM clerk_admin_identity_links").first("n") === 0);
   checks.unlinkedDenied = true;
 
-  const now = new Date().toISOString();
-  await db.prepare(`INSERT INTO clerk_admin_identity_links
-    (clerk_user_id, admin_principal_id, role, session_version, created_at, updated_at)
-    VALUES (?, ?, 'admin', 1, ?, ?)`).bind(input.userId, input.email, now, now).run();
+  await bindApprovedAdmin(db, input);
   const response = await login();
   assert(response?.status === 200 && (await response.json()).authSource === "clerk");
   const setCookie = response.headers.get("set-cookie");

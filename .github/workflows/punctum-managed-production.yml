@@ -32,8 +32,8 @@ jobs:
           request = json.loads(pathlib.Path('requests/punctum-managed-production.json').read_text())
           assert request['domain'] == 'aliceblue-locust-999458.hostingersite.com'
           action = request['action']
-          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed', 'schedule-managed')
-          if action in ('prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed'):
+          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed', 'schedule-managed', 'link-managed-clerk')
+          if action in ('prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed', 'link-managed-clerk'):
               verified = request['verified_sha']
               assert re.fullmatch('[a-f0-9]{40}', verified)
               changed = subprocess.check_output(['git','diff','--name-only',verified,'HEAD']).decode().splitlines()
@@ -100,6 +100,18 @@ jobs:
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
         run: python3 scripts/hostinger_managed_schedule.py
+      - name: Bind the explicitly approved Clerk administrator on the managed clone
+        if: steps.operation.outputs.action == 'link-managed-clerk'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+          CLERK_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
+          PUNCTUM_CLERK_ADMIN_EMAIL: ${{ secrets.PUNCTUM_CLERK_ADMIN_EMAIL }}
+          PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
+          PUNCTUM_CLERK_SESSION_ID: ${{ secrets.PUNCTUM_CLERK_SESSION_ID }}
+        run: python3 scripts/hostinger_managed_acceptance.py
       - name: Inspect the designated existing managed Node website
         if: steps.operation.outputs.action == 'inventory'
         env:

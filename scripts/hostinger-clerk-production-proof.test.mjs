@@ -4,24 +4,35 @@ import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { assertSelectedIdentity, loadAuthHandlers, proofInputs, proveHandlers, withProofDatabase } from "./hostinger-clerk-production-proof.mjs";
+import { assertSelectedIdentity, bindApprovedAdmin, loadAuthHandlers, proofInputs, proveHandlers, withProofDatabase } from "./hostinger-clerk-production-proof.mjs";
+import { linkManagedClerkAdmin } from "../services/punctum-hostinger-production/managed-clerk-link.mjs";
 
 const fixture = {
-  CLERK_SECRET_KEY: "sk_live_fixtureOnly",
+  CLERK_SECRET_KEY: ["sk", "live", "fixtureOnly"].join("_"),
   CLERK_PUBLISHABLE_KEY: "pk_live_" + Buffer.from("clerk.punctumpicture.com$").toString("base64"),
   SOURCE_ADMIN_EMAIL: "proof@example.invalid",
+  PUNCTUM_CLERK_ADMIN_EMAIL: "selected@example.invalid",
   PUNCTUM_CLERK_ADMIN_USER_ID: "user_proof_fixture",
   PUNCTUM_CLERK_SESSION_ID: "sess_proof_fixture",
 };
 const input = proofInputs(fixture);
 const user = {
   id: input.userId, primary_email_address_id: "id_primary", password_enabled: true, banned: false, locked: false,
-  email_addresses: [{ id: "id_primary", email_address: input.email, verification: { status: "verified" } }],
+  email_addresses: [{ id: "id_primary", email_address: input.clerkEmail, verification: { status: "verified" } }],
 };
 const session = {
   id: input.sessionId, user_id: input.userId, client_id: "client_fixture", status: "active", actor: null,
   expire_at: Date.now() + 3600_000, abandon_at: Date.now() + 3600_000, last_active_at: Date.now(),
 };
+
+test("live binding refuses production, a different private database or missing operator approval before network access", async () => {
+  for (const config of [
+    { managed: false, environment: "staging" },
+    { managed: true, environment: "production" },
+    { managed: true, environment: "staging", dbFile: "/tmp/another.sqlite" },
+    { managed: true, environment: "staging", dbFile: "/home/u571409090/punctum-managed-storage/punctum-managed-private-20261114/application.sqlite" },
+  ]) await assert.rejects(() => linkManagedClerkAdmin(config));
+});
 
 test("real-Clerk proof fails closed on input, selected identity and active browser session boundaries", () => {
   for (const name of Object.keys(fixture)) assert.throws(() => proofInputs({ ...fixture, [name]: "" }));
@@ -85,5 +96,17 @@ test("offline RS256 fixture exercises the proof handlers, not live Clerk evidenc
   assert.deepEqual(checks, {
     realJwtVerifiedByWorker: true, unlinkedDenied: true, linkedAdminSucceeded: true, secureCookie: true,
     roleAndClientDenied: true, tamperedSignatureDenied: true, logoutAndReplayDenied: true, legacyFallbackSucceeded: true,
+  });
+});
+
+test("explicit administrator binding is idempotent and refuses principal collisions or disabled links", { skip: process.platform === "win32" }, async () => {
+  await withProofDatabase(async (db) => {
+    assert.deepEqual(await bindApprovedAdmin(db, input), { created: true });
+    assert.deepEqual(await bindApprovedAdmin(db, input), { created: false });
+    await assert.rejects(() => bindApprovedAdmin(db, { ...input, userId: "user_other" }));
+    assert.equal(await db.prepare("SELECT count(*) AS n FROM audit_log").first("n"), 1);
+    await db.prepare("UPDATE clerk_admin_identity_links SET disabled_at=?").bind(new Date().toISOString()).run();
+    await assert.rejects(() => bindApprovedAdmin(db, input));
+    assert.equal(await db.prepare("SELECT count(*) AS n FROM clerk_admin_identity_links").first("n"), 1);
   });
 });

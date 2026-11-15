@@ -38,6 +38,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const receipt = await verifyManagedData(config, process.env.PUNCTUM_MANAGED_EXPECTED_SQL_SHA256);
     console.log("PUNCTUM_MANAGED_VERIFY " + JSON.stringify(receipt));
     const marker = process.env.PUNCTUM_MANAGED_MAINTENANCE_MARKER;
+    if (process.env.PUNCTUM_MANAGED_APPROVED_CLERK_LINK) {
+      if (marker) throw Error("MANAGED_ACCEPTANCE_SCOPE_INVALID");
+      const { withMaintenanceLock } = await import("../../cron.mjs");
+      const { linkManagedClerkAdmin } = await import("./managed-clerk-link.mjs");
+      const linked = await withMaintenanceLock(dirname(config.dbFile), () => linkManagedClerkAdmin(config));
+      console.log("PUNCTUM_MANAGED_CLERK_LINK " + JSON.stringify(linked));
+    }
     if (marker) {
       if (!config.managed || config.environment !== "staging" || !/^[p][a-f0-9]{6}$/.test(marker)) throw Error("MANAGED_ACCEPTANCE_SCOPE_INVALID");
       const { withMaintenanceLock } = await import("../../cron.mjs");

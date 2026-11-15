@@ -16,6 +16,8 @@ SETTINGS = {'app_type': 'other', 'node_version': 24, 'package_manager': 'npm',
     'root_directory': None, 'output_directory': None, 'build_script': 'build:hostinger:managed-runtime',
     'entry_file': 'services/punctum-hostinger-production/candidate-server.mjs'}
 MAINTENANCE_KEYS = {'PUNCTUM_MANAGED_E2E_FIXTURE', 'PUNCTUM_MANAGED_MAINTENANCE_MARKER', 'PUNCTUM_MANAGED_MAINTENANCE_MODE'}
+CLERK_LINK_KEYS = {'CLERK_SECRET_KEY', 'CLERK_PUBLISHABLE_KEY', 'SOURCE_ADMIN_EMAIL', 'PUNCTUM_CLERK_ADMIN_EMAIL',
+                   'PUNCTUM_CLERK_ADMIN_USER_ID', 'PUNCTUM_CLERK_SESSION_ID', 'PUNCTUM_MANAGED_APPROVED_CLERK_LINK'}
 
 
 def operations_receipt(value):
@@ -55,7 +57,7 @@ def verify_operations(operation, build_id, label):
 
 def execute(root):
     config = json.loads((root / 'requests/punctum-managed-production.json').read_text())
-    assert config['action'] in ('accept-managed', 'recover-managed') and config['domain'] == DOMAIN
+    assert config['action'] in ('accept-managed', 'recover-managed', 'link-managed-clerk') and config['domain'] == DOMAIN
     recovery_only = config['action'] == 'recover-managed'
     operation = Recovery(root, 'prepare', config['expected_build_uuid'])
     operation.output = root / 'outputs/punctum-managed-production'
@@ -87,6 +89,35 @@ def execute(root):
         paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().strip('\0').split('\0')
         archive, _ = candidate_archive(root, paths)
         name = operation.upload_archive(archive, 'punctum-node-candidate-')
+        if config['action'] == 'link-managed-clerk':
+            transient = {key: os.environ[key] for key in CLERK_LINK_KEYS if key != 'PUNCTUM_MANAGED_APPROVED_CLERK_LINK'}
+            transient['PUNCTUM_MANAGED_APPROVED_CLERK_LINK'] = 'operator-approved-existing-user'
+            try:
+                write_candidate_environment(operation, {**desired, **transient}, CLERK_LINK_KEYS)
+                identifier = build(operation, name, SETTINGS, 'approvedClerkLink')
+                logs = operation.api('approvedClerkLinkLogs', SITE + '/builds/' + identifier + '/logs?from_line=0')
+                def receipt(value):
+                    if isinstance(value, (dict, list)):
+                        return next((found for item in (value.values() if isinstance(value, dict) else value)
+                                     if (found := receipt(item))), None)
+                    if isinstance(value, str):
+                        for line in value.splitlines():
+                            if 'PUNCTUM_MANAGED_CLERK_LINK ' in line:
+                                parsed = json.JSONDecoder().raw_decode(line.split('PUNCTUM_MANAGED_CLERK_LINK ', 1)[1])[0]
+                                if parsed.get('status') == 'MANAGED_CLERK_ADMIN_LINK_VERIFIED': return parsed
+                    return None
+                operation.report['clerkAdminLink'] = receipt(logs)
+                assert operation.report['clerkAdminLink'], 'Verified Clerk binding receipt missing'
+            finally:
+                write_candidate_environment(operation, desired, CLERK_LINK_KEYS)
+            old_boot = ready(operation, 'approvedLinkReady')
+            operation.api('cleanEnvironmentRestart', SITE + '/server/restart', {})
+            ready(operation, 'approvedLinkCleanRestart', old_boot)
+            smoke(operation, 'legacyAfterClerkLink')
+            saved = operation.api('environmentAfterClerkLink', SITE + '/builds/settings/env')
+            assert {row['key'] for row in saved} == set(desired), 'Temporary Clerk credentials remain configured'
+            operation.report['status'] = 'MANAGED_CLERK_ADMIN_LINK_VERIFIED_LEGACY_PRESERVED'
+            return
         if recovery_only:
             try:
                 write_candidate_environment(operation, {**desired, 'PUNCTUM_MANAGED_MAINTENANCE_MARKER': 'p' + secrets.token_hex(3),
@@ -162,7 +193,7 @@ def execute(root):
     finally:
         operation.save()
         print(json.dumps(operation.report, indent=2))
-    if operation.report['status'] != success_status:
+    if operation.report['status'] not in (success_status, 'MANAGED_CLERK_ADMIN_LINK_VERIFIED_LEGACY_PRESERVED'):
         raise SystemExit(1)
 
 

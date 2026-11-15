@@ -34,7 +34,7 @@ def candidate_archive(root, tracked, revision=None):
             allowed = (parts[0] in ALLOWED_ROOTS or path in ALLOWED_FILES or
                        path.startswith('services/punctum-hostinger-node/') or
                        path.startswith('services/punctum-hostinger-production/') or
-                       path == 'scripts/hostinger-build-scheduled.mjs')
+                       path in ('scripts/hostinger-build-scheduled.mjs', 'scripts/hostinger-clerk-production-proof.mjs'))
             if not allowed:
                 continue
             if ((historical.getinfo(path).external_attr >> 16) & 0o170000 == 0o120000
