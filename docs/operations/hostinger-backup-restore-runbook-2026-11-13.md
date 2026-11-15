@@ -1,5 +1,7 @@
 # Runbook de Backup, Restore e Rollback — Punctum Picture (Hostinger VPS `2135319`)
 
+> Histórico do ensaio anterior na VPS. O destino aprovado atual é a hospedagem Node gerenciada da Hostinger Conthabil; consulte o [checkpoint gerenciado](hostinger-managed-checkpoint-2026-11-14.md). Resultados da VPS não qualificam automaticamente o destino gerenciado.
+
 ## 1. Arquitetura de Persistência e Backups
 
 - **Banco SQLite (D1-compatível):** `/opt/punctum/private/production/db/application.sqlite` (`WAL`, `synchronous=FULL`, `application_id = 0x50554e50`, permissões `0700`/`0600`).

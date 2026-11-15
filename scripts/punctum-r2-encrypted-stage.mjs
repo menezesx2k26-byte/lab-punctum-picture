@@ -54,7 +54,7 @@ async function apiJson(account, token, path) {
   if (!body || body.success !== true) throw Error("R2_METADATA_INVALID");
   return body;
 }
-async function sourceInventory(account, token) {
+export async function sourceInventory(account, token) {
   const objects = [];
   const keys = new Set();
   const cursors = new Set();
@@ -85,7 +85,7 @@ async function sourceInventory(account, token) {
   if (total > MAX_TOTAL) throw Error("R2_TOTAL_CAP");
   return {objects,total};
 }
-async function downloadObject(account, token, key) {
+export async function downloadObject(account, token, key) {
   const path = key.split("/").map(encodeURIComponent).join("/");
   for (let attempt=0;attempt<3;attempt++) {
     const response = await fetch(endpoint + account + "/r2/buckets/" + bucket + "/objects/" + path, {

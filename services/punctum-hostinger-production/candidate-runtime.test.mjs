@@ -4,8 +4,18 @@ import { DatabaseSync } from "node:sqlite";
 import { chmodSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { candidateConfig } from "./candidate-runtime.mjs";
+import { candidateConfig, canonicalCandidateUrl } from "./candidate-runtime.mjs";
 import { productionStageApplicationId } from "./sqlite.mjs";
+
+test("canonical www redirect preserves paths and cannot change the approved origin", () => {
+  const origin = new URL("https://punctumpicture.com");
+  assert.equal(canonicalCandidateUrl(new URL("https://www.punctumpicture.com/portfolio?q=one"), origin).href,
+    "https://punctumpicture.com/portfolio?q=one");
+  assert.equal(canonicalCandidateUrl(new URL("https://www.punctumpicture.com//other.example/path"), origin).origin, origin.origin);
+  assert.equal(canonicalCandidateUrl(origin, origin), null);
+  assert.equal(canonicalCandidateUrl(new URL("https://unrelated.example/"), origin), null);
+  assert.equal(canonicalCandidateUrl(new URL("https://www.punctumpicture.com"), new URL("https://aliceblue-locust-999458.hostingersite.com")), null);
+});
 
 test("candidateConfig validates isolated private candidate environment and rejects unsafe paths", async (t) => {
   const root = mkdtempSync(join(tmpdir(), "punctum-cand-rt-"));
@@ -48,6 +58,22 @@ test("candidateConfig validates isolated private candidate environment and rejec
   assert.equal(cfg.origin.port, "3025");
   assert.equal(cfg.publicOrigin.origin, "https://127.0.0.1:8443");
   assert.equal(cfg.trustedProxy, "caddy");
+
+  process.env.PUNCTUM_CANDIDATE_PROVIDER = "hostinger-managed";
+  process.env.PORT = "34567";
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://aliceblue-locust-999458.hostingersite.com";
+  assert.equal(candidateConfig().managed, true);
+  assert.equal(candidateConfig().origin.port, "34567");
+  delete process.env.PORT;
+  assert.equal(candidateConfig().origin.port, "3000");
+  process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "production";
+  assert.equal(candidateConfig().noindex, true);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://punctumpicture.com";
+  assert.equal(candidateConfig().noindex, false);
+  process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "staging";
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://unrelated.example.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
+  delete process.env.PUNCTUM_CANDIDATE_PROVIDER;
 
   process.env.PUNCTUM_CANDIDATE_ORIGIN = "https://0.0.0.0:3025";
   assert.throws(() => candidateConfig(), /CANDIDATE_LISTEN_ORIGIN_INVALID/);

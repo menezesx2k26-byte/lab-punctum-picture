@@ -1,5 +1,7 @@
 # Procedimento de Sincronização Final e Cutover de DNS — Punctum Picture
 
+> Histórico de ensaio na VPS. O usuário escolheu posteriormente a hospedagem Node gerenciada da Hostinger Conthabil. Os caminhos, IP, containers e Caddy abaixo não são o destino aprovado atual. Consulte [checkpoint gerenciado](hostinger-managed-checkpoint-2026-11-14.md). Retornar o DNS não recupera dados escritos depois da migração; a reversão completa desses dados ainda precisa ser comprovada.
+
 > **RESTRIÇÃO ATUAL:** Este documento descreve o procedimento preparado e validado para o cutover futuro. **Não** executar alteração de DNS de `punctumpicture.com` nem congelamento/desativação da produção Cloudflare sem autorização explícita do usuário no momento da virada.
 
 ---

@@ -1,0 +1,165 @@
+name: Punctum managed Hostinger production preparation
+
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths:
+      - requests/punctum-managed-production.json
+      - .github/workflows/punctum-managed-production.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-existing-hostinger-qa
+  cancel-in-progress: false
+
+jobs:
+  managed:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 20
+      - name: Validate the bounded operation
+        id: operation
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, subprocess
+          request = json.loads(pathlib.Path('requests/punctum-managed-production.json').read_text())
+          assert request['domain'] == 'aliceblue-locust-999458.hostingersite.com'
+          action = request['action']
+          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed', 'schedule-managed', 'link-managed-clerk')
+          if action in ('prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed', 'link-managed-clerk'):
+              verified = request['verified_sha']
+              assert re.fullmatch('[a-f0-9]{40}', verified)
+              changed = subprocess.check_output(['git','diff','--name-only',verified,'HEAD']).decode().splitlines()
+              assert changed == ['requests/punctum-managed-production.json'], 'Deploy code differs from verified revision'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('action=' + action, file=output)
+          PY
+      - uses: actions/setup-node@v7
+        if: steps.operation.outputs.action != 'inventory' && steps.operation.outputs.action != 'schedule-managed'
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+        if: steps.operation.outputs.action != 'inventory' && steps.operation.outputs.action != 'schedule-managed'
+      - name: Verify managed runtime, private import, and existing POSIX contracts
+        if: steps.operation.outputs.action == 'verify-managed' || steps.operation.outputs.action == 'recover-managed'
+        run: |
+          node --test services/punctum-hostinger-production/*.test.mjs
+          python3 -m unittest discover -s scripts -p 'hostinger_managed*test.py'
+      - name: Verify application integration
+        if: steps.operation.outputs.action == 'verify-managed'
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test -- --reporter=dot
+          npm run build:hostinger:candidate
+          npm run build:hostinger:scheduled
+          npm audit --audit-level=moderate
+      - name: Export and encrypt a fresh read-only source snapshot
+        if: steps.operation.outputs.action == 'prepare-managed'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: '257bca437616da74ece1ce4bbaf0bd89'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
+        run: node scripts/hostinger-managed-export.mjs
+      - name: Prepare and prove the temporary managed origin
+        if: steps.operation.outputs.action == 'prepare-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+          PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-managed-sealed
+        run: python3 scripts/hostinger_managed_production.py
+      - name: Resume and prove the already imported private dataset
+        if: steps.operation.outputs.action == 'resume-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+        run: python3 scripts/hostinger_managed_resume.py
+      - run: npx playwright install --with-deps chromium
+        if: steps.operation.outputs.action == 'accept-managed'
+      - name: Exercise uploads, private albums, and scheduled recovery
+        if: steps.operation.outputs.action == 'accept-managed' || steps.operation.outputs.action == 'recover-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+        run: python3 scripts/hostinger_managed_acceptance.py
+      - name: Observe the managed hourly and daily schedules
+        if: steps.operation.outputs.action == 'schedule-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: python3 scripts/hostinger_managed_schedule.py
+      - name: Bind the explicitly approved Clerk administrator on the managed clone
+        if: steps.operation.outputs.action == 'link-managed-clerk'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+          CLERK_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
+          PUNCTUM_CLERK_ADMIN_EMAIL: ${{ secrets.PUNCTUM_CLERK_ADMIN_EMAIL }}
+          PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
+          PUNCTUM_CLERK_SESSION_ID: ${{ secrets.PUNCTUM_CLERK_SESSION_ID }}
+        run: python3 scripts/hostinger_managed_acceptance.py
+      - name: Inspect the designated existing managed Node website
+        if: steps.operation.outputs.action == 'inventory'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, sys, urllib.parse
+          sys.path.insert(0, "scripts")
+          from hostinger_managed_qa import Recovery, DOMAIN, SITE
+          config = json.loads(pathlib.Path("requests/punctum-managed-production.json").read_text())
+          assert config["domain"] == DOMAIN and config["action"] == "inventory"
+          operation = Recovery(pathlib.Path.cwd(), "prepare", config["expected_build_uuid"])
+          settings = operation.api("settings", SITE + "/builds/settings")
+          history = operation.api("history", SITE + "/builds")
+          variables = operation.api("variables", SITE + "/builds/settings/env")
+          website = operation.api("website", "/websites?" + urllib.parse.urlencode({"domain": DOMAIN}))
+          assert isinstance(history, list) and history and isinstance(variables, list)
+          latest = history[0]
+          assert latest["uuid"] == config["expected_build_uuid"], "Managed build changed concurrently"
+          assert not any(row.get("state") in ("pending", "running") for row in history), "Concurrent managed build"
+          assert any(row.get("domain") == DOMAIN and row.get("username") == "u571409090" for row in website), "Wrong hosting account"
+          safe_settings = {k: settings.get(k) for k in ("app_type", "node_version", "package_manager", "root_directory", "output_directory", "build_script", "entry_file")}
+          proof = {"target": DOMAIN, "sourceSha": os.environ["GITHUB_SHA"], "settings": safe_settings,
+                   "latest": {"uuid": latest["uuid"], "state": latest.get("state")},
+                   "environmentKeys": sorted(row["key"] for row in variables),
+                   "buildOptions": {k: latest.get("build_options", {}).get(k) for k in ("source_type", "entry_file", "build_script")},
+                   "sourceMutations": 0}
+          try:
+              files = operation.api("files", "/accounts/u571409090/domains/" + DOMAIN + "/files?max_depth=1&max_items=20")
+              proof["fileInventoryType"] = type(files).__name__
+              proof["fileInventoryFields"] = sorted(files) if isinstance(files, dict) else []
+          except Exception as error:
+              proof["fileInventoryError"] = type(error).__name__
+          status, headers, raw = operation.request("publicHealth", "https://" + DOMAIN + "/api/health", headers={"Cache-Control":"no-cache"})
+          health = json.loads(raw)
+          assert status == 200 and health.get("ok") is True and health.get("service") == "punctum-picture"
+          proof["activeSource"] = headers.get("X-Punctum-QA-Source")
+          proof["activeBoot"] = headers.get("X-Punctum-QA-Boot")
+          proof["noindex"] = "noindex" in headers.get("X-Robots-Tag", "")
+          output = pathlib.Path("outputs/punctum-managed-production")
+          output.mkdir(parents=True, exist_ok=True)
+          (output / "inventory.json").write_text(json.dumps(proof, indent=2) + "\n")
+          print(json.dumps(proof))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-managed-production-evidence
+          path: outputs/punctum-managed-production/
+          if-no-files-found: warn
+          retention-days: 7

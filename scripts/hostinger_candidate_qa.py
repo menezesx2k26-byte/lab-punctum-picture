@@ -9,16 +9,22 @@ import subprocess
 import time
 import uuid
 import zipfile
+from contextlib import nullcontext
 from hostinger_managed_qa import API, SITE, DOMAIN, Recovery, RequestFailure, PROBE_SETTINGS, check_probe_settings, probe_archive, digest
 
 ALLOWED_ROOTS = {'app','build','config','db','drizzle','migrations','public','shared','worker'}
-ALLOWED_FILES = {'package.json','package-lock.json','next.config.ts','tsconfig.json','worker-configuration.d.ts','wrangler.jsonc'}
+ALLOWED_FILES = {'package.json','package-lock.json','next.config.ts','tsconfig.json','worker-configuration.d.ts','wrangler.jsonc','cron.mjs'}
 
 
-def candidate_archive(root, tracked):
+def candidate_archive(root, tracked, revision=None):
+    if revision is not None and not re.fullmatch(r'[a-f0-9]{40}', revision):
+        raise ValueError('Source archive requires an exact Git revision')
     output = io.BytesIO()
     files = []
-    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
+    snapshot = (subprocess.check_output(['git', '-c', 'core.autocrlf=false', 'archive', '--format=zip', revision], cwd=root)
+                if revision else None)
+    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive, \
+            (zipfile.ZipFile(io.BytesIO(snapshot)) if snapshot else nullcontext()) as historical:
         for path in sorted(tracked):
             parts = path.split('/')
             if (path.startswith('/') or '..' in parts or any(p.startswith('.env') for p in parts) or
@@ -26,12 +32,15 @@ def candidate_archive(root, tracked):
                 path.endswith(('.sqlite','.db','.pem','.key','.zip'))):
                 continue
             allowed = (parts[0] in ALLOWED_ROOTS or path in ALLOWED_FILES or
-                       path.startswith('services/punctum-hostinger-node/'))
+                       path.startswith('services/punctum-hostinger-node/') or
+                       path.startswith('services/punctum-hostinger-production/') or
+                       path in ('scripts/hostinger-build-scheduled.mjs', 'scripts/hostinger-clerk-production-proof.mjs'))
             if not allowed:
                 continue
-            if (root / path).is_symlink():
+            if ((historical.getinfo(path).external_attr >> 16) & 0o170000 == 0o120000
+                    if historical else (root / path).is_symlink()):
                 raise ValueError('Source archive refuses tracked symlinks')
-            data = (root / path).read_bytes()
+            data = historical.read(path) if historical else (root / path).read_bytes()
             archive.writestr(path, data)
             files.append({'path':path,'bytes':len(data),'sha256':digest(data)})
     if not any(f['path'] == 'services/punctum-hostinger-node/server.mjs' for f in files):
@@ -51,7 +60,7 @@ def confirm_environment_keys(operation, label, expected, permitted):
     for delay in (0, 2, 5, 10):
         if delay:
             time.sleep(delay)
-        rows = operation.api(label, SITE + '/builds/settings/env')
+        rows = operation.api(label, getattr(operation, 'site', SITE) + '/builds/settings/env')
         if not isinstance(rows, list):
             raise ValueError('Invalid environment key readback')
         keys = [row.get('key') for row in rows if isinstance(row, dict)]
@@ -63,7 +72,7 @@ def confirm_environment_keys(operation, label, expected, permitted):
     raise ValueError('Expected environment key readback did not converge')
 
 
-def write_candidate_environment(operation, environment):
+def write_candidate_environment(operation, environment, previous_keys=()):
     """Handle the provider's ambiguous HTTP 500 after a full env replacement.
 
     A full set of masked keys proves only that the API accepted the shape,
@@ -73,12 +82,12 @@ def write_candidate_environment(operation, environment):
     payload = {'env_vars':[{'key':k,'value':v} for k,v in environment.items()]}
     operation.report['candidateEnvironmentAcceptance'] = 'NOT_VERIFIED'
     try:
-        put(operation,'candidateEnvironmentWrite',SITE + '/builds/settings/env',payload)
+        put(operation,'candidateEnvironmentWrite',getattr(operation, 'site', SITE) + '/builds/settings/env',payload)
     except RequestFailure as error:
         if error.status not in (None,500,502,503,504):
             raise
         keys = set(environment)
-        readback = confirm_environment_keys(operation, 'candidateEnvironmentReadbackAfterHttpError', keys, keys)
+        readback = confirm_environment_keys(operation, 'candidateEnvironmentReadbackAfterHttpError', keys, keys | set(previous_keys))
         operation.report['candidateEnvironmentAcceptance'] = 'PROVISIONAL_KEYS_ONLY'
         operation.report['candidateEnvironmentKeyCount'] = len(readback)
         operation.report['candidateEnvironmentHttpError'] = error.status
@@ -88,10 +97,11 @@ def write_candidate_environment(operation, environment):
 
 
 def build(operation, name, settings, phase):
+    site = getattr(operation, 'site', SITE)
     operation.report['buildRequestAttempted'] = True
     operation.save()
     payload = {**settings,'source_type':'archive','source_options':{'archive_path':name}}
-    result = operation.api(phase + 'Start', SITE + '/builds', payload)
+    result = operation.api(phase + 'Start', site + '/builds', payload)
     identifier = result.get('uuid') if isinstance(result,dict) else None
     if not isinstance(identifier,str) or len(identifier) != 36:
         raise ValueError('Unknown build acknowledgement; do not repeat POST')
@@ -100,14 +110,14 @@ def build(operation, name, settings, phase):
     operation.save()
     deadline = time.monotonic() + 660
     while time.monotonic() < deadline:
-        state = operation.api(phase + 'State', SITE + '/builds/' + identifier)
+        state = operation.api(phase + 'State', site + '/builds/' + identifier)
         if state.get('state') == 'completed':
             options = state.get('options',{})
             if any(options.get(k) != v for k,v in settings.items()):
                 raise ValueError('Completed candidate build has unexpected settings')
             return identifier
         if state.get('state') == 'failed':
-            logs = operation.api(phase + 'Logs', SITE + '/builds/' + identifier + '/logs')
+            logs = operation.api(phase + 'Logs', site + '/builds/' + identifier + '/logs')
             content = json.dumps(logs).lower()
             operation.report['failedBuildDiagnostics'] = {
                 'sha256':digest(json.dumps(logs,sort_keys=True).encode()),

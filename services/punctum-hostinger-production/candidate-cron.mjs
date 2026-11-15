@@ -49,12 +49,18 @@ try {
   if (cronMode === "daily" && !result.objects.some((x) => x.key.includes("/daily/"))) {
     throw Error("CANDIDATE_CRON_DAILY_BACKUP_NOT_CREATED");
   }
+  let physicalBackup;
+  if (cronMode === "daily" && config.managed) {
+    const { dailyManagedBackup } = await import("./managed-restore-check.mjs");
+    physicalBackup = await dailyManagedBackup(config);
+  }
   console.log(
     JSON.stringify({
       status: "CANDIDATE_SCHEDULED_JOB_PASS",
       cronMode,
       environment: config.environment,
       backupsPresent: result.objects.length,
+      physicalBackup,
       dnsTouched: false,
     }),
   );

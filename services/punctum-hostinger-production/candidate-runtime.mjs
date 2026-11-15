@@ -2,6 +2,14 @@ import { lstatSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute } from "node:path";
 import { validatePrivateStageDb } from "./sqlite.mjs";
 
+export function canonicalCandidateUrl(url, publicOrigin) {
+  if (publicOrigin.origin !== "https://punctumpicture.com" || url.hostname !== "www.punctumpicture.com" || url.port) return null;
+  const target = new URL(publicOrigin.origin);
+  target.pathname = url.pathname;
+  target.search = url.search;
+  return target;
+}
+
 function privateDir(path, errCode) {
   if (typeof path !== "string" || !isAbsolute(path)) throw Error(errCode);
   const l = lstatSync(path);
@@ -27,8 +35,11 @@ export function candidateConfig() {
     throw Error("CANDIDATE_ENVIRONMENT_INVALID");
   }
   let origin;
+  const managed = process.env.PUNCTUM_CANDIDATE_PROVIDER === "hostinger-managed";
   try {
-    origin = new URL(process.env.PUNCTUM_CANDIDATE_ORIGIN ?? "");
+    origin = new URL(managed
+      ? `http://127.0.0.1:${process.env.PORT || "3000"}`
+      : process.env.PUNCTUM_CANDIDATE_ORIGIN ?? "");
   } catch {
     throw Error("CANDIDATE_LISTEN_ORIGIN_INVALID");
   }
@@ -50,6 +61,9 @@ export function candidateConfig() {
     publicOrigin = new URL(process.env.PUNCTUM_CANDIDATE_PUBLIC_URL ?? origin.origin);
   } catch {
     throw Error("CANDIDATE_PUBLIC_URL_INVALID");
+  }
+  if (managed && !["https://aliceblue-locust-999458.hostingersite.com", "https://punctumpicture.com"].includes(publicOrigin.origin)) {
+    throw Error("CANDIDATE_MANAGED_HOST_INVALID");
   }
   if (
     (publicOrigin.protocol !== "https:" &&
@@ -81,12 +95,14 @@ export function candidateConfig() {
   if (adminSessionSecret.length < 40 || clientSessionSecret.length < 40) {
     throw Error("CANDIDATE_SESSION_SECRETS_REQUIRED");
   }
-  const trustedProxy = process.env.PUNCTUM_CANDIDATE_TRUSTED_PROXY || "caddy";
+  const trustedProxy = process.env.PUNCTUM_CANDIDATE_TRUSTED_PROXY || (managed ? "none" : "caddy");
   if (!["caddy", "none"].includes(trustedProxy)) {
     throw Error("CANDIDATE_TRUSTED_PROXY_INVALID");
   }
 
   return {
+    managed,
+    noindex: environment !== "production" || publicOrigin.hostname === "aliceblue-locust-999458.hostingersite.com",
     environment,
     origin,
     publicOrigin,

@@ -1,0 +1,182 @@
+{
+  "sourceReadOnly": true,
+  "sourceAccount": "257bca437616da74ece1ce4bbaf0bd89",
+  "objects": 230,
+  "bytes": 372040548,
+  "sqlSha256": "b3d7b220aab9cf15cc5d8652a1bd699ebcbf2ee6d64f6680df61d3041cbbbeff",
+  "cipherSha256": "1883266e24ef00d6f21eb4382c1a70a719996c1ac7b39b3b5b4ec6db30ea17c3",
+  "originalsManifestSha256": "c6524fdd07ca8fc624b731ea21b609a292ef4d044ffcae3c973a8d8e0f76bf92",
+  "sourceTables": {
+    "admin_credentials": {
+      "rows": 1,
+      "sha256": "ace024ef699fe83cf8ecce0143a415547e1573dd47f82e2983d8ccecbdb4f07e"
+    },
+    "album_categories": {
+      "rows": 20,
+      "sha256": "7769b6c3f1f6630f4ff1f8793c1c68db4e909c5068adc36a21e48b02a8a11992"
+    },
+    "albums": {
+      "rows": 20,
+      "sha256": "ac831d0a26f30893f3cd925e59a086c115ff875be9aba84f9faa9344903151f9"
+    },
+    "audit_log": {
+      "rows": 323,
+      "sha256": "3a942a47e84c98ab448a906428a7a04defe30f1e3196e19fc00bf9e9cef97838"
+    },
+    "backup_runs": {
+      "rows": 83,
+      "sha256": "95cec0b58e4246b9c2f26c7a92f7a1d98c777a65c35e5612224546c2888d4c64"
+    },
+    "categories": {
+      "rows": 10,
+      "sha256": "18450ffe642e2bf8e6a0c2a726599f6106e577dcaab08f9343e97b06ca28bf09"
+    },
+    "d1_migrations": {
+      "rows": 8,
+      "sha256": "5c214e6b90bd823aa74af4f9b3d7bae1372fdadb0e968d5b86c5b3be6094b83b"
+    },
+    "images": {
+      "rows": 339,
+      "sha256": "3dce626c81dcd089af55ff9735c52f183e912951fcc4b78f45494b52d293e9c7"
+    },
+    "inquiries": {
+      "rows": 1,
+      "sha256": "f0ab42f457eb73a90cc552c3e8b837d4befc9fdffde286d3845389c119079e0a"
+    },
+    "rate_limit_buckets": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "site_config": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "site_config_pointers": {
+      "rows": 1,
+      "sha256": "8e6026fbfdfca3d9d21a85aa23a9fd3ab71750d385765e20e1a8f5d028dd1581"
+    },
+    "site_config_versions": {
+      "rows": 11,
+      "sha256": "045ddceaee44709e7a38ee2c2f2262d0be664808f7cc56821b7ded3da8266416"
+    },
+    "site_media": {
+      "rows": 12,
+      "sha256": "fc7cc445847d75516c98feffda0e43e58250955adef6bc642927543d32cfebd3"
+    },
+    "site_settings": {
+      "rows": 1,
+      "sha256": "53414d2114b9794da92f95f2f97158fa798247dc8abe0d01947f880d1821ae17"
+    },
+    "upload_intents": {
+      "rows": 139,
+      "sha256": "13b63541ab11dcaf708cd642207a32aca8f17464c363f3454ba65e2c48c38b9a"
+    }
+  },
+  "tables": {
+    "admin_credentials": {
+      "rows": 1,
+      "sha256": "ace024ef699fe83cf8ecce0143a415547e1573dd47f82e2983d8ccecbdb4f07e"
+    },
+    "album_categories": {
+      "rows": 20,
+      "sha256": "7769b6c3f1f6630f4ff1f8793c1c68db4e909c5068adc36a21e48b02a8a11992"
+    },
+    "albums": {
+      "rows": 20,
+      "sha256": "ac831d0a26f30893f3cd925e59a086c115ff875be9aba84f9faa9344903151f9"
+    },
+    "audit_log": {
+      "rows": 323,
+      "sha256": "3a942a47e84c98ab448a906428a7a04defe30f1e3196e19fc00bf9e9cef97838"
+    },
+    "backup_runs": {
+      "rows": 83,
+      "sha256": "95cec0b58e4246b9c2f26c7a92f7a1d98c777a65c35e5612224546c2888d4c64"
+    },
+    "categories": {
+      "rows": 10,
+      "sha256": "18450ffe642e2bf8e6a0c2a726599f6106e577dcaab08f9343e97b06ca28bf09"
+    },
+    "clerk_admin_identity_links": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clerk_pilot_identity_links": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "client_accounts": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "client_galleries": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "client_gallery_favorites": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "client_gallery_images": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "client_gallery_upload_intents": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "d1_migrations": {
+      "rows": 15,
+      "sha256": "c09149967949e6a3beddbbb9ea3f191d34a0d5f995cffd90df5760c343ab3145"
+    },
+    "images": {
+      "rows": 339,
+      "sha256": "3dce626c81dcd089af55ff9735c52f183e912951fcc4b78f45494b52d293e9c7"
+    },
+    "inquiries": {
+      "rows": 1,
+      "sha256": "f0ab42f457eb73a90cc552c3e8b837d4befc9fdffde286d3845389c119079e0a"
+    },
+    "public_home_snapshot": {
+      "rows": 1,
+      "sha256": "d75f938612a41259125dd242ece54b9fbae7ab32216faf7c98d2cf2646d49261"
+    },
+    "public_home_snapshot_mutations": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rate_limit_buckets": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "revoked_clerk_tokens": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "site_config": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "site_config_pointers": {
+      "rows": 1,
+      "sha256": "8e6026fbfdfca3d9d21a85aa23a9fd3ab71750d385765e20e1a8f5d028dd1581"
+    },
+    "site_config_versions": {
+      "rows": 11,
+      "sha256": "045ddceaee44709e7a38ee2c2f2262d0be664808f7cc56821b7ded3da8266416"
+    },
+    "site_media": {
+      "rows": 12,
+      "sha256": "fc7cc445847d75516c98feffda0e43e58250955adef6bc642927543d32cfebd3"
+    },
+    "site_settings": {
+      "rows": 1,
+      "sha256": "53414d2114b9794da92f95f2f97158fa798247dc8abe0d01947f880d1821ae17"
+    },
+    "upload_intents": {
+      "rows": 139,
+      "sha256": "13b63541ab11dcaf708cd642207a32aca8f17464c363f3454ba65e2c48c38b9a"
+    }
+  },
+  "sampleImageId": "03a3667e-ac63-4e6e-85f5-ce280f96b471"
+}

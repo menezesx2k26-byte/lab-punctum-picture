@@ -30,7 +30,7 @@ process.env.PUNCTUM_QA_CLIENT_DIRECTORY = fileURLToPath(new URL("client/", outpu
 
 await startProdServer({
   port,
-  host: config.origin.hostname,
+  host: config.managed ? "0.0.0.0" : config.origin.hostname,
   outDir: fileURLToPath(output),
   noCompression: true,
 });

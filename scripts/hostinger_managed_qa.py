@@ -70,7 +70,10 @@ class RequestFailure(Exception):
 
 
 class Recovery:
-    def __init__(self, root, action, expected_build, existing_archive=None):
+    def __init__(self, root, action, expected_build, existing_archive=None, *, domain=DOMAIN):
+        if domain not in (DOMAIN, 'punctumpicture.com'):
+            raise ValueError('Unexpected managed website')
+        self.domain, self.site = domain, f'/accounts/{USERNAME}/websites/{domain}/nodejs'
         if action not in ("prepare", "inspect-upload", "restore-probe"):
             raise ValueError("Only probe preparation or identical probe recovery is supported")
         self.root, self.action, self.expected_build = root, action, expected_build
@@ -86,7 +89,7 @@ class Recovery:
         self.opener = urllib.request.build_opener(NoRedirect())
         self.output = root / "outputs/hostinger-managed-recovery"
         self.output.mkdir(parents=True, exist_ok=True)
-        self.report = {"schema": 1, "sourceSha": os.environ.get("GITHUB_SHA"), "target": DOMAIN,
+        self.report = {"schema": 1, "sourceSha": os.environ.get("GITHUB_SHA"), "target": domain,
                        "action": action, "scope": "disposable-existing-qa-instance-only",
                        "status": "IN_PROGRESS", "productionMutations": 0, "buildsStarted": 0,
                        "settingsWrites": 0, "environmentWrites": 0, "checks": {}}
@@ -146,7 +149,7 @@ class Recovery:
     def upload_archive(self, archive, prefix):
         if prefix not in ('punctum-recovery-v2-', 'punctum-storage-qa-', 'punctum-node-candidate-'):
             raise ValueError('Unexpected archive profile')
-        credentials = self.api('uploadCredentials', '/files/upload-urls', {'username':USERNAME, 'domain':DOMAIN})
+        credentials = self.api('uploadCredentials', '/files/upload-urls', {'username':USERNAME, 'domain':self.domain})
         base = upload_base(credentials['url'])
         headers = {'X-Auth':credentials['auth_key'], 'X-Auth-Rest':credentials['rest_auth_key'],
                    'Tus-Resumable':'1.0.0', 'User-Agent':'Punctum QA recovery/1.0'}

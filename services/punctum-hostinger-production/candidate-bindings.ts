@@ -14,6 +14,9 @@ export const env = {
     return config().environment;
   },
   PRIVATE_GALLERIES_ENABLED: "true",
+  get MAX_UPLOAD_BYTES() {
+    return config().managed ? "20000000" : "26214400";
+  },
   get CLIENT_AUTH_MODE() {
     return (
       process.env.PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE ||

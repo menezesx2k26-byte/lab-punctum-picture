@@ -1,0 +1,61 @@
+name: Punctum origin ACME source preflight
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-acme-source-preflight.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check origin challenge handling with an owned public canary only
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, secrets, sys, urllib.error
+          sys.path.insert(0,'scripts')
+          from hostinger_managed_qa import Recovery, upload_base
+          op=Recovery(pathlib.Path.cwd(),'prepare',None,domain='punctumpicture.com')
+          report={'publicDnsTouched':False,'publicRoutesTouched':False,'productionDataTouched':False}
+          credentials=op.api('uploadCredentials','/files/upload-urls',{'username':'u571409090','domain':'punctumpicture.com'})
+          base=upload_base(credentials['url'])
+          headers={'X-Auth':credentials['auth_key'],'X-Auth-Rest':credentials['rest_auth_key'],'Tus-Resumable':'1.0.0'}
+          status,metadata,_=op.request('tusOptions',base,'OPTIONS',headers)
+          extensions=metadata.get('Tus-Extension','').split(',')
+          report['tusExtensions']=extensions
+          if 'termination' in [x.strip() for x in extensions]:
+              path='.well-known/acme-challenge/punctum-proof-'+secrets.token_hex(16)
+              body=('punctum-proof.'+secrets.token_urlsafe(32)).encode()
+              target=base+'/'+path
+              created=False
+              try:
+                  assert op.request('createCanary',target,'POST',{**headers,'Upload-Length':str(len(body)),'Upload-Offset':'0'},b'')[0]==201
+                  created=True
+                  assert op.request('uploadCanary',target,'PATCH',{**headers,'Content-Type':'application/offset+octet-stream','Upload-Offset':'0'},body)[0]==204
+                  report['ownedCanary']={'path':path,'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest(),'hosts':{}}
+                  for host in ('punctumpicture.com','www.punctumpicture.com'):
+                      try:
+                          status,_,actual=op.request('probe'+host,'http://punctumpicture.com.cdn.hstgr.net/'+path,headers={'Host':host})
+                          report['ownedCanary']['hosts'][host]={'status':status,'exactBytes':actual==body}
+                      except Exception as error: report['ownedCanary']['hosts'][host]={'status':getattr(error,'status',None),'exactBytes':False}
+              finally:
+                  if created:
+                      assert op.request('deleteCanary',target,'DELETE',headers)[0] in (200,204)
+                      report['ownCanaryDeleted']=True
+          else:
+              report['canarySkipped']='No advertised termination extension; no unremovable fixture created'
+          output=pathlib.Path('acme-source');output.mkdir()
+          (output/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-acme-source
+          path: acme-source/
+          retention-days: 7

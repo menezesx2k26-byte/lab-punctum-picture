@@ -1,0 +1,97 @@
+name: Punctum reconnect and prove managed schedules
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-connected-cron-repair.yml]
+permissions:
+  contents: read
+concurrency:
+  group: punctum-existing-hostinger-qa
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Move only the two known Punctum jobs and verify real executions
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os, pathlib, sys, time, urllib.error, urllib.request
+          sys.path.insert(0,'scripts')
+          from hostinger_managed_qa import Recovery, DOMAIN, USERNAME, API, RequestFailure
+          from hostinger_managed_schedule import command, job_receipt
+          op=Recovery(pathlib.Path.cwd(),'prepare',None,domain='punctumpicture.com')
+          report={'dnsTouched':False,'scope':'connected-managed-staging-only','jobs':{},'probes':{}}
+          cron=f'/accounts/{USERNAME}/cron-jobs'
+          settings=op.api('settings',op.site+'/builds/settings')
+          assert settings.get('entry_file')=='services/punctum-hostinger-production/candidate-server.mjs'
+          def delete(uid,label):
+              req=urllib.request.Request(API+cron+'/'+uid,method='DELETE',headers={'Authorization':'Bearer '+os.environ['HOSTINGER_API'],'User-Agent':'Punctum QA inventory/1.0'})
+              try:
+                  with op.opener.open(req,timeout=25) as response: assert response.status==200
+              except urllib.error.HTTPError as error:
+                  if error.code not in (500,502,503,504): raise
+              assert not any(x['uid']==uid for x in op.api(label,cron)), 'Cron deletion not reconciled'
+          def create(schedule,cmd,label):
+              before=op.api(label+'Before',cron)
+              assert not any(x.get('command')==cmd and x.get('time')==schedule for x in before)
+              try: return op.api(label,cron,{'time':schedule,'command':cmd})
+              except RequestFailure as error:
+                  if error.status not in (None,500,502,503,504): raise
+                  rows=[x for x in op.api(label+'Readback',cron) if x.get('command')==cmd and x.get('time')==schedule]
+                  assert len(rows)==1
+                  return rows[0]
+          schedules={'hourly':'15 * * * *','daily':'17 1 * * *'}
+          for mode,schedule in schedules.items():
+              old=command(mode); new=old.replace('/domains/'+DOMAIN+'/', '/domains/punctumpicture.com/')
+              rows=op.api('jobsBefore'+mode,cron)
+              owned=[x for x in rows if x.get('command') in (old,new)]
+              assert len(owned)==1 and owned[0].get('time')==schedule, 'Unexpected or concurrent Punctum schedule'
+              if owned[0]['command']==old:
+                  delete(owned[0]['uid'],'deletedOld'+mode)
+                  job=create(schedule,new,'createConnected'+mode)
+              else: job=owned[0]
+              report['jobs'][mode]={'uid':job['uid'],'schedule':schedule,'command':new}
+          probes=[]
+          try:
+              now=datetime.datetime.now(datetime.timezone.utc)
+              for index,mode in enumerate(('hourly','daily')):
+                  when=(now+datetime.timedelta(minutes=index+2)).replace(second=0,microsecond=0)
+                  if when.minute==15 or (when.hour==1 and when.minute==17): when+=datetime.timedelta(minutes=3)
+                  cmd=report['jobs'][mode]['command']
+                  schedule=f'{when.minute} {when.hour} * * *'
+                  job=create(schedule,cmd,'probe'+mode)
+                  probes.append(job['uid']); report['probes'][mode]={'uid':job['uid'],'schedule':schedule}
+              pending=set(report['probes']); deadline=time.monotonic()+420
+              while pending and time.monotonic()<deadline:
+                  for mode in sorted(pending):
+                      try: output=op.api('output'+mode,cron+'/'+report['probes'][mode]['uid']+'/output')
+                      except RequestFailure: continue
+                      receipt=job_receipt(output,mode)
+                      if receipt:
+                          assert receipt.get('environment')=='staging'
+                          report['probes'][mode]['receipt']=receipt; pending.remove(mode)
+                  if pending: time.sleep(15)
+              assert not pending, 'Real connected-domain jobs not verified'
+          finally:
+              for uid in probes: delete(uid,'deletedProbe'+uid)
+          rows=op.api('finalJobs',cron)
+          for mode,job in report['jobs'].items():
+              matches=[x for x in rows if x.get('command')==job['command']]
+              assert len(matches)==1 and matches[0]['time']==job['schedule']
+          assert not any('/domains/'+DOMAIN+'/' in x.get('command','') for x in rows), 'Old Punctum paths remain scheduled'
+          report['status']='CONNECTED_MANAGED_SCHEDULES_VERIFIED'
+          output=pathlib.Path('connected-cron');output.mkdir()
+          (output/'report.json').write_text(json.dumps(report,indent=2)+'\n'); print(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-connected-cron
+          path: connected-cron/
+          retention-days: 7

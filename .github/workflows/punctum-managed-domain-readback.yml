@@ -1,0 +1,122 @@
+name: Punctum connected Node domain readback
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-managed-domain-readback.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Reconcile the hPanel domain connection without mutating hosting or DNS
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          DNS_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, sys, urllib.error, urllib.parse, urllib.request
+          sys.path.insert(0,'scripts')
+          from hostinger_managed_qa import Recovery, USERNAME
+          op=Recovery(pathlib.Path.cwd(),'prepare',None)
+          report={'mutations':0,'websites':{}}
+          # The temporary hostingersite.com hostname ceased to be a distinct
+          # hPanel website when the primary Node website became punctumpicture.com.
+          # Inspect the canonical managed Node website once; a DNS/SNI probe below
+          # separately evaluates any externally reachable temporary hostname.
+          for domain in ('punctumpicture.com',):
+              entry={}; report['websites'][domain]=entry
+              try:
+                  rows=op.api('website'+domain,'/websites?domain='+domain)
+                  entry['websites']=[{k:x.get(k) for k in ('domain','username','order_id','website_type','vhost_type','root_directory','ip','server_ip','ipv4','ipv6','server_hostname')} for x in rows]
+                  entry['fields']=sorted(set(k for x in rows for k in x))
+              except Exception as e: entry['websiteError']=str(e)[:100]
+              root=f'/accounts/{USERNAME}/websites/{domain}'
+              for name,path in [('ssl','/ssl/status'),('cdn','/cdn/status'),('settings','/nodejs/builds/settings')]:
+                  try: entry[name]=op.api(name+domain,root+path)
+                  except Exception as e: entry[name]={'error':str(e)[:100]}
+              try:
+                  env=op.api('env'+domain,root+'/nodejs/builds/settings/env')
+                  entry['environmentKeys']=sorted(x['key'] for x in env)
+                  builds=op.api('builds'+domain,root+'/nodejs/builds')
+                  entry['latestBuild']={k:builds[0].get(k) for k in ('uuid','state','created_at')} if builds else None
+              except Exception as e: entry['nodeError']=str(e)[:100]
+          report['managedWebsiteId'] = 'punctumpicture.com'
+          report['legacyTemporaryHostnameStatus'] = 'not_registered_as_separate_website'
+          report['cron']=op.api('cron',f'/accounts/{USERNAME}/cron-jobs')
+          req=urllib.request.Request('https://developers.hostinger.com/api/dns/v1/zones/punctumpicture.com',headers={'Authorization':'Bearer '+os.environ['HOSTINGER_API'],'User-Agent':'Punctum QA inventory/1.0'})
+          try:
+              with urllib.request.urlopen(req,timeout=25) as response:
+                  value=json.load(response)
+                  records=value.get('data',[]) if isinstance(value,dict) else value
+                  report['hostingerSuggestedRouting']=[x for x in records if x.get('type') in ('A','AAAA','CNAME','ALIAS','ANAME') and x.get('name') in ('','@','www','punctumpicture.com','www.punctumpicture.com')]
+          except urllib.error.HTTPError as error: report['hostingerSuggestedRoutingHttp']=error.code
+          url='https://api.cloudflare.com/client/v4/zones/561d9796dd104b8563c9ab77fa4fae1d/dns_records?per_page=100'
+          req=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['DNS_TOKEN']})
+          with urllib.request.urlopen(req,timeout=25) as response: dns=json.load(response)
+          assert dns.get('success') is True
+          report['publicRouting']=[{k:x.get(k) for k in ('name','type','content','proxied','ttl','meta')} for x in dns['result'] if x['name'] in ('punctumpicture.com','www.punctumpicture.com') and x['type'] in ('A','AAAA','CNAME')]
+          output=pathlib.Path('connected-domain');output.mkdir()
+          (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Probe read-only canonical relay feasibility (not a cutover or TLS acceptance)
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, urllib.error, urllib.request
+          origin='https://aliceblue-locust-999458.hostingersite.com'
+          cdn_origin='https://punctumpicture.com.cdn.hstgr.net'
+          canonical='https://punctumpicture.com'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+          opener=urllib.request.build_opener(NoRedirect)
+          results={}
+          for label,url,headers in [
+              ('cloudflare-health',canonical+'/api/health',{}),
+              ('managed-health',origin+'/api/health',{}),
+              ('managed-forwarded-canonical-health',origin+'/api/health',
+               {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+              ('managed-home',origin+'/',{}),
+              ('managed-forwarded-canonical-home',origin+'/',
+               {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+              # Exact Hostinger CDN route suggested by the provider's DNS readback.
+              # HTTPS hostname verification stays enabled; no -k or TLS bypass.
+              ('managed-cdn-health',cdn_origin+'/api/health',{}),
+              ('managed-cdn-canonical-host-health',cdn_origin+'/api/health',
+               {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+              ('managed-cdn-home',cdn_origin+'/',{}),
+          ]:
+              request=urllib.request.Request(url,headers={'User-Agent':'Punctum managed read-only proxy probe/1',**headers})
+              try:
+                  with opener.open(request,timeout=15) as response:
+                      results[label]={'status':response.status,'contentType':response.headers.get('Content-Type','').split(';')[0],
+                                      'locationHost':None,'secureTransportVerified':True}
+              except urllib.error.HTTPError as error:
+                  location=error.headers.get('Location','')
+                  if location:
+                      parsed=urllib.parse.urlsplit(location)
+                      location=parsed.hostname if parsed.scheme in ('http','https') else '(relative)'
+                  results[label]={'status':error.code,'locationHost':location or None,'secureTransportVerified':True}
+              except (OSError,ValueError) as error:
+                  results[label]={'error':type(error).__name__,'secureTransportVerified':False}
+          report={
+              'mode':'READ_ONLY_NO_DNS_OR_HOSTING_MUTATION',
+              'observations':results,
+              'bothPublicEndpoints200':results['cloudflare-health'].get('status')==200 and results['managed-health'].get('status')==200,
+              'canonicalRelayReady':False,
+              'limit':'A forwarded HTTP probe cannot establish Worker relay security, Clerk cookies, Hostinger apex SNI, upload streaming, origin authenticity or rollback.'}
+          output=pathlib.Path('connected-domain');output.mkdir(exist_ok=True)
+          (output/'relay-preflight.json').write_text(json.dumps(report,indent=2)+'\\n')
+          print(json.dumps({'mode':report['mode'],'observations':{k:v.get('status',v.get('error')) for k,v in results.items()},
+                            'bothPublicEndpoints200':report['bothPublicEndpoints200'],'canonicalRelayReady':False},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-connected-node-domain
+          path: connected-domain/
+          retention-days: 7
