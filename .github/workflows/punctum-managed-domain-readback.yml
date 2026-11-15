@@ -63,6 +63,7 @@ jobs:
           python3 - <<'PY'
           import json, pathlib, urllib.error, urllib.request
           origin='https://aliceblue-locust-999458.hostingersite.com'
+          cdn_origin='https://punctumpicture.com.cdn.hstgr.net'
           canonical='https://punctumpicture.com'
           class NoRedirect(urllib.request.HTTPRedirectHandler):
               def redirect_request(self, req, fp, code, msg, headers, newurl): return None
@@ -76,6 +77,12 @@ jobs:
               ('managed-home',origin+'/',{}),
               ('managed-forwarded-canonical-home',origin+'/',
                {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+              # Exact Hostinger CDN route suggested by the provider's DNS readback.
+              # HTTPS hostname verification stays enabled; no -k or TLS bypass.
+              ('managed-cdn-health',cdn_origin+'/api/health',{}),
+              ('managed-cdn-canonical-host-health',cdn_origin+'/api/health',
+               {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+              ('managed-cdn-home',cdn_origin+'/',{}),
           ]:
               request=urllib.request.Request(url,headers={'User-Agent':'Punctum managed read-only proxy probe/1',**headers})
               try:
