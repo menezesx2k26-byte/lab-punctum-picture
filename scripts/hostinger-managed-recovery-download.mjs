@@ -49,8 +49,16 @@ try {
   const started = performance.now(), persist = join(root, "d1");
   // --local always imports into this owned directory; the production D1 binding is never written.
   execFileSync(process.execPath, ["node_modules/wrangler/bin/wrangler.js", "d1", "execute", "punctum-picture", "--local", "--persist-to", persist, "--file", sql], { stdio: "pipe", timeout: 120_000, env: { ...process.env, CLOUDFLARE_API_TOKEN: "" } });
-  const files = readdirSync(persist, { recursive: true }).filter((x) => x.endsWith(".sqlite")); assert.equal(files.length, 1);
-  const db = new DatabaseSync(join(persist, files[0]), { readOnly: true });
+  const files = readdirSync(persist, { recursive: true }).filter((x) => x.endsWith(".sqlite"));
+  const matching = files.filter((file) => {
+    const candidate = new DatabaseSync(join(persist, file), { readOnly: true });
+    try {
+      const names = new Set(candidate.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((x) => x.name));
+      return Object.keys(manifest.tables).every((name) => names.has(name));
+    } finally { candidate.close(); }
+  });
+  assert.equal(matching.length, 1, "Exactly one isolated D1 database must contain the complete restored schema");
+  const db = new DatabaseSync(join(persist, matching[0]), { readOnly: true });
   try {
     assert.equal(db.prepare("PRAGMA integrity_check").get().integrity_check, "ok"); assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
     const actual = databaseInventory(db);
