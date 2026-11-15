@@ -1,0 +1,49 @@
+name: Punctum real Clerk browser authorization proof
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths:
+      - .github/workflows/punctum-clerk-browser-proof.yml
+      - scripts/hostinger-clerk-browser-proof.mjs
+      - scripts/hostinger-clerk-browser-proof.test.mjs
+permissions:
+  contents: read
+concurrency:
+  group: punctum-approved-clerk-browser-proof
+  cancel-in-progress: false
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify browser proof safety and build the actual candidate application
+        run: |
+          node --test scripts/hostinger-clerk-browser-proof.test.mjs scripts/hostinger-clerk-production-proof.test.mjs
+          npm run build:hostinger:candidate
+      - name: Prove production Clerk SDK login and explicit backend authorization
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          PUNCTUM_CLERK_ADMIN_EMAIL: ${{ secrets.PUNCTUM_CLERK_ADMIN_EMAIL }}
+          PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
+          PUNCTUM_CLERK_SESSION_ID: ${{ secrets.PUNCTUM_CLERK_SESSION_ID }}
+        run: |
+          mkdir -m 700 clerk-browser-evidence
+          set -o pipefail
+          node scripts/hostinger-clerk-browser-proof.mjs | tee clerk-browser-evidence/receipt.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-clerk-browser-proof
+          path: clerk-browser-evidence/
+          retention-days: 7

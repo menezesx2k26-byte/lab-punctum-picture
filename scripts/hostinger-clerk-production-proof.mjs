@@ -95,7 +95,7 @@ export async function withProofDatabase(run) {
     } finally { sqlite.close(); }
     process.env.PUNCTUM_PRODUCTION_CANDIDATE_MODE = "private-candidate";
     db = openCandidateWritableDatabase(path, { candidateMode: "PRIVATE_PRODUCTION_CANDIDATE" });
-    return await run(db);
+    return await run(db, { dbFile: path, directory });
   } finally {
     process.removeListener("SIGINT", interrupt);
     process.removeListener("SIGTERM", interrupt);

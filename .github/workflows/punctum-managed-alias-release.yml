@@ -21,7 +21,7 @@ jobs:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
         run: |
           python3 - <<'PY'
-          import json, os, pathlib, sys, urllib.error, urllib.request
+          import json, os, pathlib, sys, time, urllib.error, urllib.request
           sys.path.insert(0,'scripts')
           from hostinger_managed_qa import Recovery, DOMAIN, USERNAME, API
           op=Recovery(pathlib.Path.cwd(),'prepare',None)
@@ -47,8 +47,12 @@ jobs:
               except urllib.error.HTTPError as error:
                   report['deleteHttp']=error.code
                   if error.code not in (500,502,503,504): raise
-              remaining=op.api('aliasesAfter',root+'/parked-domains')
-              assert not any(x.get('domain')=='punctumpicture.com' for x in remaining), 'Alias removal not verified'
+              print(json.dumps({'deleteHttp':report['deleteHttp']}))
+              for attempt in range(8):
+                  remaining=op.api('aliasesAfter',root+'/parked-domains')
+                  if not any(x.get('domain')=='punctumpicture.com' for x in remaining): break
+                  time.sleep(5)
+              assert not any(x.get('domain')=='punctumpicture.com' for x in remaining), 'Alias removal not verified after bounded readback'
               report['aliasRemoved']=True
           after=json.loads(urllib.request.urlopen('https://'+DOMAIN+'/api/health',timeout=20).read())
           assert after.get('ok') is True
