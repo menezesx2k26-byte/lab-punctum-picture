@@ -24,7 +24,11 @@ jobs:
           from hostinger_managed_qa import Recovery, USERNAME
           op=Recovery(pathlib.Path.cwd(),'prepare',None)
           report={'mutations':0,'websites':{}}
-          for domain in ('aliceblue-locust-999458.hostingersite.com','punctumpicture.com'):
+          # The temporary hostingersite.com hostname ceased to be a distinct
+          # hPanel website when the primary Node website became punctumpicture.com.
+          # Inspect the canonical managed Node website once; a DNS/SNI probe below
+          # separately evaluates any externally reachable temporary hostname.
+          for domain in ('punctumpicture.com',):
               entry={}; report['websites'][domain]=entry
               try:
                   rows=op.api('website'+domain,'/websites?domain='+domain)
@@ -41,6 +45,8 @@ jobs:
                   builds=op.api('builds'+domain,root+'/nodejs/builds')
                   entry['latestBuild']={k:builds[0].get(k) for k in ('uuid','state','created_at')} if builds else None
               except Exception as e: entry['nodeError']=str(e)[:100]
+          report['managedWebsiteId'] = 'punctumpicture.com'
+          report['legacyTemporaryHostnameStatus'] = 'not_registered_as_separate_website'
           report['cron']=op.api('cron',f'/accounts/{USERNAME}/cron-jobs')
           req=urllib.request.Request('https://developers.hostinger.com/api/dns/v1/zones/punctumpicture.com',headers={'Authorization':'Bearer '+os.environ['HOSTINGER_API'],'User-Agent':'Punctum QA inventory/1.0'})
           try:
