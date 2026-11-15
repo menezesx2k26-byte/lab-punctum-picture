@@ -22,7 +22,7 @@ jobs:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
         run: |
           python3 - <<'PY'
-          import json, pathlib, sys, urllib.parse
+          import json, os, pathlib, sys, urllib.error, urllib.parse, urllib.request
           sys.path.insert(0, 'scripts')
           from hostinger_managed_qa import Recovery, RequestFailure, DOMAIN, USERNAME
           operation = Recovery(pathlib.Path.cwd(), 'prepare', None)
@@ -52,8 +52,20 @@ jobs:
               operation.report['aliasVerified'] = True
               ssl_site = f'/accounts/{USERNAME}/websites/{domain}/ssl'
               ssl = operation.api('aliasTlsBefore', ssl_site + '/status')
+              operation.report['tls'] = {key: ssl.get(key) for key in ('status', 'provider', 'expires_at', 'last_error')}
               if ssl.get('status') == 'not_installed':
-                  operation.api('requestAliasTls', ssl_site + '/setup', {})
+                  request = urllib.request.Request('https://developers.hostinger.com/api/hosting/v1' + ssl_site + '/setup',
+                      data=b'{}', headers={'Authorization': 'Bearer ' + os.environ['HOSTINGER_API'],
+                          'Content-Type': 'application/json', 'User-Agent': 'Punctum QA inventory/1.0'})
+                  try:
+                      with operation.opener.open(request, timeout=25) as response:
+                          operation.report['tlsRequestHttp'] = response.status
+                  except urllib.error.HTTPError as error:
+                      operation.report['tlsRequestHttp'] = error.code
+                      rejected = json.loads(error.read(8000))
+                      message = str(rejected.get('message', ''))[:300]
+                      operation.report['tlsRejection'] = message.replace(os.environ['HOSTINGER_API'], '[redacted]')
+                      raise RequestFailure('requestAliasTls', error.code) from None
                   ssl = operation.api('aliasTlsAfter', ssl_site + '/status')
               operation.report['tls'] = {key: ssl.get(key) for key in ('status', 'provider', 'expires_at', 'last_error')}
               operation.report['status'] = 'ALIAS_VERIFIED_TLS_' + str(ssl.get('status', 'UNKNOWN')).upper()
