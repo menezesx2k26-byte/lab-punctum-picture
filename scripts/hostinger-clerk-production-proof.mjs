@@ -200,6 +200,38 @@ export async function proveHandlers(auth, db, input, jwt, pem, checks) {
   checks.legacyFallbackSucceeded = true;
 }
 
+export async function selectedClerkSession(input, checks = {}) {
+  const bapi = async (path, method = "GET") => {
+    const response = await fetch("https://api.clerk.com/v1" + path, {
+      method, headers: { authorization: "Bearer " + input.secretKey, "content-type": "application/json" },
+      ...(method === "POST" ? { body: "{}" } : {}),
+      redirect: "error", signal: AbortSignal.timeout(15_000),
+    });
+    assert(response.ok);
+    return response.json();
+  };
+  const user = await bapi("/users/" + input.userId);
+  const session = await bapi("/sessions/" + input.sessionId);
+  assertSelectedIdentity(input, user, session);
+  checks.selectedIdentityVerified = true;
+  const response = await fetch(ISSUER + "/.well-known/jwks.json", { redirect: "error", signal: AbortSignal.timeout(15_000) });
+  assert(response.ok);
+  const jwks = await response.json();
+  const issued = await bapi("/sessions/" + input.sessionId + "/tokens", "POST");
+  const jwt = process.env.PUNCTUM_CLERK_BROWSER_SESSION_JWT || issued.jwt;
+  assert(typeof jwt === "string" && jwt.split(".").length === 3);
+  const { decodeProtectedHeader, jwtVerify } = await import("jose");
+  const header = decodeProtectedHeader(jwt);
+  assert(header.alg === "RS256" && typeof header.kid === "string");
+  const matching = jwks.keys.filter((key) => key.kid === header.kid && key.kty === "RSA" && (!key.use || key.use === "sig") && (!key.alg || key.alg === "RS256"));
+  assert(matching.length === 1 && !matching[0].d);
+  const key = createPublicKey({ key: matching[0], format: "jwk" });
+  const { payload } = await jwtVerify(jwt, key, { issuer: ISSUER, subject: input.userId, algorithms: ["RS256"], requiredClaims: ["exp", "iat", "sub", "sid"] });
+  assert(payload.sid === input.sessionId && !payload.act && (payload.azp === undefined || payload.azp === ORIGIN));
+  checks.liveKeyMatchesIssuer = true;
+  return { jwt, pem: key.export({ format: "pem", type: "spki" }).toString(), browserOriginPresent: payload.azp === ORIGIN };
+}
+
 async function main() {
   let stage = "inputs";
   const checks = {};
@@ -209,39 +241,10 @@ async function main() {
     const auth = await loadAuthHandlers();
     stage = "private-sqlite";
     await withProofDatabase(async (db) => {
-      const bapi = async (path, method = "GET") => {
-        const response = await fetch("https://api.clerk.com/v1" + path, {
-          method, headers: { authorization: "Bearer " + input.secretKey, "content-type": "application/json" },
-          ...(method === "POST" ? { body: "{}" } : {}),
-          redirect: "error", signal: AbortSignal.timeout(15_000),
-        });
-        assert(response.ok);
-        return response.json();
-      };
       stage = "identity-and-active-browser-session";
-      const user = await bapi("/users/" + input.userId);
-      const session = await bapi("/sessions/" + input.sessionId);
-      assertSelectedIdentity(input, user, session);
-      checks.selectedIdentityVerified = true;
-      stage = "issuer-jwks";
-      const jwksResponse = await fetch(ISSUER + "/.well-known/jwks.json", { redirect: "error", signal: AbortSignal.timeout(15_000) });
-      assert(jwksResponse.ok);
-      const jwks = await jwksResponse.json();
-      stage = "issue-existing-session-token";
-      // The only permitted live write: default token, no template, session creation or revocation.
-      const { jwt } = await bapi("/sessions/" + input.sessionId + "/tokens", "POST");
-      assert(typeof jwt === "string" && jwt.split(".").length === 3);
-      stage = "trusted-jwt";
-      const { decodeProtectedHeader, jwtVerify } = await import("jose");
-      const header = decodeProtectedHeader(jwt);
-      assert(header.alg === "RS256" && typeof header.kid === "string");
-      const matching = jwks.keys.filter((key) => key.kid === header.kid && key.kty === "RSA" && (!key.use || key.use === "sig") && (!key.alg || key.alg === "RS256"));
-      assert(matching.length === 1 && !matching[0].d);
-      const key = createPublicKey({ key: matching[0], format: "jwk" });
-      const { payload } = await jwtVerify(jwt, key, { issuer: ISSUER, subject: input.userId, algorithms: ["RS256"], requiredClaims: ["exp", "iat", "sub", "sid"] });
-      assert(payload.sid === input.sessionId && !payload.act && (payload.azp === undefined || payload.azp === ORIGIN));
-      const pem = key.export({ format: "pem", type: "spki" }).toString();
-      checks.liveKeyMatchesIssuer = true;
+      const { jwt, pem, browserOriginPresent } = await selectedClerkSession(input, checks);
+      stage = "browser-origin-token-required";
+      assert(browserOriginPresent, "CLERK_BROWSER_ORIGIN_TOKEN_REQUIRED");
       stage = "handlers";
       await proveHandlers(auth, db, input, jwt, pem, checks);
       stage = "cleanup";
@@ -251,7 +254,7 @@ async function main() {
   } catch (error) {
     // Never emit upstream errors, assertion values, JWTs, user data or key material.
     const reason = /^CLERK_[A-Z_]+$/.test(error?.message ?? "") ? error.message : undefined;
-    console.log(JSON.stringify({ status: stage === "inputs" ? "blocked" : "failed", stage, reason, checks, limit: LIMIT }));
+    console.log(JSON.stringify({ status: stage === "inputs" || stage === "browser-origin-token-required" ? "blocked" : "failed", stage, reason, checks, limit: LIMIT }));
     process.exitCode = 1;
   }
 }
