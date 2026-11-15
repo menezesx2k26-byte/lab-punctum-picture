@@ -8,7 +8,7 @@ Session dates: 2026-11-14–15, America/Sao_Paulo. Individual workflow receipts 
 
 - Public production: https://punctumpicture.com — HTTPS200, Cloudflare response headers. Existing Studio credential was actually accepted against this origin.
 - Selected destination: https://aliceblue-locust-999458.hostingersite.com — Conthabil managed Node hosting, username `u571409090`, order `1008628483`, Node24. HTTPS health200, HCDN, served source `c10e35fdba8815531cede35104b5e2cb57c3e4d8`.
-- Effective managed build: `01a1dd1b-a01e-70de-a7d6-fdfc8f06814c`.
+- Original verified managed build: `01a1dd1b-a01e-70de-a7d6-fdfc8f06814c`. A subsequent connected Hostinger readback confirmed build `01a1dd88-8fec-7385-96ec-f97e10e109e3` completed on 2026-11-15 04:52:20 UTC using Node24 and `build:hostinger:managed-runtime`; this alone is not a public release or final-origin TLS proof.
 - Branch: `codex/punctum-managed-production-20261114`; draft PR https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/39, base `feat/hostinger-production-candidate-20261113`. No merge or force push.
 - Runtime/maintenance source passed full managed checks at `8e417011ada8279bd643c2b5cd98f2e9509c0306`; the deployed descendant changes only the bounded operation request. Later documentation and removal of an unqualified, unused ACME experiment do not change the application runtime.
 - VPS2135319 is a historical rehearsal environment, not the approved destination. Its running services were inspected; none was replaced or stopped.
@@ -20,17 +20,27 @@ PASS below is scoped to the tested managed candidate. Public production acceptan
 | Gate | Status | Verified evidence / remaining limit |
 |---|---|---|
 | 00 — takeover | PASS | Worktrees, local/remote branch, draft PR, managed account/build, private store and source/destination differences recorded; approved work preserved. |
-| 01 — Clerk production | BLOCKED | Real verified account/session and signature; explicitly approved audited admin link created. Browser-origin token and actual Clerk Studio authorization remain unproven. Runtime stays legacy. |
+| 01 — Clerk production | PARTIAL_VERIFIED / production BLOCKED | [43678214459](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43678214459) proved real production Clerk SDK **ticket** login with canonical `azp`, linked-admin Studio, denial, replay/logout and legacy fallback against an **isolated application**. This was not user password/MFA acceptance or Hostinger public TLS; managed runtime remains legacy. |
 | 02 — D1/R2 final parity | BLOCKED | Full snapshot and all230 original hashes verified; fresh source delta audit found no changes at its observation. Subsequent login/audit/scheduled writes require a controlled final reconciliation. No source freeze occurred. |
 | 03 — application E2E | PASS |35 actual HTTP assertions on the managed host, uploads, Sharp WebP/JPEG, R4 ownership/isolation, limits, logout and mobile/desktop Studio. Legacy login/Studio retested after the latest build/restart. |
 | 04 — HTTPS/routing | BLOCKED | Temporary origin HTTPS works; apex ownership/alias verified. Hostinger TLS reports `Domain challenge failed`. Correct apex-SNI readiness is not established. MCP remains HTTPS200. |
-| 05 — rollback | FAIL | Physical isolated restore and application current/previous/current rollback passed. Complete reverse recovery to Cloudflare including new Hostinger writes is not implemented/proven; actual Clerk-to-legacy cutover has not happened. |
+| 05 — rollback | PARTIAL_VERIFIED / production FAIL | Managed-to-encrypted-offsite-to-**local isolated D1** restore [43678814265](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43678814265) passed all table row/hash and 230 original SHA-256 checks (`remoteD1RestoreVerified:false`). Complete **remote D1/R2 recovery** including new Hostinger writes remains unproven; DNS rollback alone is insufficient. |
 | 06 — operations | BLOCKED | Real hourly/daily job receipts, physical daily backup, seven-day retention and restart proof exist. Final writer cutover, full managed quota/log-retention qualification and post-cutover operation remain open. |
 | 07 — performance | BLOCKED | Moderate read-only concurrency2,13 samples per route, p50/p95 measured. Authentication/upload/final-origin load qualification and sufficiently sampled p99 remain open. |
 | 08 — DNS preflight | PASS | Correct Cloudflare account/zone, Worker custom-domain routes, relevant DNS and TLS settings inventoried; only the authorized five Clerk CNAMEs and ownership TXT published. This does not authorize cutover. |
 | 09 — production cutover | BLOCKED | Unexecuted: critical prerequisite gates fail and public-routing authorization is absent. |
 | 10 — release | BLOCKED | General CI and full managed verification passed; real Clerk acceptance correctly remains blocked. No production release verdict. |
 | 11 — handoff | PASS | Repository checkpoint, exact action/build/test references and this report; private Drive copy/readback recorded when completed. PersistFlow/Gabriel tools currently unavailable. |
+
+## 2026-11-15 reconciled evidence (no release authorization)
+
+Read-only GitHub/Hostinger verification after the initial report found no production cutover. PR #39 was still draft/open at `16d1500ae919f64e1941214ea2b59f145b632672` and CI run [43678817776](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43678817776) passed. Hostinger SSL for `punctumpicture.com` remained `waiting_for_retry` / `Domain challenge failed`. The Node24 managed application build was completed, but the canonical domain was not proven to serve it.
+
+The real Clerk browser proof run [43678214459](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43678214459) completed all scoped assertions, including real SDK ticket issuance, correct authorized-party origin, admin permissions, denial for unrelated users, replay rejection, and legacy fallback. The test substituted an isolated local TLS-backed application at the canonical origin using a pinned test certificate. **It is not evidence that Hostinger apex TLS, MFA login, or real-domain cutover passed.** Its explicit `limit` field states this.
+
+The initial encrypted export workflow [43678214437](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43678214437) ended `failure` at its integrated restore stage despite a completed export. A subsequent independent restore [43678814265](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43678814265) reused that exact acknowledged ciphertext and passed D1-local table parity and 230/230 original hashes (372,040,548 bytes). Its receipt says `MANAGED_R2_TO_LOCAL_D1_RESTORE_VERIFIED` and `remoteD1RestoreVerified:false`. Do not label remote rollback PASS, target occupied production/QA resources, or imply this tests post-cutover mutable data.
+
+Outstanding gates before any public routing: preflight of the actual canonical-domain TLS and Clerk Studio; remote **isolated, clearly-owned** D1/R2 reverse recovery; controlled source delta/writer freeze; final observability and load checks; independent explicit routing authorization. Until all gates pass, retain Cloudflare production, backups, tenant isolation and the legacy Studio entry path.
 
 ## Data and integrity
 
@@ -50,7 +60,7 @@ The initially selected instruction was “same email as Studio”; the new Clerk
 
 Operation [43669393167](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43669393167) passed. It removed the temporary twenty-two-key build environment, verified the original fifteen runtime keys, restarted and successfully logged into legacy Studio. No incomplete Clerk runtime was enabled. No other identity/client link was created. No real user session was revoked.
 
-BAPI-issued session tokens have a valid signature and real active-session claims but omit the authorized-party origin. The actual SDK rejects them. The final acceptance workflow reports `CLERK_BROWSER_ORIGIN_TOKEN_REQUIRED`; this is not PASS. Keep the origin check intact. The in-app browser connection was unavailable, the alternative helper failed to retain its connection, and automatic execution review blocked direct Chrome launch. Repeated portal login is not a substitute for a production-origin Studio session.
+BAPI-issued session tokens from the earlier direct exchange lacked the authorized-party origin and were correctly rejected by the SDK. The later **browser ticket flow** supplied the correct canonical `azp` and passed isolated-application checks in workflow 43678214459, without bypassing origin verification. Hostinger-domain TLS and MFA/user-password acceptance are still unproven; do not promote the legacy runtime based on this scoped proof. The in-app browser connection was unavailable, the alternative helper failed to retain its connection, and automatic execution review blocked direct Chrome launch. Repeated portal login is not a substitute for a production-origin Studio session.
 
 Six Linux focused tests cover input boundaries, real SDK execution with an explicitly labeled offline fixture, anonymous/unlinked denial, explicit binding, cookie flags, role isolation, tampered signature, logout/replay, legacy fallback, collisions and idempotency. These are regression coverage and do not replace the missing real browser/backend acceptance.
 
@@ -82,7 +92,7 @@ All observations were200. Cache/runtime conditions differ. This sample does not 
 - Actual Hostinger schedules observed by [43661888957](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43661888957): hourly `15 * * * *`, daily `17 1 * * *`, both UTC, both on the staging clone through Node24 and the current-deployment symlink. Source Cloudflare jobs remain on their independent source database. Final production must have one controlled writer/job set.
 - RPO: nominal24h for daily physical backups. The measured isolated functional restore took9.493s; complete incident RTO, remote/offsite recovery and DNS propagation are not measured. Returning DNS alone cannot restore new Hostinger data.
 
-No full SQLite/originals→D1/R2 reverse operation exists. The POSIX sync is not a consistent live snapshot; the existing private-recovery helper covers only five R4 tables. Historical QA databases/buckets may be occupied and must not be reset without fresh ownership/vacancy evidence. Preserve source resources and golden snapshots until a complete reverse rehearsal passes.
+An encrypted offsite-to-local D1 restore of the complete dataset passed in workflow 43678814265; it does not restore a remote D1/R2 destination and therefore does not establish production rollback. No full **remote** SQLite/originals→D1/R2 reverse operation is yet proven. The POSIX sync is not a consistent live snapshot; the existing private-recovery helper covers only five R4 tables. Historical QA databases/buckets may be occupied and must not be reset without fresh ownership/vacancy evidence. Preserve source resources and golden snapshots until a complete reverse rehearsal passes.
 
 ## DNS, TLS and adjacent services
 
