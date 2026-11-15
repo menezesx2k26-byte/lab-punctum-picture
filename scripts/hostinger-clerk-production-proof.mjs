@@ -37,12 +37,12 @@ export function assertSelectedIdentity(input, user, session) {
   assert(typeof user.primary_email_address_id === "string");
   const primary = user.email_addresses.filter((email) => email.id === user.primary_email_address_id);
   assert(primary.length === 1);
-  assert(primary[0].email_address.trim().toLowerCase() === input.email);
+  assert(primary[0].email_address.trim().toLowerCase() === input.email, "CLERK_SELECTED_EMAIL_MISMATCH");
   assert(primary[0].verification?.status === "verified");
   assert(session.id === input.sessionId && session.user_id === input.userId);
   assert(session.status === "active" && session.expire_at > Date.now() && session.abandon_at > Date.now());
   assert(/^client_[a-zA-Z0-9_-]+$/.test(session.client_id));
-  assert(typeof session.latest_activity?.browser_name === "string" && session.latest_activity.browser_name.trim().length > 0);
+  assert(Number.isSafeInteger(session.last_active_at) && session.last_active_at > 0 && session.last_active_at <= Date.now());
   assert(session.actor == null);
 }
 
@@ -228,9 +228,10 @@ async function main() {
     });
     checks.temporaryDatabaseRemoved = true;
     console.log(JSON.stringify({ status: "passed", checks, limit: LIMIT }));
-  } catch {
+  } catch (error) {
     // Never emit upstream errors, assertion values, JWTs, user data or key material.
-    console.log(JSON.stringify({ status: stage === "inputs" ? "blocked" : "failed", stage, checks, limit: LIMIT }));
+    const reason = /^CLERK_[A-Z_]+$/.test(error?.message ?? "") ? error.message : undefined;
+    console.log(JSON.stringify({ status: stage === "inputs" ? "blocked" : "failed", stage, reason, checks, limit: LIMIT }));
     process.exitCode = 1;
   }
 }

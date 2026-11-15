@@ -20,7 +20,7 @@ const user = {
 };
 const session = {
   id: input.sessionId, user_id: input.userId, client_id: "client_fixture", status: "active", actor: null,
-  expire_at: Date.now() + 3600_000, abandon_at: Date.now() + 3600_000, latest_activity: { browser_name: "Fixture browser" },
+  expire_at: Date.now() + 3600_000, abandon_at: Date.now() + 3600_000, last_active_at: Date.now(),
 };
 
 test("real-Clerk proof fails closed on input, selected identity and active browser session boundaries", () => {
@@ -42,8 +42,8 @@ test("real-Clerk proof fails closed on input, selected identity and active brows
   ]) assert.throws(() => assertSelectedIdentity(input, { ...user, ...override }, session));
   for (const override of [
     { id: "sess_other" }, { user_id: "user_other" }, { status: "revoked" }, { status: "pending" },
-    { expire_at: 0 }, { abandon_at: 0 }, { client_id: "" }, { latest_activity: null },
-    { latest_activity: { browser_name: "" } }, { actor: { sub: "user_other" } },
+    { expire_at: 0 }, { abandon_at: 0 }, { client_id: "" }, { last_active_at: null },
+    { last_active_at: Date.now() + 3600_000 }, { actor: { sub: "user_other" } },
   ]) assert.throws(() => assertSelectedIdentity(input, user, { ...session, ...override }));
 
   const env = { ...process.env, ...fixture, PUNCTUM_CLERK_SESSION_ID: "" };
