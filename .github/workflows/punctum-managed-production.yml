@@ -49,7 +49,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
         if: steps.operation.outputs.action != 'inventory'
       - name: Verify managed runtime, private import, and existing POSIX contracts
-        if: steps.operation.outputs.action == 'verify-managed'
+        if: steps.operation.outputs.action == 'verify-managed' || steps.operation.outputs.action == 'recover-managed'
         run: |
           node --test services/punctum-hostinger-production/*.test.mjs
           python3 -m unittest discover -s scripts -p 'hostinger_managed*test.py'

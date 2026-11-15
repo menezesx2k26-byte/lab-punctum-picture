@@ -5,7 +5,6 @@ import {
   mkdirSync, mkdtempSync, openSync, readdirSync, realpathSync, rmSync, writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { createServer } from "node:net";
 import { once } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -170,17 +169,7 @@ export async function createManagedBackup(config) {
   }
 }
 
-async function ephemeralPort() {
-  const server = createServer();
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  const { port } = server.address();
-  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
-  return port;
-}
-
-async function httpBytes(origin, path, type, timeout = 15_000) {
-  const response = await fetch(new URL(path, origin), { redirect: "manual", headers: { accept: type, connection: "close" }, signal: AbortSignal.timeout(timeout) });
+async function responseBytes(response, type) {
   if (response.status !== 200 || response.headers.get("content-type")?.split(";")[0] !== type) {
     await response.body?.cancel();
     throw Error("MANAGED_RESTORE_HTTP_INVALID");
@@ -188,6 +177,13 @@ async function httpBytes(origin, path, type, timeout = 15_000) {
   const bytes = Buffer.from(await response.arrayBuffer());
   if (!bytes.length || (type === "image/webp" && (bytes.toString("ascii", 0, 4) !== "RIFF" || bytes.toString("ascii", 8, 12) !== "WEBP"))) throw Error("MANAGED_RESTORE_HTTP_PAYLOAD_INVALID");
   return bytes;
+}
+
+async function httpBytes(origin, path, type) {
+  const response = await fetch(new URL(path, origin), {
+    redirect: "manual", headers: { accept: type, connection: "close" }, signal: AbortSignal.timeout(20_000),
+  });
+  return responseBytes(response, type);
 }
 
 export function homepageEvidence(html) {
@@ -233,41 +229,63 @@ export async function proveManagedRestore(config, onBackup = () => {}) {
       image = db.prepare("SELECT i.id FROM images i JOIN albums a ON i.album_id=a.id WHERE i.status='ready' AND a.status='published' AND i.deleted_at IS NULL AND a.deleted_at IS NULL AND i.original_key NOT LIKE 'static:%' ORDER BY i.id LIMIT 1").get();
     } finally { db.close(); }
     if (!image || typeof image.id !== "string") throw Error("MANAGED_RESTORE_PUBLIC_IMAGE_REQUIRED");
-    const port = await ephemeralPort(), origin = `http://127.0.0.1:${port}`;
-    const env = { ...process.env, NODE_ENV: "production", PORT: String(port),
-      PUNCTUM_PRODUCTION_CANDIDATE_MODE: "private-candidate", PUNCTUM_CANDIDATE_ORIGIN: origin,
-      PUNCTUM_CANDIDATE_PUBLIC_URL: origin, PUNCTUM_CANDIDATE_TRUSTED_PROXY: "none",
+    const env = { ...process.env, NODE_ENV: "production",
       PUNCTUM_CANDIDATE_DB_FILE: join(saved.restoredRoot, "application.sqlite"),
       PUNCTUM_CANDIDATE_ORIGINALS: join(saved.restoredRoot, "originals"), PUNCTUM_CANDIDATE_BACKUPS_ROOT: join(saved.restoredRoot, "backups") };
-    delete env.PUNCTUM_CANDIDATE_PROVIDER;
-    child = spawn(process.execPath, [fileURLToPath(new URL("./candidate-server.mjs", import.meta.url))], {
-      cwd: fileURLToPath(new URL("../../", import.meta.url)), env, detached: true, stdio: "ignore",
+    child = spawn(process.execPath, [fileURLToPath(import.meta.url), "probe", image.id], {
+      cwd: fileURLToPath(new URL("../../", import.meta.url)), env, detached: true,
+      stdio: ["ignore", "pipe", "ignore"], signal: AbortSignal.timeout(90_000), killSignal: "SIGKILL",
     });
-    await once(child, "spawn");
-    let health, lastProbeError;
-    const deadline = Date.now() + 30_000;
-    while (Date.now() < deadline) {
-      if (child.exitCode !== null || child.signalCode !== null) throw Error("MANAGED_RESTORE_CHILD_EXITED");
-      try {
-        health = JSON.parse((await httpBytes(origin, "/api/health", "application/json", 2500)).toString("utf8"));
-        if (health?.ok === true && health.service === "punctum-picture") break;
-        health = null;
-      } catch (error) { lastProbeError = error; }
-      await delay(150);
+    let stdout = "";
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (text) => {
+      if (stdout.length < 16_384) stdout += text.slice(0, 16_384 - stdout.length);
+    });
+    const [exit] = await once(child, "close");
+    const prefix = "PUNCTUM_RESTORED_ROUTES ";
+    const line = stdout.split("\n").find((text) => text.startsWith(prefix));
+    if (!line || exit !== 0) {
+      const reason = stdout.match(/^PUNCTUM_RESTORED_FAILURE ([A-Z0-9_]+)$/m)?.[1];
+      throw Error("MANAGED_RESTORE_CHILD_EXITED", reason ? { cause: Error(reason) } : undefined);
     }
-    if (!health) throw Error("MANAGED_RESTORE_CHILD_TIMEOUT", { cause: lastProbeError });
-    const homepage = await httpBytes(origin, "/", "text/html", 25_000);
+    const restored = JSON.parse(line.slice(prefix.length));
     const liveOrigin = new URL(config.publicOrigin).origin;
     const liveHome = await httpBytes(liveOrigin, "/", "text/html");
-    if (JSON.stringify(homepageEvidence(homepage.toString("utf8"))) !== JSON.stringify(homepageEvidence(liveHome.toString("utf8")))) throw Error("MANAGED_RESTORE_HOME_MISMATCH");
+    if (JSON.stringify(restored.home) !== JSON.stringify(homepageEvidence(liveHome.toString("utf8")))) throw Error("MANAGED_RESTORE_HOME_MISMATCH");
     const path = `/media/${encodeURIComponent(image.id)}/card`;
     const liveCard = await httpBytes(liveOrigin, path, "image/webp");
-    const restoredCard = await httpBytes(origin, path, "image/webp");
-    if (liveCard.length !== restoredCard.length || sha(liveCard) !== sha(restoredCard)) throw Error("MANAGED_RESTORE_CARD_MISMATCH");
+    if (liveCard.length !== restored.cardBytes || sha(liveCard) !== restored.cardSha256) throw Error("MANAGED_RESTORE_CARD_MISMATCH");
     const httpMs = Math.round(performance.now() - httpStarted);
     return { status: "MANAGED_RESTORE_VERIFIED", archiveFile: saved.archiveFile, archiveSha256: saved.archiveSha256,
       objects: saved.objects, bytes: saved.bytes, tables: saved.tables, restoreMs: saved.restoreMs,
-      httpMs, functionalRestoreMs: saved.restoreMs + httpMs };
+      httpMs, functionalRestoreMs: saved.restoreMs + httpMs, routeProbe: "isolated-compiled-handler" };
   } catch (error) { throw Error("MANAGED_RESTORE_PROOF_FAILED", { cause: error }); }
   finally { try { await stopChildGroup(child); } finally { saved?.cleanup(); } }
+}
+
+async function probeRestoredRoutes(imageId) {
+  process.umask(0o077);
+  const { candidateConfig } = await import("./candidate-runtime.mjs");
+  const { installNodeR4StreamCompatibility } = await import("../punctum-hostinger-node/node-r4-stream-compat.mjs");
+  const config = candidateConfig();
+  installNodeR4StreamCompatibility();
+  const dist = new URL("../../dist/hostinger-candidate/", import.meta.url);
+  process.env.PUNCTUM_QA_CLIENT_DIRECTORY = fileURLToPath(new URL("client/", dist));
+  process.env.PUNCTUM_QA_SHARP_WORKER = fileURLToPath(new URL("../punctum-hostinger-node/sharp-worker.mjs", import.meta.url));
+  const { default: handler } = await import(new URL("server/index.js", dist));
+  const get = async (path, type) => responseBytes(await handler(new Request(new URL(path, config.publicOrigin), { headers: { accept: type } })), type);
+  const health = JSON.parse((await get("/api/health", "application/json")).toString("utf8"));
+  if (health.ok !== true || health.service !== "punctum-picture") throw Error("MANAGED_RESTORE_HEALTH_INVALID");
+  const home = homepageEvidence((await get("/", "text/html")).toString("utf8"));
+  const card = await get(`/media/${encodeURIComponent(imageId)}/card`, "image/webp");
+  console.log("PUNCTUM_RESTORED_ROUTES " + JSON.stringify({ home, cardBytes: card.length, cardSha256: sha(card) }));
+}
+
+if (import.meta.main && process.argv[2] === "probe") {
+  try { await probeRestoredRoutes(process.argv[3]); }
+  catch (error) {
+    const code = [error.message, error.code].find((value) => /^(?:MANAGED|CANDIDATE|ERR)_[A-Z0-9_]+$/.test(value ?? ""));
+    console.log("PUNCTUM_RESTORED_FAILURE " + (code ?? "MANAGED_RESTORE_HANDLER_FAILED"));
+    process.exitCode = 1;
+  }
 }
