@@ -55,6 +55,8 @@ jobs:
                    for r in records if r['name'] in relevant and r['type'] in ('A','AAAA','CNAME','CAA')]
               for setting in ('ssl','always_use_https','cache_level'):
                   result = get(setting, f'/zones/{zone_id}/settings/{setting}', 'DNS_TOKEN')
+                  if not result and report['checks'][setting] in (401,403):
+                      result = get(setting + 'WithWorkersCredential', f'/zones/{zone_id}/settings/{setting}', 'WORKERS_TOKEN')
                   if result: report[setting] = result.get('result',{}).get('value')
           path = f'/accounts/{account}/workers/domains'
           response = get('workerDomains', path, 'WORKERS_TOKEN')
@@ -63,6 +65,10 @@ jobs:
           response = get('workerBindings', f'/accounts/{account}/workers/scripts/punctum-picture-migration/settings', 'WORKERS_TOKEN')
           report['storageBindings'] = [{k:r.get(k) for k in ('type','name','id','bucket_name')}
               for r in response.get('result',{}).get('bindings',[]) if r.get('type') in ('d1','r2_bucket')]
+          response = get('workerSchedules', f'/accounts/{account}/workers/scripts/punctum-picture-migration/schedules', 'WORKERS_TOKEN')
+          if response:
+              values = response.get('result',{}).get('schedules',[])
+              report['workerSchedules'] = [r.get('cron') if isinstance(r,dict) else r for r in values]
           folder=pathlib.Path('dns-evidence')
           folder.mkdir()
           (folder/'report.json').write_text(json.dumps(report,indent=2))
