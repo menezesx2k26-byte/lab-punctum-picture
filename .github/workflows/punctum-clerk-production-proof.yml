@@ -1,0 +1,45 @@
+name: Punctum real Clerk backend proof
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths:
+      - .github/workflows/punctum-clerk-production-proof.yml
+      - scripts/hostinger-clerk-production-proof*.mjs
+permissions:
+  contents: read
+concurrency:
+  group: punctum-real-clerk-proof
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Check authorization proof and cleanup on Linux
+        run: node --test scripts/hostinger-clerk-production-proof.test.mjs
+      - name: Verify the selected real browser session against the backend
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
+          PUNCTUM_CLERK_SESSION_ID: ${{ secrets.PUNCTUM_CLERK_SESSION_ID }}
+        run: |
+          mkdir -p outputs/clerk-production-proof
+          node scripts/hostinger-clerk-production-proof.mjs > outputs/clerk-production-proof/report.json
+          cat outputs/clerk-production-proof/report.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-real-clerk-backend-proof
+          path: outputs/clerk-production-proof/report.json
+          retention-days: 7

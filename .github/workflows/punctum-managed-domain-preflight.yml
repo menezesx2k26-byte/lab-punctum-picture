@@ -33,13 +33,13 @@ jobs:
               rows = operation.api('website', '/websites?' + urllib.parse.urlencode({'domain': DOMAIN}))
               assert any(row.get('domain') == DOMAIN and row.get('username') == USERNAME and
                          row.get('order_id') == 1008628483 for row in rows), 'Wrong hosting account'
-              ownership = operation.api('ownership', '/domains/verify-ownership', {'domain': domain})
-              assert ownership.get('is_accessible') is True, 'Domain ownership must already be verified'
               aliases = operation.api('aliasesBefore', site + '/parked-domains')
               assert isinstance(aliases, list)
               matches = [row for row in aliases if row.get('domain') == domain]
               assert len(matches) <= 1
               if not matches:
+                  ownership = operation.api('ownership', '/domains/verify-ownership', {'domain': domain})
+                  assert ownership.get('is_accessible') is True, 'Domain ownership must already be verified'
                   try:
                       operation.api('createAlias', site + '/parked-domains', {'parked_domain': domain})
                   except RequestFailure as error:
