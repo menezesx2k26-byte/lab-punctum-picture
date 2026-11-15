@@ -27,7 +27,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Verify browser proof safety and build the actual candidate application
         run: |
-          node --test scripts/hostinger-clerk-browser-proof.test.mjs scripts/hostinger-clerk-production-proof.test.mjs
+          node --test --test-concurrency=1 scripts/hostinger-clerk-browser-proof.test.mjs scripts/hostinger-clerk-production-proof.test.mjs
           npm run build:hostinger:candidate
       - name: Prove production Clerk SDK login and explicit backend authorization
         env:

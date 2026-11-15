@@ -32,7 +32,7 @@ jobs:
                   entry['fields']=sorted(set(k for x in rows for k in x))
               except Exception as e: entry['websiteError']=str(e)[:100]
               root=f'/accounts/{USERNAME}/websites/{domain}'
-              for name,path in [('ssl','/ssl/status'),('cdn','/cdn/status'),('settings','/nodejs/builds/settings'),('cron','/cron-jobs')]:
+              for name,path in [('ssl','/ssl/status'),('cdn','/cdn/status'),('settings','/nodejs/builds/settings')]:
                   try: entry[name]=op.api(name+domain,root+path)
                   except Exception as e: entry[name]={'error':str(e)[:100]}
               try:
@@ -41,6 +41,13 @@ jobs:
                   builds=op.api('builds'+domain,root+'/nodejs/builds')
                   entry['latestBuild']={k:builds[0].get(k) for k in ('uuid','state','created_at')} if builds else None
               except Exception as e: entry['nodeError']=str(e)[:100]
+          report['cron']=op.api('cron',f'/accounts/{USERNAME}/cron-jobs')
+          req=urllib.request.Request('https://developers.hostinger.com/api/dns/v1/zones/punctumpicture.com',headers={'Authorization':'Bearer '+os.environ['HOSTINGER_API'],'User-Agent':'Punctum QA inventory/1.0'})
+          try:
+              with urllib.request.urlopen(req,timeout=25) as response:
+                  records=json.load(response).get('data',[])
+                  report['hostingerSuggestedRouting']=[x for x in records if x.get('type') in ('A','AAAA','CNAME') and x.get('name') in ('@','www','punctumpicture.com','www.punctumpicture.com')]
+          except urllib.error.HTTPError as error: report['hostingerSuggestedRoutingHttp']=error.code
           url='https://api.cloudflare.com/client/v4/zones/561d9796dd104b8563c9ab77fa4fae1d/dns_records?per_page=100'
           req=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['DNS_TOKEN']})
           with urllib.request.urlopen(req,timeout=25) as response: dns=json.load(response)
