@@ -57,7 +57,7 @@ jobs:
           after=json.loads(urllib.request.urlopen('https://'+DOMAIN+'/api/health',timeout=20).read())
           assert after.get('ok') is True
           report['managedHealth']=True
-          public=urllib.request.urlopen('https://punctumpicture.com/api/health',timeout=20)
+          public=urllib.request.urlopen(urllib.request.Request('https://punctumpicture.com/',headers={'User-Agent':'Punctum QA inventory/1.0'}),timeout=20)
           assert public.status==200 and public.headers.get('CF-Ray'), 'Public Cloudflare production changed'
           report['publicCloudflarePreserved']=True
           output=pathlib.Path('alias-release');output.mkdir()
