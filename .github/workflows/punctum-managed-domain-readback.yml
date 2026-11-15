@@ -58,6 +58,49 @@ jobs:
           (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
           print(json.dumps(report,indent=2))
           PY
+      - name: Probe read-only canonical relay feasibility (not a cutover or TLS acceptance)
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, urllib.error, urllib.request
+          origin='https://aliceblue-locust-999458.hostingersite.com'
+          canonical='https://punctumpicture.com'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+          opener=urllib.request.build_opener(NoRedirect)
+          results={}
+          for label,url,headers in [
+              ('cloudflare-health',canonical+'/api/health',{}),
+              ('managed-health',origin+'/api/health',{}),
+              ('managed-forwarded-canonical-health',origin+'/api/health',
+               {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+              ('managed-home',origin+'/',{}),
+              ('managed-forwarded-canonical-home',origin+'/',
+               {'Host':'punctumpicture.com','X-Forwarded-Host':'punctumpicture.com','X-Forwarded-Proto':'https'}),
+          ]:
+              request=urllib.request.Request(url,headers={'User-Agent':'Punctum managed read-only proxy probe/1',**headers})
+              try:
+                  with opener.open(request,timeout=15) as response:
+                      results[label]={'status':response.status,'contentType':response.headers.get('Content-Type','').split(';')[0],
+                                      'locationHost':None,'secureTransportVerified':True}
+              except urllib.error.HTTPError as error:
+                  location=error.headers.get('Location','')
+                  if location:
+                      parsed=urllib.parse.urlsplit(location)
+                      location=parsed.hostname if parsed.scheme in ('http','https') else '(relative)'
+                  results[label]={'status':error.code,'locationHost':location or None,'secureTransportVerified':True}
+              except (OSError,ValueError) as error:
+                  results[label]={'error':type(error).__name__,'secureTransportVerified':False}
+          report={
+              'mode':'READ_ONLY_NO_DNS_OR_HOSTING_MUTATION',
+              'observations':results,
+              'bothPublicEndpoints200':results['cloudflare-health'].get('status')==200 and results['managed-health'].get('status')==200,
+              'canonicalRelayReady':False,
+              'limit':'A forwarded HTTP probe cannot establish Worker relay security, Clerk cookies, Hostinger apex SNI, upload streaming, origin authenticity or rollback.'}
+          output=pathlib.Path('connected-domain');output.mkdir(exist_ok=True)
+          (output/'relay-preflight.json').write_text(json.dumps(report,indent=2)+'\\n')
+          print(json.dumps({'mode':report['mode'],'observations':{k:v.get('status',v.get('error')) for k,v in results.items()},
+                            'bothPublicEndpoints200':report['bothPublicEndpoints200'],'canonicalRelayReady':False},sort_keys=True))
+          PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
