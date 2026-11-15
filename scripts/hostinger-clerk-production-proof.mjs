@@ -109,8 +109,7 @@ export async function proveHandlers(auth, db, input, jwt, pem, checks) {
     DB: db, ENVIRONMENT: "production", SITE_ORIGIN: ORIGIN, PUBLIC_SITE_URL: ORIGIN,
     ADMIN_AUTH_MODE: "clerk", CLIENT_AUTH_MODE: "clerk", CLERK_AUTH_ENABLED: "true",
     ADMIN_ALLOWED_EMAILS: input.email, CLERK_ISSUER: ISSUER,
-    CLERK_PUBLISHABLE_KEY: input.publishableKey, CLERK_JWT_KEY: pem,
-    // No BAPI credential reaches handlers; SDK verification uses the trusted PEM offline.
+    CLERK_PUBLISHABLE_KEY: input.publishableKey, CLERK_JWT_KEY: pem, CLERK_SECRET_KEY: input.secretKey,
     ADMIN_SESSION_SECRET: randomBytes(48).toString("hex"), CLIENT_SESSION_SECRET: randomBytes(48).toString("hex"),
   };
   const request = (path, method = "GET", headers = {}, body) => new Request(ORIGIN + path, {
