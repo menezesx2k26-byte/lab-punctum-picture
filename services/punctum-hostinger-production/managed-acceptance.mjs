@@ -3,14 +3,15 @@ import { fileURLToPath } from "node:url";
 import { cleanupManagedFixture } from "./managed-fixture-cleanup.mjs";
 import { proveManagedRestore } from "./managed-restore-check.mjs";
 
-export async function managedAcceptance(config) {
+export async function managedAcceptance(config, marker, { cleanupOnly = false } = {}) {
   const report = {};
   const encoded = process.env.PUNCTUM_MANAGED_E2E_FIXTURE;
   if (encoded) {
     if (encoded.length > 24000 || !/^[A-Za-z0-9+/]+=*$/.test(encoded)) throw Error("MANAGED_FIXTURE_CONFIGURATION_INVALID");
     const fixture = JSON.parse(Buffer.from(encoded, "base64").toString("utf8"));
-    report.cleanup = await cleanupManagedFixture(config, fixture, process.argv[3]);
+    report.cleanup = await cleanupManagedFixture(config, fixture, marker);
   }
+  if (cleanupOnly) return { status: "MANAGED_OPERATIONS_VERIFIED", ...report };
   report.jobs = [];
   for (const mode of ["hourly", "daily"]) {
     const stdout = execFileSync(process.execPath, [fileURLToPath(new URL("./candidate-cron.mjs", import.meta.url)), mode], {

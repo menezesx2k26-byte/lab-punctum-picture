@@ -33,7 +33,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   await withMaintenanceLock(dirname(config.dbFile), async () => {
     if (mode === "check") {
       const { managedAcceptance } = await import("./services/punctum-hostinger-production/managed-acceptance.mjs");
-      console.log("PUNCTUM_MANAGED_ACCEPTANCE " + JSON.stringify(await managedAcceptance(config)));
+      console.log("PUNCTUM_MANAGED_ACCEPTANCE " + JSON.stringify(await managedAcceptance(config, process.argv[3])));
     } else {
       await import("./services/punctum-hostinger-production/candidate-cron.mjs");
     }

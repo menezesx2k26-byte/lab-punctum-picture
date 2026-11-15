@@ -6,20 +6,17 @@ import pathlib
 import re
 import secrets
 import subprocess
-import time
 
 from hostinger_candidate_qa import build, candidate_archive, ready, write_candidate_environment
 from hostinger_managed_production import PRIVATE_ROOT
-from hostinger_managed_qa import API, DOMAIN, SITE, USERNAME, Recovery, RequestFailure
+from hostinger_managed_qa import DOMAIN, SITE, Recovery, RequestFailure
 
-CRON_PATH = f'/accounts/{USERNAME}/cron-jobs'
-COMMAND = f'cd /home/{USERNAME}/domains/{DOMAIN}/hbuilds && /opt/alt/alt-nodejs24/root/bin/node --env-file=config/.env current/nodejs/cron.mjs'
 SETTINGS = {'app_type': 'other', 'node_version': 24, 'package_manager': 'npm',
     'root_directory': None, 'output_directory': None, 'build_script': 'build:hostinger:managed-runtime',
     'entry_file': 'services/punctum-hostinger-production/candidate-server.mjs'}
 
 
-def cron_receipt(value):
+def operations_receipt(value):
     if isinstance(value, dict):
         values = value.values()
     elif isinstance(value, list):
@@ -37,49 +34,21 @@ def cron_receipt(value):
         return None
     else:
         return None
-    return next((receipt for item in values if (receipt := cron_receipt(item))), None)
+    return next((receipt for item in values if (receipt := operations_receipt(item))), None)
 
 
-def run_cron_probe(operation, marker):
-    command = COMMAND + ' check ' + marker
-    assert len(command) <= 255
-    rows = operation.api('cronBefore', CRON_PATH)
-    assert isinstance(rows, list)
-    assert not any(row.get('command') == command for row in rows), 'Cron marker already present'
-    uid = None
-    try:
-        created = operation.api('cronProbeCreate', CRON_PATH, {'time': '* * * * *', 'command': command})
-        uid = created.get('uid') if isinstance(created, dict) else None
-        assert isinstance(uid, str) and re.fullmatch(r'[A-Za-z0-9_-]{3,100}', uid), 'Cron acknowledgement missing'
-        operation.report['temporaryCron'] = uid
-        operation.save()
-        deadline = time.monotonic() + 260
-        while time.monotonic() < deadline:
-            try:
-                output = operation.api('cronOutput', CRON_PATH + '/' + uid + '/output')
-            except RequestFailure as error:
-                if error.status not in (404, 422):
-                    raise
-            else:
-                if (receipt := cron_receipt(output)):
-                    return receipt
-                report = json.dumps(output)
-                operation.report['cronErrorCodes'] = sorted(set(re.findall(r'\b(?:MANAGED_[A-Z0-9_]+|CANDIDATE_[A-Z0-9_]+|ENOENT|EACCES)\b', report)))
-                if operation.report['cronErrorCodes']:
-                    raise ValueError('Managed scheduled probe reported an error')
-            time.sleep(12)
-        raise ValueError('Managed scheduled receipt timed out')
-    finally:
-        current = operation.api('cronCleanupCheck', CRON_PATH)
-        matches = [row for row in current if row.get('command') == command]
-        if len(matches) == 1 and (not uid or matches[0].get('uid') == uid):
-            owned_uid = matches[0]['uid']
-            assert re.fullmatch(r'[A-Za-z0-9_-]{3,100}', owned_uid)
-            operation.request('cronProbeDelete', API + CRON_PATH + '/' + owned_uid, 'DELETE',
-                {'Authorization': 'Bearer ' + operation.token, 'Accept': 'application/json'})
-        after = operation.api('cronAfter', CRON_PATH)
-        assert not any(row.get('command') == command for row in after), 'Temporary cron still configured'
-        operation.report['temporaryCronRemoved'] = True
+def maintenance_environment(desired, fixture, mode):
+    document = json.dumps(fixture).encode()
+    assert len(document) <= 18000 and re.fullmatch(r'p[a-f0-9]{6}', fixture['marker'])
+    return {**desired, 'PUNCTUM_MANAGED_E2E_FIXTURE': base64.b64encode(document).decode(),
+            'PUNCTUM_MANAGED_MAINTENANCE_MARKER': fixture['marker'], 'PUNCTUM_MANAGED_MAINTENANCE_MODE': mode}
+
+
+def verify_operations(operation, build_id, label):
+    logs = operation.api(label + 'Logs', SITE + '/builds/' + build_id + '/logs?from_line=0')
+    receipt = operations_receipt(logs)
+    assert receipt, 'Managed maintenance receipt missing from completed build'
+    return receipt
 
 
 def execute(root):
@@ -112,9 +81,12 @@ def execute(root):
         paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().strip('\0').split('\0')
         archive, _ = candidate_archive(root, paths)
         name = operation.upload_archive(archive, 'punctum-node-candidate-')
-        write_candidate_environment(operation, desired)
-        build(operation, name, SETTINGS, 'acceptanceRuntime')
-        ready(operation, 'acceptanceReady')
+        prior = config.get('previous_fixture')
+        write_candidate_environment(operation, maintenance_environment(desired, prior, 'cleanup') if prior else desired)
+        build_id = build(operation, name, SETTINGS, 'acceptanceRuntime')
+        if prior:
+            operation.report['previousCleanup'] = verify_operations(operation, build_id, 'previousCleanup')['cleanup']
+        original_boot = ready(operation, 'acceptanceReady')
         marker = 'p' + secrets.token_hex(3)
         operation.report['fixtureMarker'] = marker
         folder = root / 'outputs/punctum-managed-acceptance'
@@ -130,15 +102,14 @@ def execute(root):
                 operation.report['http'] = json.loads(report_file.read_text())
             fixture = folder / 'fixture.json'
             if fixture.exists():
-                document = fixture.read_bytes()
-                assert len(document) <= 18000
-                operation.report['fixture'] = json.loads(document)
-                write_candidate_environment(operation, {**desired,
-                    'PUNCTUM_MANAGED_E2E_FIXTURE': base64.b64encode(document).decode()})
-            try:
-                operation.report['operations'] = run_cron_probe(operation, marker)
-            finally:
-                if fixture.exists():
+                operation.report['fixture'] = json.loads(fixture.read_text())
+                try:
+                    write_candidate_environment(operation, maintenance_environment(desired, operation.report['fixture'], 'restore'))
+                    name = operation.upload_archive(archive, 'punctum-node-candidate-')
+                    recovery_id = build(operation, name, SETTINGS, 'acceptanceRecovery')
+                    operation.report['operations'] = verify_operations(operation, recovery_id, 'acceptanceRecovery')
+                    ready(operation, 'postRecoveryReady', original_boot)
+                finally:
                     write_candidate_environment(operation, desired)
         assert result and result.returncode == 0, 'HTTP acceptance did not pass'
         assert operation.report['operations']['cleanup']['status'] == 'OWNED_FIXTURE_REMOVED'

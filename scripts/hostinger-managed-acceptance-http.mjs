@@ -86,13 +86,14 @@ async function main() {
   adminCookie = cookieOf(login);
   stage = "public-fixture-create";
   const { album } = await json("/admin/api/albums", "POST", { title: "Punctum QA " + marker }, adminCookie, 201);
-  fixture.albums.push({ id: album.id, title: album.title }); persist();
+  fixture.albums.push({ id: album.id, title: "Punctum QA " + marker }); persist();
   stage = "csrf-negative";
   await status(await request("/admin/api/albums/" + album.id, "PATCH", { title: "Punctum QA " + marker }, adminCookie,
     { Origin: "https://unauthorized.example" }), 403, "cross-origin mutation denied");
   stage = "production-20MB-public-limit";
-  await status(await request("/admin/api/uploads/intents", "POST", { albumId: album.id, filename: "limit.png",
-    mimeType: "image/png", sizeBytes: 20_000_001 }, adminCookie), 413, "production 20000000-byte public contract");
+  const tooLarge = await status(await request("/admin/api/uploads/intents", "POST", { albumId: album.id, filename: "limit.png",
+    mimeType: "image/png", sizeBytes: 20_000_001 }, adminCookie), 400, "public upload limit");
+  check((await tooLarge.json()).error?.code === "FILE_TOO_LARGE", "public 20000000-byte limit");
   stage = "public-upload";
   const upload = await json("/admin/api/uploads/intents", "POST", { albumId: album.id, filename: "synthetic.png",
     mimeType: "image/png", sizeBytes: fixturePng.length }, adminCookie, 201);

@@ -33,7 +33,23 @@ export async function verifyManagedData(config, expectedSqlSha256) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  verifyManagedData(candidateConfig(), process.env.PUNCTUM_MANAGED_EXPECTED_SQL_SHA256)
-    .then((receipt) => console.log("PUNCTUM_MANAGED_VERIFY " + JSON.stringify(receipt)))
-    .catch(() => { console.error("PUNCTUM_MANAGED_VERIFY_FAILED"); process.exitCode = 1; });
+  try {
+    const config = candidateConfig();
+    const receipt = await verifyManagedData(config, process.env.PUNCTUM_MANAGED_EXPECTED_SQL_SHA256);
+    console.log("PUNCTUM_MANAGED_VERIFY " + JSON.stringify(receipt));
+    const marker = process.env.PUNCTUM_MANAGED_MAINTENANCE_MARKER;
+    if (marker) {
+      if (!config.managed || config.environment !== "staging" || !/^[p][a-f0-9]{6}$/.test(marker)) throw Error("MANAGED_ACCEPTANCE_SCOPE_INVALID");
+      const { withMaintenanceLock } = await import("../../cron.mjs");
+      const { managedAcceptance } = await import("./managed-acceptance.mjs");
+      const result = await withMaintenanceLock(dirname(config.dbFile), () => managedAcceptance(config, marker, {
+        cleanupOnly: process.env.PUNCTUM_MANAGED_MAINTENANCE_MODE === "cleanup",
+      }));
+      console.log("PUNCTUM_MANAGED_ACCEPTANCE " + JSON.stringify(result));
+    }
+  } catch (error) {
+    const code = /^(?:MANAGED|CANDIDATE)_[A-Z0-9_]+$/.test(error.message) ? error.message : "PUNCTUM_MANAGED_VERIFY_FAILED";
+    console.error(code);
+    process.exitCode = 1;
+  }
 }
