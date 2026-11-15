@@ -32,7 +32,7 @@ jobs:
           request = json.loads(pathlib.Path('requests/punctum-managed-production.json').read_text())
           assert request['domain'] == 'aliceblue-locust-999458.hostingersite.com'
           action = request['action']
-          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed')
+          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed', 'schedule-managed')
           if action in ('prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed'):
               verified = request['verified_sha']
               assert re.fullmatch('[a-f0-9]{40}', verified)
@@ -42,12 +42,12 @@ jobs:
               print('action=' + action, file=output)
           PY
       - uses: actions/setup-node@v7
-        if: steps.operation.outputs.action != 'inventory'
+        if: steps.operation.outputs.action != 'inventory' && steps.operation.outputs.action != 'schedule-managed'
         with:
           node-version: '24'
           cache: npm
       - run: npm ci --no-audit --no-fund
-        if: steps.operation.outputs.action != 'inventory'
+        if: steps.operation.outputs.action != 'inventory' && steps.operation.outputs.action != 'schedule-managed'
       - name: Verify managed runtime, private import, and existing POSIX contracts
         if: steps.operation.outputs.action == 'verify-managed' || steps.operation.outputs.action == 'recover-managed'
         run: |
@@ -95,6 +95,11 @@ jobs:
           SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
           SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
         run: python3 scripts/hostinger_managed_acceptance.py
+      - name: Observe the managed hourly and daily schedules
+        if: steps.operation.outputs.action == 'schedule-managed'
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: python3 scripts/hostinger_managed_schedule.py
       - name: Inspect the designated existing managed Node website
         if: steps.operation.outputs.action == 'inventory'
         env:
