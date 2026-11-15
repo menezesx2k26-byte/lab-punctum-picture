@@ -78,7 +78,7 @@ jobs:
                           count+=len(objects); size+=sum(int(x.get('size',0)) for x in objects)
                           info=listed.get('result_info',{})
                           cursor=info.get('cursor')
-                          if info.get('is_truncated') is False:
+                          if not info.get('is_truncated'):
                               complete=True; break
                           if not cursor: break
                       totals.append({'name':name,'objects':count,'bytes':size,'complete':complete})
