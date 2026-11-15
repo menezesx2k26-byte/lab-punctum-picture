@@ -1,0 +1,66 @@
+name: Punctum preserve occupied recovery lab before any restore rehearsal
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-remote-recovery-baseline.yml]
+permissions:
+  contents: read
+jobs:
+  preserve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Read-only D1 export, encrypted offsite backup and isolated restore of the lab baseline
+        env:
+          CLOUDFLARE_ACCOUNT_ID: '257bca437616da74ece1ce4bbaf0bd89'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          R2_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PUNCTUM_MANAGED_RECOVERY_KEY: ${{ secrets.PUNCTUM_MANAGED_RECOVERY_KEY }}
+        run: |
+          mkdir -m 700 recovery-lab-baseline
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {createCipheriv,createDecipheriv,createHash,randomBytes,randomUUID} from 'node:crypto';
+          import {mkdtempSync,chmodSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+          import {tmpdir} from 'node:os'; import {join} from 'node:path';
+          import {execFileSync} from 'node:child_process'; import {DatabaseSync} from 'node:sqlite';
+          import {databaseInventory,loadD1Snapshot} from './services/punctum-hostinger-production/managed-import.mjs';
+          process.umask(0o077);
+          const root=mkdtempSync(join(tmpdir(),'punctum-preserved-qa-'));chmodSync(root,0o700);
+          const sha=(b)=>createHash('sha256').update(b).digest('hex');
+          const key=Buffer.from(process.env.PUNCTUM_MANAGED_RECOVERY_KEY,'hex');assert.equal(key.length,32);
+          try {
+            const sql=join(root,'baseline.sql');
+            execFileSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','export','punctum-picture-r4-restore-20261028','--remote','--output',sql],{stdio:'pipe',timeout:120000});
+            const plain=readFileSync(sql);assert(plain.length>1000&&plain.length<12000000);
+            const original=new DatabaseSync(':memory:');loadD1Snapshot(original,plain.toString());
+            const tables=databaseInventory(original);original.close();assert.equal(tables.images.rows,113);
+            const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key,iv);
+            const envelope=Buffer.concat([iv,cipher.update(plain),cipher.final(),cipher.getAuthTag()]);
+            const prefix='managed-recovery/qa-baseline-'+randomUUID().replaceAll('-','');
+            const url='https://api.cloudflare.com/client/v4/accounts/257bca437616da74ece1ce4bbaf0bd89/r2/buckets/punctum-picture-backups/objects/'+encodeURIComponent(prefix+'/baseline.bin');
+            const headers={Authorization:'Bearer '+process.env.R2_TOKEN,'Content-Type':'application/octet-stream'};
+            const saved=await fetch(url,{method:'PUT',headers,body:envelope,redirect:'error'});assert(saved.ok);await saved.arrayBuffer();
+            const response=await fetch(url,{headers,redirect:'error'});assert(response.ok);
+            const downloaded=Buffer.from(await response.arrayBuffer());assert.equal(sha(downloaded),sha(envelope));
+            const decipher=createDecipheriv('aes-256-gcm',key,downloaded.subarray(0,12));decipher.setAuthTag(downloaded.subarray(-16));
+            const recovered=Buffer.concat([decipher.update(downloaded.subarray(12,-16)),decipher.final()]);assert.equal(sha(recovered),sha(plain));
+            const isolated=new DatabaseSync(':memory:');loadD1Snapshot(isolated,recovered.toString());assert.deepEqual(databaseInventory(isolated),tables);isolated.close();
+            const report={status:'OCCUPIED_RECOVERY_LAB_BASELINE_PRESERVED',databaseId:'0141b8f9-3074-4aa4-a184-92a4f7379ecc',databaseName:'punctum-picture-r4-restore-20261028',sourceReadOnly:true,prefix,sqlSha256:sha(plain),cipherSha256:sha(envelope),tables,offsiteReadbackAndIsolatedRestore:true};
+            writeFileSync('recovery-lab-baseline/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+          } finally {key.fill(0);rmSync(root,{recursive:true,force:true});}
+          JS
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-preserved-recovery-lab
+          path: recovery-lab-baseline/
+          retention-days: 7
