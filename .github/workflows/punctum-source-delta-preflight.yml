@@ -1,0 +1,52 @@
+name: Punctum source delta preflight
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-source-delta-preflight.yml]
+permissions:
+  contents: read
+jobs:
+  audit:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - name: Compare every original and the current source tables
+        env:
+          CLOUDFLARE_ACCOUNT_ID: '257bca437616da74ece1ce4bbaf0bd89'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          PUNCTUM_MANAGED_OUTPUT: ${{ runner.temp }}/punctum-delta-private
+        run: |
+          node scripts/hostinger-managed-export.mjs
+          python3 - <<'PY'
+          import json, os, pathlib
+          current = json.loads((pathlib.Path(os.environ['PUNCTUM_MANAGED_OUTPUT'])/'export-receipt.json').read_text())
+          baseline = json.loads(pathlib.Path('config/hostinger/managed-snapshot-20261114.json').read_text())
+          changed = [name for name in sorted(set(current['sourceTables'])|set(baseline['sourceTables']))
+                     if current['sourceTables'].get(name) != baseline['sourceTables'].get(name)]
+          fields = ('objects','bytes','sqlSha256','originalsManifestSha256','sourceTables')
+          proof = {key:current[key] for key in fields}
+          proof.update(sourceSha=os.environ['GITHUB_SHA'], sourceWrites=0, changedTables=changed,
+                       sqlUnchanged=current['sqlSha256']==baseline['sqlSha256'],
+                       everyOriginalUnchanged=current['originalsManifestSha256']==baseline['originalsManifestSha256'],
+                       writeFreezeApplied=False)
+          output = pathlib.Path('source-delta-evidence')
+          output.mkdir()
+          (output/'report.json').write_text(json.dumps(proof,indent=2))
+          print(json.dumps(proof,indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-source-delta-preflight
+          path: source-delta-evidence/
+          retention-days: 7
