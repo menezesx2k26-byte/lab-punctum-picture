@@ -23,8 +23,11 @@ jobs:
           python3 - <<'PY'
           import json, pathlib, sys, urllib.error, urllib.request
           sys.path.insert(0,'scripts')
-          from hostinger_managed_qa import Recovery, DOMAIN, USERNAME
-          op=Recovery(pathlib.Path.cwd(),'prepare',None)
+          from hostinger_managed_qa import Recovery, USERNAME
+          # Hostinger promoted the canonical domain to the primary Node.js website.
+          # The former hostingersite.com name is not a separate /websites entry.
+          DOMAIN='punctumpicture.com'
+          op=Recovery(pathlib.Path.cwd(),'prepare',None,domain=DOMAIN)
           report={'mutations':0,'hosting':{},'cloudflare':{},'checks':{}}
           def request(label,url,secret,body=None,extra=None):
               import os
@@ -48,14 +51,15 @@ jobs:
                   report['checks'][label]=type(error).__name__
                   return {},{}
           rows=op.api('account','/websites?domain='+DOMAIN)
-          assert any(x.get('domain')==DOMAIN and x.get('username')==USERNAME and x.get('order_id')==1008628483 for x in rows)
+          assert any(x.get('domain')==DOMAIN and x.get('username')==USERNAME and x.get('order_id')==1008628483 and x.get('website_type')=='nodejs' for x in rows), 'MANAGED_CANONICAL_NODE_OWNERSHIP_NOT_CONFIRMED'
           report['hosting']['website']=[{k:x.get(k) for k in ('domain','website_type','vhost_type','root_directory')} for x in rows if x.get('domain')==DOMAIN]
-          for name in (DOMAIN,'punctumpicture.com'):
+          for name in (DOMAIN,):
               root=f'/accounts/{USERNAME}/websites/{name}'
               for endpoint in ('cdn/status','ssl/status'):
                   try: report['hosting'][name+':'+endpoint]=op.api(name+endpoint,root+'/'+endpoint)
                   except Exception: report['hosting'][name+':'+endpoint]={'unavailable':True}
-          report['hosting']['aliases']=op.api('aliases',f'/accounts/{USERNAME}/websites/{DOMAIN}/parked-domains')
+          try: report['hosting']['aliases']=op.api('aliases',f'/accounts/{USERNAME}/websites/{DOMAIN}/parked-domains')
+          except Exception as error: report['hosting']['aliases']={'unavailable':type(error).__name__}
           base='https://api.cloudflare.com/client/v4/accounts/257bca437616da74ece1ce4bbaf0bd89'
           for label,path,token in [('subscriptions','/subscriptions','CF_TOKEN'),('databases','/d1/database?per_page=100','D1_TOKEN'),('buckets','/r2/buckets?per_page=1000','CF_TOKEN')]:
               value,_=request(label,base+path,token)
