@@ -24,7 +24,8 @@ jobs:
           zone = '561d9796dd104b8563c9ab77fa4fae1d'
           report = {'domain': domain, 'authorizedScope': 'one-apex-TXT-ttl-900', 'trafficRoutingChanged': False}
           def call(base, path, token, body=None):
-              headers={'Authorization':'Bearer '+os.environ[token], 'Content-Type':'application/json'}
+              headers={'Authorization':'Bearer '+os.environ[token], 'Content-Type':'application/json',
+                       'User-Agent':'Punctum QA inventory/1.0'}
               request=urllib.request.Request(base+path,headers=headers,
                   data=json.dumps(body).encode() if body is not None else None)
               with urllib.request.urlopen(request,timeout=20) as response: return json.load(response)
