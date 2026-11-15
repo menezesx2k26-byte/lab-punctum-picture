@@ -1,0 +1,75 @@
+name: Punctum managed hostname preparation
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-managed-domain-preflight.yml]
+permissions:
+  contents: read
+concurrency:
+  group: punctum-existing-hostinger-qa
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Attach the verified hostname without changing public routing
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys, urllib.parse
+          sys.path.insert(0, 'scripts')
+          from hostinger_managed_qa import Recovery, RequestFailure, DOMAIN, USERNAME
+          operation = Recovery(pathlib.Path.cwd(), 'prepare', None)
+          operation.report.update(scope='verified-hostinger-alias-only', dnsTouched=False, trafficRoutingChanged=False)
+          domain = 'punctumpicture.com'
+          site = f'/accounts/{USERNAME}/websites/{DOMAIN}'
+          try:
+              rows = operation.api('website', '/websites?' + urllib.parse.urlencode({'domain': DOMAIN}))
+              assert any(row.get('domain') == DOMAIN and row.get('username') == USERNAME and
+                         row.get('order_id') == 1008628483 for row in rows), 'Wrong hosting account'
+              ownership = operation.api('ownership', '/domains/verify-ownership', {'domain': domain})
+              assert ownership.get('is_accessible') is True, 'Domain ownership must already be verified'
+              aliases = operation.api('aliasesBefore', site + '/parked-domains')
+              assert isinstance(aliases, list)
+              matches = [row for row in aliases if row.get('domain') == domain]
+              assert len(matches) <= 1
+              if not matches:
+                  try:
+                      operation.api('createAlias', site + '/parked-domains', {'parked_domain': domain})
+                  except RequestFailure as error:
+                      if error.status not in (500, 502, 503, 504):
+                          raise
+              aliases = operation.api('aliasesAfter', site + '/parked-domains')
+              matches = [row for row in aliases if row.get('domain') == domain and
+                         row.get('parent_domain') == DOMAIN and row.get('username') == USERNAME]
+              assert len(matches) == 1, 'Alias readback missing or changed ownership'
+              operation.report['aliasVerified'] = True
+              ssl_site = f'/accounts/{USERNAME}/websites/{domain}/ssl'
+              ssl = operation.api('aliasTlsBefore', ssl_site + '/status')
+              if ssl.get('status') == 'not_installed':
+                  operation.api('requestAliasTls', ssl_site + '/setup', {})
+                  ssl = operation.api('aliasTlsAfter', ssl_site + '/status')
+              operation.report['tls'] = {key: ssl.get(key) for key in ('status', 'provider', 'expires_at', 'last_error')}
+              operation.report['status'] = 'ALIAS_VERIFIED_TLS_' + str(ssl.get('status', 'UNKNOWN')).upper()
+          except Exception as error:
+              operation.report['status'] = 'HOSTNAME_PREPARATION_NOT_VERIFIED'
+              operation.report['failure'] = {'type': type(error).__name__,
+                  'message': str(error)[:160] if isinstance(error, (AssertionError, RequestFailure)) else 'Inspect bounded checks'}
+          finally:
+              operation.save()
+              print(json.dumps(operation.report, indent=2))
+          if operation.report.get('failure') or not operation.report.get('aliasVerified'):
+              raise SystemExit(1)
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-managed-hostname
+          path: outputs/hostinger-managed-recovery/report.json
+          retention-days: 7
