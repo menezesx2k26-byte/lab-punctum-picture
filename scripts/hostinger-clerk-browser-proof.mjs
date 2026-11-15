@@ -124,9 +124,24 @@ async function browserPost(page, path, jwt, body) {
   }, { path, jwt, body });
 }
 
+export async function invalidOriginStatus(context, jwt) {
+  // APIRequestContext does not inherit Chromium's DNS mapping or SPKI pin.
+  const response = await context.request.post("http://127.0.0.1:3025/admin/api/clerk-session", {
+    headers: { host: "punctumpicture.com", "x-forwarded-proto": "https", origin: "https://invalid.example", authorization: "Bearer " + jwt },
+    data: {}, maxRedirects: 0,
+  });
+  try { return response.status(); } finally { await response.dispose(); }
+}
+
 async function main() {
   let stage = "inputs";
   const checks = {};
+  const http = {};
+  const expectHttp = (status, expected) => {
+    assert(Number.isInteger(status) && status >= 100 && status <= 599);
+    http[stage] = status;
+    assert(status === expected);
+  };
   try {
     const input = proofInputs(process.env);
     assert(process.platform === "linux" && !process.env.DEBUG && !process.env.PWDEBUG && !process.env.NODE_TLS_REJECT_UNAUTHORIZED);
@@ -160,6 +175,7 @@ async function main() {
         const user = await bapi("/users/" + input.userId);
         const original = await bapi("/sessions/" + input.sessionId);
         assertSelectedIdentity(input, user, original);
+        stage = "selected-identity-mfa-policy";
         assert(user.two_factor_enabled === false, "PROOF_MFA_REQUIRES_INTERACTIVE_LOGIN");
         checks.approvedIdentityAndOriginalSession = true;
         stage = "issuer-jwks";
@@ -191,8 +207,12 @@ async function main() {
         await context.route("**/*", (route) => allowedBrowserUrl(route.request().url()) ? route.continue() : route.abort());
         const page = await context.newPage();
         page.setDefaultTimeout(30_000);
+        stage = "canonical-access-status";
         const access = await page.goto(ORIGIN + "/acesso", { waitUntil: "domcontentloaded" });
-        assert(access?.status() === 200 && (await access.serverAddr())?.ipAddress === "127.0.0.1");
+        expectHttp(access?.status(), 200);
+        stage = "canonical-access-loopback-address";
+        assert((await access.serverAddr())?.ipAddress === "127.0.0.1");
+        stage = "clerk-provider-loaded";
         await page.waitForFunction(() => window.Clerk?.loaded && window.Clerk.client?.signIn);
         checks.canonicalOriginLoopbackAndPinnedTls = true;
         await page.exposeFunction("__punctumProofSession", (id) => {
@@ -214,48 +234,68 @@ async function main() {
           await clerk.setActive({ session: result.createdSessionId });
           return clerk.user?.id === userId && clerk.session?.id === result.createdSessionId;
         }, { ticket: ticket.token, userId: input.userId });
+        stage = "sdk-ticket-login-complete";
         assert(loggedIn && owned.sessionId);
         const created = await bapi("/sessions/" + owned.sessionId);
+        stage = "created-test-session-identity";
         assertSelectedIdentity({ ...input, sessionId: owned.sessionId }, user, created);
+        stage = "created-test-session-isolation";
         assert(created.created_at >= original.last_active_at && created.client_id !== original.client_id);
+        stage = "sdk-session-token";
         const jwt = await page.evaluate(() => window.Clerk.session.getToken({ skipCache: true }));
         stage = "sdk-token-canonical-azp";
         assert(await verifyBrowserJwt(jwt, jwks, input, owned.sessionId) === pem);
         checks.realSdkTicketLoginAndCanonicalAzp = true;
-        stage = "unlinked-and-linked-browser-backend";
-        assert(await browserPost(page, "/admin/api/clerk-session", jwt) === 403);
+        stage = "unlinked-admin-exchange";
+        expectHttp(await browserPost(page, "/admin/api/clerk-session", jwt), 403);
+        stage = "unlinked-admin-binding-absent";
         assert(await db.prepare("SELECT count(*) AS n FROM clerk_admin_identity_links").first("n") === 0);
         checks.unlinkedDenied = true;
+        stage = "explicit-admin-binding";
         await bindApprovedAdmin(db, input);
-        assert(await browserPost(page, "/admin/api/clerk-session", jwt) === 200);
+        stage = "linked-admin-exchange";
+        expectHttp(await browserPost(page, "/admin/api/clerk-session", jwt), 200);
+        stage = "linked-admin-secure-cookie";
         const cookie = (await context.cookies(ORIGIN + "/admin")).find((cookie) => cookie.name === "punctum_admin_session");
         assert(cookie?.secure && cookie.httpOnly && cookie.sameSite === "Strict" && cookie.path === "/admin");
+        stage = "linked-admin-studio-status";
         const studio = await page.goto(ORIGIN + "/admin/studio", { waitUntil: "domcontentloaded" });
-        assert(studio?.status() === 200 && page.url() === ORIGIN + "/admin/studio");
+        expectHttp(studio?.status(), 200);
+        stage = "linked-admin-studio-location";
+        assert(page.url() === ORIGIN + "/admin/studio");
+        stage = "linked-admin-studio-render";
         await page.getByRole("navigation", { name: "Painel" }).waitFor();
         checks.linkedAdminStudioAndSecureCookie = true;
-        assert(await browserPost(page, "/api/client/clerk-session", jwt) === 403);
+        stage = "unlinked-client-exchange";
+        expectHttp(await browserPost(page, "/api/client/clerk-session", jwt), 403);
         checks.clientDenied = true;
-        const invalidOrigin = (route) => route.continue({ headers: { ...route.request().headers(), origin: "https://invalid.example" } });
-        await page.route(ORIGIN + "/admin/api/clerk-session", invalidOrigin);
-        try { assert(await browserPost(page, "/admin/api/clerk-session", jwt) === 403); }
-        finally { await page.unroute(ORIGIN + "/admin/api/clerk-session", invalidOrigin); }
+        stage = "invalid-origin-exchange";
+        expectHttp(await invalidOriginStatus(context, jwt), 403);
         checks.invalidOriginDenied = true;
-        stage = "logout-and-replay";
-        assert(await page.evaluate(async () => (await fetch("/admin/api/session", { method: "DELETE" })).status) === 200);
+        stage = "logout-status";
+        expectHttp(await page.evaluate(async () => (await fetch("/admin/api/session", { method: "DELETE" })).status), 200);
+        stage = "logout-cookie-cleared";
         assert(!(await context.cookies(ORIGIN + "/admin")).some((cookie) => cookie.name === "punctum_admin_session"));
-        assert(await browserPost(page, "/admin/api/clerk-session", jwt) === 403);
+        stage = "jwt-replay-exchange";
+        expectHttp(await browserPost(page, "/admin/api/clerk-session", jwt), 403);
+        stage = "cookie-replay-admin";
         await context.addCookies([cookie]);
-        assert(await browserPost(page, "/admin/api/clientes", undefined, {}) === 403);
+        expectHttp(await browserPost(page, "/admin/api/clientes", undefined, {}), 403);
         await context.clearCookies({ name: "punctum_admin_session" });
         checks.logoutCookieAndJwtReplayDenied = true;
-        stage = "legacy-fallback";
+        stage = "legacy-server-restart";
         await stopApp(app);
         app = await startApp({ ...env, PUNCTUM_CANDIDATE_ADMIN_AUTH_MODE: "legacy", PUNCTUM_CANDIDATE_CLERK_AUTH_ENABLED: "false" });
-        assert(await browserPost(page, "/admin/api/session", undefined, { email: input.email, password }) === 200);
-        assert((await page.goto(ORIGIN + "/admin/studio", { waitUntil: "domcontentloaded" }))?.status() === 200 && page.url() === ORIGIN + "/admin/studio");
+        stage = "legacy-password-login";
+        expectHttp(await browserPost(page, "/admin/api/session", undefined, { email: input.email, password }), 200);
+        stage = "legacy-studio-status";
+        expectHttp((await page.goto(ORIGIN + "/admin/studio", { waitUntil: "domcontentloaded" }))?.status(), 200);
+        stage = "legacy-studio-location";
+        assert(page.url() === ORIGIN + "/admin/studio");
+        stage = "legacy-binding-preserved";
         assert((await bindApprovedAdmin(db, input)).created === false);
         checks.legacyFallbackAndLinkPreserved = true;
+        stage = "proof-not-interrupted";
         assert(!interrupted);
       } finally {
         const proofStage = stage;
@@ -274,10 +314,10 @@ async function main() {
       }
     });
     checks.privateFilesRemoved = true;
-    console.log(JSON.stringify({ status: "passed", checks, limit: LIMIT }));
+    console.log(JSON.stringify({ status: "passed", checks, http, limit: LIMIT }));
   } catch (error) {
     const code = /^PROOF_[A-Z_]+$/.test(error?.message ?? "") ? error.message : "PROOF_CHECK_FAILED";
-    console.log(JSON.stringify({ status: stage === "inputs" ? "blocked" : "failed", stage, code, checks, limit: LIMIT }));
+    console.log(JSON.stringify({ status: stage === "inputs" ? "blocked" : "failed", stage, code, checks, http, limit: LIMIT }));
     process.exitCode = 1;
   }
 }

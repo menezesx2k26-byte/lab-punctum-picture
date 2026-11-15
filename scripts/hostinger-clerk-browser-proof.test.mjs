@@ -8,7 +8,7 @@ import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { allowedBrowserUrl, assertTestSession, browserArgs, cleanupClerk, startTlsProxy, verifyBrowserJwt } from "./hostinger-clerk-browser-proof.mjs";
+import { allowedBrowserUrl, assertTestSession, browserArgs, cleanupClerk, invalidOriginStatus, startTlsProxy, verifyBrowserJwt } from "./hostinger-clerk-browser-proof.mjs";
 import { withProofDatabase } from "./hostinger-clerk-production-proof.mjs";
 
 const input = { userId: "user_approved", sessionId: "sess_owner" };
@@ -87,6 +87,7 @@ test("missing runtime inputs return safe blocked status before browser or networ
   assert.equal(result.status, "blocked");
   assert.equal(result.stage, "inputs");
   assert.deepEqual(result.checks, {});
+  assert.deepEqual(result.http, {});
   assert(result.limit.includes("public Hostinger TLS NOT covered"));
   assert(!run.stderr.includes("Error:"));
 });
@@ -100,6 +101,13 @@ test("real local browser preserves canonical origin through the pinned loopback 
     server = createServer((req, res) => {
       assert.equal(req.headers.host, "punctumpicture.com");
       assert.equal(req.headers["x-forwarded-proto"], "https");
+      if (req.url === "/admin/api/clerk-session") {
+        assert.equal(req.method, "POST");
+        assert.equal(req.headers.origin, "https://invalid.example");
+        assert.equal(req.headers.authorization, "Bearer offline-fixture");
+        res.writeHead(403).end();
+        return;
+      }
       res.setHeader("content-type", "text/html");
       res.setHeader("set-cookie", "fixture=local; Path=/; Secure; HttpOnly; SameSite=Strict");
       res.end("<!doctype html><title>Local transport fixture</title>");
@@ -116,6 +124,7 @@ test("real local browser preserves canonical origin through the pinned loopback 
     assert.equal(await page.evaluate(() => location.origin), "https://punctumpicture.com");
     assert.equal(await page.evaluate(() => document.cookie), "");
     assert((await context.cookies()).some((cookie) => cookie.name === "fixture" && cookie.secure && cookie.httpOnly && cookie.sameSite === "Strict"));
+    assert.equal(await invalidOriginStatus(context, "offline-fixture"), 403);
     const wrongHost = await new Promise((done, fail) => {
       const req = request({ hostname: "127.0.0.1", port: 8443, servername: "punctumpicture.com", ca: readFileSync(join(directory, "loopback-cert.pem")), headers: { host: "other.invalid" } }, (res) => { res.resume(); done(res.statusCode); });
       req.on("error", fail); req.end();
