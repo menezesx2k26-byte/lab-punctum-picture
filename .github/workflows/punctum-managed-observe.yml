@@ -35,15 +35,22 @@ jobs:
                   for child in value: yield from strings(child)
           def summarize(value):
               text = '\n'.join(strings(value))
-              codes = sorted(set(re.findall(r'\b(?:CANDIDATE_[A-Z0-9_]+|MANAGED_IMPORT_[A-Z0-9_]+|PUNCTUM_MANAGED_IMPORT_FAILED|ERR_[A-Z0-9_]+|EACCES|ENOENT|EADDRINUSE)\b', text)))
+              codes = sorted(set(re.findall(r'\b(?:CANDIDATE_[A-Z0-9_]+|MANAGED_[A-Z0-9_]+|ERR_[A-Z0-9_]+|EACCES|ENOENT|EADDRINUSE|ENOSPC|ECONNREFUSED)\b', text)))
               receipts = []
+              maintenance = []
               for line in text.splitlines():
+                  for prefix in ('PUNCTUM_MANAGED_MAINTENANCE ', 'PUNCTUM_MANAGED_BACKUP ', 'PUNCTUM_MANAGED_ACCEPTANCE '):
+                      if prefix not in line: continue
+                      try: value = json.JSONDecoder().raw_decode(line.split(prefix, 1)[1])[0]
+                      except (ValueError, TypeError): continue
+                      if isinstance(value, dict):
+                          maintenance.append({k:value[k] for k in ('status','cleanup','jobs','objects','bytes','archiveSha256','restoreMs') if k in value})
                   prefix = 'PUNCTUM_MANAGED_IMPORT '
                   if prefix not in line: continue
                   try: item = json.JSONDecoder().raw_decode(line.split(prefix, 1)[1])[0]
                   except (ValueError, TypeError): continue
                   receipts.append({k: item.get(k) for k in ('objects','bytes','integrity','missingReady','cipherSha256','reused')})
-              return {'codes': codes, 'importReceipts': receipts,
+              return {'codes': codes, 'importReceipts': receipts, 'maintenance': maintenance,
                       'archiveMentions': 'archive' in text.lower(), 'unzipMentions': 'unzip' in text.lower(),
                       'outOfMemory': any(x in text.lower() for x in ('out of memory','heap limit','sigkill'))}
           for row in history[:2]:
