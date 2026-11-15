@@ -9,6 +9,7 @@ import subprocess
 
 from hostinger_candidate_qa import build, candidate_archive, ready, write_candidate_environment
 from hostinger_managed_production import PRIVATE_ROOT
+from hostinger_managed_production import smoke
 from hostinger_managed_qa import DOMAIN, SITE, Recovery, RequestFailure
 
 SETTINGS = {'app_type': 'other', 'node_version': 24, 'package_manager': 'npm',
@@ -62,6 +63,7 @@ def execute(root):
     operation.report.update(action=config['action'], scope='existing-temporary-managed-origin', dnsTouched=False)
     success_status = 'MANAGED_RECOVERY_VERIFIED' if recovery_only else 'MANAGED_HTTP_AND_RECOVERY_VERIFIED'
     source = json.loads((root / 'config/hostinger/managed-snapshot-20261114.json').read_text())
+    operation.report['sourceSnapshot'] = source
     desired = {'PORT': '3000', 'PUNCTUM_PRODUCTION_CANDIDATE_MODE': 'private-candidate',
         'PUNCTUM_CANDIDATE_PROVIDER': 'hostinger-managed', 'PUNCTUM_CANDIDATE_ENVIRONMENT': 'staging',
         'PUNCTUM_CANDIDATE_PUBLIC_URL': 'https://' + DOMAIN,
@@ -91,9 +93,31 @@ def execute(root):
                     'PUNCTUM_MANAGED_MAINTENANCE_MODE': 'restore'}, MAINTENANCE_KEYS)
                 recovery_id = build(operation, name, SETTINGS, 'isolatedRecovery')
                 operation.report['operations'] = verify_operations(operation, recovery_id, 'isolatedRecovery')
-                ready(operation, 'postRecoveryReady')
+                initial_boot = ready(operation, 'postRecoveryReady')
             finally:
                 write_candidate_environment(operation, desired, MAINTENANCE_KEYS)
+            revision = config.get('rollback_revision')
+            if revision:
+                assert re.fullmatch(r'[a-f0-9]{40}', revision), 'Rollback requires an exact revision'
+                subprocess.run(['git', 'fetch', '--no-tags', '--depth=1', 'origin', revision],
+                    cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                files = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', revision], cwd=root).decode().splitlines()
+                previous_archive, _ = candidate_archive(root, files, revision=revision)
+                previous_name = operation.upload_archive(previous_archive, 'punctum-node-candidate-')
+                write_candidate_environment(operation, {**desired, 'PUNCTUM_QA_SOURCE_SHA': revision}, MAINTENANCE_KEYS)
+                operation.report['sourceSha'] = revision
+                build(operation, previous_name, SETTINGS, 'applicationRollback')
+                rolled_back_boot = ready(operation, 'applicationRolledBack', initial_boot)
+                smoke(operation, 'rolledBack')
+                current_name = operation.upload_archive(archive, 'punctum-node-candidate-')
+                write_candidate_environment(operation, desired, MAINTENANCE_KEYS)
+                operation.report['sourceSha'] = os.environ['GITHUB_SHA']
+                build(operation, current_name, SETTINGS, 'applicationRollForward')
+                ready(operation, 'applicationRolledForward', rolled_back_boot)
+                smoke(operation, 'rolledForward')
+                operation.report['applicationRollback'] = {'status': 'MANAGED_APPLICATION_ROLLBACK_VERIFIED',
+                    'previousSource': revision, 'restoredSource': os.environ['GITHUB_SHA'],
+                    'privateRootPreserved': PRIVATE_ROOT}
             operation.report['status'] = success_status
             return
         prior = config.get('previous_fixture')
