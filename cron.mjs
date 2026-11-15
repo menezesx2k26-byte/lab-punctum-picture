@@ -1,6 +1,5 @@
 import { closeSync, fstatSync, lstatSync, openSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { dirname, isAbsolute, join } from "node:path";
 import { candidateConfig } from "./services/punctum-hostinger-production/candidate-runtime.mjs";
 
 export async function withMaintenanceLock(root, run) {
@@ -25,7 +24,7 @@ export async function withMaintenanceLock(root, run) {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (import.meta.main) {
   process.umask(0o077);
   const mode = process.argv[2];
   if (!["hourly", "daily", "check"].includes(mode)) throw Error("CANDIDATE_CRON_MODE_INVALID");
