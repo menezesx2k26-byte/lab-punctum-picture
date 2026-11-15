@@ -1,18 +1,55 @@
 {
   "domain": "aliceblue-locust-999458.hostingersite.com",
-  "action": "accept-managed",
+  "action": "verify-managed",
   "verified_sha": "015ed317a41b633bc5057f5a7856060f9e7e8283",
   "verification_scope": "existing-source-credentials",
-  "expected_build_uuid": "01a1dc85-3ad5-7007-b895-983dbdcb64f0",
+  "expected_build_uuid": "01a1dc99-d74c-7185-a12b-6c50b2772a00",
   "previous_fixture": {
     "schema": "punctum-managed-fixture-v1",
-    "marker": "p8f1c06",
-    "sourceSha": "ea97b82cb15faf224f0f9cd60d32b3406433455e",
-    "startedAt": "2026-11-15T00:08:28.417Z",
-    "albums": [{"id": "32577ae8-07aa-4b89-bbbd-4ddae11777a9", "title": "Punctum QA p8f1c06"}],
-    "clients": [],
-    "galleries": [],
-    "images": [],
+    "marker": "p450dac",
+    "sourceSha": "d39c650bb263d68ceab9ed7f6a061fb4bb97c246",
+    "startedAt": "2026-11-15T00:25:59.153Z",
+    "albums": [
+      {
+        "id": "d14fb159-f1b8-4728-a553-fa27a32a8b0c",
+        "title": "Punctum QA p450dac"
+      }
+    ],
+    "clients": [
+      {
+        "id": "c9466746-c262-446f-aa4a-00cbaeb53fb4",
+        "email": "punctum-p450dac-a@example.test",
+        "name": "Punctum QA p450dac"
+      },
+      {
+        "id": "54aa1fbd-90b1-4f60-8db7-10be64f0d346",
+        "email": "punctum-p450dac-b@example.test",
+        "name": "Punctum QA p450dac"
+      }
+    ],
+    "galleries": [
+      {
+        "id": "8b419bcf-46bd-4ea0-b0ca-81250889eddc",
+        "clientId": "c9466746-c262-446f-aa4a-00cbaeb53fb4",
+        "title": "Punctum QA p450dac"
+      }
+    ],
+    "images": [
+      {
+        "id": "b95efd3c-56d5-42e5-a9c2-cfeb5e9fff60",
+        "parentId": "d14fb159-f1b8-4728-a553-fa27a32a8b0c",
+        "private": false,
+        "key": "originals/d14fb159-f1b8-4728-a553-fa27a32a8b0c/b95efd3c-56d5-42e5-a9c2-cfeb5e9fff60.png",
+        "sha256": "f1581abaa0673dad1cdb190a5234ee14eff769d3836de4f70ecb17cdd4ccfa76"
+      },
+      {
+        "id": "f7dc8281-3b6f-4c4a-b1cd-291d0778c242",
+        "parentId": "8b419bcf-46bd-4ea0-b0ca-81250889eddc",
+        "private": true,
+        "key": "client-galleries/8b419bcf-46bd-4ea0-b0ca-81250889eddc/f7dc8281-3b6f-4c4a-b1cd-291d0778c242.png",
+        "sha256": "f1581abaa0673dad1cdb190a5234ee14eff769d3836de4f70ecb17cdd4ccfa76"
+      }
+    ],
     "inquiries": []
   }
 }

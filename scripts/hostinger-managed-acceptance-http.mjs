@@ -131,7 +131,7 @@ async function main() {
     sizeBytes: fixturePng.length, sha256: fixtureSha256 }, adminCookie, 201);
   fixture.images.push({ id: intent.imageId, parentId: gallery.id, private: true,
     key: `client-galleries/${gallery.id}/${intent.imageId}.png`, sha256: fixtureSha256 }); persist();
-  const put = (body) => request(intent.uploadUrl, "PUT", body, undefined, { ...intent.requiredHeaders, "Content-Length": String(body.length) });
+  const put = (body) => request(intent.uploadUrl, "PUT", body, adminCookie, { ...intent.requiredHeaders, "Content-Length": String(body.length) });
   stage = "interrupted-private-upload";
   const controller = new AbortController();
   const interrupted = new ReadableStream({ start(stream) { stream.enqueue(fixturePng.subarray(0, 8)); } });
@@ -141,7 +141,7 @@ async function main() {
     const target = new URL(intent.uploadUrl, origin);
     check(target.origin === origin, "unexpected interrupted upload origin");
     const response = await fetch(target, { method: "PUT", body: interrupted, duplex: "half", redirect: "manual",
-      headers: { Origin: origin, ...intent.requiredHeaders, "Content-Length": String(fixturePng.length) }, signal: controller.signal });
+      headers: { Origin: origin, Cookie: adminCookie, ...intent.requiredHeaders, "Content-Length": String(fixturePng.length) }, signal: controller.signal });
     await response.body?.cancel();
   } catch (error) { aborted = error.name === "AbortError"; }
   finally { clearTimeout(timer); }

@@ -72,7 +72,7 @@ def confirm_environment_keys(operation, label, expected, permitted):
     raise ValueError('Expected environment key readback did not converge')
 
 
-def write_candidate_environment(operation, environment):
+def write_candidate_environment(operation, environment, previous_keys=()):
     """Handle the provider's ambiguous HTTP 500 after a full env replacement.
 
     A full set of masked keys proves only that the API accepted the shape,
@@ -87,7 +87,7 @@ def write_candidate_environment(operation, environment):
         if error.status not in (None,500,502,503,504):
             raise
         keys = set(environment)
-        readback = confirm_environment_keys(operation, 'candidateEnvironmentReadbackAfterHttpError', keys, keys)
+        readback = confirm_environment_keys(operation, 'candidateEnvironmentReadbackAfterHttpError', keys, keys | set(previous_keys))
         operation.report['candidateEnvironmentAcceptance'] = 'PROVISIONAL_KEYS_ONLY'
         operation.report['candidateEnvironmentKeyCount'] = len(readback)
         operation.report['candidateEnvironmentHttpError'] = error.status

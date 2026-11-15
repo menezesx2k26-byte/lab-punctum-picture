@@ -23,6 +23,7 @@ export async function managedAcceptance(config, marker, { cleanupOnly = false } 
     if (!result) throw Error("MANAGED_SCHEDULED_RECEIPT_MISSING");
     report.jobs.push(result);
   }
-  report.restore = await proveManagedRestore(config);
+  console.log("PUNCTUM_MANAGED_MAINTENANCE " + JSON.stringify(report));
+  report.restore = await proveManagedRestore(config, (proof) => console.log("PUNCTUM_MANAGED_BACKUP " + JSON.stringify(proof)));
   return { status: "MANAGED_OPERATIONS_VERIFIED", ...report };
 }

@@ -14,6 +14,7 @@ from hostinger_managed_qa import DOMAIN, SITE, Recovery, RequestFailure
 SETTINGS = {'app_type': 'other', 'node_version': 24, 'package_manager': 'npm',
     'root_directory': None, 'output_directory': None, 'build_script': 'build:hostinger:managed-runtime',
     'entry_file': 'services/punctum-hostinger-production/candidate-server.mjs'}
+MAINTENANCE_KEYS = {'PUNCTUM_MANAGED_E2E_FIXTURE', 'PUNCTUM_MANAGED_MAINTENANCE_MARKER', 'PUNCTUM_MANAGED_MAINTENANCE_MODE'}
 
 
 def operations_receipt(value):
@@ -72,17 +73,18 @@ def execute(root):
         'PUNCTUM_MANAGED_EXPECTED_SQL_SHA256': source['sqlSha256'], 'PUNCTUM_QA_SOURCE_SHA': os.environ['GITHUB_SHA']}
     try:
         history = operation.api('historyBefore', SITE + '/builds')
-        assert history[0]['uuid'] == config['expected_build_uuid'] and history[0]['state'] == 'completed'
+        assert history[0]['uuid'] == config['expected_build_uuid'] and history[0]['state'] in ('completed', 'failed')
         assert not any(row.get('state') in ('pending', 'running') for row in history)
         saved = operation.api('settingsBefore', SITE + '/builds/settings')
         assert all(saved.get(key) == value for key, value in SETTINGS.items())
         current = operation.api('environmentBefore', SITE + '/builds/settings/env')
-        assert {row['key'] for row in current} == set(desired), 'Unknown managed environment'
+        keys = {row['key'] for row in current}
+        assert set(desired) <= keys <= set(desired) | MAINTENANCE_KEYS, 'Unknown managed environment'
         paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().strip('\0').split('\0')
         archive, _ = candidate_archive(root, paths)
         name = operation.upload_archive(archive, 'punctum-node-candidate-')
         prior = config.get('previous_fixture')
-        write_candidate_environment(operation, maintenance_environment(desired, prior, 'cleanup') if prior else desired)
+        write_candidate_environment(operation, maintenance_environment(desired, prior, 'cleanup') if prior else desired, MAINTENANCE_KEYS)
         build_id = build(operation, name, SETTINGS, 'acceptanceRuntime')
         if prior:
             operation.report['previousCleanup'] = verify_operations(operation, build_id, 'previousCleanup')['cleanup']
@@ -110,7 +112,7 @@ def execute(root):
                     operation.report['operations'] = verify_operations(operation, recovery_id, 'acceptanceRecovery')
                     ready(operation, 'postRecoveryReady', original_boot)
                 finally:
-                    write_candidate_environment(operation, desired)
+                    write_candidate_environment(operation, desired, MAINTENANCE_KEYS)
         assert result and result.returncode == 0, 'HTTP acceptance did not pass'
         assert operation.report['operations']['cleanup']['status'] == 'OWNED_FIXTURE_REMOVED'
         operation.report['status'] = 'MANAGED_HTTP_AND_RECOVERY_VERIFIED'

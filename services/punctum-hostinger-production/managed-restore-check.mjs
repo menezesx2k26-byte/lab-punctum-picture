@@ -164,9 +164,9 @@ export async function createManagedBackup(config) {
     snapshot.cleanup();
     return { archiveFile, archiveSha256, restoredRoot: restored.path, objects: actual.objects.length,
       bytes: actual.bytes, tables, restoreMs, cleanup: () => restored.cleanup() };
-  } catch {
+  } catch (error) {
     try { restored?.cleanup(); } finally { snapshot?.cleanup(); }
-    throw Error("MANAGED_BACKUP_RESTORE_FAILED");
+    throw Error("MANAGED_BACKUP_RESTORE_FAILED", { cause: error });
   }
 }
 
@@ -220,11 +220,12 @@ async function stopChildGroup(child) {
   throw Error("MANAGED_RESTORE_CHILD_CLEANUP_FAILED");
 }
 
-export async function proveManagedRestore(config) {
+export async function proveManagedRestore(config, onBackup = () => {}) {
   if (process.platform !== "linux") throw Error("MANAGED_RESTORE_LINUX_REQUIRED");
   let saved, child;
   try {
     saved = await createManagedBackup(config);
+    onBackup({ objects: saved.objects, bytes: saved.bytes, archiveSha256: saved.archiveSha256, restoreMs: saved.restoreMs });
     const httpStarted = performance.now();
     const db = new DatabaseSync(join(saved.restoredRoot, "application.sqlite"), { readOnly: true });
     let image;
@@ -261,6 +262,6 @@ export async function proveManagedRestore(config) {
     return { status: "MANAGED_RESTORE_VERIFIED", archiveFile: saved.archiveFile, archiveSha256: saved.archiveSha256,
       objects: saved.objects, bytes: saved.bytes, tables: saved.tables, restoreMs: saved.restoreMs,
       httpMs, functionalRestoreMs: saved.restoreMs + httpMs };
-  } catch { throw Error("MANAGED_RESTORE_PROOF_FAILED"); }
+  } catch (error) { throw Error("MANAGED_RESTORE_PROOF_FAILED", { cause: error }); }
   finally { try { await stopChildGroup(child); } finally { saved?.cleanup(); } }
 }

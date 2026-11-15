@@ -48,8 +48,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log("PUNCTUM_MANAGED_ACCEPTANCE " + JSON.stringify(result));
     }
   } catch (error) {
-    const code = /^(?:MANAGED|CANDIDATE)_[A-Z0-9_]+$/.test(error.message) ? error.message : "PUNCTUM_MANAGED_VERIFY_FAILED";
-    console.error(code);
+    const codes = [];
+    for (let cause = error, depth = 0; cause && depth < 4; cause = cause.cause, depth++) {
+      const code = [cause.message, cause.code].find((value) => /^(?:(?:MANAGED|CANDIDATE|ERR|UNSAFE)_[A-Z0-9_]+|EACCES|ENOSPC|ENOENT|EADDRINUSE|ECONNREFUSED)$/.test(value ?? ""));
+      if (code) codes.push(code);
+    }
+    console.error("PUNCTUM_MANAGED_VERIFY_FAILED " + codes.join(" "));
     process.exitCode = 1;
   }
 }
