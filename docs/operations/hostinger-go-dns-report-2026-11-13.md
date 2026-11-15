@@ -1,5 +1,7 @@
 # Relatório Final de Homologação `GO_DNS` — Punctum Picture na Hostinger (`srv2135319`)
 
+> Registro histórico da VPS. O usuário escolheu posteriormente a hospedagem Node gerenciada da Hostinger Conthabil. Este `GO_DNS` não autoriza nem qualifica o cutover atual; prevalecem o [checkpoint gerenciado](hostinger-managed-checkpoint-2026-11-14.md) e seus gates ainda abertos.
+
 **Data:** 2026-11-13 / 2026-11-14 UTC  
 **Branch:** `feat/hostinger-production-candidate-20261113`  
 **Veredito:** **`GO_DNS`**  
