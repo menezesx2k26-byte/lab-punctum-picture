@@ -83,6 +83,33 @@ jobs:
                           if not cursor: break
                       totals.append({'name':name,'objects':count,'bytes':size,'complete':complete})
                   report['cloudflare'][label]=totals
+          # Read-only scope: existing QA resources can contain user data. Inventory is
+          # never an exclusive lease or permission to overwrite, reset or delete them.
+          databases=report['cloudflare'].get('databases',[])
+          buckets=report['cloudflare'].get('buckets',[])
+          production_d1='22697f13-7484-41e3-9441-f7b902c6577a'
+          def qa_name(name):
+              lowered=(name or '').lower()
+              return lowered.startswith('punctum') and any(word in lowered for word in ('qa','test','preview','stage','recovery'))
+          candidate_dbs=[{'name':entry.get('name'),'sizeBytes':entry.get('file_size'),
+                          'tableCount':entry.get('num_tables'),'exclusiveOwnerVerified':False,
+                          'writable':False}
+                         for entry in databases if entry.get('uuid')!=production_d1 and qa_name(entry.get('name'))]
+          candidate_buckets=[{'name':entry.get('name'),'objectCount':entry.get('objects'),
+                              'bytes':entry.get('bytes'),'scanComplete':entry.get('complete'),
+                              'exclusiveOwnerVerified':False,'writable':False}
+                             for entry in buckets if qa_name(entry.get('name'))]
+          report['remoteReversePreflight']={
+              'mode':'READ_ONLY_NO_MUTATIONS',
+              'productionD1Present':any(x.get('uuid')==production_d1 for x in databases),
+              'd1InventoryRead':isinstance(report['cloudflare'].get('databases'),list),
+              'r2InventoryRead':isinstance(report['cloudflare'].get('buckets'),list),
+              'candidateD1':candidate_dbs,
+              'candidateR2':candidate_buckets,
+              'eligibleWriteTargets':0,
+              'remoteD1RestoreVerified':False,
+              'remoteR2RestoreVerified':False,
+              'nextGate':'Prove exclusive vacancy/ownership of a segregated restore target; then rehearse all D1 rows and original hashes. Never overwrite the production or an occupied QA resource.'}
           init={'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'punctum-cutover-audit','version':'1.0'}}}
           for endpoint in ('https://mcp.hostinger.com','https://mcp.hostinger.com/mcp'):
               initialized,headers=request('mcpInit'+endpoint,endpoint,'HOSTINGER_API',init,{'Accept':'application/json, text/event-stream'})
@@ -94,7 +121,14 @@ jobs:
                   break
           output=pathlib.Path('capability-evidence'); output.mkdir()
           (output/'report.json').write_text(json.dumps(report,indent=2))
-          print(json.dumps(report,indent=2))
+          # Prevent unrelated domains/buckets/account data from entering public Actions logs.
+          print(json.dumps({'status':'READ_ONLY_REMOTE_REVERSE_PREFLIGHT_COMPLETE',
+              'mutations':report['mutations'],
+              'productionD1Present':report['remoteReversePreflight']['productionD1Present'],
+              'd1InventoryRead':report['remoteReversePreflight']['d1InventoryRead'],
+              'r2InventoryRead':report['remoteReversePreflight']['r2InventoryRead'],
+              'candidateD1Count':len(candidate_dbs),'candidateR2Count':len(candidate_buckets),
+              'eligibleWriteTargets':0,'remoteD1RestoreVerified':False,'remoteR2RestoreVerified':False},sort_keys=True))
           PY
       - uses: actions/upload-artifact@v6
         if: always()
