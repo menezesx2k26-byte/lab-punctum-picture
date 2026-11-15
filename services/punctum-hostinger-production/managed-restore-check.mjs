@@ -244,13 +244,19 @@ export async function proveManagedRestore(config, onBackup = () => {}) {
       cwd: fileURLToPath(new URL("../../", import.meta.url)), env, detached: true, stdio: "ignore",
     });
     await once(child, "spawn");
-    let homepage;
+    let health, lastProbeError;
     const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
       if (child.exitCode !== null || child.signalCode !== null) throw Error("MANAGED_RESTORE_CHILD_EXITED");
-      try { homepage = await httpBytes(origin, "/", "text/html", 1000); break; } catch { await delay(150); }
+      try {
+        health = JSON.parse((await httpBytes(origin, "/api/health", "application/json", 2500)).toString("utf8"));
+        if (health?.ok === true && health.service === "punctum-picture") break;
+        health = null;
+      } catch (error) { lastProbeError = error; }
+      await delay(150);
     }
-    if (!homepage) throw Error("MANAGED_RESTORE_CHILD_TIMEOUT");
+    if (!health) throw Error("MANAGED_RESTORE_CHILD_TIMEOUT", { cause: lastProbeError });
+    const homepage = await httpBytes(origin, "/", "text/html", 25_000);
     const liveOrigin = new URL(config.publicOrigin).origin;
     const liveHome = await httpBytes(liveOrigin, "/", "text/html");
     if (JSON.stringify(homepageEvidence(homepage.toString("utf8"))) !== JSON.stringify(homepageEvidence(liveHome.toString("utf8")))) throw Error("MANAGED_RESTORE_HOME_MISMATCH");

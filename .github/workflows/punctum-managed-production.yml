@@ -32,8 +32,8 @@ jobs:
           request = json.loads(pathlib.Path('requests/punctum-managed-production.json').read_text())
           assert request['domain'] == 'aliceblue-locust-999458.hostingersite.com'
           action = request['action']
-          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed')
-          if action in ('prepare-managed', 'resume-managed', 'accept-managed'):
+          assert action in ('inventory', 'verify-managed', 'prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed')
+          if action in ('prepare-managed', 'resume-managed', 'accept-managed', 'recover-managed'):
               verified = request['verified_sha']
               assert re.fullmatch('[a-f0-9]{40}', verified)
               changed = subprocess.check_output(['git','diff','--name-only',verified,'HEAD']).decode().splitlines()
@@ -89,7 +89,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
         if: steps.operation.outputs.action == 'accept-managed'
       - name: Exercise uploads, private albums, and scheduled recovery
-        if: steps.operation.outputs.action == 'accept-managed'
+        if: steps.operation.outputs.action == 'accept-managed' || steps.operation.outputs.action == 'recover-managed'
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
           SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}

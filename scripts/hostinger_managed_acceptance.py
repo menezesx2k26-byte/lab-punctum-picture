@@ -54,11 +54,13 @@ def verify_operations(operation, build_id, label):
 
 def execute(root):
     config = json.loads((root / 'requests/punctum-managed-production.json').read_text())
-    assert config['action'] == 'accept-managed' and config['domain'] == DOMAIN
+    assert config['action'] in ('accept-managed', 'recover-managed') and config['domain'] == DOMAIN
+    recovery_only = config['action'] == 'recover-managed'
     operation = Recovery(root, 'prepare', config['expected_build_uuid'])
     operation.output = root / 'outputs/punctum-managed-production'
     operation.output.mkdir(parents=True, exist_ok=True)
-    operation.report.update(action='accept-managed', scope='existing-temporary-managed-origin', dnsTouched=False)
+    operation.report.update(action=config['action'], scope='existing-temporary-managed-origin', dnsTouched=False)
+    success_status = 'MANAGED_RECOVERY_VERIFIED' if recovery_only else 'MANAGED_HTTP_AND_RECOVERY_VERIFIED'
     source = json.loads((root / 'config/hostinger/managed-snapshot-20261114.json').read_text())
     desired = {'PORT': '3000', 'PUNCTUM_PRODUCTION_CANDIDATE_MODE': 'private-candidate',
         'PUNCTUM_CANDIDATE_PROVIDER': 'hostinger-managed', 'PUNCTUM_CANDIDATE_ENVIRONMENT': 'staging',
@@ -83,6 +85,17 @@ def execute(root):
         paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().strip('\0').split('\0')
         archive, _ = candidate_archive(root, paths)
         name = operation.upload_archive(archive, 'punctum-node-candidate-')
+        if recovery_only:
+            try:
+                write_candidate_environment(operation, {**desired, 'PUNCTUM_MANAGED_MAINTENANCE_MARKER': 'p' + secrets.token_hex(3),
+                    'PUNCTUM_MANAGED_MAINTENANCE_MODE': 'restore'}, MAINTENANCE_KEYS)
+                recovery_id = build(operation, name, SETTINGS, 'isolatedRecovery')
+                operation.report['operations'] = verify_operations(operation, recovery_id, 'isolatedRecovery')
+                ready(operation, 'postRecoveryReady')
+            finally:
+                write_candidate_environment(operation, desired, MAINTENANCE_KEYS)
+            operation.report['status'] = success_status
+            return
         prior = config.get('previous_fixture')
         write_candidate_environment(operation, maintenance_environment(desired, prior, 'cleanup') if prior else desired, MAINTENANCE_KEYS)
         build_id = build(operation, name, SETTINGS, 'acceptanceRuntime')
@@ -115,7 +128,7 @@ def execute(root):
                     write_candidate_environment(operation, desired, MAINTENANCE_KEYS)
         assert result and result.returncode == 0, 'HTTP acceptance did not pass'
         assert operation.report['operations']['cleanup']['status'] == 'OWNED_FIXTURE_REMOVED'
-        operation.report['status'] = 'MANAGED_HTTP_AND_RECOVERY_VERIFIED'
+        operation.report['status'] = success_status
     except Exception as error:
         operation.report['status'] = 'MANAGED_ACCEPTANCE_INCOMPLETE'
         operation.report['failure'] = {'type': type(error).__name__,
@@ -125,7 +138,7 @@ def execute(root):
     finally:
         operation.save()
         print(json.dumps(operation.report, indent=2))
-    if operation.report['status'] != 'MANAGED_HTTP_AND_RECOVERY_VERIFIED':
+    if operation.report['status'] != success_status:
         raise SystemExit(1)
 
 
