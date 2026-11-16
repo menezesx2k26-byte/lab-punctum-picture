@@ -4,7 +4,7 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AD 2026-11-15: local synthetic 25 MiB upload/retry/SHA/A-B zero-byte denial PASS; 322/322 Vitest, 7/7 Colagem, typecheck, lint (22 pre-existing warnings), candidate and public builds PASS. Scope is Node/Sharp localhost legacy synthetic auth; no target remote 25 MiB, real Clerk, derivatives, G17 cost or G23 rollback. Historical canonical statuses preserved; current-cycle gateRecords reflect unverified partial evidence. CI exact final head pending. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AD 2026-11-15: local synthetic 25 MiB upload/retry/SHA/A-B zero-byte denial plus private WebP/favorites 48 HTTP checks PASS; 322/322 Vitest, 7/7 Colagem, typecheck, lint (22 pre-existing warnings), candidate and public builds PASS. Scope is Node/Sharp localhost legacy synthetic auth; no target remote 25 MiB or derivatives, real Clerk, G17 cost or G23 rollback. Historical canonical statuses preserved; current-cycle gateRecords reflect unverified partial evidence. CI #757 succeeded on c975a39; new extension head CI pending. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-15",
   "branch": "codex/punctum-r4-goal-20261115",
   "baseBranch": "codex/punctum-managed-production-20261114",
@@ -3757,7 +3757,7 @@
       "initialCiRunId": 43790359989,
       "initialCiResult": "SUCCESS_ON_INITIAL_HEAD_feb4e7a",
       "initialCiRunUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43790359989",
-      "finalHeadCi": "PENDING_AFTER_DOCUMENTARY_AMENDMENT"
+      "finalHeadCi": "c975a39 CI #757 SUCCESS; extended-proof commit CI pending"
     },
     "driveCheckpoint": {
       "documentId": "1C_0pEAiCoWAC0T-z2cUXswOqcsEbzBO9H_nvwmHGUnI",
@@ -3774,7 +3774,7 @@
       "provider": "Node/Sharp identified binding, never Cloudflare Images Binding",
       "uploadBytes": 26214400,
       "fixtureSha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce",
-      "httpChecks": 25,
+      "httpChecks": 48,
       "focusedVitest": "14/14 PASS",
       "fullVitest": "322/322 PASS (62 files)",
       "collageVitest": "7/7 PASS",
@@ -3786,7 +3786,7 @@
       "diffCheck": "PASS",
       "hostedOrRemoteQa": "NOT_RUN",
       "realClerk": "NOT_RUN",
-      "publishedCiExactHead": "INITIAL_HEAD_CI_SUCCESS_FINAL_HEAD_PENDING",
+      "publishedCiExactHead": "c975a39_CI_757_SUCCESS_EXTENDED_HEAD_PENDING",
       "incrementalSpend": "R$ 0,00 local execution; runtime and Clerk bills unverified"
     },
     "gateRecords": {
@@ -3794,13 +3794,13 @@
       "G02": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"unit/integration/lint/tsc","evidence":"322/322 Vitest and 7/7 Colagem local; initial PR #40 CI passed; runtime target pending","proofType":"LOCAL_PARTIAL","date":"2026-11-15","owner":"engineering/CI","nextAction":"run full required matrix on exact PR head"},
       "G03": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"Node admin client API","evidence":"two synthetic clients; UI and real Clerk not tested","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"admin browser create/edit with authorized Clerk"},
       "G04": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"Node gallery API","evidence":"synthetic create/cover/publish; UI editing not tested","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"full product gallery editing and archive"},
-      "G05": {"status":"FAIL","version":"R1 diff on 8abb9f38","surface":"Node Sharp private upload","evidence":"exact 26214400B PNG, sha256 c16e100e..., retry, overlimit/short/checksum denial; derivatives and remote QA missing","proofType":"QA_SYNTHETIC_LOCAL_PASS_ONLY","date":"2026-11-15","owner":"engineering/authorized QA","nextAction":"remote isolated 25MiB raster+derivative+partial restore proof"},
+      "G05": {"status":"FAIL","version":"R1 diff on 8abb9f38","surface":"Node Sharp private upload","evidence":"exact 26214400B PNG, sha256 c16e100e..., retry, overlimit/short/checksum denial; WebP thumb/gallery private GET/HEAD and A/B/guest denial locally PASS; target remote QA missing","proofType":"QA_SYNTHETIC_LOCAL_PASS_ONLY","date":"2026-11-15","owner":"engineering/authorized QA","nextAction":"remote isolated 25MiB raster+derivative+partial restore proof"},
       "G06": {"status":"NOT_RUN","version":"Clerk historical + R1 delta","surface":"SDK/JWT/admin/client","evidence":"existing Clerk matrix; not rerun against deployed target","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"security","nextAction":"verify SDK signature/azp/claims and roles target"},
       "G07": {"status":"BLOCKED_EXTERNAL","version":"historical Access; Clerk R1","surface":"browser auth","evidence":"Access real OTP historical; client Clerk real login missing","proofType":"HISTORICAL_OTHER_PROVIDER","date":"2026-11-15","owner":"QA account owner","nextAction":"real QA user Clerk sign-in with configured factor on authorized origin"},
       "G08": {"status":"NOT_RUN","version":"R1 delta","surface":"admin/client session","evidence":"synthetic cookie checks; Clerk real revocation not run","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"security/QA","nextAction":"disable/revoke/login/logout real Clerk both roles"},
-      "G09": {"status":"NOT_RUN","version":"R1 delta","surface":"A/B private download","evidence":"B GET/HEAD denied; full A1/A2/B1 and favorites missing","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"full ownership matrix including favorites"},
-      "G10": {"status":"NOT_RUN","version":"R1 delta","surface":"private media","evidence":"original GET/HEAD denied with zero bytes; derivatives/cache not tested","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"security","nextAction":"verify original, derivative, optimizer and cache isolation"},
-      "G11": {"status":"NOT_RUN","version":"historical","surface":"favorites UI/database","evidence":"not rerun this cycle","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA","nextAction":"favorites add/remove/reload and A/B"},
+      "G09": {"status":"NOT_RUN","version":"R1 delta","surface":"A/B private download","evidence":"local A/B list, detail and favorite write denial, original/derivative GET/HEAD zero bytes; full A1/A2/B1 and real Clerk missing","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"full ownership matrix including favorites"},
+      "G10": {"status":"NOT_RUN","version":"R1 delta","surface":"private media","evidence":"local original and WebP thumb/gallery private A allowed, B/guest GET/HEAD 404 zero bytes, cache private no-store/Vary Cookie; generic public error and optimizer 400 carry no media; target CDN/cache not tested","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"security","nextAction":"verify original, derivative, optimizer and cache isolation"},
+      "G11": {"status":"NOT_RUN","version":"historical","surface":"favorites UI/database","evidence":"local HTTP favorite PUT/DELETE persisted through fresh GET; browser reload and target owner missing","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"favorites add/remove/reload and A/B"},
       "G12": {"status":"NOT_RUN","version":"R1 delta","surface":"private download API","evidence":"on/off and SHA of original local; browser pending","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"test download UI and permissions"},
       "G13": {"status":"NOT_RUN","version":"historical","surface":"client browser","evidence":"not rerun against Clerk/Node","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA","nextAction":"browser library/viewer/focus/errors/expiry"},
       "G14": {"status":"NOT_RUN","version":"historical","surface":"admin browser","evidence":"not rerun against Clerk/Node","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA","nextAction":"browser upload/progress/edit/cover/publish"},
@@ -3810,10 +3810,10 @@
       "G18": {"status":"NOT_RUN","version":"historical","surface":"backup and restore","evidence":"historical remote synthetic restoration; not rerun","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA/operations","nextAction":"restore 2 accounts 2 galleries 10 objects in target QA"},
       "G19": {"status":"BLOCKED_EXTERNAL","version":"R1 delta","surface":"independent security","evidence":"no final authorized signoff","proofType":"MISSING_HUMAN_APPROVAL","date":"2026-11-15","owner":"authorized independent reviewer","nextAction":"review code and target configuration, resolve P0/P1"},
       "G20": {"status":"BLOCKED_EXTERNAL","version":"historical documentation","surface":"LGPD controller","evidence":"no studio controller signoff","proofType":"MISSING_HUMAN_APPROVAL","date":"2026-11-15","owner":"studio controller","nextAction":"approve retention, purposes, export, deletion, incident handling"},
-      "G21": {"status":"NOT_RUN","version":"historical CI; new R1 delta","surface":"PR integration/CI","evidence":"draft PR #40 published; initial SHA CI #756 completed SUCCESS; final SHA CI and independent review pending","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"engineering/reviewer","nextAction":"publish draft PR and verify final head CI"},
+      "G21": {"status":"NOT_RUN","version":"historical CI; new R1 delta","surface":"PR integration/CI","evidence":"draft PR #40, initial CI #756 SUCCESS and c975a39 CI #757 SUCCESS; new extension SHA CI and independent review pending","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"engineering/reviewer","nextAction":"publish draft PR and verify final head CI"},
       "G22": {"status":"BLOCKED_EXTERNAL","version":"R1 candidate","surface":"release approval","evidence":"no scoped R2/R3 production authorization","proofType":"MISSING_HUMAN_APPROVAL","date":"2026-11-15","owner":"product owner","nextAction":"approve each merge/deploy/login/flag action explicitly"},
       "G23": {"status":"BLOCKED_EXTERNAL","version":"historical","surface":"rollback QA","evidence":"full target rollback with post-cutover writes missing","proofType":"NOT_RUN_TARGET","date":"2026-11-15","owner":"operations/QA","nextAction":"test prior version/flag/login/DB/media/data continuity"},
-      "G24": {"status":"NOT_RUN","version":"historical handoff; AD report 69","surface":"repo and Drive continuity","evidence":"handoff in commit feb4e7a and Drive document created; 24 gate rows read back; final SHA/CI pending","proofType":"LOCAL_AND_DRIVE_READBACK_PARTIAL","date":"2026-11-15","owner":"engineering","nextAction":"verify exact final CI SHA, receipt and review"}
+      "G24": {"status":"NOT_RUN","version":"historical handoff; AD report 69","surface":"repo and Drive continuity","evidence":"handoff/Drive 24 gate rows read back; c975a39 CI #757 SUCCESS; extended-proof SHA/CI pending","proofType":"LOCAL_AND_DRIVE_READBACK_PARTIAL","date":"2026-11-15","owner":"engineering","nextAction":"verify exact final CI SHA, receipt and review"}
     }
   }
 }

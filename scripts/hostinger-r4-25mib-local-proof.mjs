@@ -153,6 +153,48 @@ async function main() {
         const denied = await expect(await req(photo + "/download", method, undefined, clients[1].cookie), 404, `B-${method}-denied`);
         assert.equal((await denied.arrayBuffer()).byteLength, 0, "no cross-client original bytes");
       }
+      const clientPath = `/api/client/galleries/${gallery.id}`;
+      const favoritePath = `${clientPath}/favorites/${intent.imageId}`;
+      assert.equal((await json('/api/client/galleries', 'GET', undefined, clients[0].cookie)).galleries.length, 1);
+      assert.equal((await json('/api/client/galleries', 'GET', undefined, clients[1].cookie)).galleries.length, 0);
+      assert.equal((await json(clientPath, 'GET', undefined, clients[0].cookie)).gallery.images[0].favorite, false);
+      await expect(await req(clientPath, 'GET', undefined, clients[1].cookie), 404, 'B-gallery-detail-denied');
+      await expect(await req(favoritePath, 'PUT', undefined, clients[1].cookie), 404, 'B-favorite-denied');
+      await json(favoritePath, 'PUT', undefined, clients[0].cookie);
+      assert.equal((await json(clientPath, 'GET', undefined, clients[0].cookie)).gallery.images[0].favorite, true);
+      await json(favoritePath, 'DELETE', undefined, clients[0].cookie);
+      assert.equal((await json(clientPath, 'GET', undefined, clients[0].cookie)).gallery.images[0].favorite, false);
+      for (const preset of ['thumb', 'gallery']) {
+        const path = `${photo}/${preset}`;
+        const allowed = await expect(await req(path, 'GET', undefined, clients[0].cookie,
+          { Accept: 'image/webp' }), 200, `A-${preset}-derivative`);
+        assert.equal(allowed.headers.get('Cache-Control'), 'private, no-store');
+        assert.equal(allowed.headers.get('Vary'), 'Cookie');
+        assert.equal(allowed.headers.get('Content-Type'), 'image/webp');
+        const bytes = Buffer.from(await allowed.arrayBuffer());
+        assert(bytes.length > 0 && bytes.length < png.length, `${preset}: transformed image is non-empty and bounded`);
+        assert.equal((await sharp(bytes).metadata()).format, 'webp');
+        const head = await expect(await req(path, 'HEAD', undefined, clients[0].cookie,
+          { Accept: 'image/webp' }), 200, `A-${preset}-head`);
+        assert.equal(head.headers.get('Cache-Control'), 'private, no-store');
+        assert.equal((await head.arrayBuffer()).byteLength, 0);
+        for (const method of ['GET', 'HEAD']) {
+          const denied = await expect(await req(path, method, undefined, clients[1].cookie),
+            404, `B-${preset}-${method}-denied`);
+          assert.equal((await denied.arrayBuffer()).byteLength, 0, `${preset}: no cross-client derivative bytes`);
+          const guest = await expect(await req(path, method), 404, `guest-${preset}-${method}-denied`);
+          assert.equal((await guest.arrayBuffer()).byteLength, 0, `${preset}: no anonymous derivative bytes`);
+        }
+      }
+      for (const leak of [`/media/${intent.imageId}/gallery`,
+        `/_vinext/image?url=${encodeURIComponent(`${photo}/gallery`)}&w=640&q=75`]) {
+        const denied = await expect(await req(leak, 'GET', undefined, clients[0].cookie),
+          leak.startsWith('/media/') ? 404 : 400, 'public-media-denied');
+        const deniedBytes = Buffer.from(await denied.arrayBuffer());
+        assert(deniedBytes.length < 1024, 'public denial has no media payload');
+        assert(!denied.headers.get('Content-Type')?.startsWith('image/'), 'no public image content type');
+        assert(!deniedBytes.subarray(0, 8).equals(png.subarray(0, 8)), 'no public PNG raster');
+      }
       console.log(JSON.stringify({ result: "PASS_LOCAL_SYNTHETIC_NODE", bytes: png.length, sha256: hash(png),
         checks, environment: "isolated POSIX WSL staging; legacy synthetic auth; no remote access" }));
     } finally {
