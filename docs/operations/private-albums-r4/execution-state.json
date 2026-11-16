@@ -4,7 +4,7 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AG 2026-11-16: G18 local synthetic D1/R2 two-client/two-gallery/ten-original restore proof strengthened for all ten SHA-256 digests, row ownership/FKs and source-session revocation (20 focused tests PASS); target QA still required. Cycle AF 25MiB interrupted-upload local proof (49 HTTP checks) has exact SHA c0faf2f CI #760 SUCCESS, Hostinger Node job SKIPPED. All target Hostinger, Clerk, capacity/cost, rollback, physical security/LGPD and release gates remain open. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AH 2026-11-16: G18 synthetic restore now proves 10 distinct valid PNG originals/hashes for two clients, 20/20 focused tests PASS; prior AG/AF local proofs retained. Operational Hostinger/Clerk, cost/load, physical access, security/LGPD, QA rollback and release gates remain open. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-16",
   "branch": "codex/punctum-r4-goal-20261115",
   "baseBranch": "codex/punctum-managed-production-20261114",
@@ -4537,5 +4537,43 @@
     "targetProof": "NOT_RUN",
     "costIncrementLocal": "BRL 0.00",
     "costTarget": "INDETERMINATE"
+  },
+  "currentCycle20261116AH": {
+    "report": "docs/operations/private-albums-r4/73-cycle-ah-g18-distinct-images-2026-11-16.md",
+    "baselineSha": "13ab3589da6dcd53d9b3d6f1da0ae87c3ac8a815",
+    "branch": "codex/punctum-r4-goal-20261115",
+    "gateRecordsSource": "currentCycle20261116AF.gateRecords",
+    "gateRecordOverrides": {
+      "G18": {
+        "status": "NOT_RUN",
+        "version": "R1 G18 fixture after 13ab3589",
+        "surface": "local separated D1/R2 restore with two clients, two galleries and ten distinct valid PNG originals",
+        "evidence": "tests/integration/client-recovery.spec.ts: ten visually distinct synthetic 2x2 PNG originals, ten unique SHA-256 values and matching DB original_sha256, every restored R2 object matched expected distinct bytes/hash and D1 gallery/key; two restored quarantined accounts, D1 FK pass, source session denied after secret rotation, A/B cross-access denied; focused RED 19/20 (distinct hashes), GREEN 20/20, targeted ESLint/typecheck PASS; real target not tested",
+        "proofType": "QA_SYNTHETIC_LOCAL_PARTIAL",
+        "date": "2026-11-16",
+        "owner": "QA/operations",
+        "nextAction": "Run authorized isolated target D1/R2 restore with two QA accounts, two galleries and ten distinct PNG objects; prove verified target, readback hashes, permissions A/B, revocation, recoverability, documented receipt and cost; do not promote from local test",
+        "evaluatedHead": "13ab3589da6dcd53d9b3d6f1da0ae87c3ac8a815"
+      }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 6,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "targetProof": "NOT_RUN",
+    "costIncrementLocal": "BRL 0.00",
+    "costTarget": "INDETERMINATE",
+    "localProof": {
+      "test": "npm exec vitest run tests/integration/client-recovery.spec.ts -- --reporter=dot",
+      "result": "20/20 PASS",
+      "red": "19/20 PASS; unique SHA-256 assertion failed as expected",
+      "lint": "PASS",
+      "typecheck": "PASS",
+      "source": "two clients/two galleries/ten distinct 2x2 PNGs",
+      "target": "NOT_RUN"
+    }
   }
 }
