@@ -1,9 +1,10 @@
 // Synthetic local-only candidate proof. Never points at a deployed Hostinger origin.
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
+import { request as httpRequest } from "node:http";
 import { crc32 } from "node:zlib";
 import { fixturePng } from "../services/punctum-hostinger-production/acceptance-fixture.mjs";
 import { withProofDatabase } from "./hostinger-clerk-production-proof.mjs";
@@ -137,6 +138,28 @@ async function main() {
       });
       await expect(await put(Buffer.alloc(1024)), 400, "reject-short-upload");
       await expect(await put(Buffer.alloc(png.length)), 400, "reject-invalid-checksum");
+      await new Promise((resolve, reject) => {
+        let connected = false;
+        let partialSent = false;
+        const interrupted = httpRequest(new URL(signedUrl.pathname + signedUrl.search, localOrigin), {
+          method: "PUT",
+          headers: { Host: "punctumpicture.com", Origin: publicOrigin, "X-Forwarded-Proto": "https",
+            Cookie: admin, ...intent.requiredHeaders, "Content-Length": String(png.length) },
+        });
+        interrupted.once("socket", (socket) => socket.once("connect", () => { connected = true; }));
+        interrupted.once("response", () => reject(Error("partial upload unexpectedly completed")));
+        interrupted.on("error", (error) => { if (!connected || !partialSent) reject(error); });
+        interrupted.once("close", () => connected && partialSent ? resolve() : reject(Error("partial upload was not transmitted")));
+        interrupted.write(png.subarray(0, 256 * 1024), () => {
+          partialSent = true;
+          setTimeout(() => interrupted.destroy(), 150);
+        });
+      });
+      assert.equal((await db.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+        .bind(intent.intentId).first()).status, "pending", "aborted upload remains retryable");
+      assert.deepEqual(readdirSync(join(directory, "originals"), { recursive: true }), [],
+        "aborted upload must not stage any original bytes");
+      checks.push("partial-network-abort-pending");
       await expect(await put(png), 200, "accept-exact-25mib");
       await expect(await put(png), 200, "idempotent-retry");
       await json(`${galleryPath}/uploads/${intent.intentId}/complete`, "POST", {}, admin);
