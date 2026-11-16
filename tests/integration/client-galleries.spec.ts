@@ -343,8 +343,9 @@ describe("private publication and favorites", () => {
     );
     const adminData = (await (
       await exports.default.fetch(privateRequest(admin))
-    ).json()) as { gallery: { favoriteCount: number } };
+    ).json()) as { gallery: { favoriteCount: number }; uploadMaxBytes: number };
     expect(adminData.gallery.favoriteCount).toBe(1);
+    expect(adminData.uploadMaxBytes).toBe(20_000_000);
     for (let i = 0; i < 2; i++)
       expect(
         (

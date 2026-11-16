@@ -10,6 +10,7 @@ import {
   CLIENT_MAX_UPLOAD_BYTES,
   CLIENT_MAX_UPLOAD_LABEL,
   CLIENT_SPEC_MAX_UPLOAD_BYTES,
+  CLIENT_SPEC_MAX_UPLOAD_LABEL,
   IMAGES_BINDING_MAX_INPUT_BYTES,
   IMAGES_BINDING_LIMIT_MESSAGE,
   CLIENT_MIME_TYPES,
@@ -214,9 +215,14 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [jobs, setJobs] = useState<UploadJob[]>([]);
+  const [uploadMaxBytes, setUploadMaxBytes] = useState(CLIENT_MAX_UPLOAD_BYTES);
+  const uploadMaxLabel = uploadMaxBytes === CLIENT_SPEC_MAX_UPLOAD_BYTES
+    ? CLIENT_SPEC_MAX_UPLOAD_LABEL : CLIENT_MAX_UPLOAD_LABEL;
   const load = useCallback(
     async (resetForm = true) => {
-      const data = await privateApi<{ gallery: ClientGallery }>(base);
+      const data = await privateApi<{ gallery: ClientGallery; uploadMaxBytes?: number }>(base);
+      setUploadMaxBytes(data.uploadMaxBytes === CLIENT_SPEC_MAX_UPLOAD_BYTES
+        ? CLIENT_SPEC_MAX_UPLOAD_BYTES : CLIENT_MAX_UPLOAD_BYTES);
       setGallery(data.gallery);
       if (resetForm)
         setForm({
@@ -317,7 +323,8 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
       progress: 0,
     }));
     const providerBlocked = queue.find(
-      (j) => j.file.size > IMAGES_BINDING_MAX_INPUT_BYTES && j.file.size <= CLIENT_SPEC_MAX_UPLOAD_BYTES,
+      (j) => uploadMaxBytes === IMAGES_BINDING_MAX_INPUT_BYTES &&
+        j.file.size > IMAGES_BINDING_MAX_INPUT_BYTES && j.file.size <= CLIENT_SPEC_MAX_UPLOAD_BYTES,
     );
     if (providerBlocked) {
       setError(IMAGES_BINDING_LIMIT_MESSAGE + " Arquivo: " + providerBlocked.file.name);
@@ -325,13 +332,13 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
     }
     const invalid = queue.find(
       (j) =>
-        j.file.size > CLIENT_MAX_UPLOAD_BYTES ||
+        j.file.size > uploadMaxBytes ||
         !(CLIENT_MIME_TYPES as readonly string[]).includes(j.file.type),
     );
     if (invalid) {
       setError(
         "Escolha somente fotos JPG, PNG ou WebP de até " +
-          CLIENT_MAX_UPLOAD_LABEL + ": " +
+          uploadMaxLabel + ": " +
           invalid.file.name,
       );
       return;
@@ -489,9 +496,11 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
               />
             </label>
             <p className="pga-note">
-              JPG, PNG ou WebP · até {CLIENT_MAX_UPLOAD_LABEL} por foto · até 3 envios simultâneos.
+              JPG, PNG ou WebP · até {uploadMaxLabel} por foto · até 3 envios simultâneos.
             </p>
-            <p className="pga-note" role="note">{IMAGES_BINDING_LIMIT_MESSAGE}</p>
+            {uploadMaxBytes === IMAGES_BINDING_MAX_INPUT_BYTES && (
+              <p className="pga-note" role="note">{IMAGES_BINDING_LIMIT_MESSAGE}</p>
+            )}
             {jobs.length > 0 && (
               <ul className="pga-queue" aria-label="Progresso dos envios">
                 {jobs.map((j) => (

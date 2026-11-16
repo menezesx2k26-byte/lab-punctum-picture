@@ -9,6 +9,7 @@ import { publicPaths } from "./public-files";
 import { markQaMediaPhase } from "./worker-phase-trace.mjs";
 import { sha256Hex } from "./admin-session-crypto.mjs";
 import { qaProvidedSha256Matches } from "./r2-checksum.mjs";
+import { NODE_SHARP_IMAGES_MARKER } from "../../shared/client-galleries";
 
 const maxUploadBytes = 26_214_400;
 const managedSharpWorker = () => process.env.PUNCTUM_QA_SHARP_WORKER;
@@ -122,6 +123,7 @@ export function qaOriginals(db: D1Database) {
 }
 
 export const qaImages = {
+  [NODE_SHARP_IMAGES_MARKER]: true,
   async info(body: ReadableStream<Uint8Array>) {
     markQaMediaPhase("media-body-start");
     const bytes = await boundedBytes(body);
