@@ -3748,6 +3748,25 @@
     "originalSpec": "R4 section 23 G01-G24; all gates remain mandatory",
     "canonicalStatusPreserved": true,
     "report": "docs/operations/private-albums-r4/69-cycle-ad-2026-11-15.md",
+    "publication": {
+      "pullRequestNumber": 40,
+      "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/40",
+      "draft": true,
+      "baseBranch": "codex/punctum-managed-production-20261114",
+      "firstPublishedHeadSha": "feb4e7a7498fe248556fcffead4518a832df4c2c",
+      "initialCiRunId": 43790359989,
+      "initialCiResult": "SUCCESS_ON_INITIAL_HEAD_feb4e7a",
+      "initialCiRunUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43790359989",
+      "finalHeadCi": "PENDING_AFTER_DOCUMENTARY_AMENDMENT"
+    },
+    "driveCheckpoint": {
+      "documentId": "1C_0pEAiCoWAC0T-z2cUXswOqcsEbzBO9H_nvwmHGUnI",
+      "url": "https://docs.google.com/document/d/1C_0pEAiCoWAC0T-z2cUXswOqcsEbzBO9H_nvwmHGUnI/edit?usp=drivesdk",
+      "parentFolderId": "1faquU27mdRUcmNn4iIOm4bcyjE34NVU4",
+      "account": "sgtmenezes",
+      "readbackVerified": true,
+      "gateRecordCountVerified": 24
+    },
     "proof": {
       "type": "QA_SYNTHETIC_LOCAL_NODE_POSIX",
       "environment": "WSL Ubuntu Node 24.21.0, SQLite disposable, 127.0.0.1:3025, staging, legacy synthetic admin/client auth",
@@ -3767,12 +3786,12 @@
       "diffCheck": "PASS",
       "hostedOrRemoteQa": "NOT_RUN",
       "realClerk": "NOT_RUN",
-      "publishedCiExactHead": "NOT_RUN",
+      "publishedCiExactHead": "INITIAL_HEAD_CI_SUCCESS_FINAL_HEAD_PENDING",
       "incrementalSpend": "R$ 0,00 local execution; runtime and Clerk bills unverified"
     },
     "gateRecords": {
       "G01": {"status":"PASS","version":"base 8abb9f38","surface":"Git/PR worktrees","evidence":"local refs; report 69","proofType":"LOCAL_READ_AND_HISTORICAL","date":"2026-11-15","owner":"engineering","nextAction":"recheck remote main and published PR head"},
-      "G02": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"unit/integration/lint/tsc","evidence":"14/14 focused and diff-check; full suite pending","proofType":"LOCAL_PARTIAL","date":"2026-11-15","owner":"engineering/CI","nextAction":"run full required matrix on exact PR head"},
+      "G02": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"unit/integration/lint/tsc","evidence":"322/322 Vitest and 7/7 Colagem local; initial PR #40 CI passed; runtime target pending","proofType":"LOCAL_PARTIAL","date":"2026-11-15","owner":"engineering/CI","nextAction":"run full required matrix on exact PR head"},
       "G03": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"Node admin client API","evidence":"two synthetic clients; UI and real Clerk not tested","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"admin browser create/edit with authorized Clerk"},
       "G04": {"status":"NOT_RUN","version":"R1 diff on 8abb9f38","surface":"Node gallery API","evidence":"synthetic create/cover/publish; UI editing not tested","proofType":"QA_SYNTHETIC_LOCAL_PARTIAL","date":"2026-11-15","owner":"QA","nextAction":"full product gallery editing and archive"},
       "G05": {"status":"FAIL","version":"R1 diff on 8abb9f38","surface":"Node Sharp private upload","evidence":"exact 26214400B PNG, sha256 c16e100e..., retry, overlimit/short/checksum denial; derivatives and remote QA missing","proofType":"QA_SYNTHETIC_LOCAL_PASS_ONLY","date":"2026-11-15","owner":"engineering/authorized QA","nextAction":"remote isolated 25MiB raster+derivative+partial restore proof"},
@@ -3786,15 +3805,15 @@
       "G13": {"status":"NOT_RUN","version":"historical","surface":"client browser","evidence":"not rerun against Clerk/Node","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA","nextAction":"browser library/viewer/focus/errors/expiry"},
       "G14": {"status":"NOT_RUN","version":"historical","surface":"admin browser","evidence":"not rerun against Clerk/Node","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA","nextAction":"browser upload/progress/edit/cover/publish"},
       "G15": {"status":"BLOCKED_EXTERNAL","version":"historical visual QA","surface":"physical accessibility","evidence":"no physical TalkBack/VoiceOver acceptance","proofType":"MISSING_HUMAN_PROOF","date":"2026-11-15","owner":"Android and iOS testers","nextAction":"physical screen reader, contrast and zoom review"},
-      "G16": {"status":"NOT_RUN","version":"historical","surface":"public/Studio/Colagem","evidence":"full regression not rerun for new R1 delta","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"engineering/CI","nextAction":"run public, collage, Studio and build CI exact head"},
+      "G16": {"status":"NOT_RUN","version":"historical","surface":"public/Studio/Colagem","evidence":"local 322/322 Vitest, Colagem 7/7 and public build passed; target browser/operator signoff missing","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"engineering/CI","nextAction":"run public, collage, Studio and build CI exact head"},
       "G17": {"status":"FAIL","version":"historical+R1","surface":"Node/storage/Cloudflare/Clerk cost","evidence":"local HTTP proof is not CPU/cost/capacity evidence","proofType":"NOT_RUN_TARGET","date":"2026-11-15","owner":"operations/billing","nextAction":"measure target load, CPU, storage, quota, Clerk pricing and R$0 increment"},
       "G18": {"status":"NOT_RUN","version":"historical","surface":"backup and restore","evidence":"historical remote synthetic restoration; not rerun","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"QA/operations","nextAction":"restore 2 accounts 2 galleries 10 objects in target QA"},
       "G19": {"status":"BLOCKED_EXTERNAL","version":"R1 delta","surface":"independent security","evidence":"no final authorized signoff","proofType":"MISSING_HUMAN_APPROVAL","date":"2026-11-15","owner":"authorized independent reviewer","nextAction":"review code and target configuration, resolve P0/P1"},
       "G20": {"status":"BLOCKED_EXTERNAL","version":"historical documentation","surface":"LGPD controller","evidence":"no studio controller signoff","proofType":"MISSING_HUMAN_APPROVAL","date":"2026-11-15","owner":"studio controller","nextAction":"approve retention, purposes, export, deletion, incident handling"},
-      "G21": {"status":"NOT_RUN","version":"historical CI; new R1 delta","surface":"PR integration/CI","evidence":"new draft PR/exact head CI not verified at ledger write","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"engineering/reviewer","nextAction":"publish draft PR and verify final head CI"},
+      "G21": {"status":"NOT_RUN","version":"historical CI; new R1 delta","surface":"PR integration/CI","evidence":"draft PR #40 published; initial SHA CI #756 completed SUCCESS; final SHA CI and independent review pending","proofType":"HISTORICAL_ONLY","date":"2026-11-15","owner":"engineering/reviewer","nextAction":"publish draft PR and verify final head CI"},
       "G22": {"status":"BLOCKED_EXTERNAL","version":"R1 candidate","surface":"release approval","evidence":"no scoped R2/R3 production authorization","proofType":"MISSING_HUMAN_APPROVAL","date":"2026-11-15","owner":"product owner","nextAction":"approve each merge/deploy/login/flag action explicitly"},
       "G23": {"status":"BLOCKED_EXTERNAL","version":"historical","surface":"rollback QA","evidence":"full target rollback with post-cutover writes missing","proofType":"NOT_RUN_TARGET","date":"2026-11-15","owner":"operations/QA","nextAction":"test prior version/flag/login/DB/media/data continuity"},
-      "G24": {"status":"NOT_RUN","version":"historical handoff; AD report 69","surface":"repo and Drive continuity","evidence":"new handoff exists locally; Drive readback pending","proofType":"LOCAL_DOCUMENTATION_PENDING_EXTERNAL","date":"2026-11-15","owner":"engineering","nextAction":"commit and publish report; Drive Sgtmenezes copy plus readback"}
+      "G24": {"status":"NOT_RUN","version":"historical handoff; AD report 69","surface":"repo and Drive continuity","evidence":"handoff in commit feb4e7a and Drive document created; 24 gate rows read back; final SHA/CI pending","proofType":"LOCAL_AND_DRIVE_READBACK_PARTIAL","date":"2026-11-15","owner":"engineering","nextAction":"verify exact final CI SHA, receipt and review"}
     }
   }
 }
