@@ -662,14 +662,18 @@ describe("scoped private recovery with real local D1/R2", () => {
     const b = await seedClient();
     const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));
     const collections: { gallery: string; first: string }[] = [];
+    const photos: { id: string; gallery: string; key: string }[] = [];
+    const sourceCookie = await createClientSession({ id: a, sessionVersion: 1 }, env);
     for (const id of [a, b]) {
       const gallery = await seedGallery(id);
       let first = "";
       for (let i = 0; i < 5; i++) {
         const photo = await seedReadyImage(gallery);
         first ||= photo;
-        await env.ORIGINALS.put(`client-galleries/${gallery}/${photo}.png`, bytes, { httpMetadata: { contentType: "image/png" } });
+        const key = `client-galleries/${gallery}/${photo}.png`;
+        await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" } });
         await env.DB.prepare("UPDATE client_gallery_images SET size_bytes=? WHERE id=?").bind(bytes.length, photo).run();
+        photos.push({ id: photo, gallery, key });
       }
       await env.DB.prepare("UPDATE client_galleries SET cover_image_id=?,allow_downloads=1 WHERE id=?").bind(first, gallery).run();
       await env.DB.prepare("INSERT INTO client_gallery_favorites VALUES (?,?,?,datetime('now'))").bind(id, gallery, first).run();
@@ -678,10 +682,23 @@ describe("scoped private recovery with real local D1/R2", () => {
     const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [a, b]);
     const result = await restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
     expect(result).toMatchObject({ rows: 16, objects: 10, accountsQuarantined: true });
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map((n) => n.toString(16).padStart(2, "0")).join("");
+    expect(result.hashes).toEqual(Array(10).fill(digest));
+    for (const photo of photos) {
+      const stored = await bindings.RESTORE_ORIGINALS.get(photo.key);
+      expect(stored).not.toBeNull();
+      const actual = new Uint8Array(await stored!.arrayBuffer());
+      const restoredDigest = new Uint8Array(await crypto.subtle.digest("SHA-256", actual));
+      expect(Array.from(restoredDigest).map((n) => n.toString(16).padStart(2, "0")).join("")).toBe(digest);
+      expect(await bindings.RESTORE_DB.prepare("SELECT gallery_id AS gallery, storage_key AS key FROM client_gallery_images WHERE id=?")
+        .bind(photo.id).first()).toEqual({ gallery: photo.gallery, key: photo.key });
+    }
+    expect(await bindings.RESTORE_DB.prepare("PRAGMA foreign_key_check").all()).toMatchObject({ results: [] });
     const restoredEnv = { ...env, DB: bindings.RESTORE_DB, ORIGINALS: bindings.RESTORE_ORIGINALS, CLIENT_SESSION_SECRET: "rotated-two-client-restore-secret-independent-from-source" } as Env;
     await bindings.RESTORE_DB.prepare("UPDATE client_accounts SET disabled_at=NULL WHERE id IN (?,?)").bind(a,b).run();
     const ca = "punctum_client_session=" + await createClientSession({ id: a, sessionVersion: 2 }, restoredEnv);
     const cb = "punctum_client_session=" + await createClientSession({ id: b, sessionVersion: 2 }, restoredEnv);
+    await expect(requireClient(privateRequest("/api/client/me", "GET", undefined, "punctum_client_session=" + sourceCookie), restoredEnv, bindings.RESTORE_DB)).rejects.toMatchObject({ status: 401 });
     const [ga,gb] = collections;
     const own = await servePrivateGalleryImage(privateRequest("/api/client/galleries", "GET", undefined, ca), restoredEnv, ga.gallery, ga.first, "download", "client");
     expect(new Uint8Array(await own.arrayBuffer())).toEqual(bytes);

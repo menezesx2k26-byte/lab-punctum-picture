@@ -4,7 +4,7 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AF 2026-11-16: local synthetic Node proof now includes HTTP connection abort after 256KiB, zero original files, pending intent and 25MiB successful retry (49 HTTP checks). CI #759 on da3a416 succeeded before this script change; exact new SHA CI pending. All target Hostinger, Clerk, capacity/cost, rollback, physical security/LGPD and release gates remain open. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AG 2026-11-16: G18 local synthetic D1/R2 two-client/two-gallery/ten-original restore proof strengthened for all ten SHA-256 digests, row ownership/FKs and source-session revocation (20 focused tests PASS); target QA still required. Cycle AF 25MiB interrupted-upload local proof (49 HTTP checks) has exact SHA c0faf2f CI #760 SUCCESS, Hostinger Node job SKIPPED. All target Hostinger, Clerk, capacity/cost, rollback, physical security/LGPD and release gates remain open. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-16",
   "branch": "codex/punctum-r4-goal-20261115",
   "baseBranch": "codex/punctum-managed-production-20261114",
@@ -4508,5 +4508,34 @@
       "BLOCKED_EXTERNAL": 6,
       "NOT_RUN": 15
     }
+  },
+  "currentCycle20261116AG": {
+    "report": "docs/operations/private-albums-r4/72-cycle-ag-g18-two-client-ten-object-integrity-2026-11-16.md",
+    "baselineSha": "c0faf2f521d333e70bedba96d665a5c37488a669",
+    "branch": "codex/punctum-r4-goal-20261115",
+    "gateRecordsSource": "currentCycle20261116AF.gateRecords",
+    "gateRecordOverrides": {
+      "G18": {
+        "status": "NOT_RUN",
+        "version": "R1 test delta after c0faf2f",
+        "surface": "segregated local D1/R2 restore fixture, not target QA",
+        "evidence": "tests/integration/client-recovery.spec.ts: two clients, two galleries, ten originals; all ten restored objects checked by SHA-256 and per-row gallery/key; D1 foreign_key_check empty; prior source cookie denied after restore secret rotation; A/B download denials; 20/20 focused Vitest tests PASS",
+        "proofType": "QA_SYNTHETIC_LOCAL_PARTIAL",
+        "date": "2026-11-16",
+        "owner": "QA/operations",
+        "nextAction": "Repeat with isolated authorized target D1/R2, ten distinct synthetic photos, independent hashes, restore receipt, revocation and tenant-isolation proof",
+        "evaluatedHead": "c0faf2f521d333e70bedba96d665a5c37488a669"
+      }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 6,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "targetProof": "NOT_RUN",
+    "costIncrementLocal": "BRL 0.00",
+    "costTarget": "INDETERMINATE"
   }
 }
