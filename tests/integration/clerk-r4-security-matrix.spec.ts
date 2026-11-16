@@ -462,6 +462,9 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       sub: adminClerkUserId,
       azp: "https://evil.example",
     });
+    const missingSidAdminJwt = await signClerkJwt(primaryPriv, {
+      sub: adminClerkUserId,
+    });
     const parts = adminJwt1.split(".");
     const tamperedJwt = `${parts[0]}.${parts[1]}.${parts[2].slice(0, -4)}AAAA`;
 
@@ -471,6 +474,7 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       wrongIssuerJwt,
       wrongAzpJwt,
       tamperedJwt,
+      missingSidAdminJwt,
     ]) {
       expect(
         (
@@ -496,6 +500,17 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
         await dispatch(clerkEnv, "/api/client/clerk-session", {
           method: "POST",
           headers: { Authorization: `Bearer ${rogueClientJwt}` },
+        })
+      ).status,
+    ).toBe(401);
+    const missingSidClientJwt = await signClerkJwt(primaryPriv, {
+      sub: clientAClerkUserId,
+    });
+    expect(
+      (
+        await dispatch(clerkEnv, "/api/client/clerk-session", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${missingSidClientJwt}` },
         })
       ).status,
     ).toBe(401);

@@ -4,7 +4,7 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AH 2026-11-16: G18 synthetic restore now proves 10 distinct valid PNG originals/hashes for two clients, 20/20 focused tests PASS; prior AG/AF local proofs retained. Operational Hostinger/Clerk, cost/load, physical access, security/LGPD, QA rollback and release gates remain open. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AI 2026-11-16: verified and fixed SDK acceptance of RS256 Clerk session JWT without sid; focused security regression 16/16 PASS and previous G18 distinct synthetic restore evidence retained. Operational Hostinger/Clerk, cost/load, physical access, security/LGPD, QA rollback and release gates remain open. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-16",
   "branch": "codex/punctum-r4-goal-20261115",
   "baseBranch": "codex/punctum-managed-production-20261114",
@@ -4574,6 +4574,48 @@
       "typecheck": "PASS",
       "source": "two clients/two galleries/ten distinct 2x2 PNGs",
       "target": "NOT_RUN"
+    }
+  },
+  "currentCycle20261116AI": {
+    "report": "docs/operations/private-albums-r4/74-cycle-ai-clerk-session-sid-2026-11-16.md",
+    "baselineSha": "13f769eca855690cb31ffd300e49acef3f3bf850",
+    "branch": "codex/punctum-r4-goal-20261115",
+    "gateRecordsSource": "currentCycle20261116AF.gateRecords + G18 overrides in AG/AH",
+    "gateRecordOverrides": {
+      "G06": {
+        "status": "NOT_RUN",
+        "version": "R1 Clerk SDK session-sid guard after 13f769e",
+        "surface": "admin/client Clerk RS256 JWT, SDK and internal link",
+        "evidence": "RED: synthetic linked admin JWT without sid authenticated HTTP 200 instead of 403; GREEN: fail-closed sessionId guard. 16/16 focused security tests PASS, typecheck and targeted ESLint PASS; actual target not verified",
+        "proofType": "QA_SYNTHETIC_LOCAL_SECURITY_TDD_PARTIAL",
+        "date": "2026-11-16",
+        "owner": "security/engineering",
+        "nextAction": "Verify authorized real Clerk admin/client sign-in and session claim + authorized party on final QA target; independent security review",
+        "evaluatedHead": "LOCAL_CHANGE_AFTER_13f769e"
+      },
+      "G08": {
+        "status": "NOT_RUN",
+        "version": "R1 Clerk missing-session guard after 13f769e",
+        "surface": "admin/client Clerk token exchange and revocation",
+        "evidence": "signed sessionless JWT denied in both exchange paths after shared guard; local logout/link revocation matrix 16/16 focused PASS; no real Clerk session revocation on target",
+        "proofType": "QA_SYNTHETIC_LOCAL_SECURITY_TDD_PARTIAL",
+        "date": "2026-11-16",
+        "owner": "security/QA",
+        "nextAction": "Exercise valid/expired/disabled/unlinked/revoked Clerk sessions for both roles on isolated authorized target",
+        "evaluatedHead": "LOCAL_CHANGE_AFTER_13f769e"
+      }
+    },
+    "gateCounts": { "PASS": 1, "FAIL": 2, "BLOCKED_EXTERNAL": 6, "NOT_RUN": 15 },
+    "decision": "NO_GO_PRODUCTION",
+    "targetProof": "NOT_RUN",
+    "costIncrementLocal": "BRL 0.00",
+    "costTarget": "INDETERMINATE",
+    "localProof": {
+      "red": "admin sessionless RS256 JWT accepted 200 versus expected 403",
+      "green": "Clerk matrix 1/1 PASS; four security suites 16/16 PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "diffCheck": "PASS"
     }
   }
 }

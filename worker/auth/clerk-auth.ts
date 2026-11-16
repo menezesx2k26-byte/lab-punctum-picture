@@ -254,7 +254,7 @@ export async function verifyClerkSessionFromRequest(
   const verifier = options.verifier ?? verifyClerkRequestWithSdk;
   try {
     const verified = await verifier(request, config);
-    if (!verified || !isValidClerkUserId(verified.clerkUserId)) return null;
+    if (!verified || !isValidClerkUserId(verified.clerkUserId) || !verified.sessionId) return null;
     const rawToken = extractClerkToken(request);
     const revocationKeys = [
       ...(rawToken ? [await clerkTokenRevocationKey(rawToken)] : []),
