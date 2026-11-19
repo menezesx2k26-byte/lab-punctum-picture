@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClerkProvider, Show, SignInButton, UserButton, useAuth, useClerk } from "@clerk/react";
+import { ClerkProvider, Show, SignInButton, useAuth, useClerk } from "@clerk/react";
 import { ArrowRight } from "lucide-react";
 
 function ClerkAdminSessionExchange() {
@@ -43,6 +43,22 @@ function ClerkAdminSessionExchange() {
     }
   }
 
+  async function switchAccount() {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch("/admin/api/session", {
+        method: "DELETE", credentials: "same-origin", cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Não foi possível encerrar a sessão administrativa.");
+      await signOut();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Não foi possível trocar de conta.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <Show when="signed-out">
@@ -55,12 +71,13 @@ function ClerkAdminSessionExchange() {
       </Show>
       <Show when="signed-in">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <UserButton />
+          <span>Conta Clerk conectada</span>
           <button
             type="button"
+            disabled={busy}
             className="access-back"
             style={{ background: "none", border: 0, cursor: "pointer", padding: 0 }}
-            onClick={() => void signOut()}
+            onClick={() => void switchAccount()}
           >
             Trocar conta
           </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClerkProvider, Show, SignInButton, UserButton, useAuth, useClerk } from "@clerk/react";
+import { ClerkProvider, Show, SignInButton, useAuth, useClerk } from "@clerk/react";
 
 function ClerkClientSessionExchange() {
   const { getToken, isLoaded } = useAuth();
@@ -42,6 +42,23 @@ function ClerkClientSessionExchange() {
     }
   }
 
+  async function switchAccount() {
+    setBusy(true);
+    setError("");
+    try {
+      // Clerk signOut alone leaves the independent Punctum cookie authorized.
+      const response = await fetch("/api/client/session", {
+        method: "DELETE", credentials: "same-origin", cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Não foi possível encerrar a sessão privada.");
+      await signOut();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível trocar de conta.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <Show when="signed-out">
@@ -53,11 +70,12 @@ function ClerkClientSessionExchange() {
       </Show>
       <Show when="signed-in">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <UserButton />
+          <span>Conta Clerk conectada</span>
           <button
             type="button"
+            disabled={busy}
             style={{ background: "none", border: 0, cursor: "pointer", textDecoration: "underline", font: "inherit" }}
-            onClick={() => void signOut()}
+            onClick={() => void switchAccount()}
           >
             Trocar conta
           </button>

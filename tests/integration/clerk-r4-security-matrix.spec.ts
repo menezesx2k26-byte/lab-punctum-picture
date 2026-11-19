@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import { exportSPKI, generateKeyPair, SignJWT } from "jose";
+import { revokeClerkSessionKeys, verifyClerkSessionFromRequest } from "../../worker/auth/clerk-auth";
 import worker from "../../worker/test-entry";
 import {
   bootstrapPrivateDb,
@@ -747,5 +748,183 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
         })
       ).status,
     ).toBe(403);
+  });
+
+  it("revokes existing Clerk client cookies on identity rebind without revoking an idempotent link", async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const rebindAdminEmail = `qa-admin-rebind-${suffix}@example.test`;
+    const clerkEnv = makeEnv(primaryPem, {
+      ADMIN_ALLOWED_EMAILS: `${ADMIN_EMAIL},${rebindAdminEmail}`,
+    });
+    const priorUserId = `user_old_${suffix}`;
+    const nextUserId = `user_new_${suffix}`;
+    const adminUserId = `user_admin_rebind_${suffix}`;
+    const clientId = await seedClient();
+    const galleryId = await seedGallery(clientId, "published");
+    const imageId = await seedReadyImage(galleryId);
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO clerk_admin_identity_links
+       (clerk_user_id, admin_principal_id, role, session_version, created_at, updated_at)
+       VALUES (?, ?, 'admin', 1, ?, ?)`,
+    ).bind(adminUserId, rebindAdminEmail, now, now).run();
+
+    const adminToken = await signClerkJwt(primaryPriv, {
+      sub: adminUserId, sid: `sess_rebind_admin_${suffix}`,
+    });
+    const adminResponse = await dispatch(clerkEnv, "/admin/api/clerk-session", {
+      method: "POST", headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(adminResponse.status).toBe(200);
+    const adminCookie = cookieValue(adminResponse.headers.get("Set-Cookie"), "punctum_admin_session");
+    const link = (clerkUserId: string) => dispatch(clerkEnv, `/admin/api/clientes/${clientId}/clerk-link`, {
+      method: "PUT",
+      headers: { Cookie: adminCookie, "Content-Type": "application/json" },
+      body: JSON.stringify({ clerkUserId }),
+    });
+    const login = async (clerkUserId: string, sid: string) => {
+      const token = await signClerkJwt(primaryPriv, { sub: clerkUserId, sid });
+      const response = await dispatch(clerkEnv, "/api/client/clerk-session", {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(response.status).toBe(200);
+      return cookieValue(response.headers.get("Set-Cookie"), "punctum_client_session");
+    };
+
+    expect((await link(priorUserId)).status).toBe(200);
+    const oldCookie = await login(priorUserId, `sess_old_${suffix}`);
+    expect((await dispatch(clerkEnv, "/api/client/galleries", { headers: { Cookie: oldCookie } })).status).toBe(200);
+
+    // A no-op relink must not invalidate an existing authorized session.
+    expect((await link(priorUserId)).status).toBe(200);
+    expect((await dispatch(clerkEnv, "/api/client/galleries", { headers: { Cookie: oldCookie } })).status).toBe(200);
+
+    // Rebinding a customer account must revoke the previous identity's Punctum cookie,
+    // not merely prevent the previous Clerk JWT from exchanging a new cookie.
+    expect((await link(nextUserId)).status).toBe(200);
+    for (const [path, method] of [
+      ["/api/client/galleries", "GET"],
+      [`/api/client/galleries/${galleryId}`, "GET"],
+      [`/api/client/galleries/${galleryId}/images/${imageId}/download`, "GET"],
+      [`/api/client/galleries/${galleryId}/images/${imageId}/thumb`, "HEAD"],
+      [`/api/client/galleries/${galleryId}/favorites/${imageId}`, "PUT"],
+    ] as const) {
+      const response = await dispatch(clerkEnv, path, {
+        method, headers: { Cookie: oldCookie },
+      });
+      expect(response.status, `stale cookie allowed ${method} ${path}`).toBe(
+        path.includes("/images/") ? 404 : 401,
+      );
+      if (path.includes("/images/")) expect((await response.arrayBuffer()).byteLength).toBe(0);
+    }
+
+    const nextCookie = await login(nextUserId, `sess_new_${suffix}`);
+    const fresh = await dispatch(clerkEnv, "/api/client/galleries", { headers: { Cookie: nextCookie } });
+    expect(fresh.status).toBe(200);
+    expect(((await fresh.json()) as { galleries: Array<{ id: string }> }).galleries.map((g) => g.id)).toContain(galleryId);
+  });
+
+  it("fails closed if the Clerk token-revocation migration is missing", async () => {
+    const missingTable = new Error("D1_ERROR: no such table: revoked_clerk_tokens");
+    const missingDb = {
+      prepare: () => ({
+        bind: () => ({
+          run: async () => { throw missingTable; },
+          first: async () => { throw missingTable; },
+        }),
+      }),
+    } as unknown as D1Database;
+    await expect(revokeClerkSessionKeys(missingDb, ["sid:sess_fixture"])).rejects.toThrow(
+      /Revogação da sessão indisponível/,
+    );
+    const clerkEnv = makeEnv(primaryPem, { DB: missingDb });
+    const session = await verifyClerkSessionFromRequest(
+      new Request(`${SITE_ORIGIN}/api/client/me`), clerkEnv,
+      { verifier: async () => ({ clerkUserId: "user_missing_migration", sessionId: "sess_fixture" }) },
+    );
+    expect(session).toBeNull();
+  });
+
+  it("never reports successful admin logout when Clerk revocation storage fails", async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const adminPrincipal = `qa-admin-logout-${suffix}@example.test`;
+    const adminUserId = `user_admin_logout_${suffix}`;
+    const activeEnv = makeEnv(primaryPem, { ADMIN_ALLOWED_EMAILS: adminPrincipal });
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO clerk_admin_identity_links
+       (clerk_user_id, admin_principal_id, role, session_version, created_at, updated_at)
+       VALUES (?, ?, 'admin', 1, ?, ?)`,
+    ).bind(adminUserId, adminPrincipal, now, now).run();
+    const adminToken = await signClerkJwt(primaryPriv, {
+      sub: adminUserId, sid: `sess_logout_${suffix}`,
+    });
+    const loginResponse = await dispatch(activeEnv, "/admin/api/clerk-session", {
+      method: "POST", headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(loginResponse.status).toBe(200);
+    const cookie = cookieValue(loginResponse.headers.get("Set-Cookie"), "punctum_admin_session");
+
+    // A transient identity-link read failure is not an anonymous logout.
+    // Reporting 200 would strand a still-valid copied admin cookie.
+    const unreadableDb = new Proxy(env.DB, {
+      get(target, prop) {
+        if (prop === "prepare") {
+          return (sql: string) => {
+            if (sql.includes("FROM clerk_admin_identity_links")) {
+              throw new Error("D1_ERROR: simulated identity-link read failure");
+            }
+            return target.prepare(sql);
+          };
+        }
+        const value = Reflect.get(target, prop, target) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const unreadableEnv = makeEnv(primaryPem, {
+      DB: unreadableDb, ADMIN_ALLOWED_EMAILS: adminPrincipal,
+    });
+    const readFailure = await dispatch(unreadableEnv, "/admin/api/session", {
+      method: "DELETE", headers: { Cookie: cookie },
+    });
+    expect(readFailure.status).toBe(503);
+    expect((await dispatch(activeEnv, "/admin/api/clientes", {
+      headers: { Cookie: cookie },
+    })).status).toBe(200);
+
+    // Missing DB binding must not acknowledge logout for an active cookie.
+    const noDbEnv = makeEnv(primaryPem, {
+      DB: undefined, ADMIN_ALLOWED_EMAILS: adminPrincipal,
+    });
+    const missingBinding = await dispatch(noDbEnv, "/admin/api/session", {
+      method: "DELETE", headers: { Cookie: cookie },
+    });
+    expect(missingBinding.status).toBe(503);
+    expect((await dispatch(activeEnv, "/admin/api/clientes", {
+      headers: { Cookie: cookie },
+    })).status).toBe(200);
+
+    const brokenDb = new Proxy(env.DB, {
+      get(target, prop) {
+        if (prop === "prepare") {
+          return (sql: string) => {
+            if (sql.includes("revoked_clerk_tokens")) {
+              throw new Error("D1_ERROR: no such table: revoked_clerk_tokens");
+            }
+            return target.prepare(sql);
+          };
+        }
+        const value = Reflect.get(target, prop, target) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const brokenEnv = makeEnv(primaryPem, {
+      DB: brokenDb, ADMIN_ALLOWED_EMAILS: adminPrincipal,
+    });
+    const failure = await dispatch(brokenEnv, "/admin/api/session", {
+      method: "DELETE", headers: { Cookie: cookie },
+    });
+    expect(failure.status).toBe(503);
+    expect((await failure.json()) as unknown).not.toMatchObject({ ok: true });
   });
 });
