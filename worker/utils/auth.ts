@@ -159,23 +159,35 @@ async function verifyPasswordSession(
       );
       if (!valid) return null;
 
-      const link = await env.DB.prepare(
-        `SELECT clerk_user_id AS clerkUserId,
-                admin_principal_id AS adminPrincipalId,
-                role,
-                session_version AS sessionVersion,
-                disabled_at AS disabledAt
-         FROM clerk_admin_identity_links
-         WHERE clerk_user_id = ?`,
-      )
-        .bind(payload.clerkUserId)
-        .first<{
-          clerkUserId: string;
-          adminPrincipalId: string;
-          role: string;
-          sessionVersion: number;
-          disabledAt: string | null;
-        }>();
+      let link: {
+        clerkUserId: string;
+        adminPrincipalId: string;
+        role: string;
+        sessionVersion: number;
+        disabledAt: string | null;
+      } | null;
+      try {
+        link = await env.DB.prepare(
+          `SELECT clerk_user_id AS clerkUserId,
+                  admin_principal_id AS adminPrincipalId,
+                  role,
+                  session_version AS sessionVersion,
+                  disabled_at AS disabledAt
+           FROM clerk_admin_identity_links
+           WHERE clerk_user_id = ?`,
+        )
+          .bind(payload.clerkUserId)
+          .first<{
+            clerkUserId: string;
+            adminPrincipalId: string;
+            role: string;
+            sessionVersion: number;
+            disabledAt: string | null;
+          }>();
+      } catch {
+        // Never reinterpret a database outage as an absent/expired cookie.
+        throw new AppError(503, "ADMIN_SESSION_STORAGE_UNAVAILABLE", "Validação da sessão indisponível.");
+      }
       if (
         !link ||
         link.disabledAt !== null ||
@@ -211,7 +223,8 @@ async function verifyPasswordSession(
     mark?.("session-verified");
     if (!valid) return null;
     return { email, roles: ["admin"], authSource: "shared-password" };
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError && error.status >= 500) throw error;
     return null;
   }
 }

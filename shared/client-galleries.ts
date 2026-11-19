@@ -9,6 +9,8 @@ export const CLIENT_MAX_UPLOAD_LABEL = "20 MB";
 // remains open. This is a contract bound, not the currently accepted upload size.
 export const CLIENT_SPEC_MAX_UPLOAD_BYTES = 26_214_400;
 export const CLIENT_SPEC_MAX_UPLOAD_LABEL = "25 MiB";
+// Only the Node Sharp image binding has this capability; env strings cannot grant it.
+export const NODE_SHARP_IMAGES_MARKER = Symbol.for("punctum.node.sharp.images");
 // Current Cloudflare Images Binding .input() ceiling. This is a separate
 // provider capability guard, not the product/specification maximum.
 export const IMAGES_BINDING_MAX_INPUT_BYTES = 20_000_000;

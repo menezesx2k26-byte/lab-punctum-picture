@@ -150,7 +150,9 @@ export async function revokeClerkSessionKeys(
   keys: Array<string | null | undefined>,
   ttlSeconds = 86_400,
 ): Promise<void> {
-  if (!db) return;
+  if (!db) {
+    throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
+  }
   const unique = Array.from(
     new Set(keys.filter((k): k is string => typeof k === "string" && k.length > 0)),
   );
@@ -173,8 +175,11 @@ export async function revokeClerkSessionKeys(
         .run();
     }
   } catch (error) {
-    // Allow graceful compatibility only if migration 0015 table doesn't exist in legacy test fixtures
-    if (!String(error).includes("no such table")) throw error;
+    // A missing migration must never turn a Clerk logout into a false success.
+    if (String(error).includes("no such table")) {
+      throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
+    }
+    throw error;
   }
 }
 
@@ -182,7 +187,10 @@ async function isClerkTokenRevoked(
   db: D1Database | undefined,
   keys: string[],
 ): Promise<boolean> {
-  if (!db || keys.length === 0) return false;
+  if (keys.length === 0) return false;
+  if (!db) {
+    throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
+  }
   const nowIso = new Date().toISOString();
   const placeholders = keys.map(() => "?").join(",");
   try {
@@ -195,7 +203,9 @@ async function isClerkTokenRevoked(
       .first<{ revoked: number }>();
     return Boolean(row);
   } catch (error) {
-    if (String(error).includes("no such table")) return false;
+    if (String(error).includes("no such table")) {
+      throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
+    }
     throw error;
   }
 }
@@ -254,7 +264,7 @@ export async function verifyClerkSessionFromRequest(
   const verifier = options.verifier ?? verifyClerkRequestWithSdk;
   try {
     const verified = await verifier(request, config);
-    if (!verified || !isValidClerkUserId(verified.clerkUserId)) return null;
+    if (!verified || !isValidClerkUserId(verified.clerkUserId) || !verified.sessionId) return null;
     const rawToken = extractClerkToken(request);
     const revocationKeys = [
       ...(rawToken ? [await clerkTokenRevocationKey(rawToken)] : []),
@@ -435,22 +445,37 @@ export async function linkClerkClientAccount(
   }
 
   const now = new Date().toISOString();
-  await db
-    .prepare(
+  // A rebind changes who owns every previously issued Punctum cookie.
+  // Both statements run in one D1 transaction: rotate only on identity change,
+  // then store the resulting version in the link, never the preflight version.
+  await db.batch([
+    db.prepare(
+      `UPDATE client_accounts
+       SET session_version = session_version + 1, updated_at = ?
+       WHERE id = ? AND EXISTS (
+         SELECT 1 FROM clerk_pilot_identity_links
+         WHERE client_id = ? AND clerk_user_id <> ?
+       )`,
+    ).bind(now, clientId, clientId, clerkUserId),
+    db.prepare(
       `INSERT INTO clerk_pilot_identity_links (clerk_user_id, client_id, session_version_at_link, created_at)
-       VALUES (?, ?, ?, ?)
+       SELECT ?, id, session_version, ? FROM client_accounts WHERE id = ?
        ON CONFLICT(client_id) DO UPDATE SET
          clerk_user_id = excluded.clerk_user_id,
          session_version_at_link = excluded.session_version_at_link,
          created_at = excluded.created_at`,
-    )
-    .bind(clerkUserId, clientId, client.sessionVersion, now)
-    .run();
+    ).bind(clerkUserId, now, clientId),
+  ]);
+
+  const updatedClient = await db.prepare(
+    "SELECT session_version AS sessionVersion FROM client_accounts WHERE id = ?",
+  ).bind(clientId).first<{ sessionVersion: number }>();
+  if (!updatedClient) throw new AppError(404, "NOT_FOUND", "Cliente indisponível.");
 
   return {
     clientId,
     clerkUserId,
-    sessionVersion: client.sessionVersion,
+    sessionVersion: updatedClient.sessionVersion,
   };
 }
 

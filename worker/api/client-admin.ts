@@ -24,6 +24,7 @@ import { assertRateLimit } from "../utils/rate-limit";
 import { parseJson } from "../client/validation";
 import { clientAuthMode } from "../client/auth-mode";
 import { loadSanitizedTitularExport } from "../client/lgpd";
+import { providerImageInputLimit } from "../media/provider-input-limit";
 import {
   linkClerkClientAccount,
   unlinkClerkClientAccount,
@@ -416,6 +417,7 @@ async function handleGalleryAdminApi(
     ).results;
     const counts = new Map(favorites.map((f) => [f.imageId, f.count]));
     return privateJson({
+      uploadMaxBytes: providerImageInputLimit(env),
       gallery: {
         ...serializeGallery(gallery),
         favoriteCount: favorites.reduce((sum, f) => sum + f.count, 0),

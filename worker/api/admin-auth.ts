@@ -80,32 +80,35 @@ export async function handleAdminAuth(
   }
 
   if (request.method === "DELETE") {
-    if (env.DB) {
-      try {
-        const identity = await requireAdmin(request, env);
-        if (identity.authSource === "clerk" && identity.clerkUserId) {
-          await env.DB.prepare(
-            `UPDATE clerk_admin_identity_links
-             SET session_version = session_version + 1, updated_at = ?
-             WHERE clerk_user_id = ?`,
-          )
-            .bind(new Date().toISOString(), identity.clerkUserId)
-            .run();
-          const revocationKeys = await collectClerkRevocationKeys(
-            request,
-            identity.clerkRevocationKeys ?? [],
-          );
-          await revokeClerkSessionKeys(env.DB, revocationKeys);
-          await writeAudit(
-            env.DB,
-            auditPrincipal(identity),
-            "admin.clerk_logout",
-            "admin",
-            identity.clerkUserId,
-          );
-        }
-      } catch {
-        /* Idempotent logout preserves cookie clearing even for expired sessions. */
+    const db = requireDb(env);
+    try {
+      const identity = await requireAdmin(request, env);
+      if (identity.authSource === "clerk" && identity.clerkUserId) {
+        await db.prepare(
+          `UPDATE clerk_admin_identity_links
+           SET session_version = session_version + 1, updated_at = ?
+           WHERE clerk_user_id = ?`,
+        )
+          .bind(new Date().toISOString(), identity.clerkUserId)
+          .run();
+        const revocationKeys = await collectClerkRevocationKeys(
+          request,
+          identity.clerkRevocationKeys ?? [],
+        );
+        await revokeClerkSessionKeys(db, revocationKeys);
+        await writeAudit(
+          db,
+          auditPrincipal(identity),
+          "admin.clerk_logout",
+          "admin",
+          identity.clerkUserId,
+        );
+      }
+    } catch (error) {
+      // Absent/expired sessions may log out idempotently, but a failed D1
+      // revocation must never be reported to the browser as successful.
+      if (!(error instanceof AppError && (error.status === 401 || error.status === 403))) {
+        throw error;
       }
     }
     return json(
