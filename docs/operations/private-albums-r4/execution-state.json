@@ -4,8 +4,8 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AI 2026-11-16: verified and fixed SDK acceptance of RS256 Clerk session JWT without sid; focused security regression 16/16 PASS and previous G18 distinct synthetic restore evidence retained. Operational Hostinger/Clerk, cost/load, physical access, security/LGPD, QA rollback and release gates remain open. NO_GO_PRODUCTION.",
-  "updatedAt": "2026-11-16",
+  "statusScope": "Cycle AJ 2026-11-19: Clerk account rebind stale session and missing revocation-storage fail-open corrected with red/green synthetic tests; admin DB-failure logout protection and account-switch UI hardened. 325/325 full Worker tests PASS on pre-final implementation state; new-final regression/CI pending. Managed Hostinger R4/real Clerk/restore/redeploy, cost/load, physical accessibility, independent security approval, LGPD and explicit release authorization remain open. NO_GO_PRODUCTION.",
+  "updatedAt": "2026-11-19",
   "branch": "codex/punctum-r4-goal-20261115",
   "baseBranch": "codex/punctum-managed-production-20261114",
   "baseSha": "8abb9f38a0bc7a265ddde10e71686964f21a5dd9",
@@ -4616,6 +4616,44 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "diffCheck": "PASS"
+    }
+  },
+  "currentCycle20261119AJ": {
+    "report": "docs/operations/private-albums-r4/75-cycle-aj-security-hardening-2026-11-19.md",
+    "sourceHeadVerified": "3e9db949556a9b61179b63f0fb65152a4b20327d",
+    "implementationSha": "f932ed9e3e0be0e078fd3298e18058cb6797a9fe",
+    "branch": "agent/punctum-r4-p0-20261119-approved",
+    "pullRequest": 40,
+    "canonicalSpec": "PUNCTUM_SPEC_R4_ALBUNS_PRIVADOS.txt section 23 (library source original)",
+    "gateRecordsSource": "currentCycle20261116AF.gateRecords, subsequent AG/AH G18 and AI G06/G08 overrides, plus AJ G19 override",
+    "gateRecordOverrides": {
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "proofType": "READ_ONLY_INDEPENDENT_REVIEW_WITH_REQUEST_CHANGES",
+        "evidence": "Independent security worker found stale-session rebind and conditional Clerk revocation/logout fail-open, plus residual provider sid TTL and logout coordination issues; final SHA independent acceptance not obtained",
+        "nextAction": "Rerun security review on exact final SHA and close remaining P0/P1 with real Clerk QA before G19 PASS"
+      }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "targetProof": "NOT_RUN",
+    "productionChange": "NONE",
+    "localProof": {
+      "clerkMatrix": "RED rebind stale cookie HTTP 200 vs 401; RED revocation missing table accepted; RED admin D1 link read failure returned logout HTTP 200; GREEN 4/4 with read/no-DB/revocation-write fail-closed cases on implementation f932ed9",
+      "fullWorkerVitest": "325/325 PASS on pre-final implementation code, 62/62 files",
+      "publicBuild": "PASS on pre-final implementation code",
+      "managedCandidateBuild": "PASS on pre-final implementation code",
+      "typecheck": "PASS on implementation f932ed9",
+      "lint": "PASS with pre-existing warnings, no errors",
+      "remoteManagedQa": "NOT_VERIFIED: Hostinger connector cannot access historical managed site",
+      "linuxPosixSuite": "PENDING",
+      "newFinalCI": "PENDING"
     }
   }
 }
