@@ -76,8 +76,7 @@ def sanitize_order(row: dict) -> dict | None:
     }
 
 
-def main() -> int:
-    token = os.environ.get("HOSTINGER_API") or ""
+def build_report(token: str) -> dict:
     report = {
         "schema": 1,
         "measuredAt": datetime.now(timezone.utc).isoformat(),
@@ -101,10 +100,10 @@ def main() -> int:
     if not token.strip():
         report["verdict"] = "HOSTINGER_API_MISSING_IN_ACTIONS_CONTEXT"
         report["blockingCall"] = "secrets.HOSTINGER_API absent in workflow env"
-        print(json.dumps(report, indent=2))
-        return 0
+        return report
 
     status, websites, err = call(token, "/websites?" + urllib.parse.urlencode({"order_id": ORDER_ID, "per_page": 100}))
+    websites_status = status
     report["checks"]["websites_by_order"] = {"http": status, "error": err}
     sites = websites if isinstance(websites, list) else []
     if isinstance(websites, dict) and isinstance(websites.get("data"), list):
@@ -129,6 +128,7 @@ def main() -> int:
             and row.get("username") == USERNAME
             and row.get("order_id") == ORDER_ID
             and row.get("website_type") == "nodejs"
+            and row.get("is_enabled") is True
         ):
             punctum = item
     report["checks"]["websites_by_order"]["sites"] = sanitized
@@ -137,7 +137,6 @@ def main() -> int:
         1 for item in sanitized if item.get("website_type") == "nodejs"
     )
     report["checks"]["websites_by_order"]["website_count"] = len(sanitized)
-    report["accountConfirmed"] = bool(punctum)
 
     status, orders_payload, err = call(token, "/orders?" + urllib.parse.urlencode({"per_page": 50}))
     orders = orders_payload if isinstance(orders_payload, list) else []
@@ -150,6 +149,16 @@ def main() -> int:
         "orders": sanitized_orders,
         "expectedOrderPresent": any(item.get("id") == ORDER_ID for item in sanitized_orders),
     }
+    active_order = status == 200 and any(
+        item["id"] == ORDER_ID and item["status"] == "active" for item in sanitized_orders
+    )
+    report["accountConfirmed"] = websites_status == 200 and bool(punctum) and active_order
+    if not report["accountConfirmed"]:
+        report["deployPath"] = "ACCOUNT_NOT_CONFIRMED"
+        report["verdict"] = "PUNCTUM_WEBSITE_OR_ACTIVE_ORDER_NOT_CONFIRMED"
+        report["blockingCall"] = "Expected enabled Node website and active order 1008628483 required"
+        return report
+
     report["checks"]["nodejs_capacity_observed"] = {
         "nodejsSiteCountOnOrder": report["checks"]["websites_by_order"]["nodejs_count"],
         "websiteCountOnOrder": len(sanitized),
@@ -194,9 +203,6 @@ def main() -> int:
                 report["nodeApiReadable"] = True
         if label == "env_inventory" and isinstance(data, list):
             entry["variable_count"] = len(data)
-            # Never dump env values
-        if label == "env_inventory" and status == 200:
-            report["nodeApiReadable"] = True
         report["checks"][label] = entry
 
     # Same probes against historical temp domain if listed
@@ -205,7 +211,7 @@ def main() -> int:
         status, data, err = call(token, tsite + "/builds/settings")
         report["checks"]["aliceblue_build_settings"] = {"http": status, "error": err}
 
-    if report["accountConfirmed"] and report["nodeApiReadable"]:
+    if report["nodeApiReadable"]:
         report["deployPath"] = "HOSTINGER_API_NODE_BUILDS_READ_OK"
         report["verdict"] = "PUNCTUM_ACCOUNT_CONFIRMED_NODE_API_READABLE"
         report["nextSafeNote"] = (
@@ -213,16 +219,17 @@ def main() -> int:
             "Isolated QA still needs an empty additional Node host (not main punctumpicture.com) "
             "before any build POST. GENERATE_FREE_SUBDOMAIN alone is not a host."
         )
-    elif report["accountConfirmed"]:
+    else:
         report["deployPath"] = "ACCOUNT_OK_NODE_API_BLOCKED"
         report["verdict"] = "ACCOUNT_CONFIRMED_NODE_API_NOT_READABLE"
         failed = [k for k, v in report["checks"].items() if k.startswith("build") and v.get("http") not in (200,)]
         report["blockingCall"] = failed[0] if failed else "nodejs builds endpoints non-200"
-    else:
-        report["deployPath"] = "ACCOUNT_NOT_CONFIRMED"
-        report["verdict"] = "HOSTINGER_TOKEN_NOT_PUNCTUM_OR_WEBSITE_MISSING"
-        report["blockingCall"] = "websites_by_order missing punctumpicture.com nodejs on 1008628483/u571409090"
+    return report
 
+
+def main() -> int:
+    token = os.environ.get("HOSTINGER_API") or ""
+    report = build_report(token)
     text = json.dumps(report, indent=2) + "\n"
     if token and token in text:
         raise SystemExit("REFUSING_TO_PRINT_TOKEN")

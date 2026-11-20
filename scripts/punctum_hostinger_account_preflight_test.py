@@ -1,6 +1,10 @@
 import importlib.util
+import io
+import json
 import pathlib
 import unittest
+from contextlib import redirect_stdout
+from unittest.mock import patch
 
 
 def load_preflight():
@@ -12,6 +16,31 @@ def load_preflight():
 
 
 class HostingerPreflightSanitizeTest(unittest.TestCase):
+    def test_inactive_order_stops_before_node_api(self):
+        module = load_preflight()
+        website = {
+            "domain": module.MAIN_DOMAIN,
+            "username": module.USERNAME,
+            "order_id": module.ORDER_ID,
+            "website_type": "nodejs",
+            "is_enabled": True,
+        }
+        output = io.StringIO()
+        with (
+            patch.dict("os.environ", {"HOSTINGER_API": "synthetic-credential"}),
+            patch.object(module, "call", side_effect=[
+                (200, [website], None),
+                (200, [{"id": module.ORDER_ID, "status": "cancelled"}], None),
+                *[(404, None, None)] * 5,
+            ]) as call,
+            redirect_stdout(output),
+        ):
+            module.main()
+        self.assertEqual(call.call_count, 2)
+        report = json.loads(output.getvalue())
+        self.assertFalse(report["accountConfirmed"])
+        self.assertEqual(report["deployPath"], "ACCOUNT_NOT_CONFIRMED")
+
     def test_order_whitelist_drops_unlisted_fields(self):
         module = load_preflight()
         sanitized = module.sanitize_order(
