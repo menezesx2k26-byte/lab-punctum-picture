@@ -9,6 +9,14 @@ Data: 20/11/2026, America/Sao_Paulo. [PR #42](https://github.com/menezesx2k26-by
 - O preflight Hostinger com o segredo do repositório verificou a mesma identidade registrada para `hostinger_usings-moko`: `punctumpicture.com`, usuário `u571409090`, pedido `1008628483` ativo, `hostinger_premium_v3`. Há dois sites no pedido, um deles Node.js. Configuração lida via HTTP 200: Node 24, npm, build `build:hostinger:managed-runtime`, entrada `services/punctum-hostinger-production/candidate-server.mjs`. Histórico acessível, consulta de variáveis HTTP 500 e host temporário histórico ausente do inventário. Nenhuma escrita. [Preflight e artefato 14652823100](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44783616955).
 - A etapa que grava os artefatos de pré-verificação do Clerk e da Hostinger usa Bash explícito para que uma falha do processo seja propagada por `tee`. A regressão foi reproduzida e validada com `node --test --test-reporter=dot scripts/ci-evidence.test.mjs scripts/punctum-clerk-instance-readonly.test.mjs` (11 passaram) e `python -m unittest discover -s scripts -p punctum_hostinger_account_preflight_test.py` (3 passaram).
 - HTTPS público respondeu 200 em `punctumpicture.com/api/health` e 308 em `www.punctumpicture.com/`, com validação TLS do cliente. DNS autoritativo na Cloudflare. Inventário anterior associa o tráfego ao Worker `punctum-picture-migration`. A origem temporária histórica da Hostinger encerrou a conexão antes de responder. [Runbook de rollback](../PUNCTUM-ROLLBACK.md).
+- O [CI 44784525425](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44784525425) concluiu ambos os jobs com sucesso no commit `5cb2166f3dea268f14ec07e41cb71469faf28d3e`. Auditoria npm com zero vulnerabilidades, QA Node 40 aprovados e adaptador gerenciado 69 aprovados. O teste de recusa em plataforma sem grupos de processos teve skip esperado no Linux e passou isoladamente no Windows. O [artefato Playwright 14654650155](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44784525425/artifacts/14654650155) traz 23 verificações sintéticas.
+- [Preflight Clerk nesse SHA](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44784514200) confirmou a identidade da instância de produção. A API Backend retornou a leitura da instância sem o campo de duração máxima de sessão. O artefato preserva `BLOCKED_API_GAP`, sem alterar configurações nem revogar sessões.
+
+### Build do candidato Hostinger
+
+Dois `npm run build:hostinger:candidate` em Ubuntu/WSL com Node 24.21.0 e saídas limpas geraram 555 arquivos por build a partir de `2a19956`. Os SHA-256 de 552 arquivos coincidiram. As diferenças ficaram em `server/index.js`, `server/vinext-server.json` e `server/ssr/vinext-server.json`. O ensaio controlado partiu de `5cb2166` e acrescentou um protótipo local para fixar `generateBuildId`. As mesmas três diferenças persistiram e o protótipo foi descartado.
+
+No Vinext 0.0.50 do lockfile, o bundle inclui o UUID de Draft Mode e os dois manifestos contêm `prerenderSecret` gerado no build. A comparação estrutural confirmou `prerenderSecret` como único campo variável nos manifestos e uma única linha variável no bundle. Os valores das credenciais ficaram fora do registro. Reprodutibilidade byte a byte permanece em aberto. Próxima ação técnica: verificar se o Vinext oferece injeção segura desses valores em runtime ou qualificar separadamente essa mudança no servidor gerenciado, preservando o comportamento dos controles de Draft Mode e prerenderização.
 
 ## G01–G24
 
@@ -17,7 +25,7 @@ Escopo e critérios conforme a [reconciliação 16](16-original-g01-g24-reconcil
 | Gate | Estado | Evidência e dependência |
 | --- | --- | --- |
 | G01 Baseline | PARTIAL_VERIFIED | HEAD, CI, PRs relacionadas e identidade Hostinger reconciliados. Falta cotejar a SPEC integral. |
-| G02 Integração | PARTIAL_VERIFIED | Baseline verde no seu SHA. CI e comparação dos dois builds do candidato requerem evidência própria. |
+| G02 Integração | PARTIAL_VERIFIED | CI verde em `5cb2166`. Dois builds do candidato diferiram em três arquivos com valores aleatórios do Vinext. |
 | G03 Cadastro admin | PARTIAL_VERIFIED | Chromium local e SQLite sintético. Falta cadastro no destino autorizado. |
 | G04 Galeria/publicação | PARTIAL_VERIFIED | Chromium local com publicação sintética. Falta medição no destino. |
 | G05 Upload | PARTIAL_VERIFIED | Fronteira de 26.214.400 bytes e aborto de stream cobertos localmente. Falta aceite remoto dos 25 MiB. |
@@ -50,4 +58,4 @@ Escopo e critérios conforme a [reconciliação 16](16-original-g01-g24-reconcil
 | SPEC-01 | Reconciliação em Git disponível. A SPEC integral não apareceu no nome histórico em arquivos ou anexos e o Drive pede login. | Proprietário indica um link acessível ou anexa o arquivo íntegro. |
 | OPS-01 | VPS `2135319` é compartilhada e pertence à Conthabil. A chave pública temporária permanece como pendência registrada no handoff 84. | Responsável pela VPS decide sobre revisão e eventual revogação específica da chave. |
 
-Próximo passo de engenharia: fechar a comparação dos artefatos de dois builds, registrar o CI do HEAD na PR e usar o destino isolado quando o operador confirmar seu escopo.
+Próximo passo de engenharia: qualificar a passagem segura das credenciais geradas pelo Vinext para o runtime e repetir a comparação de hashes. A frente remota continua quando o operador confirmar o escopo do destino isolado.
