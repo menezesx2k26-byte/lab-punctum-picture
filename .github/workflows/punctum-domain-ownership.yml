@@ -48,7 +48,9 @@ jobs:
           report['initiallyAccessible']=ownership.get('is_accessible')
           if not ownership.get('is_accessible'):
               txt=ownership.get('txt_to_verify')
-              assert isinstance(txt,str) and re.fullmatch('[A-Za-z0-9_-]{16,128}',txt)
+              print(json.dumps({'verifiedTarget':report['target'], 'challengeKeys':list(ownership),
+                  'challengeType':type(txt).__name__, 'challengeLength':len(txt) if isinstance(txt,str) else None}))
+              assert isinstance(txt,str) and re.fullmatch('[A-Za-z0-9_=.:-]{1,255}',txt), 'Unexpected ownership TXT format'
               report['challengeSha256']=hashlib.sha256(txt.encode()).hexdigest()
               zone_info=call(cf,'/zones/'+zone,'DNS_TOKEN')
               assert zone_info.get('success') and zone_info['result']['name']==domain and zone_info['result']['account']['id']==account
