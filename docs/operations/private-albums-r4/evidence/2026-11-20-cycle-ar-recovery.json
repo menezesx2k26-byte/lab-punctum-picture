@@ -3,6 +3,8 @@
   "cycle": "AR",
   "measuredAt": "2026-11-20T07:20:00Z",
   "baseShaBeforeEvidence": "66b2c9958de14d685f561b1d0e0f2a967d28e3e2",
+  "evidenceCommit": "384507406de848e6d3b16c6264a1729e14eb46e0",
+  "evidenceCommitCi": {"runId": 44694282725, "verify": "success", "hostingerNodeQa": "skipped", "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44694282725"},
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "pr": 42,
   "writes": {

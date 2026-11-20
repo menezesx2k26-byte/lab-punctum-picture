@@ -15,6 +15,9 @@ Evidência: `docs/operations/private-albums-r4/evidence/2026-11-20-cycle-ar-reco
 | PR | https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42 |
 | Branch | `cursor/r4-aj-security-phase-b-ae72` |
 | Código medido localmente | `66b2c9958de14d685f561b1d0e0f2a967d28e3e2` |
+| Commit documental | `384507406de848e6d3b16c6264a1729e14eb46e0` |
+| CI `verify` desse SHA | success [44694282725](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44694282725) |
+| `hostinger-node-qa` | skipped pelo filtro de branch |
 | Worker no ar | `punctum-picture-migration` |
 | `GIT_SHA` plain | `4a9842dac2726699a5272d137ea7eedfe20d469c` |
 | Deployment / version 100% | `276eb966-4561-4c95-b35c-3b461ff0c18d` / `e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7` |
@@ -38,7 +41,7 @@ Estados desta rodada, apenas os permitidos. Evidência comum: o JSON acima e, pa
 | Gate | Definição original | Estado anterior no PR | Agora | Estado |
 | --- | --- | --- | --- | --- |
 | G01 | Baseline — SHAs/inventário | PASS | Inventário Cloudflare, D1, R2, Hostinger e DNS relido | PASS_VERIFIED |
-| G02 | Integração sem regressão | NOT_RUN no AQ; CI anterior verde | Suíte local verde em `66b2c99`; CI do commit documental fica registrado à parte | PARTIAL_VERIFIED |
+| G02 | Integração sem regressão | NOT_RUN no AQ; CI anterior verde | Suíte local em `66b2c99` e `verify` success em `3845074` | PASS_VERIFIED |
 | G03 | Cadastro admin E2E/D1 | NOT_RUN no AQ | E2E local cria cliente sintético; sem OTP real | PARTIAL_VERIFIED |
 | G04 | Galeria e publicação E2E | NOT_RUN no AQ | E2E local publica galeria sintética | PARTIAL_VERIFIED |
 | G05 | Upload confiável — bytes/retry | FAIL histórico; NOT_RUN_REMOTE no AQ | Suíte local verde, teto plain `26214400`; sem upload remoto de 25 MiB | PARTIAL_VERIFIED |
@@ -57,7 +60,7 @@ Estados desta rodada, apenas os permitidos. Evidência comum: o JSON acima e, pa
 | G18 | Backup/restauração byte a byte | PASS histórico scoped; NOT_RUN_REMOTE no AQ | Backup de hoje comparado em memória; `site_media` de fora | PARTIAL_VERIFIED |
 | G19 | Segurança independente | BLOCKED_SECURITY | Sem sign-off independente neste SHA | READY_FOR_AUTHORIZATION |
 | G20 | LGPD — estúdio | BLOCKED_EXTERNAL | Sem aprovação da controladora | READY_FOR_AUTHORIZATION |
-| G21 | PR — CI/revisão | NOT_RUN até o CI do próprio SHA | Suíte local verde; CI remoto do commit documental é a prova que falta | PARTIAL_VERIFIED |
+| G21 | PR — CI/revisão | NOT_RUN até o CI do próprio SHA | `verify` success em `3845074`; revisão independente e merge continuam abertos | PARTIAL_VERIFIED |
 | G22 | Release | BLOCKED_EXTERNAL | Sem autorização de merge ou cutover | READY_FOR_AUTHORIZATION |
 | G23 | Rollback testado | BLOCKED_EXTERNAL | Runbook reconciliado; restore lógico isolado; produção não revertida | PARTIAL_VERIFIED |
 | G24 | Handoff verificável | NOT_RUN no AQ | Este arquivo e o JSON | PASS_VERIFIED |
