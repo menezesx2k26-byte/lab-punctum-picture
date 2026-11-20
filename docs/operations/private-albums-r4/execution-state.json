@@ -5094,5 +5094,345 @@
     "executedDns": false,
     "executedProductionWrite": false,
     "siteCreated": false
+  },
+  "currentCycle20261120AU": {
+    "mission": "PUNCTUM-R4-PRIVATE-ALBUMS-OPERATIONAL-DOD",
+    "date": "2026-11-20",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "baselineSha": "18193a9fcda873df12536624444e45b315e0324d",
+    "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
+    "pullRequest": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "baselineCi": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+    "qualificationCodeSha": "854f11fe4623d40b892078fbd9810c3e9592c02a",
+    "currentPullRequestChecks": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42/checks",
+    "localQualification": {
+      "environment": "Linux WSL / Node 24.21.0 / synthetic loopback",
+      "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+      "filesCompared": 555,
+      "byteIdentical": 552,
+      "structurallyEquivalent": [
+        "server/index.js",
+        "server/ssr/vinext-server.json",
+        "server/vinext-server.json"
+      ],
+      "regressionTestsPassed": 6,
+      "npmAuditVulnerabilities": 0,
+      "uploadChecksPassed": 49,
+      "uploadBytes": 26214400,
+      "syntheticOriginalSha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce",
+      "scheduledWorkerBuild": "PASS",
+      "managedLocalTestSuite": "PASS",
+      "ssrSmoke": {
+        "healthStatus": 200,
+        "htmlStatus": 200,
+        "draftStatus": 200,
+        "draftNoStore": true,
+        "prerenderMissingOrInvalidStatus": 403,
+        "prerenderAfterValidGuardStatus": 404
+      }
+    },
+    "plan": "docs/superpowers/plans/2026-11-20-punctum-r4-final-dod.md",
+    "report": "docs/operations/private-albums-r4/86-cycle-au-p0-final-dod-2026-11-20.md",
+    "hostinger": {
+      "order": 1008628483,
+      "domain": "punctumpicture.com",
+      "plan": "hostinger_premium_v3",
+      "nodeApp": "PRESENT",
+      "secondNodeApp": "PLAN_LIMIT_UPGRADE_REQUIRED",
+      "limits": {
+        "cpuCores": 1,
+        "memoryMiB": 2048,
+        "diskGB": 20,
+        "maxProcesses": 80
+      },
+      "logs": "FAILED_TO_LOAD",
+      "dailyBackupCron": "CONFIGURED_EXECUTION_UNVERIFIED",
+      "isolatedOrigin": "PENDING_APPROVED_ZERO_COST_ORIGIN"
+    },
+    "clerk": {
+      "environment": "production",
+      "emailOtpSignIn": true,
+      "emailOtpSignUp": true,
+      "webMaxSessionDays": 7,
+      "inactivityTimeout": false,
+      "domainVerified": true,
+      "tlsIssued": true,
+      "accountPortalFallbacks": "DEFAULT_APPLICATION_DOMAIN",
+      "realOtpAndRevocation": "NOT_RUN"
+    },
+    "independentReadOnlyReview": {
+      "scope": "public vinext@0.0.50 build source",
+      "runId": "a03e1ec3-acb8-47a6-aee0-32cd02a959f0",
+      "workerId": "worker-1",
+      "result": "Confirmed both random sources and manifest secret consistency; emitted syntax must be tested on the actual build."
+    },
+    "incrementalCostBRL": 0,
+    "gateLedger": {
+      "G01": {
+        "status": "PASS",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Git e GitHub",
+        "testCommand": "git ls-remote origin HEAD refs/pull/42/head",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+        "failures": null,
+        "owner": "Engenharia",
+        "blocker": null,
+        "nextSafeAction": "Revalidar refs antes de integrar; usar reconciliação versionada enquanto a SPEC integral estiver indisponível."
+      },
+      "G02": {
+        "status": "NOT_RUN",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node 24 Linux, fixture sintética",
+        "testCommand": "node scripts/hostinger-candidate-build-equivalence.mjs build-a build-b",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": "Equivalência, SSR e Draft Mode comprovados em Linux no código do candidato. CI da entrega fica vinculado ao HEAD da PR.",
+        "owner": "Engenharia",
+        "blocker": "Fechamento da integração no HEAD de entrega pendente.",
+        "nextSafeAction": "Verificar o CI do SHA de entrega."
+      },
+      "G03": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01, origem isolada ausente.",
+        "nextSafeAction": "Provar cadastro admin e persistência na origem aprovada."
+      },
+      "G04": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Provar rascunho, publicação, arquivo, capa e ordem no navegador."
+      },
+      "G05": {
+        "status": "FAIL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/85-cycle-at-p0-hostinger-account-ci-2026-11-20.md",
+        "failures": "Upload de 26.214.400 bytes e download com SHA-256 passaram em loopback. Aceite remoto pendente.",
+        "owner": "Engenharia e operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Provar limite, SHA-256, negações, retry e integridade na origem aprovada."
+      },
+      "G06": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Clerk QA e Node gerenciado",
+        "testCommand": "npm test -- tests/integration/clerk-r4-security-matrix.spec.ts",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Admin Clerk e engenharia",
+        "blocker": "HST-01 e identidades Clerk QA.",
+        "nextSafeAction": "Validar issuer, audience, JWKS e sid no candidato autorizado."
+      },
+      "G07": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Clerk QA",
+        "testCommand": null,
+        "evidenceUrl": "https://clerk.com/docs/guides/secure/session-options",
+        "failures": "OTP por e-mail habilitado no painel.",
+        "owner": "Admin Clerk",
+        "blocker": "Origem e identidade QA autorizadas.",
+        "nextSafeAction": "Executar login com OTP real, preservando código e sessão fora da evidência."
+      },
+      "G08": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Clerk produção e Node QA",
+        "testCommand": null,
+        "evidenceUrl": "https://dashboard.clerk.com/apps/app_3M14L9JyjaJ9ySitVTsQFf6xJ2A/instances/ins_3M6H9ktM3jO84RvEu5BmKFokCfr/sessions",
+        "failures": "Sessão web máxima de 7 dias lida no dashboard.",
+        "owner": "Admin Clerk e engenharia",
+        "blocker": "Sessão real em QA indisponível.",
+        "nextSafeAction": "Exercitar expiração, logout, conta desativada, revogação e rejeição de sessão antiga."
+      },
+      "G09": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Demonstrar isolamento A/B antes e depois de restart."
+      },
+      "G10": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado e CDN",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Confirmar contrato de GET/HEAD e zero bytes indevidos."
+      },
+      "G11": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Confirmar favoritos após reload e restart."
+      },
+      "G12": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Validar autorização, negação e hash do download."
+      },
+      "G13": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Executar matriz cliente, lightbox, estados e larguras."
+      },
+      "G14": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Executar matriz administrativa, publicação e upload nas larguras exigidas."
+      },
+      "G15": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Android e iOS físicos",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md",
+        "failures": null,
+        "owner": "Responsável pela acessibilidade",
+        "blocker": "Validação assistiva física pendente.",
+        "nextSafeAction": "Registrar TalkBack, VoiceOver, teclado, foco, contraste, zoom e reduced motion."
+      },
+      "G16": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Produção pública e staging",
+        "testCommand": "curl -fsS https://punctumpicture.com/api/health",
+        "evidenceUrl": "https://punctumpicture.com/api/health",
+        "failures": "HTTP 200 e TLS válidos no health público; smoke integral em staging pendente.",
+        "owner": "Engenharia",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Comparar Studio, Colagem, hero, portfólio e rascunhos em staging."
+      },
+      "G17": {
+        "status": "FAIL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Worker público e Node gerenciado",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/83-cycle-ar-p0-execution-2026-11-20.md",
+        "failures": "Worker público registrado com p99 de CPU de 156,5 ms frente ao limite de 10 ms; Node ainda sem medição.",
+        "owner": "Infraestrutura e proprietário",
+        "blocker": "HST-01 e aceite de equivalência do critério Node.",
+        "nextSafeAction": "Medir capacidade, concorrência, custo e limites reais sem upgrade."
+      },
+      "G18": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": "Há teste de restauração SQLite sintética local.",
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Executar backup, restart, rebuild e restore descartável com hashes, RTO e RPO."
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "SHA de release",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
+        "failures": "Configuração Clerk de até 14 dias comprovada em leitura; testes reais e parecer ainda pendentes.",
+        "owner": "Revisor de segurança independente",
+        "blocker": "QA remoto e parecer formal sem P0/P1.",
+        "nextSafeAction": "Revisar isolamento, sessão, logs, mídia, dados e recuperação no SHA de entrega."
+      },
+      "G20": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Controladora do estúdio",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/11-lgpd-decisions.md",
+        "failures": null,
+        "owner": "Controladora Punctum",
+        "blocker": "Aprovação formal LGPD pendente.",
+        "nextSafeAction": "Aprovar finalidade, base legal, retenção, exclusão, terceiros e entrega."
+      },
+      "G21": {
+        "status": "NOT_RUN",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "GitHub",
+        "testCommand": "git ls-remote origin refs/pull/42/head",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+        "failures": "PR draft; CI do baseline verde; revisão formal pendente.",
+        "owner": "Mantenedor e revisor",
+        "blocker": "CI do delta e revisão formal.",
+        "nextSafeAction": "Verificar checks, artefatos e aprovação no SHA de entrega."
+      },
+      "G22": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Produção",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md",
+        "failures": null,
+        "owner": "Proprietário",
+        "blocker": "Autorizações de release pendentes.",
+        "nextSafeAction": "Decidir separadamente integração, publicação com flag desligada e ativação/cutover."
+      },
+      "G23": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Staging isolado",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/PUNCTUM-ROLLBACK.md",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Ensaiar rollback de código, configuração, dados, sessões e reabertura."
+      },
+      "G24": {
+        "status": "NOT_RUN",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Git",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42/files",
+        "failures": null,
+        "owner": "Engenharia",
+        "blocker": "Readback do commit de evidência pendente.",
+        "nextSafeAction": "Confirmar relatório, matriz coerente e commit publicado ou registrar impedimento."
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
 # R1 ops checklist — Clerk session lifetime ≤ 14d + API revoke
 
-**Status:** checklist only. **Not** Dashboard/API proof. Does not clear G19 or R1 residual.
+**Status após o ciclo AU:** o dashboard da instância de produção confirmou máximo web de 7 dias. Permanecem abertos o ensaio real de sessão e a revisão formal. [Relatório AU](86-cycle-au-p0-final-dod-2026-11-20.md)
 
 **Cycle AP (2026-11-20 05:41 UTC):** `CLERK_SECRET_KEY` was re-read in Actions as `sk_live_` and returns instance `ins_3M6H9ktM3jO84RvEu5BmKFokCfr` (production, HTTP 200). `GET /v1/instance` still has no maximum-lifetime field. R1 remains **`BLOCKED_API_GAP`**. See `81-cycle-ap-qa-unblock-2026-11-20.md`. Production settings were not changed and no session was revoked.
 
@@ -19,9 +19,9 @@ Punctum local `sid:` revocation TTL is **14 days** (`CLERK_SESSION_REVOCATION_TT
 
 ## Acceptance for clearing R1 (human)
 
-- [ ] Max session lifetime ≤ 14d verified in Clerk for the target application  
+- [x] Max session lifetime ≤ 14d verified in Clerk for the target application
 - [ ] Evidence stored privately (not in public repo secrets)  
 - [ ] QA replay after logout still denied  
 - [ ] Independent reviewer accepts R1 closed on named SHA  
 
-Until then: **R1 OPEN**; G19 remains **BLOCKED_SECURITY**.
+**R1 OPEN** para o ensaio real e o aceite do revisor. G19 permanece **BLOCKED_SECURITY**.
