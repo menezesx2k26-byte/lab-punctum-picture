@@ -1,4 +1,10 @@
 import { createClerkClient } from "@clerk/backend";
+import {
+  clerkTokenRevocationKey,
+  extractClerkToken,
+  isClerkTokenRevoked,
+  isValidClerkUserId,
+} from "../auth/clerk-auth";
 import { envString } from "../utils/env";
 import { privateJson, privateResponse } from "./response";
 
@@ -10,10 +16,16 @@ type PilotConfig = {
   publishableKey: string;
   jwtKey: string;
 };
+
+export type PilotVerifiedIdentity = {
+  clerkUserId: string;
+  sessionId: string;
+};
+
 export type PilotIdentityVerifier = (
   request: Request,
   config: PilotConfig,
-) => Promise<string | null>;
+) => Promise<PilotVerifiedIdentity | null>;
 
 const deny = (status: number) => privateResponse(new Response(null, { status }));
 
@@ -41,7 +53,7 @@ function configFor(request: Request, env: Env): PilotConfig | null {
 export async function verifyClerkPilotIdentity(
   request: Request,
   config: PilotConfig,
-): Promise<string | null> {
+): Promise<PilotVerifiedIdentity | null> {
   try {
     const client = createClerkClient({ publishableKey: config.publishableKey });
     const state = await client.authenticateRequest(request, {
@@ -51,10 +63,11 @@ export async function verifyClerkPilotIdentity(
       jwtKey: config.jwtKey,
     });
     if (!state.isAuthenticated) return null;
-    const userId = state.toAuth().userId;
-    return typeof userId === "string" && /^user_[a-zA-Z0-9_-]{3,180}$/.test(userId)
-      ? userId
-      : null;
+    const auth = state.toAuth();
+    if (!isValidClerkUserId(auth.userId)) return null;
+    // Align with the main Clerk verifier: session tokens must carry a sid.
+    if (typeof auth.sessionId !== "string" || auth.sessionId.length < 3) return null;
+    return { clerkUserId: auth.userId, sessionId: auth.sessionId };
   } catch {
     return null;
   }
@@ -76,13 +89,31 @@ export async function handleClerkPilotRequest(
   const config = configFor(request, env);
   if (!config || !env.DB) return deny(503);
 
-  let userId: string | null;
+  let verified: PilotVerifiedIdentity | null;
   try {
-    userId = await verifier(request, config);
+    verified = await verifier(request, config);
   } catch {
-    userId = null;
+    verified = null;
   }
-  if (!userId || !/^user_[a-zA-Z0-9_-]{3,180}$/.test(userId)) return deny(401);
+  if (
+    !verified ||
+    !isValidClerkUserId(verified.clerkUserId) ||
+    typeof verified.sessionId !== "string" ||
+    verified.sessionId.length < 3
+  ) {
+    return deny(401);
+  }
+
+  const rawToken = extractClerkToken(request);
+  const revocationKeys = [
+    ...(rawToken ? [await clerkTokenRevocationKey(rawToken)] : []),
+    `sid:${verified.sessionId}`,
+  ];
+  try {
+    if (await isClerkTokenRevoked(env.DB, revocationKeys)) return deny(401);
+  } catch {
+    return deny(503);
+  }
 
   // Neither email nor token metadata can link accounts. D1 association is
   // provisioned in a separately authorized verified migration transaction.
@@ -93,7 +124,7 @@ export async function handleClerkPilotRequest(
     FROM clerk_pilot_identity_links l
     JOIN client_accounts c ON c.id = l.client_id
     WHERE l.clerk_user_id = ?`,
-  ).bind(userId).first<{
+  ).bind(verified.clerkUserId).first<{
     clientId: string;
     disabledAt: string | null;
     sessionVersion: number;

@@ -4,12 +4,12 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AJ 2026-11-19: Clerk account rebind stale session and missing revocation-storage fail-open corrected with red/green synthetic tests; admin DB-failure logout protection and account-switch UI hardened. 325/325 full Worker tests PASS on pre-final implementation state; new-final regression/CI pending. Managed Hostinger R4/real Clerk/restore/redeploy, cost/load, physical accessibility, independent security approval, LGPD and explicit release authorization remain open. NO_GO_PRODUCTION.",
-  "updatedAt": "2026-11-19",
-  "branch": "codex/punctum-r4-goal-20261115",
-  "baseBranch": "codex/punctum-managed-production-20261114",
-  "baseSha": "8abb9f38a0bc7a265ddde10e71686964f21a5dd9",
-  "headBeforeStateUpdate": "8abb9f38a0bc7a265ddde10e71686964f21a5dd9",
+  "statusScope": "Cycle AK 2026-11-20: sid revocation TTL extended to 14d, logout collects sid from raw Clerk token, clerk-pilot requires sessionId+revocation parity with main verifier, next@16.4.6 clears CI npm audit. 326/326 Worker tests PASS locally; G05 local synthetic Node/Sharp 25MiB PASS_LOCAL only. Managed Hostinger remote QA/Clerk/cost/restore, independent security, LGPD and release authorization remain open. NO_GO_PRODUCTION.",
+  "updatedAt": "2026-11-20",
+  "branch": "cursor/r4-aj-security-phase-b-ae72",
+  "baseBranch": "codex/punctum-r4-goal-20261115",
+  "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
+  "headBeforeStateUpdate": "f0f951d9f30225d717c1f82df7661889e287ec34",
   "currentCycle20261110Z": {
     "baselineRemoteSha": "07a2d15b816b340d62d21792c410139fa2562608",
     "baselineRemoteTree": "5aa3ac91407cd5b6620701e37516cfae0d8b3739",
@@ -4655,5 +4655,72 @@
       "linuxPosixSuite": "PENDING",
       "newFinalCI": "PENDING"
     }
+  },
+  "currentCycle20261120AK": {
+    "report": "docs/operations/private-albums-r4/76-cycle-ak-security-sid-ttl-pilot-ci-2026-11-20.md",
+    "goal": "PUNCTUM-FINAL-COMPLETION-20261119",
+    "sourceHeadVerified": "f0f951d9f30225d717c1f82df7661889e287ec34",
+    "branch": "cursor/r4-aj-security-phase-b-ae72",
+    "integrationBase": "codex/punctum-r4-goal-20261115",
+    "pullRequestParent": 40,
+    "canonicalSpec": "SPEC section 23 via docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md (original txt absent from clone)",
+    "gateRecordsSource": "AJ conservative matrix + AK local evidence without promotion",
+    "gateRecordOverrides": {
+      "G01": {
+        "status": "PASS",
+        "evidence": "G00 inventory of main/PR40/Hostinger Conthabil read-only and AJ ledger"
+      },
+      "G05": {
+        "status": "FAIL",
+        "proofType": "QA_SYNTHETIC_LOCAL_PARTIAL",
+        "evidence": "PASS_LOCAL_SYNTHETIC_NODE 26214400 bytes SHA-256 c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce; remote managed Hostinger FAIL/not homologated"
+      },
+      "G08": {
+        "status": "NOT_RUN",
+        "proofType": "QA_SYNTHETIC_LOCAL_SECURITY_TDD_PARTIAL",
+        "evidence": "sid TTL 14d + raw-token sid collection + pilot sid/revocation RED/GREEN; real Clerk session cycle absent"
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Prior independent review residual P1 addressed locally; final SHA independent acceptance not obtained"
+      }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "hostingerGateCounts": {
+      "PASS": 1,
+      "BLOCKED_EXTERNAL": 8,
+      "NOT_RUN": 1,
+      "note": "H00 PASS read-only; H08 historical DNS inventory not re-promoted as fresh PASS this cycle"
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "targetProof": "READY_FOR_AUTHORIZATION",
+    "productionChange": "NONE",
+    "localProof": {
+      "securityFocused": "20/20 PASS (clerk matrix, pilot, admin rotation, client security)",
+      "fullWorkerVitest": "326/326 PASS, 62/62 files",
+      "typecheck": "PASS",
+      "eslintFocused": "PASS",
+      "npmAuditLow": "0 vulnerabilities after next@16.4.6",
+      "g05LocalSynthetic": "PASS_LOCAL_SYNTHETIC_NODE exact 25MiB + checksum",
+      "managedCandidateBuild": "PASS build:hostinger:candidate",
+      "remoteManagedHealth": "aliceblue hostname unreachable and absent from Conthabil website list; punctumpicture.com is Node main",
+      "driveHandoff": "NOT_AVAILABLE file 1C_0pEAi… 404 for connected Google account",
+      "newFinalCI": "PENDING_EXACT_SHA_AFTER_PUSH"
+    },
+    "changes": [
+      "CLERK_SESSION_REVOCATION_TTL_SECONDS=14d for sid: keys; token digests remain 24h",
+      "collectClerkRevocationKeys extracts sid from raw Clerk JWT for logout deny-list",
+      "clerk-pilot requires sessionId and honors revocation storage fail-closed",
+      "next/eslint-config-next 16.4.6 to clear GHSA audit CI failure on AJ tip"
+    ]
   }
 }
