@@ -27,6 +27,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Hostinger RO account + Node API probe
+        shell: bash
         env:
           HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
         run: |

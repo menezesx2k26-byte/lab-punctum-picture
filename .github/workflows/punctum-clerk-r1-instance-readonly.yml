@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: "24"
       - name: Read Clerk instance (sanitized)
+        shell: bash
         env:
           # Historical production secret name used by reviewed Clerk workflows
           PUNCTUM_CLERK_PRODUCTION_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}

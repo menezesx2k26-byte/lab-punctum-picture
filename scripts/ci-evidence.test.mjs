@@ -24,3 +24,11 @@ test('remote recovery changes are eligible for the explicit QA trigger and never
   for(const path of ['scripts/r4-recovery-execute.mjs','scripts/lib/r4-recovery-qa.mjs','scripts/r4-recovery-qa.test.mjs']) assert.ok(edge.includes('"'+path+'"'),'Missing QA path: '+path);
   assert.match(edge,/if: contains\(github\.event\.head_commit\.message, '\[r4-qa-run\]'\)/);
 });
+
+test('read-only provider workflows propagate probe failures through tee', async () => {
+  for (const name of ['punctum-clerk-r1-instance-readonly', 'punctum-hostinger-account-preflight']) {
+    const probe = await readFile(new URL(`../.github/workflows/${name}.yml`, import.meta.url), 'utf8');
+    assert.ok(probe.split(/^      - /m).some((step) =>
+      /^        shell: bash\r?$/m.test(step) && /\| tee outputs\//.test(step)), name);
+  }
+});
