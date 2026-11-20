@@ -101,11 +101,28 @@ async function main() {
       report.attempts.push({ envName: candidate.envName, result: "ABSENT" });
       continue;
     }
+    const prefix = keyPrefix(candidate.value);
+    if (prefix === "pk_live_" || prefix === "pk_test_") {
+      report.attempts.push({
+        envName: candidate.envName,
+        keyPrefix: prefix,
+        result: "MISNAMED_PUBLISHABLE_NOT_BACKEND_SECRET",
+      });
+      continue;
+    }
+    if (prefix !== "sk_live_" && prefix !== "sk_test_") {
+      report.attempts.push({
+        envName: candidate.envName,
+        keyPrefix: prefix,
+        result: "UNEXPECTED_KEY_PREFIX_SKIPPED",
+      });
+      continue;
+    }
     const result = await clerkGet(candidate.value, "/instance");
     const attempt = {
       envName: candidate.envName,
       http: result.status,
-      keyPrefix: keyPrefix(candidate.value),
+      keyPrefix: prefix,
     };
     if (result.status === 200) {
       attempt.instance = sanitizeInstance(result.body);
