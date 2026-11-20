@@ -4,12 +4,14 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AK 2026-11-20: sid revocation TTL extended to 14d, logout collects sid from raw Clerk token, clerk-pilot requires sessionId+revocation parity with main verifier, next@16.4.6 clears CI npm audit. 326/326 Worker tests PASS locally; G05 local synthetic Node/Sharp 25MiB PASS_LOCAL only. Managed Hostinger remote QA/Clerk/cost/restore, independent security, LGPD and release authorization remain open. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AL 2026-11-20: PR #42 draft opened; Hostinger D1 export NUL truncation fixed (69/0/1 node tests); G18 local synthetic SQLite restore demo PASS_LOCAL; G19 review package prepared. Exact-SHA CI in flight/re-run on PR #42. Remote Hostinger/Clerk/cost/LGPD/release still open. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-20",
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "baseBranch": "codex/punctum-r4-goal-20261115",
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
-  "headBeforeStateUpdate": "f0f951d9f30225d717c1f82df7661889e287ec34",
+  "headBeforeStateUpdate": "7cef6d900480b470cfabb1948c6c888e245a42d3",
+  "pullRequest": 42,
+  "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
   "currentCycle20261110Z": {
     "baselineRemoteSha": "07a2d15b816b340d62d21792c410139fa2562608",
     "baselineRemoteTree": "5aa3ac91407cd5b6620701e37516cfae0d8b3739",
@@ -4663,6 +4665,8 @@
     "branch": "cursor/r4-aj-security-phase-b-ae72",
     "integrationBase": "codex/punctum-r4-goal-20261115",
     "pullRequestParent": 40,
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
     "canonicalSpec": "SPEC section 23 via docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md (original txt absent from clone)",
     "gateRecordsSource": "AJ conservative matrix + AK local evidence without promotion",
     "gateRecordOverrides": {
@@ -4714,13 +4718,78 @@
       "managedCandidateBuild": "PASS build:hostinger:candidate",
       "remoteManagedHealth": "aliceblue hostname unreachable and absent from Conthabil website list; punctumpicture.com is Node main",
       "driveHandoff": "NOT_AVAILABLE file 1C_0pEAi… 404 for connected Google account",
-      "newFinalCI": "PENDING_EXACT_SHA_AFTER_PUSH"
+      "newFinalCI": "IN_FLIGHT_PR42_RUN_44659567781_ON_7cef6d9_THEN_RERUN_AFTER_AL_PUSH"
     },
     "changes": [
       "CLERK_SESSION_REVOCATION_TTL_SECONDS=14d for sid: keys; token digests remain 24h",
       "collectClerkRevocationKeys extracts sid from raw Clerk JWT for logout deny-list",
       "clerk-pilot requires sessionId and honors revocation storage fail-closed",
       "next/eslint-config-next 16.4.6 to clear GHSA audit CI failure on AJ tip"
+    ]
+  },
+  "currentCycle20261120AL": {
+    "report": "docs/operations/private-albums-r4/77-cycle-al-pr42-export-nul-g18-g19-2026-11-20.md",
+    "g19ReviewPackage": "docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
+    "goal": "PUNCTUM-FINAL-COMPLETION-20261119",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "pullRequestDraft": true,
+    "branch": "cursor/r4-aj-security-phase-b-ae72",
+    "integrationBase": "codex/punctum-r4-goal-20261115",
+    "headAtPrOpen": "7cef6d900480b470cfabb1948c6c888e245a42d3",
+    "ciAtPrOpen": {
+      "runId": 44659567781,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44659567781",
+      "verify": "in_progress_at_ledger_write",
+      "hostingerNodeQa": "skipped"
+    },
+    "gateRecordOverrides": {
+      "G02": {
+        "status": "NOT_RUN",
+        "localEvidence": "326/326 Worker + Hostinger 69/0/1 + G18 demo; exact-SHA CI pending conclusion on PR #42",
+        "note": "May become PARTIAL_VERIFIED only after green exact-SHA CI; never remote PASS"
+      },
+      "G18": {
+        "status": "NOT_RUN",
+        "proofType": "QA_SYNTHETIC_LOCAL_PARTIAL",
+        "evidence": "PASS_LOCAL_SYNTHETIC_G18_SQLITE 2/2/10 + NUL text; client-recovery 20/20; remote managed NOT_RUN"
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Review package prepared at g19-independent-review-package-2026-11-20.md; no independent signoff yet"
+      },
+      "G21": {
+        "status": "NOT_RUN",
+        "evidence": "Draft PR #42 open; CI in flight; integration/review incomplete"
+      },
+      "G05": { "status": "FAIL" },
+      "G17": { "status": "FAIL" }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "localProof": {
+      "hostingerExportNulFix": "RED truncated note hex; GREEN 3/3 managed-d1-export tests; full suite 69 pass / 0 fail / 1 skip",
+      "g18LocalSqliteDemo": "PASS_LOCAL_SYNTHETIC_G18_SQLITE",
+      "g18WorkersRecovery": "20/20 PASS client-recovery.spec.ts",
+      "g06g08Focused": "12/12 PASS clerk matrix+pilot revalidation",
+      "g19Package": "prepared",
+      "managePullRequest": "unavailable_subagent_note_for_parent"
+    },
+    "changes": [
+      "Fix managed-d1-export TEXT NUL truncation via typeof+hex serialization",
+      "Add scripts/r4-g18-local-sqlite-restore-demo(.test).mjs",
+      "Add G19 independent review package",
+      "Record PR #42 URL and CI-in-flight in ledger"
     ]
   }
 }

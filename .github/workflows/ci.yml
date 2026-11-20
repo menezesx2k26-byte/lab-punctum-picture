@@ -36,6 +36,8 @@ jobs:
       - run: node --test scripts/r4-access-runtime.test.mjs
       - run: node --test scripts/r4-recovery-qa.test.mjs
       - run: node --test scripts/r4-scoped-local.test.mjs
+      - run: node --test services/punctum-hostinger-production/managed-d1-export.test.mjs
+      - run: node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
