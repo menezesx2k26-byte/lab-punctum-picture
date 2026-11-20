@@ -4,12 +4,12 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AL 2026-11-20: PR #42 draft; D1 export NUL fix; G18 local demo; G19 package; CI verify SUCCESS on HEAD b0b1874 (run 44660042268) and prior 7cef6d9 (44659567781). G02 PARTIAL_VERIFIED / G21 progress only — not production. Remote Hostinger/Clerk/cost/LGPD/release still open. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AM 2026-11-20: G09 cookie A/B HEAD+favorites isolation; G06/G08 helper unit coverage; G19 findings stub awaiting parallel review on b0b1874. Hostinger Composio signed out; punctumpicture.com/api/health 200; aliceblue unreachable. CI on docs HEAD d5c77ad observed separately. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-20",
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "baseBranch": "codex/punctum-r4-goal-20261115",
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
-  "headBeforeStateUpdate": "b0b18748f64269612c15f33921045ac9afe1372d",
+  "headBeforeStateUpdate": "d5c77ad4bf85b12c9b6ad8308d6d132128895471",
   "pullRequest": 42,
   "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
   "currentCycle20261110Z": {
@@ -4802,6 +4802,76 @@
       "Add G19 independent review package",
       "Wire managed-d1-export + G18 demo into CI verify",
       "Record PR #42 URL and exact-SHA CI SUCCESS in ledger"
+    ]
+  },
+  "currentCycle20261120AM": {
+    "report": "docs/operations/private-albums-r4/78-cycle-am-g06-g09-local-g19-stub-2026-11-20.md",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "headConfirmedPushed": "d5c77ad4bf85b12c9b6ad8308d6d132128895471",
+    "productShaUnderG19Review": "b0b18748f64269612c15f33921045ac9afe1372d",
+    "ciOnDocsHead": {
+      "runId": 44660657613,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44660657613",
+      "verify": "success",
+      "duration": "~4m59s",
+      "note": "docs-only commit d5c77ad after green product SHA b0b1874"
+    },
+    "hostingerReadonly": {
+      "composio": "SIGNED_OUT_THIS_SESSION",
+      "punctumpictureHealth": "HTTP_200",
+      "aliceblueHealth": "UNREACHABLE_EMPTY_REPLY",
+      "writes": 0
+    },
+    "g19FindingsIncorporation": {
+      "status": "AWAITING_INDEPENDENT_REVIEW_RESULTS",
+      "package": "docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
+      "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+      "rule": "Do not set G19=PASS until signed acceptance on exact SHA; map findings to P0/P1/P2 and residualRisks only; no invented PASS",
+      "findings": []
+    },
+    "gateRecordOverrides": {
+      "G06": {
+        "status": "NOT_RUN",
+        "localEvidence": "Unit helpers 3/3 + matrix rogue/expired/issuer/azp/tamper/missing-sid; real JWKS/Clerk target absent"
+      },
+      "G08": {
+        "status": "NOT_RUN",
+        "localEvidence": "TTL helpers + revocation/rebind/logout fail-closed matrix; real Clerk session cycle absent"
+      },
+      "G09": {
+        "status": "NOT_RUN",
+        "localEvidence": "Cookie GET/HEAD A→B media 0-byte + favorites PUT/DELETE 404 added; remote A/B after restart absent"
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Parallel review on b0b1874 in flight; incorporation stub ready; no PASS"
+      },
+      "G05": { "status": "FAIL" },
+      "G17": { "status": "FAIL" }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "localProof": {
+      "clerkMatrixPlusHelpers": "8/8 PASS (5 matrix incl G09 cookie/HEAD/favorites + 3 helper units)",
+      "composioHostinger": "SIGNED_OUT",
+      "publicHealth": "200"
+    },
+    "changes": [
+      "G09 cookie GET/HEAD A/B media zero-byte + favorites isolation assertions",
+      "G06/G08 clerk revocation helper unit tests",
+      "G19 findings incorporation stub awaiting parallel review",
+      "Hostinger read-only: Composio unavailable; curl health evidence only"
     ]
   }
 }

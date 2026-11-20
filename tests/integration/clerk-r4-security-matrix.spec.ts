@@ -342,6 +342,37 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       expect(deniedMedia.status).toBe(404);
       expect((await deniedMedia.arrayBuffer()).byteLength).toBe(0);
     }
+    // G09 completeness: cookie session + HEAD must also leak zero bytes / no body.
+    for (const method of ["GET", "HEAD"] as const) {
+      for (const preset of ["thumb", "gallery", "download"]) {
+        const denied = await dispatch(
+          clerkEnv,
+          `/api/client/galleries/${galleryB}/images/${imageB}/${preset}`,
+          { method, headers: { Cookie: clientACookie } },
+        );
+        expect(denied.status).toBe(404);
+        expect((await denied.arrayBuffer()).byteLength).toBe(0);
+      }
+    }
+    const favoriteDenied = await dispatch(
+      clerkEnv,
+      `/api/client/galleries/${galleryB}/favorites/${imageB}`,
+      {
+        method: "PUT",
+        headers: { Cookie: clientACookie, "Content-Type": "application/json" },
+        body: "{}",
+      },
+    );
+    expect(favoriteDenied.status).toBe(404);
+    expect(
+      (
+        await dispatch(
+          clerkEnv,
+          `/api/client/galleries/${galleryB}/favorites/${imageB}`,
+          { method: "DELETE", headers: { Cookie: clientACookie } },
+        )
+      ).status,
+    ).toBe(404);
 
     // 5. Authenticated Clerk user WITHOUT D1 link denied on both admin & client
     const unlinkedJwt = await signClerkJwt(primaryPriv, {
