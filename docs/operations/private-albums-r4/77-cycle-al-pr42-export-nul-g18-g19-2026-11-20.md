@@ -10,7 +10,9 @@
 | Base | `codex/punctum-r4-goal-20261115` @ `f0f951d` |
 | Branch | `cursor/r4-aj-security-phase-b-ae72` |
 | HEAD ao abrir PR | `7cef6d900480b470cfabb1948c6c888e245a42d3` |
-| CI no open | run `44659567781` — `verify` in_progress / `hostinger-node-qa` skipped |
+| HEAD AL | `b0b18748f64269612c15f33921045ac9afe1372d` |
+| CI no open | run `44659567781` — `verify` **SUCCESS** / `hostinger-node-qa` skipped |
+| CI exact AL HEAD | run `44660042268` — `verify` **SUCCESS** (~4m) / `hostinger-node-qa` skipped |
 | ManagePullRequest | indisponível neste subagente; body refresh via parent |
 
 ## Mudanças deste ciclo
@@ -26,16 +28,16 @@
 | Gate | AK | AL | Nota |
 | --- | --- | --- | --- |
 | G01 | PASS | PASS | + PR #42 inventariado |
-| G02 | NOT_RUN | NOT_RUN→aguardar CI exact SHA pós-push AL | Local 326/326; CI in flight / re-run |
+| G02 | NOT_RUN | NOT_RUN (+ **PARTIAL_VERIFIED** local/CI) | CI `44660042268` SUCCESS exact `b0b1874`; não promove PASS remoto |
 | G05 | FAIL | FAIL | Local only; remoto não homologado |
 | G06 | NOT_RUN | NOT_RUN | TDD local reforçado; sem Access/Clerk real |
 | G08 | NOT_RUN | NOT_RUN | Idem |
 | G17 | FAIL | FAIL | Custo/CPU alvo |
 | G18 | NOT_RUN | NOT_RUN | + PASS_LOCAL_SYNTHETIC demo; remoto NOT_RUN |
 | G19 | BLOCKED_SECURITY | BLOCKED_SECURITY | Package preparado; sem signoff |
-| G21 | NOT_RUN | NOT_RUN→progresso via PR #42 draft | CI exact SHA pendente conclusão |
+| G21 | NOT_RUN | NOT_RUN (+ **PARTIAL_VERIFIED** draft+CI) | PR #42 + CI green; review/merge ainda abertos |
 
-Contagem conservadora inalterada: **1 PASS / 2 FAIL / 5 BLOCKED_EXTERNAL / 1 BLOCKED_SECURITY / 15 NOT_RUN**.
+Contagem canônica inalterada: **1 PASS / 2 FAIL / 5 BLOCKED_EXTERNAL / 1 BLOCKED_SECURITY / 15 NOT_RUN**.
 
 ## DoD
 
@@ -47,6 +49,6 @@ Contagem conservadora inalterada: **1 PASS / 2 FAIL / 5 BLOCKED_EXTERNAL / 1 BLO
 
 ## Próximo bloco
 
-1. Observar CI do HEAD AL; corrigir se vermelho.
-2. Parent: refresh PR #42 body com evidência AL + pedir revisão G19 no package.
+1. Parent: refresh PR #42 body com HEAD `b0b1874`, CI #44660042268 SUCCESS, export NUL fix, G18 demo, G19 package path.
+2. Bugbot/revisor: G19 package em `g19-independent-review-package-2026-11-20.md`.
 3. Autorização humana para QA managed isolado (sem cutover).

@@ -4,12 +4,12 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AL 2026-11-20: PR #42 draft opened; Hostinger D1 export NUL truncation fixed (69/0/1 node tests); G18 local synthetic SQLite restore demo PASS_LOCAL; G19 review package prepared. Exact-SHA CI in flight/re-run on PR #42. Remote Hostinger/Clerk/cost/LGPD/release still open. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AL 2026-11-20: PR #42 draft; D1 export NUL fix; G18 local demo; G19 package; CI verify SUCCESS on HEAD b0b1874 (run 44660042268) and prior 7cef6d9 (44659567781). G02 PARTIAL_VERIFIED / G21 progress only — not production. Remote Hostinger/Clerk/cost/LGPD/release still open. NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-20",
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "baseBranch": "codex/punctum-r4-goal-20261115",
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
-  "headBeforeStateUpdate": "7cef6d900480b470cfabb1948c6c888e245a42d3",
+  "headBeforeStateUpdate": "b0b18748f64269612c15f33921045ac9afe1372d",
   "pullRequest": 42,
   "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
   "currentCycle20261110Z": {
@@ -4740,14 +4740,23 @@
     "ciAtPrOpen": {
       "runId": 44659567781,
       "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44659567781",
-      "verify": "in_progress_at_ledger_write",
-      "hostingerNodeQa": "skipped"
+      "verify": "success",
+      "hostingerNodeQa": "skipped",
+      "headSha": "7cef6d900480b470cfabb1948c6c888e245a42d3"
+    },
+    "ciExactHeadAl": {
+      "runId": 44660042268,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44660042268",
+      "verify": "success",
+      "hostingerNodeQa": "skipped",
+      "headSha": "b0b18748f64269612c15f33921045ac9afe1372d"
     },
     "gateRecordOverrides": {
       "G02": {
         "status": "NOT_RUN",
-        "localEvidence": "326/326 Worker + Hostinger 69/0/1 + G18 demo; exact-SHA CI pending conclusion on PR #42",
-        "note": "May become PARTIAL_VERIFIED only after green exact-SHA CI; never remote PASS"
+        "localStatus": "PARTIAL_VERIFIED",
+        "localEvidence": "CI verify SUCCESS exact HEAD b0b1874 run 44660042268; 326/326 Worker + Hostinger 69/0/1 + G18 demo. Canonical gate remains NOT_RUN for remote/integration DoD; do not promote historical PASS.",
+        "note": "PARTIAL_VERIFIED is local/CI evidence only"
       },
       "G18": {
         "status": "NOT_RUN",
@@ -4760,7 +4769,8 @@
       },
       "G21": {
         "status": "NOT_RUN",
-        "evidence": "Draft PR #42 open; CI in flight; integration/review incomplete"
+        "localStatus": "PARTIAL_VERIFIED",
+        "evidence": "Draft PR #42 open; CI verify SUCCESS on exact AL HEAD; review/merge/integration still incomplete — not PASS"
       },
       "G05": { "status": "FAIL" },
       "G17": { "status": "FAIL" }
@@ -4783,13 +4793,15 @@
       "g18WorkersRecovery": "20/20 PASS client-recovery.spec.ts",
       "g06g08Focused": "12/12 PASS clerk matrix+pilot revalidation",
       "g19Package": "prepared",
+      "ciExactHead": "SUCCESS verify run 44660042268 on b0b1874",
       "managePullRequest": "unavailable_subagent_note_for_parent"
     },
     "changes": [
       "Fix managed-d1-export TEXT NUL truncation via typeof+hex serialization",
       "Add scripts/r4-g18-local-sqlite-restore-demo(.test).mjs",
       "Add G19 independent review package",
-      "Record PR #42 URL and CI-in-flight in ledger"
+      "Wire managed-d1-export + G18 demo into CI verify",
+      "Record PR #42 URL and exact-SHA CI SUCCESS in ledger"
     ]
   }
 }
