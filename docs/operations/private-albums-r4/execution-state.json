@@ -5051,5 +5051,48 @@
       "Record CI SUCCESS on AN HEAD 88970b3 (run 44661780547)",
       "Verdict READY_FOR_AUTHORIZATION not COMPLETED_VERIFIED"
     ]
+  },
+  "currentCycle20261120AQ": {
+    "report": "docs/operations/private-albums-r4/82-cycle-aq-qa-unblock-2026-11-20.md",
+    "mission": "PUNCTUM-R1-R3-QA-UNBLOCK-20261120",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "takeoverHead": "f5dddb49853883a239ff737a111e7cfe3cfd21f2",
+    "knownMissionStart": "7834423e40296d04894ecc5ade203a6f56847afd",
+    "decision": "NO_GO_PRODUCTION",
+    "verdict": "PARTIAL_VERIFIED",
+    "completionVerdict": "NOT_COMPLETED_VERIFIED",
+    "productionChange": "NONE",
+    "r1": "BLOCKED_API_GAP",
+    "r3": "AWAITING_A2",
+    "clerkSecret": {
+      "name": "CLERK_SECRET_KEY",
+      "classification": "sk_live_",
+      "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+      "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640472"
+    },
+    "hostinger": {
+      "used": "hostinger_usings-moko",
+      "adminToolkit": "custom_punctum_picture_administra_o",
+      "adminId": "custom_punctum_picture_administra_o_stamen-form",
+      "adminApi": "HTTP_401",
+      "order": 1008628483,
+      "user": "u571409090"
+    },
+    "remoteG05G17G18": "NOT_RUN_REMOTE",
+    "g19": "BLOCKED_SECURITY",
+    "authorizationChecklist": {
+      "A1_R1_Clerk_max_session_le_14d": "PENDING_HUMAN",
+      "A2_R3_Hostinger_QA_staging_path": "PENDING_HUMAN",
+      "A3_G20_LGPD_studio": "PENDING_HUMAN",
+      "A4_G15_physical_a11y": "PENDING_HUMAN",
+      "A5_G19_security_signoff_exact_sha": "PENDING_HUMAN",
+      "A6_G22_merge_cutover_authorization": "PENDING_HUMAN",
+      "A7_G23_rollback_rehearsal_authorization": "PENDING_HUMAN"
+    },
+    "executedCutover": false,
+    "executedDns": false,
+    "executedProductionWrite": false,
+    "siteCreated": false
   }
 }

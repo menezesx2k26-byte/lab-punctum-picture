@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "cycle": "AQ",
+  "mission": "PUNCTUM-R1-R3-QA-UNBLOCK-20261120",
+  "recordedAt": "2026-11-20T06:05:00Z",
+  "pr": 42,
+  "prUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+  "branch": "cursor/r4-aj-security-phase-b-ae72",
+  "takeoverHead": "f5dddb49853883a239ff737a111e7cfe3cfd21f2",
+  "knownMissionStart": "7834423e40296d04894ecc5ade203a6f56847afd",
+  "preservedCommitsAfterKnownStart": [
+    "dc3e555d564296b8111937dd712541e35725eb31",
+    "f5dddb49853883a239ff737a111e7cfe3cfd21f2"
+  ],
+  "productionDecision": "NO_GO",
+  "verdict": "PARTIAL_VERIFIED",
+  "g01ClerkSecret": {
+    "name": "CLERK_SECRET_KEY",
+    "classification": "sk_live_",
+    "http": 200,
+    "environment_type": "production",
+    "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+    "matchesKnownProductionInstance": true,
+    "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640472",
+    "runSha": "dc3e555d564296b8111937dd712541e35725eb31",
+    "secretListApi": "HTTP_403",
+    "workflowDispatch": "HTTP_403",
+    "ownerUpdatedAt": "2026-11-20T05:24:43Z",
+    "runIsAfterOwnerUpdate": true,
+    "scriptUnchangedSinceRun": true
+  },
+  "r1": "BLOCKED_API_GAP",
+  "openapi": {
+    "bapi": "clerk/openapi-specs bapi/2026-08-20.yml Instance schema",
+    "instanceFields": [
+      "object",
+      "id",
+      "environment_type",
+      "allowed_origins",
+      "allowed_subdomains",
+      "subdomain_allowlist_enabled",
+      "workspace_id",
+      "max_allowed_users"
+    ],
+    "maximumLifetimeInSchema": false,
+    "platformBetaSessionSettings": false
+  },
+  "r3": "AWAITING_A2",
+  "hostingerConnectionUsed": "hostinger_usings-moko",
+  "adminConnection": {
+    "toolkit": "custom_punctum_picture_administra_o",
+    "id": "custom_punctum_picture_administra_o_stamen-form",
+    "status": "ACTIVE",
+    "account_type": "PRIVATE",
+    "aliasReturned": null,
+    "developersApi": "HTTP_401_Unauthenticated",
+    "identityQualified": false,
+    "usedForInventory": false
+  },
+  "remoteG05G17G18": "NOT_RUN_REMOTE",
+  "localG05": "PASS_LOCAL",
+  "localG18": "PASS_LOCAL_SYNTHETIC",
+  "g06LocalSuites": "PASS",
+  "g19SelfAccepted": false,
+  "authorization": {
+    "A1": "PENDING",
+    "A2": "PENDING",
+    "A3": "PENDING",
+    "A4": "PENDING",
+    "A5": "PENDING",
+    "A6": "PENDING",
+    "A7": "PENDING"
+  },
+  "writes": {
+    "hostinger": 0,
+    "dns": 0,
+    "clerkSettings": 0,
+    "sessionsRevoked": 0,
+    "productionDeploy": 0
+  },
+  "nextSafeAction": "Record Dashboard → Sessions → Maximum lifetime ≤ 14 days for ins_3M6H9ktM3jO84RvEu5BmKFokCfr, then a synthetic logout/replay. Record A2 before any site creation. Attach a Hostinger API credential to custom_punctum_picture_administra_o_stamen-form or keep using HOSTINGER_API on order 1008628483."
+}

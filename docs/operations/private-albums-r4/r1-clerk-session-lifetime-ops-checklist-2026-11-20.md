@@ -4,6 +4,8 @@
 
 **Cycle AP (2026-11-20 05:41 UTC):** `CLERK_SECRET_KEY` was re-read in Actions as `sk_live_` and returns instance `ins_3M6H9ktM3jO84RvEu5BmKFokCfr` (production, HTTP 200). `GET /v1/instance` still has no maximum-lifetime field. R1 remains **`BLOCKED_API_GAP`**. See `81-cycle-ap-qa-unblock-2026-11-20.md`. Production settings were not changed and no session was revoked.
 
+**Cycle AQ (2026-11-20):** the same Actions evidence still stands (`workflow_dispatch` and the secret-list API returned 403; the script is unchanged). Clerk OpenAPI `bapi/2026-08-20.yml` `Instance` schema matches that payload and has no lifetime field. `platform/beta.yml` in that snapshot has no `session_settings`. R1 remains **`BLOCKED_API_GAP`**. See `82-cycle-aq-qa-unblock-2026-11-20.md`.
+
 Punctum local `sid:` revocation TTL is **14 days** (`CLERK_SESSION_REVOCATION_TTL_SECONDS`). Upstream Clerk sessions longer than that can mint fresh JWTs with the same `sid` after local deny-list expiry unless Clerk itself is configured and revoked correctly.
 
 ## Operator steps (authorized Clerk Dashboard / Backend API)

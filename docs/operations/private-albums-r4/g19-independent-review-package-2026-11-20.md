@@ -2,7 +2,9 @@
 
 **Status:** prepared for Bugbot / independent security reviewer. **Not** a G19 PASS.
 
-**Cycle AP addendum:** the executing agent does not accept G19. R1 is still `BLOCKED_API_GAP` after a fresh Backend API read, and R3 is `AWAITING_A2` with no isolated Node origin. Package for the reviewer: `81-cycle-ap-qa-unblock-2026-11-20.md`.  
+**Cycle AP addendum:** the executing agent does not accept G19. R1 is still `BLOCKED_API_GAP` after a fresh Backend API read, and R3 is `AWAITING_A2` with no isolated Node origin. Package for the reviewer: `81-cycle-ap-qa-unblock-2026-11-20.md`.
+
+**Cycle AQ addendum:** this agent does not accept G19. OpenAPI `bapi/2026-08-20` confirms `GET /v1/instance` has no maximum lifetime. The custom connection `custom_punctum_picture_administra_o_stamen-form` is ACTIVE and returns 401 on the Hostinger API, so R3 stays `AWAITING_A2`. Local CI-equivalent suites passed and are not a remote pass. Package: `82-cycle-aq-qa-unblock-2026-11-20.md`.  
 **PR:** https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42  
 **Base:** `codex/punctum-r4-goal-20261115` @ `f0f951d9f30225d717c1f82df7661889e287ec34`  
 **Branch:** `cursor/r4-aj-security-phase-b-ae72`
