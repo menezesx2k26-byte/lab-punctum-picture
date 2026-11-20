@@ -1,0 +1,20 @@
+{
+  "measuredAt": "2026-11-20T03:41:38.962121+00:00",
+  "host": "aliceblue-locust-999458.hostingersite.com",
+  "dns": {
+    "addresses": [
+      "195.35.60.151",
+      "212.1.212.75",
+      "2a02:4780:1e:8803:fa65:2bf2:e037:f3f1",
+      "2a02:4780:22:c0b0:bd1f:35ba:4605:4474"
+    ]
+  },
+  "http": {
+    "https_health": {
+      "error": "RemoteDisconnected: Remote end closed connection without response"
+    },
+    "https_root": {
+      "error": "RemoteDisconnected: Remote end closed connection without response"
+    }
+  }
+}

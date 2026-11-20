@@ -47,6 +47,25 @@ test("stream accepts exact bytes, rejects short and oversized bodies",async()=>{
   assert.throws(()=>new target.FixedLengthStream(-1),/R4_FIXED_LENGTH_INVALID/);
   await assert.rejects(read(source([Buffer.from("ok"),"untrusted"]).pipeThrough(new target.FixedLengthStream(10))),/R4_STREAM_CHUNK_INVALID/);
 });
+test("G05 Node FixedLengthStream accepts exact 26214400 and rejects 26214401",async()=>{
+  const exact=26_214_400;
+  const target=isolate();installNodeR4StreamCompatibility(target);
+  assert.doesNotThrow(()=>new target.FixedLengthStream(exact));
+  assert.throws(()=>new target.FixedLengthStream(exact+1),/R4_FIXED_LENGTH_INVALID/);
+  // Stream exact limit in fixed-size chunks (no single 25MiB allocation retained beyond pipe).
+  const chunkSize=1024*1024;
+  const chunks=[];
+  let remaining=exact;
+  while(remaining>0){
+    const n=Math.min(chunkSize,remaining);
+    chunks.push(Buffer.alloc(n,0x5a));
+    remaining-=n;
+  }
+  const out=await read(source(chunks).pipeThrough(new target.FixedLengthStream(exact)));
+  assert.equal(out.byteLength,exact);
+  assert.equal(createHash("sha256").update(out).digest("hex"),
+    createHash("sha256").update(Buffer.alloc(exact,0x5a)).digest("hex"));
+});
 test("DigestStream returns a SHA-256 ArrayBuffer equal to Node crypto",async()=>{
   const target=isolate();installNodeR4StreamCompatibility(target);
   const stream=new target.crypto.DigestStream("SHA-256");
