@@ -2,16 +2,28 @@
   "schemaVersion": 3,
   "feature": "private-client-galleries",
   "round": "R4",
-  "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
+  "status": "TECHNICAL_DOD_PARTIAL_READY_FOR_AUTHORIZATION",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AN 2026-11-20: G19 reviews incorporated (Pass1 residuals R1–R4; Pass2 R4 app CLOSED). R2 admin Sair+Clerk signOut implemented fail-closed. R1 ops checklist only. G19 still BLOCKED_SECURITY (R1+R3 open). NO_GO_PRODUCTION.",
+  "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
+  "completionVerdict": "NOT_COMPLETED_VERIFIED",
+  "statusScope": "Cycle AO 2026-11-20: READY_FOR_AUTHORIZATION package published (80-cycle-ao). Human checklist A1–A7 required (R1 Clerk≤14d, R3 Hostinger QA, G20 LGPD, G15 a11y, G19 signoff, G22 merge/cutover, G23 rollback rehearsal). No merge/DNS/production writes. G19 still BLOCKED_SECURITY. NO_GO_PRODUCTION / not COMPLETED_VERIFIED.",
   "updatedAt": "2026-11-20",
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "baseBranch": "codex/punctum-r4-goal-20261115",
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
-  "headBeforeStateUpdate": "750c2b64536cf83a02bb6bc8251b2afc8082cd42",
+  "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+  "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
+  "headBeforeStateUpdate": "88970b37227e708d4ac56e26da0c851f38527513",
   "pullRequest": 42,
   "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+  "ciOnAnHead": {
+    "sha": "88970b37227e708d4ac56e26da0c851f38527513",
+    "runId": 44661780547,
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+    "job": "verify",
+    "conclusion": "success",
+    "hostingerNodeQa": "skipped"
+  },
   "currentCycle20261110Z": {
     "baselineRemoteSha": "07a2d15b816b340d62d21792c410139fa2562608",
     "baselineRemoteTree": "5aa3ac91407cd5b6620701e37516cfae0d8b3739",
@@ -4947,6 +4959,76 @@
       "DELETE /admin/api/session returns authSource",
       "R1 Clerk ≤14d ops checklist (no fake proof)",
       "Fill g19FindingsIncorporation from Pass1/Pass2"
+    ],
+    "ciOnHead": {
+      "sha": "88970b37227e708d4ac56e26da0c851f38527513",
+      "runId": 44661780547,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+      "conclusion": "success"
+    }
+  },
+  "currentCycle20261120AO": {
+    "report": "docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+    "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
+    "baselineHead": "88970b37227e708d4ac56e26da0c851f38527513",
+    "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
+    "completionVerdict": "NOT_COMPLETED_VERIFIED",
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "ciOnAnHead": {
+      "sha": "88970b37227e708d4ac56e26da0c851f38527513",
+      "runId": 44661780547,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+      "job": "verify",
+      "conclusion": "success",
+      "hostingerNodeQa": "skipped"
+    },
+    "ciKnownGreen": [
+      { "runId": 44659567781, "sha": "7cef6d9", "conclusion": "success" },
+      { "runId": 44660042268, "sha": "b0b1874", "conclusion": "success" },
+      { "runId": 44660657613, "sha": "d5c77ad", "conclusion": "success" },
+      { "runId": 44661334982, "sha": "750c2b6", "conclusion": "success" },
+      { "runId": 44661780547, "sha": "88970b3", "conclusion": "success" }
+    ],
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "authorizationChecklist": {
+      "A1_R1_Clerk_max_session_le_14d": "PENDING_HUMAN",
+      "A2_R3_Hostinger_QA_staging_path": "PENDING_HUMAN",
+      "A3_G20_LGPD_studio": "PENDING_HUMAN",
+      "A4_G15_physical_a11y": "PENDING_HUMAN",
+      "A5_G19_security_signoff_exact_sha": "PENDING_HUMAN",
+      "A6_G22_merge_cutover_authorization": "PENDING_HUMAN",
+      "A7_G23_rollback_rehearsal_authorization": "PENDING_HUMAN"
+    },
+    "g19": {
+      "status": "BLOCKED_SECURITY",
+      "R1": "OPEN",
+      "R2": "FIXED_AN",
+      "R3": "OPEN",
+      "R4": "CLOSED_APPLICATION_CODE"
+    },
+    "cutoverRollbackPointersOnly": true,
+    "executedCutover": false,
+    "executedDns": false,
+    "executedProductionWrite": false,
+    "changes": [
+      "Durable READY_FOR_AUTHORIZATION package (G01–G24 + H00–H10 matrices)",
+      "Human authorization checklist A1–A7 (no invented approvals)",
+      "Cutover/rollback runbook pointers only",
+      "Record CI SUCCESS on AN HEAD 88970b3 (run 44661780547)",
+      "Verdict READY_FOR_AUTHORIZATION not COMPLETED_VERIFIED"
     ]
   }
 }
