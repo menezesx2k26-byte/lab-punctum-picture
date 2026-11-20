@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "measuredAt": "2026-11-20T05:55:30Z",
+  "cycle": "AQ",
+  "requestedAlias": "Punctum Picture - Administração",
+  "writes": 0,
+  "excludedConnection": {
+    "id": "hostinger_brake-angelo",
+    "alias": "Operacao 50-50 Producao",
+    "used": false
+  },
+  "namedConnection": {
+    "foundAsHostingerToolkitAlias": false,
+    "toolkit": "custom_punctum_picture_administra_o",
+    "id": "custom_punctum_picture_administra_o_stamen-form",
+    "status": "ACTIVE",
+    "is_default": true,
+    "account_type": "PRIVATE",
+    "aliasFromList": null,
+    "slugNote": "Toolkit slug is the normalized requested name. The list call did not return a separate alias string.",
+    "toolSearch": "COMPOSIO_SEARCH_TOOLS returned no tools for this toolkit.",
+    "proxy": {
+      "GET https://developers.hostinger.com/api/hosting/v1/websites?order_id=1008628483": "401 Unauthenticated",
+      "interpretation": "The connection did not attach a Hostinger API credential. It is not identity-qualified for order 1008628483."
+    },
+    "used": false
+  },
+  "accountUsed": {
+    "id": "hostinger_usings-moko",
+    "alias": "Punctum Picture",
+    "status": "ACTIVE",
+    "created_at": "2026-10-14T00:55:30.587Z",
+    "reason": "Known Punctum connection. Read-only inventory only."
+  },
+  "otherVisibleHostingerAccounts": [
+    {
+      "id": "hostinger_ackey-genal",
+      "alias": null,
+      "status": "ACTIVE",
+      "created_at": "2026-09-24T02:33:02.227Z",
+      "used": false,
+      "reason": "Created 2026-09-24. Not the connection added for this mission. Not queried."
+    }
+  ],
+  "accountMatch": {
+    "order_id": 1008628483,
+    "order_status": "active",
+    "plan": "hostinger_premium_v3",
+    "subscription_id": "AzZiaeV92d20j1rmC",
+    "subscription_name": "Premium Web Hosting",
+    "subscription_status": "non_renewing",
+    "client_id": 1018536097,
+    "username": "u571409090",
+    "orders_on_connection": 1,
+    "websites": [
+      {
+        "domain": "punctumpicture.com",
+        "website_type": "nodejs",
+        "vhost_type": "main",
+        "is_enabled": true,
+        "username": "u571409090"
+      },
+      {
+        "domain": "menezescontabilidade.com",
+        "website_type": "builder",
+        "is_enabled": true,
+        "username": "u571409090",
+        "modified": false
+      }
+    ],
+    "aliceblueListed": false,
+    "setups_last_24h": 0
+  },
+  "capability": {
+    "executedReadOnly": [
+      "HOSTINGER_LIST_WEBSITES",
+      "HOSTINGER_LIST_ORDERS",
+      "HOSTINGER_LIST_WEBSITE_SETUPS",
+      "HOSTINGER_LIST_SUBSCRIPTIONS"
+    ],
+    "createNodeSiteInToolkitSearch": false,
+    "freeSubdomainToolPresent": "HOSTINGER_GENERATE_FREE_SUBDOMAIN",
+    "freeSubdomainCalled": false,
+    "githubActionsHOSTINGER_API": {
+      "redispatched": false,
+      "reason": "workflow_dispatch HTTP 403 for this token",
+      "priorRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640483",
+      "priorSha": "dc3e555d564296b8111937dd712541e35725eb31",
+      "comparison": "Same order, user, and Node site as this Composio read. Script unchanged since that run."
+    }
+  },
+  "a2": "AWAITING_A2",
+  "siteCreated": false,
+  "isolatedQaOrigin": null,
+  "qaBuildId": null
+}

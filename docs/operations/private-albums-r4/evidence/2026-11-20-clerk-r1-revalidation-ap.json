@@ -1,0 +1,167 @@
+{
+  "schema": 2,
+  "measuredAt": "2026-11-20T05:41:14.911Z",
+  "purpose": "Validate every configured Clerk secret, including CLERK_SECRET_KEY, without printing secret material",
+  "docs": "https://clerk.com/docs/guides/secure/session-options",
+  "knownProductionInstanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+  "secretPresence": {
+    "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY": true,
+    "CLERK_SECRET_KEY": true,
+    "PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY": true
+  },
+  "keyPrefixes": {
+    "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY": "sk_live_",
+    "CLERK_SECRET_KEY": "sk_live_"
+  },
+  "attempts": [
+    {
+      "envName": "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+      "http": 200,
+      "keyPrefix": "sk_live_",
+      "classification": "sk_live_",
+      "callsBackend": true,
+      "instance": {
+        "id": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+        "object": "instance",
+        "environment_type": "production"
+      },
+      "sessionEvidence": {
+        "topLevelKeys": [
+          "allowed_origins",
+          "allowed_subdomains",
+          "environment_type",
+          "id",
+          "max_allowed_users",
+          "object",
+          "subdomain_allowlist_enabled",
+          "workspace_id"
+        ],
+        "sessionFields": {},
+        "sessionFieldsPresent": false
+      },
+      "result": "VALID",
+      "matchesKnownProductionInstance": true
+    },
+    {
+      "envName": "CLERK_SECRET_KEY",
+      "http": 200,
+      "keyPrefix": "sk_live_",
+      "classification": "sk_live_",
+      "callsBackend": true,
+      "instance": {
+        "id": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+        "object": "instance",
+        "environment_type": "production"
+      },
+      "sessionEvidence": {
+        "topLevelKeys": [
+          "allowed_origins",
+          "allowed_subdomains",
+          "environment_type",
+          "id",
+          "max_allowed_users",
+          "object",
+          "subdomain_allowlist_enabled",
+          "workspace_id"
+        ],
+        "sessionFields": {},
+        "sessionFieldsPresent": false
+      },
+      "result": "VALID",
+      "matchesKnownProductionInstance": true
+    },
+    {
+      "envName": "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+      "probe": "/jwt_templates",
+      "http": 200,
+      "jwtTemplates": {
+        "shape": "list",
+        "count": 0,
+        "note": "Custom templates only. An empty list does not prove the default session token lacks sid.",
+        "templates": []
+      },
+      "note": "claim names and numeric token lifetime only; template bodies discarded"
+    },
+    {
+      "envName": "CLERK_SECRET_KEY",
+      "probe": "/jwt_templates",
+      "http": 200,
+      "jwtTemplates": {
+        "shape": "list",
+        "count": 0,
+        "note": "Custom templates only. An empty list does not prove the default session token lacks sid.",
+        "templates": []
+      },
+      "note": "claim names and numeric token lifetime only; template bodies discarded"
+    }
+  ],
+  "instanceIdentities": [
+    {
+      "envName": "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+      "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+      "environment_type": "production",
+      "matchesKnownProductionInstance": true
+    },
+    {
+      "envName": "CLERK_SECRET_KEY",
+      "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+      "environment_type": "production",
+      "matchesKnownProductionInstance": true
+    }
+  ],
+  "sameInstanceAcrossBackendSecrets": true,
+  "updatedSecret": {
+    "name": "CLERK_SECRET_KEY",
+    "classification": "sk_live_",
+    "publishable": false,
+    "http": 200,
+    "environment_type": "production",
+    "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+    "matchesKnownProductionInstance": true,
+    "callsBackend": true
+  },
+  "r1": {
+    "maximumLifetime": null,
+    "inactivityTimeout": null,
+    "sessionTokenLifetime": null,
+    "dashboardPath": "Clerk Dashboard \u2192 Sessions \u2192 Maximum lifetime \u2264 14 days (\u2264 336 hours)",
+    "docs": "https://clerk.com/docs/guides/secure/session-options",
+    "platformApi": "session_settings (Maximum lifetime). The session config key is session-token lifetime, not this control.",
+    "productionSettingsChanged": false,
+    "sessionsRevoked": false,
+    "localSidRevocationTtlSeconds": 1209600,
+    "status": "BLOCKED_API_GAP",
+    "reason": "Clerk docs (read 2026-11-20) place Maximum lifetime on Dashboard Sessions / Platform API session_settings. Backend GET /v1/instance did not yield an interpreted maximum lifetime. HTTP 200, inactivity timeout, and session-token TTL are not R1 proof.",
+    "dashboardProofStillRequired": [
+      "Clerk Dashboard \u2192 Sessions \u2192 Maximum lifetime enabled and duration \u2264 14 days (\u2264 336 hours) on the identified instance",
+      "Inactivity timeout is a separate control and is not maximum-lifetime proof",
+      "Session token lifetime (often ~60s) is not maximum-lifetime proof",
+      "Default session JWT must still contain sid; a custom jwt_templates list does not prove the default session token",
+      "Synthetic or QA-owned logout/replay must show a revoked sid stays rejected. Do not revoke real user sessions"
+    ],
+    "sourceEnv": "CLERK_SECRET_KEY",
+    "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr"
+  },
+  "secretNamesValidated": [
+    "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+    "CLERK_SECRET_KEY"
+  ],
+  "verdict": "INSTANCE_READ_OK",
+  "secretNameUsed": "CLERK_SECRET_KEY",
+  "agentNote": {
+    "cycle": "AP",
+    "measuredAt": "2026-11-20T05:41:14.911Z",
+    "ciRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640472",
+    "headSha": "dc3e555d564296b8111937dd712541e35725eb31",
+    "priorEvidence": "docs/operations/private-albums-r4/evidence/2026-11-20-clerk-r1-instance-readonly.json",
+    "githubSecretListFromAgent": "HTTP_403_Resource_not_accessible_by_integration",
+    "ownerMetadata": "CLERK_SECRET_KEY updated 2026-11-20 05:24:43 UTC (given). This run is later and reclassified that name from the prior pk_live_ result to sk_live_.",
+    "priorPrefix": {
+      "CLERK_SECRET_KEY": "pk_live_",
+      "source": "2026-11-20T04:53:09.929Z evidence"
+    },
+    "productionSettingsChanged": false,
+    "sessionsRevoked": false,
+    "sidCode": "worker/auth/clerk-auth.ts rejects verified tokens without sessionId and stores sid: revocation for 1209600 seconds"
+  }
+}

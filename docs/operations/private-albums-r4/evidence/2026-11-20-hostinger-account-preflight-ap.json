@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "measuredAt": "2026-11-20T05:41:13.374465+00:00",
+  "purpose": "G03 Hostinger RO preflight \u2014 prove Punctum account before any create",
+  "writesAttempted": 0,
+  "secretPresence": {
+    "HOSTINGER_API": true
+  },
+  "expected": {
+    "order_id": 1008628483,
+    "username": "u571409090",
+    "main_domain": "punctumpicture.com",
+    "temp_domain_historical": "aliceblue-locust-999458.hostingersite.com",
+    "do_not_touch": "menezescontabilidade.com"
+  },
+  "checks": {
+    "websites_by_order": {
+      "http": 200,
+      "error": null,
+      "sites": [
+        {
+          "domain": "punctumpicture.com",
+          "username": "u571409090",
+          "order_id": 1008628483,
+          "website_type": "nodejs",
+          "vhost_type": "main",
+          "is_enabled": true
+        },
+        {
+          "domain": "menezescontabilidade.com",
+          "username": "u571409090",
+          "order_id": 1008628483,
+          "website_type": "builder",
+          "vhost_type": null,
+          "is_enabled": true
+        }
+      ],
+      "punctum_nodejs": true,
+      "nodejs_count": 1,
+      "website_count": 2
+    },
+    "orders": {
+      "http": 200,
+      "error": null,
+      "orders": [
+        {
+          "id": 1008628483,
+          "status": "active",
+          "subscription_id": "AzZiaeV92d20j1rmC",
+          "plan": "hostinger_premium_v3",
+          "created_at": "2026-01-22T14:15:54Z"
+        }
+      ],
+      "expectedOrderPresent": true
+    },
+    "nodejs_capacity_observed": {
+      "nodejsSiteCountOnOrder": 1,
+      "websiteCountOnOrder": 2,
+      "createAttempted": false,
+      "writesAttempted": 0,
+      "note": "Read-only counts only. No POST /orders/{order_id}/onboardings and no free-subdomain generation. A numeric Node.js quota was not returned by these GET endpoints."
+    },
+    "aliceblue_website": {
+      "http": 200,
+      "error": null,
+      "listed": false,
+      "count": 0
+    },
+    "build_settings": {
+      "http": 200,
+      "error": null,
+      "settings": {
+        "app_type": "other",
+        "node_version": 24,
+        "root_directory": null,
+        "output_directory": null,
+        "build_script": "build:hostinger:managed-runtime",
+        "entry_file": "services/punctum-hostinger-production/candidate-server.mjs",
+        "package_manager": "npm"
+      }
+    },
+    "build_history": {
+      "http": 200,
+      "error": null,
+      "page_items": 25,
+      "states": [
+        "completed",
+        "completed",
+        "completed",
+        "completed",
+        "completed",
+        "completed",
+        "failed",
+        "failed"
+      ]
+    },
+    "env_inventory": {
+      "http": 500,
+      "error": "[Hosting:9999] Request failed"
+    }
+  },
+  "accountConfirmed": true,
+  "nodeApiReadable": true,
+  "deployPath": "HOSTINGER_API_NODE_BUILDS_READ_OK",
+  "isolatedQaOrigin": null,
+  "blockingCall": null,
+  "verdict": "PUNCTUM_ACCOUNT_CONFIRMED_NODE_API_READABLE",
+  "nextSafeNote": "Composio cannot deploy. HOSTINGER_API can read Node builds. Isolated QA still needs an empty additional Node host (not main punctumpicture.com) before any build POST. GENERATE_FREE_SUBDOMAIN alone is not a host.",
+  "agentNote": {
+    "cycle": "AP",
+    "ciRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640483",
+    "headSha": "dc3e555d564296b8111937dd712541e35725eb31",
+    "priorEvidence": "docs/operations/private-albums-r4/evidence/2026-11-20-hostinger-account-preflight.json",
+    "envInventoryHttp": 500,
+    "envInventoryNote": "GET nodejs builds/settings/env returned Hosting:9999. Build settings and build history remained HTTP 200. No env values were read.",
+    "createAttempted": false,
+    "a2": "AWAITING_A2"
+  }
+}

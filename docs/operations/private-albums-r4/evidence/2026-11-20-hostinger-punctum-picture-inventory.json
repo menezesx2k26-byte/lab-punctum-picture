@@ -1,0 +1,201 @@
+{
+  "measuredAt": "2026-11-20T03:43:23.792962+00:00",
+  "connection": {
+    "id": "hostinger_usings-moko",
+    "alias": "Punctum Picture",
+    "toolkit": "hostinger",
+    "status": "ACTIVE",
+    "is_default": false,
+    "note": "Only this connection used. Default hostinger_brake-angelo (Operacao 50-50) NOT used."
+  },
+  "reconcile": {
+    "docs_ref": "docs/operations/hostinger-managed-release-status-2026-11-14.md",
+    "order_1008628483": "CONFIRMED_ACTIVE on this connection",
+    "username_u571409090": "CONFIRMED on punctumpicture.com nodejs site",
+    "aliceblue_locust_999458": "NOT_LISTED as website; DNS resolves but HTTPS unreachable (RemoteDisconnected/Empty reply)",
+    "vps_2135319": "NOT_ON_THIS_ACCOUNT (LIST_VIRTUAL_MACHINES empty) \u2014 reference only, not proof",
+    "same_order_also_hosts": "menezescontabilidade.com (builder) \u2014 inventory fact; no Contabilidade mutations"
+  },
+  "resources": {
+    "virtual_machines": [],
+    "ssh_public_keys_total": 0,
+    "orders": [
+      {
+        "id": 1008628483,
+        "status": "active",
+        "plan": "hostinger_premium_v3",
+        "subscription_id": "AzZiaeV92d20j1rmC"
+      }
+    ],
+    "websites": [
+      {
+        "domain": "punctumpicture.com",
+        "website_type": "nodejs",
+        "vhost_type": "main",
+        "is_enabled": true,
+        "order_id": 1008628483,
+        "username": "u571409090",
+        "root_directory": "/home/u571409090/domains/punctumpicture.com/public_html",
+        "created_at": "2026-10-28T21:17:59Z"
+      },
+      {
+        "domain": "menezescontabilidade.com",
+        "website_type": "builder",
+        "order_id": 1008628483,
+        "username": "u571409090",
+        "note": "co-tenant on same order; not touched"
+      }
+    ],
+    "domains_portfolio": [
+      {
+        "domain": "menezescontabilidade.com",
+        "status": "active",
+        "id": 28266231
+      }
+    ],
+    "subscriptions_summary": [
+      {
+        "id": "AzZiaeV92d20j1rmC",
+        "name": "Premium Web Hosting",
+        "status": "non_renewing"
+      },
+      {
+        "id": "AzZjm8V92d2Rb1rES",
+        "name": ".COM Domain",
+        "status": "non_renewing"
+      },
+      {
+        "name": "Starter Business Email",
+        "count": 2
+      },
+      {
+        "name": "Reach 100",
+        "count": 1
+      }
+    ],
+    "website_setups_last_24h": [],
+    "dns_snapshots_punctumpicture": []
+  },
+  "dns_read_punctumpicture_com_hostinger_zone": {
+    "apex_ALIAS": "punctumpicture.com.cdn.hstgr.net.",
+    "www_CNAME": "www.punctumpicture.com.cdn.hstgr.net.",
+    "ftp_A": "212.85.9.181",
+    "public_resolution_note": "Public dig resolves punctumpicture.com to Cloudflare 2606:4700:* / 172.67.164.87 \u2014 Hostinger zone view differs from live public DNS (Cloudflare Worker still fronting).",
+    "verify_ownership": {
+      "domain": "punctumpicture.com",
+      "is_accessible": false,
+      "txt_to_verify": ""
+    },
+    "domain_forwarding": {
+      "http_status": 404,
+      "message": "Domain does not have a forwarding"
+    }
+  },
+  "api_capability_matrix": {
+    "CONNECTED": true,
+    "DEPLOY_VERIFIED": false,
+    "allowed_observed": {
+      "read_list_vms": true,
+      "read_list_websites": true,
+      "read_list_orders": true,
+      "read_list_subscriptions": true,
+      "read_list_domains": true,
+      "read_dns_records": true,
+      "read_dns_snapshots": true,
+      "read_website_setups_24h": true,
+      "read_public_keys": true,
+      "verify_domain_ownership": true,
+      "validate_dns_records_tool_exists": true,
+      "get_domain_forwarding": true
+    },
+    "missing_or_absent_in_composio_hostinger_toolkit": [
+      "managed Node deploy / build / restart",
+      "file manager read/write",
+      "SSH shell exec to managed hosting (not VPS)",
+      "SSL certificate status/detail tool",
+      "cron / database / FTP management",
+      "VPS metrics/restart (no VMs on this account anyway)"
+    ],
+    "write_tools_exist_but_not_executed": [
+      "HOSTINGER_CREATE_PUBLIC_KEY",
+      "HOSTINGER_GENERATE_FREE_SUBDOMAIN",
+      "HOSTINGER_CREATE_WHOIS_PROFILE",
+      "HOSTINGER_VALIDATE_DNS_RECORDS (validate-only; DNS mutate tools not confirmed in search)"
+    ],
+    "proxy_execute": "NOT_USED \u2014 COMPOSIO_PROXY_EXECUTE has no account selector; would risk default Hostinger account"
+  },
+  "calls_made": [
+    {
+      "tool": "HOSTINGER_LIST_VIRTUAL_MACHINES",
+      "account": "hostinger_usings-moko",
+      "result": "success empty"
+    },
+    {
+      "tool": "HOSTINGER_LIST_SUBSCRIPTIONS",
+      "account": "hostinger_usings-moko",
+      "result": "success n=5"
+    },
+    {
+      "tool": "HOSTINGER_LIST_DOMAINS",
+      "account": "hostinger_usings-moko",
+      "result": "success n=1 menezescontabilidade.com"
+    },
+    {
+      "tool": "HOSTINGER_LIST_WEBSITES",
+      "account": "hostinger_usings-moko",
+      "result": "success punctumpicture.com nodejs + contabilidade builder"
+    },
+    {
+      "tool": "HOSTINGER_LIST_ORDERS",
+      "account": "hostinger_usings-moko",
+      "result": "success order 1008628483"
+    },
+    {
+      "tool": "HOSTINGER_LIST_PUBLIC_KEYS",
+      "account": "hostinger_usings-moko",
+      "result": "success empty"
+    },
+    {
+      "tool": "HOSTINGER_GET_DNS_RECORDS",
+      "account": "hostinger_usings-moko",
+      "args": "punctumpicture.com",
+      "result": "success Hostinger CDN ALIAS"
+    },
+    {
+      "tool": "HOSTINGER_LIST_WEBSITE_SETUPS",
+      "account": "hostinger_usings-moko",
+      "result": "success empty"
+    },
+    {
+      "tool": "HOSTINGER_VERIFY_DOMAIN_OWNERSHIP",
+      "account": "hostinger_usings-moko",
+      "result": "is_accessible=false"
+    },
+    {
+      "tool": "HOSTINGER_GET_DOMAIN_FORWARDING",
+      "account": "hostinger_usings-moko",
+      "result": "404 no forwarding"
+    },
+    {
+      "tool": "HOSTINGER_LIST_DNS_SNAPSHOTS",
+      "account": "hostinger_usings-moko",
+      "result": "success empty"
+    },
+    {
+      "tool": "HOSTINGER_LIST_WEBSITES",
+      "account": "hostinger_usings-moko",
+      "args": "domain=punctumpicture.com",
+      "result": "success 1 site"
+    }
+  ],
+  "remote_g05_g17_g18": {
+    "status": "NOT_RUN_REMOTE",
+    "reason": "No Composio tool to deploy/exec/SSH on managed Node; aliceblue temporary origin unreachable; public apex is Cloudflare not Hostinger Node process"
+  },
+  "clerk_r1": {
+    "composio_clerk_toolkit": "NOT_FOUND",
+    "missing_call": "No Composio Clerk tool / no CLERK_* env in agent workspace to GET Backend API instance session settings; Dashboard Sessions max lifetime remains human-only for proof",
+    "production_clerk_changed": false,
+    "sessions_revoked": false
+  }
+}

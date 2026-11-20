@@ -3,17 +3,33 @@ import { createHash } from "node:crypto";
 const identifier = (value) => '"' + value.replaceAll('"', '""') + '"';
 const applicationObject = (name) => !name.startsWith("sqlite_") && !name.startsWith("_cf_");
 
-function literal(value) {
-  if (value === null) return "NULL";
-  if (typeof value === "bigint") return value.toString();
-  if (typeof value === "number" && Number.isFinite(value)) {
-    const text = String(value);
+function literalFromStorage(type, hexValue, rawValue) {
+  if (type === "null") return "NULL";
+  if (type === "integer") {
+    if (typeof rawValue === "bigint") return rawValue.toString();
+    if (typeof rawValue === "number" && Number.isSafeInteger(rawValue)) {
+      return String(rawValue);
+    }
+    // Prefer the exact decimal captured by CAST(... AS TEXT) when available.
+    if (typeof rawValue === "string" && /^-?\d+$/.test(rawValue)) return rawValue;
+    throw Error("MANAGED_D1_VALUE_UNSUPPORTED");
+  }
+  if (type === "real") {
+    if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) {
+      throw Error("MANAGED_D1_VALUE_UNSUPPORTED");
+    }
+    const text = String(rawValue);
     return /[.e]/i.test(text) ? text : text + ".0";
   }
-  if (typeof value === "string") return value.includes("\0")
-    ? "CAST(X'" + Buffer.from(value).toString("hex") + "' AS TEXT)"
-    : "'" + value.replaceAll("'", "''") + "'";
-  if (value instanceof Uint8Array) return "X'" + Buffer.from(value).toString("hex") + "'";
+  if (type === "text") {
+    // node:sqlite truncates JS strings at embedded NULs; hex() is authoritative.
+    const bytes = Buffer.from(hexValue, "hex");
+    if (bytes.includes(0)) {
+      return "CAST(X'" + hexValue + "' AS TEXT)";
+    }
+    return "'" + bytes.toString("utf8").replaceAll("'", "''") + "'";
+  }
+  if (type === "blob") return "X'" + hexValue + "'";
   throw Error("MANAGED_D1_VALUE_UNSUPPORTED");
 }
 
@@ -34,10 +50,40 @@ export function exportD1Snapshot(db) {
       const columns = db.prepare("PRAGMA table_xinfo(" + identifier(table.name) + ")").all().filter((row) => row.hidden === 0).map((row) => row.name);
       if (!columns.length) throw Error("MANAGED_D1_COLUMNS_UNSUPPORTED");
       const selection = columns.map(identifier).join(",");
-      const statement = db.prepare("SELECT " + selection + " FROM " + identifier(table.name));
+      const typedSelection = columns
+        .map(
+          (column) =>
+            `typeof(${identifier(column)}) AS ${identifier(column + "__type")},` +
+            `hex(${identifier(column)}) AS ${identifier(column + "__hex")},` +
+            `CAST(${identifier(column)} AS TEXT) AS ${identifier(column + "__text")},` +
+            `${identifier(column)} AS ${identifier(column)}`,
+        )
+        .join(",");
+      const statement = db.prepare(
+        "SELECT " + typedSelection + " FROM " + identifier(table.name),
+      );
       statement.setReadBigInts(true);
       const rows = statement.all();
-      const inserts = rows.map((row) => "INSERT INTO " + identifier(table.name) + "(" + selection + ") VALUES(" + columns.map((column) => literal(row[column])).join(",") + ");").sort();
+      const inserts = rows
+        .map((row) => {
+          const values = columns.map((column) => {
+            const type = row[column + "__type"];
+            const hexValue = row[column + "__hex"] ?? "";
+            const raw =
+              type === "integer" ? (row[column] ?? row[column + "__text"]) : row[column];
+            return literalFromStorage(type, hexValue, raw);
+          });
+          return (
+            "INSERT INTO " +
+            identifier(table.name) +
+            "(" +
+            selection +
+            ") VALUES(" +
+            values.join(",") +
+            ");"
+          );
+        })
+        .sort();
       lines.push(...inserts);
       counts[table.name] = rows.length;
     }

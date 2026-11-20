@@ -119,6 +119,15 @@ export function extractClerkToken(request: Request): string | null {
   return null;
 }
 
+/** Bound to short-lived Clerk JWT instances (token digest keys). */
+export const CLERK_TOKEN_REVOCATION_TTL_SECONDS = 86_400;
+/**
+ * Bound to long-lived Clerk session identifiers (`sid:` keys).
+ * A 24h window left a window where Clerk could mint a fresh JWT for the same
+ * session after local revocation expired; 14 days covers typical max lifetimes.
+ */
+export const CLERK_SESSION_REVOCATION_TTL_SECONDS = 60 * 60 * 24 * 14;
+
 export async function clerkTokenRevocationKey(rawToken: string): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
@@ -128,6 +137,36 @@ export async function clerkTokenRevocationKey(rawToken: string): Promise<string>
     b.toString(16).padStart(2, "0"),
   ).join("");
   return `tk:${hex}`;
+}
+
+/**
+ * Best-effort sid extraction for revocation only. Untrusted decode is safe here
+ * because forged claims can only add keys to the deny-list, never grant access.
+ */
+export function clerkSessionIdFromRawToken(rawToken: string): string | null {
+  try {
+    const [, payload] = rawToken.split(".");
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const json = JSON.parse(atob(padded)) as { sid?: unknown };
+    return typeof json.sid === "string" &&
+      json.sid.length >= 3 &&
+      json.sid.length <= 180
+      ? json.sid
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clerkRevocationTtlSeconds(key: string, override?: number): number {
+  if (typeof override === "number" && Number.isFinite(override) && override > 0) {
+    return override;
+  }
+  return key.startsWith("sid:")
+    ? CLERK_SESSION_REVOCATION_TTL_SECONDS
+    : CLERK_TOKEN_REVOCATION_TTL_SECONDS;
 }
 
 export async function collectClerkRevocationKeys(
@@ -141,6 +180,8 @@ export async function collectClerkRevocationKeys(
   const rawToken = extractClerkToken(request);
   if (rawToken) {
     keys.add(await clerkTokenRevocationKey(rawToken));
+    const sessionId = clerkSessionIdFromRawToken(rawToken);
+    if (sessionId) keys.add(`sid:${sessionId}`);
   }
   return Array.from(keys);
 }
@@ -148,7 +189,7 @@ export async function collectClerkRevocationKeys(
 export async function revokeClerkSessionKeys(
   db: D1Database | undefined,
   keys: Array<string | null | undefined>,
-  ttlSeconds = 86_400,
+  ttlSeconds?: number,
 ): Promise<void> {
   if (!db) {
     throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
@@ -158,18 +199,25 @@ export async function revokeClerkSessionKeys(
   );
   if (unique.length === 0) return;
   const nowIso = new Date().toISOString();
-  const expiresIso = new Date(Date.now() + ttlSeconds * 1000).toISOString();
   try {
     await db
       .prepare("DELETE FROM revoked_clerk_tokens WHERE expires_at <= ?")
       .bind(nowIso)
       .run();
     for (const key of unique) {
+      const expiresIso = new Date(
+        Date.now() + clerkRevocationTtlSeconds(key, ttlSeconds) * 1000,
+      ).toISOString();
       await db
         .prepare(
           `INSERT INTO revoked_clerk_tokens (revocation_key, expires_at)
            VALUES (?, ?)
-           ON CONFLICT(revocation_key) DO UPDATE SET expires_at = excluded.expires_at`,
+           ON CONFLICT(revocation_key) DO UPDATE SET
+             expires_at = CASE
+               WHEN excluded.expires_at > revoked_clerk_tokens.expires_at
+               THEN excluded.expires_at
+               ELSE revoked_clerk_tokens.expires_at
+             END`,
         )
         .bind(key, expiresIso)
         .run();
@@ -183,7 +231,7 @@ export async function revokeClerkSessionKeys(
   }
 }
 
-async function isClerkTokenRevoked(
+export async function isClerkTokenRevoked(
   db: D1Database | undefined,
   keys: string[],
 ): Promise<boolean> {

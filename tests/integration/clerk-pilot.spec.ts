@@ -1,5 +1,6 @@
 import { env, exports } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
+import { revokeClerkSessionKeys } from "../../worker/auth/clerk-auth";
 import { bootstrapPrivateDb, seedClient } from "./client-fixture";
 import { handleClerkPilotRequest } from "../../worker/client/clerk-pilot";
 
@@ -16,8 +17,15 @@ function pilotEnv(overrides: Record<string, unknown> = {}): Env {
 function req(method = "GET", origin = ORIGIN) {
   return new Request(origin + "/api/clerk-pilot/me", { method });
 }
-const identity = async () => "user_fixture_alice";
+const identity = async () => ({
+  clerkUserId: "user_fixture_alice",
+  sessionId: "sess_fixture_alice",
+});
 const anonymous = async () => null;
+const sessionless = async () => ({
+  clerkUserId: "user_fixture_alice",
+  sessionId: "",
+});
 
 describe("Clerk migration pilot: isolated and fail closed", () => {
   beforeAll(bootstrapPrivateDb);
@@ -30,7 +38,7 @@ describe("Clerk migration pilot: isolated and fail closed", () => {
     let calls = 0;
     const response = await handleClerkPilotRequest(req(), pilotEnv({ CLERK_PILOT_ENABLED: "false" }), async () => {
       calls++;
-      return "user_fixture_alice";
+      return { clerkUserId: "user_fixture_alice", sessionId: "sess_dark" };
     });
     expect(response?.status).toBe(404);
     expect(calls).toBe(0);
@@ -44,16 +52,18 @@ describe("Clerk migration pilot: isolated and fail closed", () => {
     expect((await handleClerkPilotRequest(req(), pilotEnv({ CLERK_PILOT_ISSUER: undefined }), identity))?.status).toBe(503);
   });
 
-  it("rejects anonymous and unlinked identities, including legacy email matches", async () => {
+  it("rejects anonymous, sessionless and unlinked identities, including legacy email matches", async () => {
     await seedClient();
     expect((await handleClerkPilotRequest(req(), pilotEnv(), anonymous))?.status).toBe(401);
+    expect((await handleClerkPilotRequest(req(), pilotEnv(), sessionless))?.status).toBe(401);
     expect((await handleClerkPilotRequest(req(), pilotEnv(), identity))?.status).toBe(403);
   });
 
-  it("allows only explicitly mapped, enabled, version-matching client UUIDs", async () => {
+  it("allows only explicitly mapped, enabled, version-matching client UUIDs with an active session id", async () => {
     const clientId = await seedClient();
     const userId = "user_fixture_linked_" + clientId;
-    const linked = async () => userId;
+    const sessionId = "sess_linked_" + clientId;
+    const linked = async () => ({ clerkUserId: userId, sessionId });
     const now = new Date().toISOString();
     await env.DB.prepare(
       "INSERT INTO clerk_pilot_identity_links (clerk_user_id,client_id,session_version_at_link,created_at) VALUES (?,?,1,?)",
@@ -66,11 +76,18 @@ describe("Clerk migration pilot: isolated and fail closed", () => {
     const oldSession = (await handleClerkPilotRequest(req(), pilotEnv(), linked))?.status;
     expect(oldSession).toBe(200);
 
+    await revokeClerkSessionKeys(env.DB, [`sid:${sessionId}`]);
+    expect((await handleClerkPilotRequest(req(), pilotEnv(), linked))?.status).toBe(401);
+
     await env.DB.prepare("UPDATE client_accounts SET session_version = session_version + 1 WHERE id=?").bind(clientId).run();
-    expect((await handleClerkPilotRequest(req(), pilotEnv(), linked))?.status).toBe(403);
+    const nextSession = async () => ({
+      clerkUserId: userId,
+      sessionId: `${sessionId}_next`,
+    });
+    expect((await handleClerkPilotRequest(req(), pilotEnv(), nextSession))?.status).toBe(403);
     await env.DB.prepare("UPDATE clerk_pilot_identity_links SET session_version_at_link = session_version_at_link + 1 WHERE clerk_user_id=?").bind(userId).run();
     await env.DB.prepare("UPDATE client_accounts SET disabled_at = datetime('now') WHERE id=?").bind(clientId).run();
-    expect((await handleClerkPilotRequest(req(), pilotEnv(), linked))?.status).toBe(403);
+    expect((await handleClerkPilotRequest(req(), pilotEnv(), nextSession))?.status).toBe(403);
   });
 
   it("keeps the real Worker pilot endpoint dark and old client routes unauthenticated", async () => {

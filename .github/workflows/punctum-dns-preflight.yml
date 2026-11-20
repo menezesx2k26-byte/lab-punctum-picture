@@ -1,7 +1,8 @@
 name: Punctum read-only Cloudflare preflight
 on:
+  workflow_dispatch:
   push:
-    branches: [codex/punctum-managed-production-20261114]
+    branches: [codex/punctum-managed-production-20261114, cursor/r4-aj-security-phase-b-ae72]
     paths: [.github/workflows/punctum-dns-preflight.yml]
 permissions:
   contents: read

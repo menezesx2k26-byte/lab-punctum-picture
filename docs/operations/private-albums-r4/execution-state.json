@@ -2,14 +2,38 @@
   "schemaVersion": 3,
   "feature": "private-client-galleries",
   "round": "R4",
-  "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
+  "status": "TECHNICAL_DOD_PARTIAL_READY_FOR_AUTHORIZATION",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AJ 2026-11-19: Clerk account rebind stale session and missing revocation-storage fail-open corrected with red/green synthetic tests; admin DB-failure logout protection and account-switch UI hardened. 325/325 full Worker tests PASS on pre-final implementation state; new-final regression/CI pending. Managed Hostinger R4/real Clerk/restore/redeploy, cost/load, physical accessibility, independent security approval, LGPD and explicit release authorization remain open. NO_GO_PRODUCTION.",
-  "updatedAt": "2026-11-19",
-  "branch": "codex/punctum-r4-goal-20261115",
-  "baseBranch": "codex/punctum-managed-production-20261114",
-  "baseSha": "8abb9f38a0bc7a265ddde10e71686964f21a5dd9",
-  "headBeforeStateUpdate": "8abb9f38a0bc7a265ddde10e71686964f21a5dd9",
+  "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
+  "completionVerdict": "NOT_COMPLETED_VERIFIED",
+  "statusScope": "Cycle AO 2026-11-20: READY_FOR_AUTHORIZATION package published (80-cycle-ao). Human checklist A1–A7 required (R1 Clerk≤14d, R3 Hostinger QA, G20 LGPD, G15 a11y, G19 signoff, G22 merge/cutover, G23 rollback rehearsal). No merge/DNS/production writes. G19 still BLOCKED_SECURITY. NO_GO_PRODUCTION / not COMPLETED_VERIFIED.",
+  "updatedAt": "2026-11-20",
+  "branch": "cursor/r4-aj-security-phase-b-ae72",
+  "baseBranch": "codex/punctum-r4-goal-20261115",
+  "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
+  "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+  "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
+  "aoPackageSha": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+  "aoHead": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+  "headBeforeStateUpdate": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+  "pullRequest": 42,
+  "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+  "ciOnAnHead": {
+    "sha": "88970b37227e708d4ac56e26da0c851f38527513",
+    "runId": 44661780547,
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+    "job": "verify",
+    "conclusion": "success",
+    "hostingerNodeQa": "skipped"
+  },
+  "ciOnAoTip": {
+    "sha": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+    "runId": 44662435650,
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44662435650",
+    "job": "verify",
+    "conclusion": "success",
+    "hostingerNodeQa": "skipped"
+  },
   "currentCycle20261110Z": {
     "baselineRemoteSha": "07a2d15b816b340d62d21792c410139fa2562608",
     "baselineRemoteTree": "5aa3ac91407cd5b6620701e37516cfae0d8b3739",
@@ -4655,5 +4679,857 @@
       "linuxPosixSuite": "PENDING",
       "newFinalCI": "PENDING"
     }
+  },
+  "currentCycle20261120AK": {
+    "report": "docs/operations/private-albums-r4/76-cycle-ak-security-sid-ttl-pilot-ci-2026-11-20.md",
+    "goal": "PUNCTUM-FINAL-COMPLETION-20261119",
+    "sourceHeadVerified": "f0f951d9f30225d717c1f82df7661889e287ec34",
+    "branch": "cursor/r4-aj-security-phase-b-ae72",
+    "integrationBase": "codex/punctum-r4-goal-20261115",
+    "pullRequestParent": 40,
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "canonicalSpec": "SPEC section 23 via docs/operations/private-albums-r4/16-original-g01-g24-reconciliation.md (original txt absent from clone)",
+    "gateRecordsSource": "AJ conservative matrix + AK local evidence without promotion",
+    "gateRecordOverrides": {
+      "G01": {
+        "status": "PASS",
+        "evidence": "G00 inventory of main/PR40/Hostinger Conthabil read-only and AJ ledger"
+      },
+      "G05": {
+        "status": "FAIL",
+        "proofType": "QA_SYNTHETIC_LOCAL_PARTIAL",
+        "evidence": "PASS_LOCAL_SYNTHETIC_NODE 26214400 bytes SHA-256 c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce; remote managed Hostinger FAIL/not homologated"
+      },
+      "G08": {
+        "status": "NOT_RUN",
+        "proofType": "QA_SYNTHETIC_LOCAL_SECURITY_TDD_PARTIAL",
+        "evidence": "sid TTL 14d + raw-token sid collection + pilot sid/revocation RED/GREEN; real Clerk session cycle absent"
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Prior independent review residual P1 addressed locally; final SHA independent acceptance not obtained"
+      }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "hostingerGateCounts": {
+      "PASS": 1,
+      "BLOCKED_EXTERNAL": 8,
+      "NOT_RUN": 1,
+      "note": "H00 PASS read-only; H08 historical DNS inventory not re-promoted as fresh PASS this cycle"
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "targetProof": "READY_FOR_AUTHORIZATION",
+    "productionChange": "NONE",
+    "localProof": {
+      "securityFocused": "20/20 PASS (clerk matrix, pilot, admin rotation, client security)",
+      "fullWorkerVitest": "326/326 PASS, 62/62 files",
+      "typecheck": "PASS",
+      "eslintFocused": "PASS",
+      "npmAuditLow": "0 vulnerabilities after next@16.4.6",
+      "g05LocalSynthetic": "PASS_LOCAL_SYNTHETIC_NODE exact 25MiB + checksum",
+      "managedCandidateBuild": "PASS build:hostinger:candidate",
+      "remoteManagedHealth": "aliceblue hostname unreachable and absent from Conthabil website list; punctumpicture.com is Node main",
+      "driveHandoff": "NOT_AVAILABLE file 1C_0pEAi… 404 for connected Google account",
+      "newFinalCI": "IN_FLIGHT_PR42_RUN_44659567781_ON_7cef6d9_THEN_RERUN_AFTER_AL_PUSH"
+    },
+    "changes": [
+      "CLERK_SESSION_REVOCATION_TTL_SECONDS=14d for sid: keys; token digests remain 24h",
+      "collectClerkRevocationKeys extracts sid from raw Clerk JWT for logout deny-list",
+      "clerk-pilot requires sessionId and honors revocation storage fail-closed",
+      "next/eslint-config-next 16.4.6 to clear GHSA audit CI failure on AJ tip"
+    ]
+  },
+  "currentCycle20261120AL": {
+    "report": "docs/operations/private-albums-r4/77-cycle-al-pr42-export-nul-g18-g19-2026-11-20.md",
+    "g19ReviewPackage": "docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
+    "goal": "PUNCTUM-FINAL-COMPLETION-20261119",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "pullRequestDraft": true,
+    "branch": "cursor/r4-aj-security-phase-b-ae72",
+    "integrationBase": "codex/punctum-r4-goal-20261115",
+    "headAtPrOpen": "7cef6d900480b470cfabb1948c6c888e245a42d3",
+    "ciAtPrOpen": {
+      "runId": 44659567781,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44659567781",
+      "verify": "success",
+      "hostingerNodeQa": "skipped",
+      "headSha": "7cef6d900480b470cfabb1948c6c888e245a42d3"
+    },
+    "ciExactHeadAl": {
+      "runId": 44660042268,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44660042268",
+      "verify": "success",
+      "hostingerNodeQa": "skipped",
+      "headSha": "b0b18748f64269612c15f33921045ac9afe1372d"
+    },
+    "gateRecordOverrides": {
+      "G02": {
+        "status": "NOT_RUN",
+        "localStatus": "PARTIAL_VERIFIED",
+        "localEvidence": "CI verify SUCCESS exact HEAD b0b1874 run 44660042268; 326/326 Worker + Hostinger 69/0/1 + G18 demo. Canonical gate remains NOT_RUN for remote/integration DoD; do not promote historical PASS.",
+        "note": "PARTIAL_VERIFIED is local/CI evidence only"
+      },
+      "G18": {
+        "status": "NOT_RUN",
+        "proofType": "QA_SYNTHETIC_LOCAL_PARTIAL",
+        "evidence": "PASS_LOCAL_SYNTHETIC_G18_SQLITE 2/2/10 + NUL text; client-recovery 20/20; remote managed NOT_RUN"
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Review package prepared at g19-independent-review-package-2026-11-20.md; no independent signoff yet"
+      },
+      "G21": {
+        "status": "NOT_RUN",
+        "localStatus": "PARTIAL_VERIFIED",
+        "evidence": "Draft PR #42 open; CI verify SUCCESS on exact AL HEAD; review/merge/integration still incomplete — not PASS"
+      },
+      "G05": { "status": "FAIL" },
+      "G17": { "status": "FAIL" }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "localProof": {
+      "hostingerExportNulFix": "RED truncated note hex; GREEN 3/3 managed-d1-export tests; full suite 69 pass / 0 fail / 1 skip",
+      "g18LocalSqliteDemo": "PASS_LOCAL_SYNTHETIC_G18_SQLITE",
+      "g18WorkersRecovery": "20/20 PASS client-recovery.spec.ts",
+      "g06g08Focused": "12/12 PASS clerk matrix+pilot revalidation",
+      "g19Package": "prepared",
+      "ciExactHead": "SUCCESS verify run 44660042268 on b0b1874",
+      "managePullRequest": "unavailable_subagent_note_for_parent"
+    },
+    "changes": [
+      "Fix managed-d1-export TEXT NUL truncation via typeof+hex serialization",
+      "Add scripts/r4-g18-local-sqlite-restore-demo(.test).mjs",
+      "Add G19 independent review package",
+      "Wire managed-d1-export + G18 demo into CI verify",
+      "Record PR #42 URL and exact-SHA CI SUCCESS in ledger"
+    ]
+  },
+  "currentCycle20261120AM": {
+    "report": "docs/operations/private-albums-r4/78-cycle-am-g06-g09-local-g19-stub-2026-11-20.md",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "headConfirmedPushed": "d5c77ad4bf85b12c9b6ad8308d6d132128895471",
+    "productShaUnderG19Review": "b0b18748f64269612c15f33921045ac9afe1372d",
+    "ciOnDocsHead": {
+      "runId": 44660657613,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44660657613",
+      "verify": "success",
+      "duration": "~4m59s",
+      "note": "docs-only commit d5c77ad after green product SHA b0b1874"
+    },
+    "hostingerReadonly": {
+      "composio": "SIGNED_OUT_THIS_SESSION",
+      "punctumpictureHealth": "HTTP_200",
+      "aliceblueHealth": "UNREACHABLE_EMPTY_REPLY",
+      "writes": 0
+    },
+    "g19FindingsIncorporation": {
+      "status": "INCORPORATED_IN_CYCLE_AN_STILL_BLOCKED_SECURITY",
+      "package": "docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
+      "productShaReviewed": "b0b18748f64269612c15f33921045ac9afe1372d",
+      "rule": "Do not set G19=PASS until signed acceptance on exact SHA; map findings to P0/P1/P2 and residualRisks only; no invented PASS",
+      "reviews": [
+        {
+          "pass": 1,
+          "agent": "bc-e0f91a0a",
+          "verdict": "G19_NOT_PASS",
+          "exploitableP0P1InAkAlFocus": false,
+          "residuals": ["R1_clerk_max_session_le_14d_proof", "R2_admin_sair_signOut", "R3_hostinger_qa", "R4_scope"]
+        },
+        {
+          "pass": 2,
+          "agent": "bc-10cb5091",
+          "verdict": "R4_CLOSED_FOR_APPLICATION_CODE",
+          "newApplicationP0P1": false,
+          "note": "Zero new P0/P1 on worker/Hostinger/private media/upload/cache/Clerk; docs/ops remainders only"
+        }
+      ],
+      "residualStatus": {
+        "R1": "OPEN_OPS_CHECKLIST_ONLY",
+        "R2": "FIXED_IN_CYCLE_AN",
+        "R3": "OPEN_HOSTINGER_QA",
+        "R4": "CLOSED_APPLICATION_CODE"
+      },
+      "gateG19": "BLOCKED_SECURITY"
+    },
+    "gateRecordOverrides": {
+      "G06": {
+        "status": "NOT_RUN",
+        "localEvidence": "Unit helpers 3/3 + matrix rogue/expired/issuer/azp/tamper/missing-sid; real JWKS/Clerk target absent"
+      },
+      "G08": {
+        "status": "NOT_RUN",
+        "localEvidence": "TTL helpers + revocation/rebind/logout fail-closed matrix; real Clerk session cycle absent"
+      },
+      "G09": {
+        "status": "NOT_RUN",
+        "localEvidence": "Cookie GET/HEAD A→B media 0-byte + favorites PUT/DELETE 404 added; remote A/B after restart absent"
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Parallel review on b0b1874 in flight; incorporation stub ready; no PASS"
+      },
+      "G05": { "status": "FAIL" },
+      "G17": { "status": "FAIL" }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "localProof": {
+      "clerkMatrixPlusHelpers": "8/8 PASS (5 matrix incl G09 cookie/HEAD/favorites + 3 helper units)",
+      "composioHostinger": "SIGNED_OUT",
+      "publicHealth": "200"
+    },
+    "changes": [
+      "G09 cookie GET/HEAD A/B media zero-byte + favorites isolation assertions",
+      "G06/G08 clerk revocation helper unit tests",
+      "G19 findings incorporation stub awaiting parallel review",
+      "Hostinger read-only: Composio unavailable; curl health evidence only"
+    ]
+  },
+  "currentCycle20261120AN": {
+    "report": "docs/operations/private-albums-r4/79-cycle-an-g19-incorporate-r2-logout-2026-11-20.md",
+    "r1OpsChecklist": "docs/operations/private-albums-r4/r1-clerk-session-lifetime-ops-checklist-2026-11-20.md",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "baselineHead": "750c2b64536cf83a02bb6bc8251b2afc8082cd42",
+    "g19FindingsIncorporation": {
+      "status": "INCORPORATED_STILL_BLOCKED_SECURITY",
+      "pass1": {
+        "agent": "bc-e0f91a0a",
+        "verdict": "G19_NOT_PASS",
+        "exploitableP0P1": false,
+        "residuals": ["R1", "R2", "R3", "R4"]
+      },
+      "pass2": {
+        "agent": "bc-10cb5091",
+        "verdict": "R4_CLOSED_FOR_APPLICATION_CODE",
+        "newApplicationP0P1": false
+      },
+      "residualStatus": {
+        "R1": "OPEN_OPS_CHECKLIST_ONLY",
+        "R2": "FIXED_IN_THIS_COMMIT",
+        "R3": "OPEN_HOSTINGER_QA",
+        "R4": "CLOSED_APPLICATION_CODE"
+      }
+    },
+    "gateRecordOverrides": {
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Pass1+Pass2 incorporated; R2 fixed; R1 ops checklist only (no Dashboard proof); R3 Hostinger QA open; R4 app closed. No PASS."
+      },
+      "G05": { "status": "FAIL" },
+      "G17": { "status": "FAIL" }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "changes": [
+      "Admin LogoutButton + performAdminLogout: Punctum DELETE then Clerk signOut when authSource=clerk",
+      "DELETE /admin/api/session returns authSource",
+      "R1 Clerk ≤14d ops checklist (no fake proof)",
+      "Fill g19FindingsIncorporation from Pass1/Pass2"
+    ],
+    "ciOnHead": {
+      "sha": "88970b37227e708d4ac56e26da0c851f38527513",
+      "runId": 44661780547,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+      "conclusion": "success"
+    }
+  },
+  "currentCycle20261120AO": {
+    "report": "docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+    "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
+    "aoPackageSha": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+    "aoHead": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+    "baselineHead": "88970b37227e708d4ac56e26da0c851f38527513",
+    "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
+    "completionVerdict": "NOT_COMPLETED_VERIFIED",
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "ciOnAnHead": {
+      "sha": "88970b37227e708d4ac56e26da0c851f38527513",
+      "runId": 44661780547,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+      "job": "verify",
+      "conclusion": "success",
+      "hostingerNodeQa": "skipped"
+    },
+    "ciOnAoTip": {
+      "sha": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+      "runId": 44662435650,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44662435650",
+      "job": "verify",
+      "conclusion": "success",
+      "hostingerNodeQa": "skipped"
+    },
+    "ciKnownGreen": [
+      { "runId": 44659567781, "sha": "7cef6d9", "conclusion": "success" },
+      { "runId": 44660042268, "sha": "b0b1874", "conclusion": "success" },
+      { "runId": 44660657613, "sha": "d5c77ad", "conclusion": "success" },
+      { "runId": 44661334982, "sha": "750c2b6", "conclusion": "success" },
+      { "runId": 44661780547, "sha": "88970b3", "conclusion": "success" },
+      { "runId": 44662435650, "sha": "a14776a", "conclusion": "success" }
+    ],
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "authorizationChecklist": {
+      "A1_R1_Clerk_max_session_le_14d": "PENDING_HUMAN",
+      "A2_R3_Hostinger_QA_staging_path": "PENDING_HUMAN",
+      "A3_G20_LGPD_studio": "PENDING_HUMAN",
+      "A4_G15_physical_a11y": "PENDING_HUMAN",
+      "A5_G19_security_signoff_exact_sha": "PENDING_HUMAN",
+      "A6_G22_merge_cutover_authorization": "PENDING_HUMAN",
+      "A7_G23_rollback_rehearsal_authorization": "PENDING_HUMAN"
+    },
+    "g19": {
+      "status": "BLOCKED_SECURITY",
+      "R1": "OPEN",
+      "R2": "FIXED_AN",
+      "R3": "OPEN",
+      "R4": "CLOSED_APPLICATION_CODE"
+    },
+    "cutoverRollbackPointersOnly": true,
+    "executedCutover": false,
+    "executedDns": false,
+    "executedProductionWrite": false,
+    "changes": [
+      "Durable READY_FOR_AUTHORIZATION package (G01–G24 + H00–H10 matrices)",
+      "Human authorization checklist A1–A7 (no invented approvals)",
+      "Cutover/rollback runbook pointers only",
+      "Record CI SUCCESS on AN HEAD 88970b3 (run 44661780547)",
+      "Verdict READY_FOR_AUTHORIZATION not COMPLETED_VERIFIED"
+    ]
+  },
+  "currentCycle20261120AQ": {
+    "report": "docs/operations/private-albums-r4/82-cycle-aq-qa-unblock-2026-11-20.md",
+    "mission": "PUNCTUM-R1-R3-QA-UNBLOCK-20261120",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "takeoverHead": "f5dddb49853883a239ff737a111e7cfe3cfd21f2",
+    "knownMissionStart": "7834423e40296d04894ecc5ade203a6f56847afd",
+    "decision": "NO_GO_PRODUCTION",
+    "verdict": "PARTIAL_VERIFIED",
+    "completionVerdict": "NOT_COMPLETED_VERIFIED",
+    "productionChange": "NONE",
+    "r1": "BLOCKED_API_GAP",
+    "r3": "AWAITING_A2",
+    "clerkSecret": {
+      "name": "CLERK_SECRET_KEY",
+      "classification": "sk_live_",
+      "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+      "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640472"
+    },
+    "hostinger": {
+      "used": "hostinger_usings-moko",
+      "adminToolkit": "custom_punctum_picture_administra_o",
+      "adminId": "custom_punctum_picture_administra_o_stamen-form",
+      "adminApi": "HTTP_401",
+      "order": 1008628483,
+      "user": "u571409090"
+    },
+    "remoteG05G17G18": "NOT_RUN_REMOTE",
+    "g19": "BLOCKED_SECURITY",
+    "authorizationChecklist": {
+      "A1_R1_Clerk_max_session_le_14d": "PENDING_HUMAN",
+      "A2_R3_Hostinger_QA_staging_path": "PENDING_HUMAN",
+      "A3_G20_LGPD_studio": "PENDING_HUMAN",
+      "A4_G15_physical_a11y": "PENDING_HUMAN",
+      "A5_G19_security_signoff_exact_sha": "PENDING_HUMAN",
+      "A6_G22_merge_cutover_authorization": "PENDING_HUMAN",
+      "A7_G23_rollback_rehearsal_authorization": "PENDING_HUMAN"
+    },
+    "executedCutover": false,
+    "executedDns": false,
+    "executedProductionWrite": false,
+    "siteCreated": false
+  },
+  "currentCycle20261120AU": {
+    "mission": "PUNCTUM-R4-PRIVATE-ALBUMS-OPERATIONAL-DOD",
+    "date": "2026-11-20",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "baselineSha": "18193a9fcda873df12536624444e45b315e0324d",
+    "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
+    "pullRequest": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "baselineCi": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+    "qualificationCodeSha": "854f11fe4623d40b892078fbd9810c3e9592c02a",
+    "currentPullRequestChecks": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42/checks",
+    "localQualification": {
+      "environment": "Linux WSL / Node 24.21.0 / synthetic loopback",
+      "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+      "filesCompared": 555,
+      "byteIdentical": 552,
+      "structurallyEquivalent": [
+        "server/index.js",
+        "server/ssr/vinext-server.json",
+        "server/vinext-server.json"
+      ],
+      "regressionTestsPassed": 6,
+      "npmAuditVulnerabilities": 0,
+      "uploadChecksPassed": 49,
+      "uploadBytes": 26214400,
+      "syntheticOriginalSha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce",
+      "scheduledWorkerBuild": "PASS",
+      "managedLocalTestSuite": "PASS",
+      "ssrSmoke": {
+        "healthStatus": 200,
+        "htmlStatus": 200,
+        "draftStatus": 200,
+        "draftNoStore": true,
+        "prerenderMissingOrInvalidStatus": 403,
+        "prerenderAfterValidGuardStatus": 404
+      }
+    },
+    "plan": "docs/superpowers/plans/2026-11-20-punctum-r4-final-dod.md",
+    "report": "docs/operations/private-albums-r4/86-cycle-au-p0-final-dod-2026-11-20.md",
+    "hostinger": {
+      "order": 1008628483,
+      "domain": "punctumpicture.com",
+      "plan": "hostinger_premium_v3",
+      "nodeApp": "PRESENT",
+      "secondNodeApp": "PLAN_LIMIT_UPGRADE_REQUIRED",
+      "limits": {
+        "cpuCores": 1,
+        "memoryMiB": 2048,
+        "diskGB": 20,
+        "maxProcesses": 80
+      },
+      "logs": "FAILED_TO_LOAD",
+      "dailyBackupCron": "CONFIGURED_EXECUTION_UNVERIFIED",
+      "isolatedOrigin": "PENDING_APPROVED_ZERO_COST_ORIGIN"
+    },
+    "clerk": {
+      "environment": "production",
+      "emailOtpSignIn": true,
+      "emailOtpSignUp": true,
+      "webMaxSessionDays": 7,
+      "inactivityTimeout": false,
+      "domainVerified": true,
+      "tlsIssued": true,
+      "accountPortalFallbacks": "DEFAULT_APPLICATION_DOMAIN",
+      "realOtpAndRevocation": "NOT_RUN"
+    },
+    "independentReadOnlyReview": {
+      "scope": "public vinext@0.0.50 build source",
+      "runId": "a03e1ec3-acb8-47a6-aee0-32cd02a959f0",
+      "workerId": "worker-1",
+      "result": "Confirmed both random sources and manifest secret consistency; emitted syntax must be tested on the actual build."
+    },
+    "incrementalCostBRL": 0,
+    "gateLedger": {
+      "G01": {
+        "status": "PASS",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Git e GitHub",
+        "testCommand": "git ls-remote origin HEAD refs/pull/42/head",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+        "failures": null,
+        "owner": "Engenharia",
+        "blocker": null,
+        "nextSafeAction": "Revalidar refs antes de integrar; usar reconciliação versionada enquanto a SPEC integral estiver indisponível."
+      },
+      "G02": {
+        "status": "NOT_RUN",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node 24 Linux, fixture sintética",
+        "testCommand": "node scripts/hostinger-candidate-build-equivalence.mjs build-a build-b",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": "Equivalência, SSR e Draft Mode comprovados em Linux no código do candidato. CI da entrega fica vinculado ao HEAD da PR.",
+        "owner": "Engenharia",
+        "blocker": "Fechamento da integração no HEAD de entrega pendente.",
+        "nextSafeAction": "Verificar o CI do SHA de entrega."
+      },
+      "G03": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01, origem isolada ausente.",
+        "nextSafeAction": "Provar cadastro admin e persistência na origem aprovada."
+      },
+      "G04": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Provar rascunho, publicação, arquivo, capa e ordem no navegador."
+      },
+      "G05": {
+        "status": "FAIL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/85-cycle-at-p0-hostinger-account-ci-2026-11-20.md",
+        "failures": "Upload de 26.214.400 bytes e download com SHA-256 passaram em loopback. Aceite remoto pendente.",
+        "owner": "Engenharia e operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Provar limite, SHA-256, negações, retry e integridade na origem aprovada."
+      },
+      "G06": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Clerk QA e Node gerenciado",
+        "testCommand": "npm test -- tests/integration/clerk-r4-security-matrix.spec.ts",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Admin Clerk e engenharia",
+        "blocker": "HST-01 e identidades Clerk QA.",
+        "nextSafeAction": "Validar issuer, audience, JWKS e sid no candidato autorizado."
+      },
+      "G07": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Clerk QA",
+        "testCommand": null,
+        "evidenceUrl": "https://clerk.com/docs/guides/secure/session-options",
+        "failures": "OTP por e-mail habilitado no painel.",
+        "owner": "Admin Clerk",
+        "blocker": "Origem e identidade QA autorizadas.",
+        "nextSafeAction": "Executar login com OTP real, preservando código e sessão fora da evidência."
+      },
+      "G08": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Clerk produção e Node QA",
+        "testCommand": null,
+        "evidenceUrl": "https://dashboard.clerk.com/apps/app_3M14L9JyjaJ9ySitVTsQFf6xJ2A/instances/ins_3M6H9ktM3jO84RvEu5BmKFokCfr/sessions",
+        "failures": "Sessão web máxima de 7 dias lida no dashboard.",
+        "owner": "Admin Clerk e engenharia",
+        "blocker": "Sessão real em QA indisponível.",
+        "nextSafeAction": "Exercitar expiração, logout, conta desativada, revogação e rejeição de sessão antiga."
+      },
+      "G09": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Demonstrar isolamento A/B antes e depois de restart."
+      },
+      "G10": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado e CDN",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Confirmar contrato de GET/HEAD e zero bytes indevidos."
+      },
+      "G11": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Confirmar favoritos após reload e restart."
+      },
+      "G12": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Validar autorização, negação e hash do download."
+      },
+      "G13": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Executar matriz cliente, lightbox, estados e larguras."
+      },
+      "G14": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "npm run test:e2e",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Executar matriz administrativa, publicação e upload nas larguras exigidas."
+      },
+      "G15": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Android e iOS físicos",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md",
+        "failures": null,
+        "owner": "Responsável pela acessibilidade",
+        "blocker": "Validação assistiva física pendente.",
+        "nextSafeAction": "Registrar TalkBack, VoiceOver, teclado, foco, contraste, zoom e reduced motion."
+      },
+      "G16": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Produção pública e staging",
+        "testCommand": "curl -fsS https://punctumpicture.com/api/health",
+        "evidenceUrl": "https://punctumpicture.com/api/health",
+        "failures": "HTTP 200 e TLS válidos no health público; smoke integral em staging pendente.",
+        "owner": "Engenharia",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Comparar Studio, Colagem, hero, portfólio e rascunhos em staging."
+      },
+      "G17": {
+        "status": "FAIL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Worker público e Node gerenciado",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/83-cycle-ar-p0-execution-2026-11-20.md",
+        "failures": "Worker público registrado com p99 de CPU de 156,5 ms frente ao limite de 10 ms; Node ainda sem medição.",
+        "owner": "Infraestrutura e proprietário",
+        "blocker": "HST-01 e aceite de equivalência do critério Node.",
+        "nextSafeAction": "Medir capacidade, concorrência, custo e limites reais sem upgrade."
+      },
+      "G18": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Node gerenciado",
+        "testCommand": "node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44787355848",
+        "failures": "Há teste de restauração SQLite sintética local.",
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Executar backup, restart, rebuild e restore descartável com hashes, RTO e RPO."
+      },
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "SHA de release",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
+        "failures": "Configuração Clerk de até 14 dias comprovada em leitura; testes reais e parecer ainda pendentes.",
+        "owner": "Revisor de segurança independente",
+        "blocker": "QA remoto e parecer formal sem P0/P1.",
+        "nextSafeAction": "Revisar isolamento, sessão, logs, mídia, dados e recuperação no SHA de entrega."
+      },
+      "G20": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Controladora do estúdio",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/11-lgpd-decisions.md",
+        "failures": null,
+        "owner": "Controladora Punctum",
+        "blocker": "Aprovação formal LGPD pendente.",
+        "nextSafeAction": "Aprovar finalidade, base legal, retenção, exclusão, terceiros e entrega."
+      },
+      "G21": {
+        "status": "NOT_RUN",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "GitHub",
+        "testCommand": "git ls-remote origin refs/pull/42/head",
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+        "failures": "PR draft; CI do baseline verde; revisão formal pendente.",
+        "owner": "Mantenedor e revisor",
+        "blocker": "CI do delta e revisão formal.",
+        "nextSafeAction": "Verificar checks, artefatos e aprovação no SHA de entrega."
+      },
+      "G22": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Produção",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md",
+        "failures": null,
+        "owner": "Proprietário",
+        "blocker": "Autorizações de release pendentes.",
+        "nextSafeAction": "Decidir separadamente integração, publicação com flag desligada e ativação/cutover."
+      },
+      "G23": {
+        "status": "BLOCKED_EXTERNAL",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Staging isolado",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/blob/18193a9fcda873df12536624444e45b315e0324d/docs/operations/PUNCTUM-ROLLBACK.md",
+        "failures": null,
+        "owner": "Operador QA",
+        "blocker": "HST-01.",
+        "nextSafeAction": "Ensaiar rollback de código, configuração, dados, sessões e reabertura."
+      },
+      "G24": {
+        "status": "NOT_RUN",
+        "sourceSha": "18193a9fcda873df12536624444e45b315e0324d",
+        "environment": "Git",
+        "testCommand": null,
+        "evidenceUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42/files",
+        "failures": null,
+        "owner": "Engenharia",
+        "blocker": "Readback do commit de evidência pendente.",
+        "nextSafeAction": "Confirmar relatório, matriz coerente e commit publicado ou registrar impedimento."
+      }
+    }
+  },
+  "currentCycle20261120AV": {
+    "date": "2026-11-20",
+    "baselineSha": "86e169add453a716ac386ff52e520d264102ec36",
+    "baselineCi": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44817705938",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "hostinger": {
+      "scope": "Staging descartável em conta alternativa autorizada pelo proprietário",
+      "plan": "Unlimited",
+      "origin": "https://magic-lime-guanaco-79.hostingersite.com",
+      "deployment": "https://hpanel.hostinger.com/websites/magic-lime-guanaco-79.hostingersite.com/node/deployments/01a1fadc-f660-7383-b5f9-f5a6e95d8d04/details",
+      "probeArchiveSha256": "efeb61027d09243ee3627cbc6b9862048e2280d1439081367001a8c2ea51c16f",
+      "probe": "https://magic-lime-guanaco-79.hostingersite.com/health",
+      "status": "ISOLATED_HTTPS_NODE_PROBE_VERIFIED",
+      "node": "v24.22.3",
+      "httpsStatus": 200,
+      "nonceMatched": true,
+      "cacheControl": "no-store",
+      "planLimits": {
+        "diskGB": 50,
+        "memoryMiB": 3072,
+        "cpuCores": 2,
+        "maxProcesses": 120
+      },
+      "incrementalCostBRL": 0
+    },
+    "stagingCandidate": {
+      "sourceSha": "a136f721e004ac9cba48ffe77c7ffc625a57850d",
+      "ci": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44822132691",
+      "archive": "punctum-r4-synthetic-a136f721.zip",
+      "archiveSha256": "3b65aab8d50b84eefa115c68622e5b57c2dea954ed8cbfd2332b2d8c160043f7",
+      "deployments": "https://hpanel.hostinger.com/websites/magic-lime-guanaco-79.hostingersite.com/node/deployments",
+      "environment": "staging",
+      "fixtures": "SQLite inicializado exclusivamente por migrations, mídia e autenticação por senha de QA sintéticas",
+      "httpsHealth": 200,
+      "ssr": 200,
+      "noindex": true,
+      "privateFilesHTTPStatus": 404,
+      "remoteSyntheticE2E": {
+        "status": "PASS_REMOTE_SYNTHETIC_NODE",
+        "checksPassed": 48,
+        "uploadBytes": 26214400,
+        "originalSha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce",
+        "covers": ["cadastro administrativo", "publicação", "retry", "favoritos", "download", "isolamento A/B", "negações anônimas"],
+        "auth": "Senha e identidades sintéticas de QA"
+      },
+      "rebuild": {
+        "deploymentStartedAt": "2026-11-20T18:57:29-03:00",
+        "status": "REDEPLOYED_SAME_ARCHIVE",
+        "syntheticSqliteGalleryPreserved": true,
+        "authorizedOriginalBytesPreserved": 26214400,
+        "originalSha256Matched": true,
+        "syntheticLogoutVerified": true,
+        "backupRestore": "NOT_RUN"
+      },
+      "clerkRealOtp": "BLOCKED_EXTERNAL_QA_INSTANCE_AND_IDENTITIES"
+    },
+    "publicHealth": {
+      "url": "https://punctumpicture.com/api/health",
+      "httpsStatus": 200
+    },
+    "qualification": "HTTPS isolado e candidato Node com SSR confirmados na conta alternativa. Qualificação de produto, Clerk real, recuperação, capacidade e aprovações seguem com critérios próprios.",
+    "nextSafeAction": "Confirmar instância e identidades Clerk QA para OTP e revogação. Ensaiar backup, restore descartável, cron e rollback do candidato. Qualificar capacidade e critérios restantes antes de qualquer release."
+  },
+  "publicHostingerCutoverIntent20261120": {
+    "date": "2026-11-20",
+    "confirmedIntent": "Servir o site público pela Hostinger mantendo https://punctumpicture.com no navegador.",
+    "scope": "Migração do site público. Ativação dos álbuns privados exige decisão de release própria.",
+    "sourceSha": "34f3e9be83081c819be108c558b1a44a5444194f",
+    "livePublic": "punctumpicture.com retornou HTTP 200 pela Cloudflare.",
+    "observedHostinger": "magic-lime-guanaco-79.hostingersite.com retornou HTTP 200 com noindex e serve a implantação sintética de QA. O hostname temporário novo é aceito somente em staging.",
+    "status": "NO_GO_SAFETY",
+    "unlimitedApiVerification": {
+      "secretName": "HOSTINGER_UNLIMITED_API",
+      "accountVerified": true,
+      "username": "u775492464",
+      "orderId": 1008583103,
+      "orderStatus": "active",
+      "nodeWebsite": "magic-lime-guanaco-79.hostingersite.com",
+      "evidenceRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44837527835",
+      "ownershipResponse": {
+        "is_accessible": false,
+        "txt_to_verify_length": 0
+      },
+      "domainConnection": "BLOCKED_EXTERNAL",
+      "dnsWrites": 0,
+      "domainRegistryInOldConnectedAccount": "punctumpicture.com ausente do portfolio de registros consultado pela API Conthabil",
+      "nativeBrowserError": "Local browser access is unavailable for this chat",
+      "nextSafeAction": "Resolver a autorização ou o vínculo existente de punctumpicture.com na Hostinger pelo painel da conta proprietária ou pelo suporte. A API da conta nova recusa o domínio sem fornecer um desafio TXT."
+    },
+    "requiredBeforePublicRouting": [
+      "Qualificar o destino de produção autorizado e a configuração do site público com os álbuns privados desligados.",
+      "Reconciliar e validar conteúdo público, mídia e estado operacional do Studio a partir de uma cópia atual protegida.",
+      "Verificar HTTPS da origem Hostinger para punctumpicture.com e ensaiar a volta ao roteamento Cloudflare preservando dados.",
+      "Aplicar o procedimento de integração e release estabelecido para publicação e roteamento na janela aprovada."
+    ]
   }
 }

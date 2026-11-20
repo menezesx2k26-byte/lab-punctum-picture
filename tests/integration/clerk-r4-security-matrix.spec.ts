@@ -1,7 +1,15 @@
 import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import { exportSPKI, generateKeyPair, SignJWT } from "jose";
-import { revokeClerkSessionKeys, verifyClerkSessionFromRequest } from "../../worker/auth/clerk-auth";
+import {
+  CLERK_SESSION_REVOCATION_TTL_SECONDS,
+  CLERK_TOKEN_REVOCATION_TTL_SECONDS,
+  clerkRevocationTtlSeconds,
+  clerkSessionIdFromRawToken,
+  collectClerkRevocationKeys,
+  revokeClerkSessionKeys,
+  verifyClerkSessionFromRequest,
+} from "../../worker/auth/clerk-auth";
 import worker from "../../worker/test-entry";
 import {
   bootstrapPrivateDb,
@@ -334,6 +342,37 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       expect(deniedMedia.status).toBe(404);
       expect((await deniedMedia.arrayBuffer()).byteLength).toBe(0);
     }
+    // G09 completeness: cookie session + HEAD must also leak zero bytes / no body.
+    for (const method of ["GET", "HEAD"] as const) {
+      for (const preset of ["thumb", "gallery", "download"]) {
+        const denied = await dispatch(
+          clerkEnv,
+          `/api/client/galleries/${galleryB}/images/${imageB}/${preset}`,
+          { method, headers: { Cookie: clientACookie } },
+        );
+        expect(denied.status).toBe(404);
+        expect((await denied.arrayBuffer()).byteLength).toBe(0);
+      }
+    }
+    const favoriteDenied = await dispatch(
+      clerkEnv,
+      `/api/client/galleries/${galleryB}/favorites/${imageB}`,
+      {
+        method: "PUT",
+        headers: { Cookie: clientACookie, "Content-Type": "application/json" },
+        body: "{}",
+      },
+    );
+    expect(favoriteDenied.status).toBe(404);
+    expect(
+      (
+        await dispatch(
+          clerkEnv,
+          `/api/client/galleries/${galleryB}/favorites/${imageB}`,
+          { method: "DELETE", headers: { Cookie: clientACookie } },
+        )
+      ).status,
+    ).toBe(404);
 
     // 5. Authenticated Clerk user WITHOUT D1 link denied on both admin & client
     const unlinkedJwt = await signClerkJwt(primaryPriv, {
@@ -606,6 +645,7 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       headers: { Cookie: adminCookie },
     });
     expect(adminLogout.status).toBe(200);
+    expect(await adminLogout.json()).toMatchObject({ ok: true, authSource: "clerk" });
     expect(
       (
         await dispatch(clerkEnv, "/admin/api/clientes", {
@@ -822,6 +862,68 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
     const fresh = await dispatch(clerkEnv, "/api/client/galleries", { headers: { Cookie: nextCookie } });
     expect(fresh.status).toBe(200);
     expect(((await fresh.json()) as { galleries: Array<{ id: string }> }).galleries.map((g) => g.id)).toContain(galleryId);
+  });
+
+  it("keeps sid revocations alive beyond the 24h token digest TTL and extracts sid on logout", async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const sid = `sess_ttl_${suffix}`;
+    const tokenKey = `tk:fixture_${suffix}`;
+    expect(clerkRevocationTtlSeconds(`sid:${sid}`)).toBe(CLERK_SESSION_REVOCATION_TTL_SECONDS);
+    expect(clerkRevocationTtlSeconds(tokenKey)).toBe(CLERK_TOKEN_REVOCATION_TTL_SECONDS);
+    expect(CLERK_SESSION_REVOCATION_TTL_SECONDS).toBeGreaterThan(CLERK_TOKEN_REVOCATION_TTL_SECONDS);
+
+    await revokeClerkSessionKeys(env.DB, [`sid:${sid}`, tokenKey]);
+    const rows = await env.DB.prepare(
+      `SELECT revocation_key AS key, expires_at AS expiresAt
+       FROM revoked_clerk_tokens
+       WHERE revocation_key IN (?, ?)
+       ORDER BY revocation_key`,
+    )
+      .bind(`sid:${sid}`, tokenKey)
+      .all<{ key: string; expiresAt: string }>();
+    const byKey = new Map(rows.results.map((row) => [row.key, Date.parse(row.expiresAt)]));
+    const now = Date.now();
+    const sidExpiry = byKey.get(`sid:${sid}`);
+    const tokenExpiry = byKey.get(tokenKey);
+    expect(sidExpiry).toBeDefined();
+    expect(tokenExpiry).toBeDefined();
+    expect(sidExpiry! - now).toBeGreaterThan(CLERK_TOKEN_REVOCATION_TTL_SECONDS * 1000);
+    expect(sidExpiry! - now).toBeGreaterThan(12 * 24 * 60 * 60 * 1000);
+    expect(tokenExpiry! - now).toBeLessThan(2 * 24 * 60 * 60 * 1000);
+
+    // After the token digest would have expired, the sid block must still deny replay.
+    await env.DB.prepare(
+      `UPDATE revoked_clerk_tokens SET expires_at = ?
+       WHERE revocation_key = ?`,
+    )
+      .bind(new Date(now - 60_000).toISOString(), tokenKey)
+      .run();
+    const stillBlocked = await verifyClerkSessionFromRequest(
+      new Request(`${SITE_ORIGIN}/api/client/me`),
+      makeEnv(primaryPem),
+      {
+        verifier: async () => ({
+          clerkUserId: `user_ttl_${suffix}`,
+          sessionId: sid,
+        }),
+      },
+    );
+    expect(stillBlocked).toBeNull();
+
+    const jwt = await signClerkJwt(primaryPriv, {
+      sub: `user_collect_${suffix}`,
+      sid,
+    });
+    expect(clerkSessionIdFromRawToken(jwt)).toBe(sid);
+    const collected = await collectClerkRevocationKeys(
+      new Request(`${SITE_ORIGIN}/api/client/session`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${jwt}` },
+      }),
+    );
+    expect(collected).toEqual(
+      expect.arrayContaining([`sid:${sid}`, expect.stringMatching(/^tk:[a-f0-9]{64}$/)]),
+    );
   });
 
   it("fails closed if the Clerk token-revocation migration is missing", async () => {

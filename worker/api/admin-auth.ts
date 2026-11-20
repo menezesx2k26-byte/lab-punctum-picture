@@ -81,8 +81,10 @@ export async function handleAdminAuth(
 
   if (request.method === "DELETE") {
     const db = requireDb(env);
+    let authSource: "shared-password" | "clerk" | undefined;
     try {
       const identity = await requireAdmin(request, env);
+      authSource = identity.authSource;
       if (identity.authSource === "clerk" && identity.clerkUserId) {
         await db.prepare(
           `UPDATE clerk_admin_identity_links
@@ -112,7 +114,7 @@ export async function handleAdminAuth(
       }
     }
     return json(
-      { ok: true },
+      { ok: true, ...(authSource ? { authSource } : {}) },
       {
         admin: true,
         headers: { "Set-Cookie": clearAdminSessionCookie() },
