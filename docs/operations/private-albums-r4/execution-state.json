@@ -5453,13 +5453,50 @@
       "httpsStatus": 200,
       "nonceMatched": true,
       "cacheControl": "no-store",
+      "planLimits": {
+        "diskGB": 50,
+        "memoryMiB": 3072,
+        "cpuCores": 2,
+        "maxProcesses": 120
+      },
       "incrementalCostBRL": 0
+    },
+    "stagingCandidate": {
+      "sourceSha": "a136f721e004ac9cba48ffe77c7ffc625a57850d",
+      "ci": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44822132691",
+      "archive": "punctum-r4-synthetic-a136f721.zip",
+      "archiveSha256": "3b65aab8d50b84eefa115c68622e5b57c2dea954ed8cbfd2332b2d8c160043f7",
+      "deployments": "https://hpanel.hostinger.com/websites/magic-lime-guanaco-79.hostingersite.com/node/deployments",
+      "environment": "staging",
+      "fixtures": "SQLite inicializado exclusivamente por migrations, mídia e autenticação por senha de QA sintéticas",
+      "httpsHealth": 200,
+      "ssr": 200,
+      "noindex": true,
+      "privateFilesHTTPStatus": 404,
+      "remoteSyntheticE2E": {
+        "status": "PASS_REMOTE_SYNTHETIC_NODE",
+        "checksPassed": 48,
+        "uploadBytes": 26214400,
+        "originalSha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce",
+        "covers": ["cadastro administrativo", "publicação", "retry", "favoritos", "download", "isolamento A/B", "negações anônimas"],
+        "auth": "Senha e identidades sintéticas de QA"
+      },
+      "rebuild": {
+        "deploymentStartedAt": "2026-11-20T18:57:29-03:00",
+        "status": "REDEPLOYED_SAME_ARCHIVE",
+        "syntheticSqliteGalleryPreserved": true,
+        "authorizedOriginalBytesPreserved": 26214400,
+        "originalSha256Matched": true,
+        "syntheticLogoutVerified": true,
+        "backupRestore": "NOT_RUN"
+      },
+      "clerkRealOtp": "BLOCKED_EXTERNAL_QA_INSTANCE_AND_IDENTITIES"
     },
     "publicHealth": {
       "url": "https://punctumpicture.com/api/health",
       "httpsStatus": 200
     },
-    "qualification": "A sonda confirma provisionamento isolado, certificado e runtime Node. O candidato e os gates remotos de produto exigem validações próprias.",
-    "nextSafeAction": "Qualificar o candidato com SQLite e mídias sintéticas em armazenamento privado. Confirmar instância e identidades Clerk QA para OTP e revogação."
+    "qualification": "HTTPS isolado e candidato Node com SSR confirmados na conta alternativa. Qualificação de produto, Clerk real, recuperação, capacidade e aprovações seguem com critérios próprios.",
+    "nextSafeAction": "Confirmar instância e identidades Clerk QA para OTP e revogação. Ensaiar backup, restore descartável, cron e rollback do candidato. Qualificar capacidade e critérios restantes antes de qualquer release."
   }
 }
