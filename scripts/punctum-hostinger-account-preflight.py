@@ -62,6 +62,20 @@ def call(token: str, path: str, timeout: int = 20):
         return None, None, type(error).__name__ + ":" + mask(str(error), token)[:160]
 
 
+def sanitize_order(row: dict) -> dict | None:
+    if not isinstance(row, dict):
+        return None
+    plan = row.get("plan")
+    plan_name = plan.get("name") if isinstance(plan, dict) else plan if isinstance(plan, str) else None
+    return {
+        "id": row.get("id"),
+        "status": row.get("status"),
+        "subscription_id": row.get("subscription_id"),
+        "plan": plan_name,
+        "created_at": row.get("created_at"),
+    }
+
+
 def main() -> int:
     token = os.environ.get("HOSTINGER_API") or ""
     report = {
@@ -119,7 +133,33 @@ def main() -> int:
             punctum = item
     report["checks"]["websites_by_order"]["sites"] = sanitized
     report["checks"]["websites_by_order"]["punctum_nodejs"] = bool(punctum)
+    report["checks"]["websites_by_order"]["nodejs_count"] = sum(
+        1 for item in sanitized if item.get("website_type") == "nodejs"
+    )
+    report["checks"]["websites_by_order"]["website_count"] = len(sanitized)
     report["accountConfirmed"] = bool(punctum)
+
+    status, orders_payload, err = call(token, "/orders?" + urllib.parse.urlencode({"per_page": 50}))
+    orders = orders_payload if isinstance(orders_payload, list) else []
+    if isinstance(orders_payload, dict) and isinstance(orders_payload.get("data"), list):
+        orders = orders_payload["data"]
+    sanitized_orders = [item for item in (sanitize_order(row) for row in orders) if item]
+    report["checks"]["orders"] = {
+        "http": status,
+        "error": err,
+        "orders": sanitized_orders,
+        "expectedOrderPresent": any(item.get("id") == ORDER_ID for item in sanitized_orders),
+    }
+    report["checks"]["nodejs_capacity_observed"] = {
+        "nodejsSiteCountOnOrder": report["checks"]["websites_by_order"]["nodejs_count"],
+        "websiteCountOnOrder": len(sanitized),
+        "createAttempted": False,
+        "writesAttempted": 0,
+        "note": (
+            "Read-only counts only. No POST /orders/{order_id}/onboardings and no free-subdomain generation. "
+            "A numeric Node.js quota was not returned by these GET endpoints."
+        ),
+    }
 
     # Historical temporary origin (read-only)
     status, temp_sites, err = call(token, "/websites?" + urllib.parse.urlencode({"domain": TEMP_DOMAIN}))

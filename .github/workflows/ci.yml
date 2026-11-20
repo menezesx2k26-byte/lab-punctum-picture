@@ -39,6 +39,8 @@ jobs:
       - run: node --test services/punctum-hostinger-production/managed-d1-export.test.mjs
       - run: node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
+      - run: node --test scripts/punctum-clerk-instance-readonly.test.mjs
+      - run: python3 -m unittest discover -s scripts -p punctum_hostinger_account_preflight_test.py
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
       - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
