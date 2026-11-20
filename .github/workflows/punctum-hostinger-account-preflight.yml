@@ -1,0 +1,41 @@
+name: Punctum Hostinger account preflight (read-only)
+
+# Proves secrets.HOSTINGER_API is the Punctum Picture hosting account before any create/deploy.
+# No website creation, no builds POST, no DNS writes, no Contabilidade touch.
+on:
+  workflow_dispatch:
+  push:
+    branches: [cursor/r4-aj-security-phase-b-ae72]
+    paths:
+      - .github/workflows/punctum-hostinger-account-preflight.yml
+      - scripts/punctum-hostinger-account-preflight.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-hostinger-account-preflight
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Hostinger RO account + Node API probe
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        run: |
+          set +x
+          mkdir -p outputs/hostinger-account-preflight
+          python3 scripts/punctum-hostinger-account-preflight.py | tee outputs/hostinger-account-preflight/report.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-hostinger-account-preflight
+          path: outputs/hostinger-account-preflight/
+          retention-days: 14

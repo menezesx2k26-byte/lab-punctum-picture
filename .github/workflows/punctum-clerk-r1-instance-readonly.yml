@@ -1,0 +1,48 @@
+name: Punctum Clerk R1 instance read-only
+
+# Trusted same-repo push / manual dispatch only. Prints presence + sanitized instance fields.
+# Never logs secret values. Does not change session settings or revoke sessions.
+on:
+  workflow_dispatch:
+  push:
+    branches: [cursor/r4-aj-security-phase-b-ae72]
+    paths:
+      - .github/workflows/punctum-clerk-r1-instance-readonly.yml
+      - scripts/punctum-clerk-instance-readonly.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-clerk-r1-instance-readonly
+  cancel-in-progress: false
+
+jobs:
+  instance:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Read Clerk instance (sanitized)
+        env:
+          # Historical production secret name used by reviewed Clerk workflows
+          PUNCTUM_CLERK_PRODUCTION_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          # Possible newly added alias — presence only if configured
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
+        run: |
+          set +x
+          mkdir -p outputs/clerk-r1-readonly
+          node scripts/punctum-clerk-instance-readonly.mjs | tee outputs/clerk-r1-readonly/report.json
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-clerk-r1-instance-readonly
+          path: outputs/clerk-r1-readonly/
+          retention-days: 14
