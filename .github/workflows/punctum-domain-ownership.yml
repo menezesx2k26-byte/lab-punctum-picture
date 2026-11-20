@@ -51,14 +51,18 @@ jobs:
               print(json.dumps({'verifiedTarget':report['target'], 'challengeKeys':list(ownership),
                   'challengeType':type(txt).__name__, 'challengeLength':len(txt) if isinstance(txt,str) else None}))
               if txt == '':
+                  # Hostinger refused access and offered no publishable challenge. Record
+                  # BLOCKED_EXTERNAL evidence (ownership remains false; no DNS writes) and
+                  # exit 0 — SystemExit(str) would fail the job with code 1 and drop the intent
+                  # of preserving this provider outcome as evidence rather than a script defect.
                   report.update(status='HOSTINGER_DOMAIN_ACCESS_DENIED_WITHOUT_CHALLENGE',
                       hostingerOwnershipVerified=False, challengeLength=0, dnsWrites=0,
                       nextAction='Resolve the existing domain association with the owning account or Hostinger support.')
                   output=pathlib.Path('ownership-evidence')
-                  output.mkdir()
-                  (output/'report.json').write_text(json.dumps(report,indent=2))
+                  output.mkdir(exist_ok=True)
+                  (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
                   print(json.dumps(report,indent=2))
-                  raise SystemExit('Hostinger denied domain access and provided no TXT challenge.')
+                  raise SystemExit(0)
               assert isinstance(txt,str) and re.fullmatch('[A-Za-z0-9_=.:-]{1,255}',txt), 'Unexpected ownership TXT format'
               report['challengeSha256']=hashlib.sha256(txt.encode()).hexdigest()
               zone_info=call(cf,'/zones/'+zone,'DNS_TOKEN')
