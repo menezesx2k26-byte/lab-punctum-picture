@@ -13,7 +13,8 @@
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
   "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
   "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
-  "headBeforeStateUpdate": "88970b37227e708d4ac56e26da0c851f38527513",
+  "aoHead": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+  "headBeforeStateUpdate": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
   "pullRequest": 42,
   "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
   "ciOnAnHead": {
@@ -4973,6 +4974,7 @@
     "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
     "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
     "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
+    "aoHead": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
     "baselineHead": "88970b37227e708d4ac56e26da0c851f38527513",
     "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
     "completionVerdict": "NOT_COMPLETED_VERIFIED",

@@ -16,7 +16,7 @@ Goal: `PUNCTUM-FINAL-COMPLETION-20261119` / private albums R4. No DNS cutover, n
 | Base (PR #40 tip) | `codex/punctum-r4-goal-20261115` @ `f0f951d9f30225d717c1f82df7661889e287ec34` |
 | **Product SHA** (export NUL + G18/G19 package; G19 reviewed) | `b0b18748f64269612c15f33921045ac9afe1372d` |
 | **AN HEAD** (R2 admin Clerk signOut) | `88970b37227e708d4ac56e26da0c851f38527513` |
-| AO HEAD | recorded in `execution-state.json` after this commit |
+| **AO HEAD** (this package) | `c94f541e535f9a2fff0cd59302a19fe75a5a51b1` |
 | Main (untouched) | `f0c82f2c7200417e41c1fd3a21414607c2c5a973` |
 
 ### CI known green (exact SHA)
