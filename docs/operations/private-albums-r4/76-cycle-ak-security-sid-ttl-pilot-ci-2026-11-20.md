@@ -107,8 +107,8 @@ Contagem: **1 PASS / 2 FAIL / 5 BLOCKED_EXTERNAL / 1 BLOCKED_SECURITY / 15 NOT_R
 
 ## Próximo bloco concreto
 
-1. CI exact SHA desta branch (audit 0).
-2. Build candidato + prova local 25 MiB + POSIX Linux suite.
+1. **Abrir draft PR** `cursor/r4-aj-security-phase-b-ae72` → `codex/punctum-r4-goal-20261115` (token deste agente: push OK, create PR/comment/workflow_dispatch **403**). CI do repo só dispara em `pull_request` ou push `main`.
+2. Confirmar CI exact SHA `db3e768` (audit 0 esperado).
 3. Autorização humana para QA no Node managed em `punctumpicture.com` **sem** cutover DNS público, ou recriar hostname de staging isolado.
 4. Revisão de segurança independente no SHA final (G19).
 5. Drive handoff com conta que vê `sgtmenezes` R4 doc; só então G24.
