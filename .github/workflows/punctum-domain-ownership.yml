@@ -50,6 +50,15 @@ jobs:
               txt=ownership.get('txt_to_verify')
               print(json.dumps({'verifiedTarget':report['target'], 'challengeKeys':list(ownership),
                   'challengeType':type(txt).__name__, 'challengeLength':len(txt) if isinstance(txt,str) else None}))
+              if txt == '':
+                  report.update(status='HOSTINGER_DOMAIN_ACCESS_DENIED_WITHOUT_CHALLENGE',
+                      hostingerOwnershipVerified=False, challengeLength=0, dnsWrites=0,
+                      nextAction='Resolve the existing domain association with the owning account or Hostinger support.')
+                  output=pathlib.Path('ownership-evidence')
+                  output.mkdir()
+                  (output/'report.json').write_text(json.dumps(report,indent=2))
+                  print(json.dumps(report,indent=2))
+                  raise SystemExit('Hostinger denied domain access and provided no TXT challenge.')
               assert isinstance(txt,str) and re.fullmatch('[A-Za-z0-9_=.:-]{1,255}',txt), 'Unexpected ownership TXT format'
               report['challengeSha256']=hashlib.sha256(txt.encode()).hexdigest()
               zone_info=call(cf,'/zones/'+zone,'DNS_TOKEN')

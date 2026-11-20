@@ -5507,6 +5507,24 @@
     "livePublic": "punctumpicture.com retornou HTTP 200 pela Cloudflare.",
     "observedHostinger": "magic-lime-guanaco-79.hostingersite.com retornou HTTP 200 com noindex e serve a implantação sintética de QA. O hostname temporário novo é aceito somente em staging.",
     "status": "NO_GO_SAFETY",
+    "unlimitedApiVerification": {
+      "secretName": "HOSTINGER_UNLIMITED_API",
+      "accountVerified": true,
+      "username": "u775492464",
+      "orderId": 1008583103,
+      "orderStatus": "active",
+      "nodeWebsite": "magic-lime-guanaco-79.hostingersite.com",
+      "evidenceRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44837527835",
+      "ownershipResponse": {
+        "is_accessible": false,
+        "txt_to_verify_length": 0
+      },
+      "domainConnection": "BLOCKED_EXTERNAL",
+      "dnsWrites": 0,
+      "domainRegistryInOldConnectedAccount": "punctumpicture.com ausente do portfolio de registros consultado pela API Conthabil",
+      "nativeBrowserError": "Local browser access is unavailable for this chat",
+      "nextSafeAction": "Resolver a autorização ou o vínculo existente de punctumpicture.com na Hostinger pelo painel da conta proprietária ou pelo suporte. A API da conta nova recusa o domínio sem fornecer um desafio TXT."
+    },
     "requiredBeforePublicRouting": [
       "Qualificar o destino de produção autorizado e a configuração do site público com os álbuns privados desligados.",
       "Reconciliar e validar conteúdo público, mídia e estado operacional do Studio a partir de uma cópia atual protegida.",
