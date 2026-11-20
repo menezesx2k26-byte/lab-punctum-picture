@@ -112,3 +112,29 @@ Execute imediatamente após a restauração:
 3. [ ] **SEO**: Canonical aponta para `https://punctumpicture.com/` e structured data presente;
 4. [ ] **Admin & Studio**: Acesso funcional em `/admin` e `/admin/studio`;
 5. [ ] **Console do Navegador**: 0 erros críticos de execução ou de rede.
+
+---
+
+## 7. Reconciliação de 2026-11-20 — não substitui a baseline de setembro
+
+A seção 1 permanece como registro histórico de 2026-09-10. Ela não é o alvo de rollback do tráfego que está no ar hoje. Nenhuma promoção, DNS ou restore remoto foi executado nesta reconciliação.
+
+Estado lido em 2026-11-20, sem alteração:
+
+| Item | Valor observado |
+| --- | --- |
+| Autoridade DNS | `nia.ns.cloudflare.com`, `pedro.ns.cloudflare.com` |
+| Tráfego público | Worker `punctum-picture-migration`, domínios customizados no apex e em `www` |
+| Deployment no ar | `276eb966-4561-4c95-b35c-3b461ff0c18d` |
+| Version em 100% | `e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7` |
+| `GIT_SHA` plain | `4a9842dac2726699a5272d137ea7eedfe20d469c` |
+| D1 | `punctum-picture` `22697f13-7484-41e3-9441-f7b902c6577a`, migrações `0001`–`0008` |
+| Backup lógico mais novo | `backups/d1/daily/2026-11-20/2026-11-20T03-00-30-053Z.json`, status `completed` |
+| Zona Hostinger | não autoritativa; ALIAS/CNAME para `*.cdn.hstgr.net` |
+| VPS `2135319` | host alcançável, ausente da API de VPS das contas conectadas; não recebe o domínio público |
+
+Rollback imediato de um deploy futuro do Worker: promover de volta a version `e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7` a 100%, sem editar DNS. A version de setembro `cc6a8fb3-3952-4181-a933-295d89b2a158` só volta ao ar se a decisão for explicitamente a baseline visual de 2026-09-10.
+
+Restore de dados: o JSON de 2026-11-20 foi lido e comparado, em memória isolada, com o D1 vivo. Os conjuntos de id coincidem nas tabelas incluídas pelo código implantado. `backup_runs` fica 88 no arquivo e 89 no vivo porque a linha do próprio job entra depois do snapshot. `site_media` (12 linhas, objetos `site-media/hero`) não entra nesse backup. Não restaurar esse JSON por cima do D1 de produção. Um ensaio destrutivo continua exigindo autorização e um banco vazio.
+
+Corte de DNS, se for autorizado depois: a mudança é nos registros proxied do apex e de `www` na zona Cloudflare `561d9796dd104b8563c9ab77fa4fae1d`. A zona da Hostinger sozinha não desvia o tráfego. O retorno é recolocar o proxy do Worker, sem apontar o domínio para a VPS enquanto o TLS direto dela responder alerta interno.

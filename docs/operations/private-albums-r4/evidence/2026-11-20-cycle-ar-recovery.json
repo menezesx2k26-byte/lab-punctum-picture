@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "cycle": "AR",
+  "measuredAt": "2026-11-20T07:20:00Z",
+  "baseShaBeforeEvidence": "66b2c9958de14d685f561b1d0e0f2a967d28e3e2",
+  "branch": "cursor/r4-aj-security-phase-b-ae72",
+  "pr": 42,
+  "writes": {
+    "dns": 0,
+    "hostinger": 0,
+    "cloudflare": 0,
+    "clerk": 0,
+    "productionData": 0
+  },
+  "cloudflare": {
+    "accountId": "257bca437616da74ece1ce4bbaf0bd89",
+    "accountName": "Menezesx2k26@gmail.com's Account",
+    "zoneId": "561d9796dd104b8563c9ab77fa4fae1d",
+    "zoneStatus": "active",
+    "nameservers": ["nia.ns.cloudflare.com", "pedro.ns.cloudflare.com"],
+    "worker": "punctum-picture-migration",
+    "liveGitSha": "4a9842dac2726699a5272d137ea7eedfe20d469c",
+    "liveDeploymentId": "276eb966-4561-4c95-b35c-3b461ff0c18d",
+    "liveVersionId": "e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7",
+    "liveVersionPercentage": 100,
+    "liveDeploymentCreatedOn": "2026-10-27T00:36:39.789669Z",
+    "customDomains": ["punctumpicture.com", "www.punctumpicture.com"],
+    "crons": ["0 * * * *", "0 3 * * *"],
+    "plainVars": {
+      "ENVIRONMENT": "production",
+      "MAX_UPLOAD_BYTES": "26214400",
+      "ALLOWED_MIME_TYPES": "image/jpeg,image/png,image/webp",
+      "BACKUP_PREFIX": "backups/d1",
+      "BACKUP_RETENTION_DAYS": "180",
+      "PUBLIC_SITE_URL": "https://punctumpicture.com"
+    },
+    "bindingsPresent": ["DB", "ORIGINALS", "BACKUPS", "IMAGES", "ASSETS"],
+    "d1": "22697f13-7484-41e3-9441-f7b902c6577a",
+    "authoritativeDns": {
+      "apex": "proxied AAAA 100::",
+      "www": "proxied AAAA 100::"
+    }
+  },
+  "publicHttp": {
+    "origin": "cloudflare",
+    "healthGet": 200,
+    "healthHead": 404,
+    "wwwToApex": 308,
+    "routes200": ["/", "/portfolio", "/arquivo", "/contato", "/ensaios/ritos-de-luz", "/servicos/retratos", "/fotografia/sao-bento-do-sul", "/robots.txt", "/sitemap.xml"],
+    "canonicalHome": "https://punctumpicture.com/",
+    "canonicalPortfolio": "https://punctumpicture.com/portfolio",
+    "adminUnauthenticated": {"status": 303, "locationPath": "/acesso?next=%2Fadmin"},
+    "adminSessionGet": {"status": 405, "code": "METHOD_NOT_ALLOWED", "cacheControl": "no-store"},
+    "anonymousFakeMedia": {"status": 400, "code": "INVALID_IMAGE_PRESET"},
+    "publicImageDelivery": {"pathClass": "/_vinext/image", "status": 200, "contentType": "image/jpeg"}
+  },
+  "d1": {
+    "migrationsApplied": ["0001_init.sql", "0002_seed_settings.sql", "0003_operations.sql", "0004_whatsapp_contact.sql", "0005_foundation_reconcile.sql", "0006_editorial_personality.sql", "0007_site_config_versions.sql", "0008_site_media.sql"],
+    "migrationsNotApplied": ["0009_private_client_galleries.sql", "0010_public_home_snapshot.sql", "0011_private_gallery_byte_integrity.sql", "0012_public_home_snapshot_mutations.sql", "0013_private_gallery_upload_token_version.sql", "0014_clerk_pilot_identity_links.sql", "0015_clerk_admin_identity_links.sql"],
+    "counts": {
+      "albums": 20,
+      "albumsPublished": 19,
+      "albumsDraft": 1,
+      "images": 339,
+      "imagesReady": 331,
+      "imagesPending": 7,
+      "imagesFailed": 1,
+      "categories": 10,
+      "albumCategories": 20,
+      "siteSettings": 1,
+      "siteConfigVersions": 11,
+      "siteMedia": 12,
+      "inquiries": 1,
+      "uploadIntents": 139,
+      "backupRuns": 89,
+      "auditLog": 323,
+      "adminCredentials": 1
+    },
+    "foreignKeys": {"imagesOrphanAlbum": 0, "albumCategoriesOrphanAlbum": 0, "albumCategoriesOrphanCategory": 0},
+    "readyBytes": 336128498,
+    "imagesMissingChecksum": 121,
+    "readyDistinctChecksums": 215
+  },
+  "r2": {
+    "originals": {"objects": 230, "bytes": 372040548, "extensions": {"jpg": 223, "png": 7}, "publicDomainsEndpoint": 404},
+    "backups": {"objectsUnderPrefix": 18, "bytes": 7915821, "extensions": {"json": 15, "sql": 3}},
+    "parity": {
+      "readyRowsMatchedBySize": 218,
+      "readySizeMismatches": 0,
+      "readyStaticGitReferences": 113,
+      "staticPrefix": "static:/photos",
+      "pendingOrFailedWithoutObject": 8,
+      "r2ObjectsNotInImages": 12,
+      "thoseObjectsMatchSiteMedia": 12,
+      "siteMediaPrefix": "site-media/hero",
+      "classification": "explained"
+    }
+  },
+  "backupRestore": {
+    "latest": {
+      "status": "completed",
+      "createdAt": "2026-11-20T03:00:30.053Z",
+      "objectKey": "backups/d1/daily/2026-11-20/2026-11-20T03-00-30-053Z.json",
+      "format": "punctum-picture-logical-backup-v1",
+      "chars": 502446,
+      "hasError": false
+    },
+    "priorCompletedDays": ["2026-11-19", "2026-11-18", "2026-11-17", "2026-11-16", "2026-11-15"],
+    "isolatedComparison": "in-memory parse of the R2 object against live D1 id sets; production D1 and R2 were not written",
+    "equalIdSets": ["admin_credentials", "albums", "audit_log", "categories", "images", "inquiries", "site_config", "site_config_pointers", "site_config_versions", "site_settings", "upload_intents"],
+    "countEqualWithoutId": ["album_categories", "rate_limit_buckets"],
+    "expectedDelta": "backup_runs 88 in the snapshot and 89 live, because the run row is inserted after the snapshot",
+    "backupImageOrphans": 0,
+    "omitted": "site_media is absent because worker GIT_SHA 4a9842d backs up only BACKUP_TABLES",
+    "cronProof": "daily 03:00 UTC backup completed on 2026-11-20; hourly cron is cleanup and leaves no backup row"
+  },
+  "hostinger": {
+    "accountUsed": "hostinger_usings-moko",
+    "alias": "Punctum Picture",
+    "accountsNotUsedForReadsExceptVmDiscovery": ["hostinger_brake-angelo", "hostinger_ackey-genal"],
+    "virtualMachinesOnAllThreeAccounts": 0,
+    "orderId": 1008628483,
+    "orderStatus": "active",
+    "plan": "hostinger_premium_v3",
+    "subscriptionId": "AzZiaeV92d20j1rmC",
+    "hostingSubscriptionName": "Premium Web Hosting",
+    "hostingSubscriptionStatus": "non_renewing",
+    "hostingSubscriptionExpiresAt": "2027-01-22T14:15:53Z",
+    "username": "u571409090",
+    "clientId": 1018536097,
+    "website": {
+      "domain": "punctumpicture.com",
+      "websiteType": "nodejs",
+      "enabled": true,
+      "vhostType": "main",
+      "rootDirectory": "/home/u571409090/domains/punctumpicture.com/public_html",
+      "createdAt": "2026-10-28T21:17:59Z"
+    },
+    "domainsInPortfolio": ["menezescontabilidade.com"],
+    "hostingerZoneNotAuthoritative": {
+      "apex": "ALIAS punctumpicture.com.cdn.hstgr.net",
+      "www": "CNAME www.punctumpicture.com.cdn.hstgr.net",
+      "dnsSnapshots": 0
+    },
+    "sshPublicKeys": 0,
+    "websiteSetupsLast24h": 0,
+    "customConnection": {
+      "toolkit": "custom_punctum_picture_administra_o",
+      "id": "custom_punctum_picture_administra_o_stamen-form",
+      "status": "ACTIVE",
+      "websitesRead": 401
+    },
+    "nodejsBuildApi": "not exposed by the connected Hostinger toolkit; not called"
+  },
+  "vps2135319": {
+    "reverseDns": "srv2135319.hstgr.cloud",
+    "address": "179.236.241.135",
+    "tcpOpen": [22, 80, 443],
+    "sshBanner": "SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.20",
+    "http": "308 to https via Caddy",
+    "tls": "alert 80 internal error with and without SNI srv2135319.hstgr.cloud",
+    "sshKeyOnThisAgent": false,
+    "listedByHostingerApi": false
+  },
+  "clerk": {
+    "applicationId": "app_3M14L9JyjaJ9ySitVTsQFf6xJ2A",
+    "applicationName": "My Application",
+    "productionInstance": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+    "developmentInstance": "ins_3M14L5pOMO7DQ8ZX4CW5bZ3w3eB",
+    "productionPublishableKeyPresent": true,
+    "sessionConfig": null,
+    "sessionSchemaFields": ["allowed_clock_skew", "claims", "lifetime"],
+    "sessionTokenLifetimeDefaultSeconds": 60,
+    "maximumSessionLifetimeField": "absent from platform config schema",
+    "productionLoginLogoutRevoke": "not executed; no synthetic production session was created and no real session was revoked"
+  },
+  "localVerification": {
+    "node": "v22.23.4",
+    "npmAudit": "0 vulnerabilities",
+    "typecheck": "pass",
+    "lint": "0 errors, 22 pre-existing warnings",
+    "vitest": "333/333",
+    "vitestCollage": "7/7",
+    "nodeTest": "126/126",
+    "pythonPreflight": "2/2",
+    "build": "pass",
+    "ssrRouteImports": "1/1",
+    "e2e": {
+      "status": "PASS_LOCAL",
+      "sourceSha": "66b2c9958de14d685f561b1d0e0f2a967d28e3e2",
+      "productionTouched": false,
+      "cloudflareAccessOtpTested": false,
+      "note": "Chromium against the local production bundle and fresh synthetic D1/R2. Includes anonymous denial, upload/publish, restart persistence, logout revocation of client A with client B still authorized, and isolated rollback."
+    }
+  }
+}
