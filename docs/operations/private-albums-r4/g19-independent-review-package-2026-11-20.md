@@ -1,6 +1,8 @@
 # G19 independent review package — cycle AK/AL (2026-11-20)
 
-**Status:** prepared for Bugbot / independent security reviewer. **Not** a G19 PASS.  
+**Status:** prepared for Bugbot / independent security reviewer. **Not** a G19 PASS.
+
+**Cycle AP addendum:** the executing agent does not accept G19. R1 is still `BLOCKED_API_GAP` after a fresh Backend API read, and R3 is `AWAITING_A2` with no isolated Node origin. Package for the reviewer: `81-cycle-ap-qa-unblock-2026-11-20.md`.  
 **PR:** https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42  
 **Base:** `codex/punctum-r4-goal-20261115` @ `f0f951d9f30225d717c1f82df7661889e287ec34`  
 **Branch:** `cursor/r4-aj-security-phase-b-ae72`

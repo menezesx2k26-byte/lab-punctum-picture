@@ -2,6 +2,8 @@
 
 **Status:** checklist only. **Not** Dashboard/API proof. Does not clear G19 or R1 residual.
 
+**Cycle AP (2026-11-20 05:41 UTC):** `CLERK_SECRET_KEY` was re-read in Actions as `sk_live_` and returns instance `ins_3M6H9ktM3jO84RvEu5BmKFokCfr` (production, HTTP 200). `GET /v1/instance` still has no maximum-lifetime field. R1 remains **`BLOCKED_API_GAP`**. See `81-cycle-ap-qa-unblock-2026-11-20.md`. Production settings were not changed and no session was revoked.
+
 Punctum local `sid:` revocation TTL is **14 days** (`CLERK_SESSION_REVOCATION_TTL_SECONDS`). Upstream Clerk sessions longer than that can mint fresh JWTs with the same `sid` after local deny-list expiry unless Clerk itself is configured and revoked correctly.
 
 ## Operator steps (authorized Clerk Dashboard / Backend API)

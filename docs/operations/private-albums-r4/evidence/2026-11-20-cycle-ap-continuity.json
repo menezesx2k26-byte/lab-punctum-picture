@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "cycle": "AP",
+  "mission": "PUNCTUM-R1-R3-QA-UNBLOCK-20261120",
+  "recordedAt": "2026-11-20T05:45:00Z",
+  "pr": 42,
+  "prUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+  "branch": "cursor/r4-aj-security-phase-b-ae72",
+  "initialHead": "7834423e40296d04894ecc5ade203a6f56847afd",
+  "remoteHeadMovedBeforeStart": false,
+  "scriptHead": "dc3e555d564296b8111937dd712541e35725eb31",
+  "productionDecision": "NO_GO",
+  "verdict": "PARTIAL_VERIFIED",
+  "g01ClerkSecret": {
+    "name": "CLERK_SECRET_KEY",
+    "classification": "sk_live_",
+    "http": 200,
+    "environment_type": "production",
+    "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+    "matchesKnownProductionInstance": true,
+    "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640472"
+  },
+  "r1": "BLOCKED_API_GAP",
+  "r3": "AWAITING_A2",
+  "hostingerConnectionUsed": "hostinger_usings-moko",
+  "adminConnectionFound": false,
+  "remoteG05G17G18": "NOT_RUN_REMOTE",
+  "g19SelfAccepted": false,
+  "authorization": {
+    "A1": "PENDING",
+    "A2": "PENDING",
+    "A3": "PENDING",
+    "A4": "PENDING",
+    "A5": "PENDING",
+    "A6": "PENDING",
+    "A7": "PENDING"
+  },
+  "nextSafeAction": "Dashboard proof of Maximum lifetime ≤ 14 days on ins_3M6H9ktM3jO84RvEu5BmKFokCfr, plus a synthetic logout/replay. Share the Composio connection named Punctum Picture - Administração with this session or keep using HOSTINGER_API read-only. Do not create a site until A2 is recorded."
+}

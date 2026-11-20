@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "measuredAt": "2026-11-20T05:38:28Z",
+  "cycle": "AP",
+  "requestedAlias": "Punctum Picture - Administração",
+  "requestedAliasFound": false,
+  "listSource": "COMPOSIO_MANAGE_CONNECTIONS action=list toolkit=hostinger, confirmed by COMPOSIO_SEARCH_TOOLS toolkit_connection_statuses",
+  "workspaceNote": "This Composio session returned three private Hostinger accounts. None uses the alias Punctum Picture - Administração, and none has created_at on 2026-11-20. The named admin connection is absent from this workspace/session. hostinger_brake-angelo was not used.",
+  "accountsVisible": [
+    {
+      "id": "hostinger_brake-angelo",
+      "alias": "Operacao 50-50 Producao",
+      "status": "ACTIVE",
+      "is_default": true,
+      "created_at": "2026-11-03T00:40:02.943Z",
+      "used": false,
+      "reason": "Excluded. Operação 50/50 default."
+    },
+    {
+      "id": "hostinger_usings-moko",
+      "alias": "Punctum Picture",
+      "status": "ACTIVE",
+      "is_default": false,
+      "created_at": "2026-10-14T00:55:30.587Z",
+      "used": true,
+      "reason": "Known Punctum connection. Used for read-only inventory only."
+    },
+    {
+      "id": "hostinger_ackey-genal",
+      "alias": null,
+      "status": "ACTIVE",
+      "is_default": false,
+      "created_at": "2026-09-24T02:33:02.227Z",
+      "used": false,
+      "reason": "No alias. Created 2026-09-24, so it is not the connection added for this mission."
+    }
+  ],
+  "accountUsed": {
+    "id": "hostinger_usings-moko",
+    "alias": "Punctum Picture",
+    "status": "ACTIVE"
+  },
+  "accountMatch": {
+    "order_id": 1008628483,
+    "order_status": "active",
+    "plan": "hostinger_premium_v3",
+    "subscription_id": "AzZiaeV92d20j1rmC",
+    "subscription_name": "Premium Web Hosting",
+    "subscription_status": "non_renewing",
+    "client_id": 1018536097,
+    "username": "u571409090",
+    "nodejs_site": "punctumpicture.com",
+    "shared_order_site": "menezescontabilidade.com",
+    "shared_order_site_type": "builder",
+    "website_count": 2,
+    "nodejs_count": 1,
+    "setups_last_24h": 0,
+    "orders_on_connection": 1
+  },
+  "subscriptionsSummary": [
+    {"id": "AzZiaeV92d20j1rmC", "name": "Premium Web Hosting", "status": "non_renewing"},
+    {"id": "AzZjm8V92d2Rb1rES", "name": ".COM Domain", "status": "non_renewing"},
+    {"name": "Starter Business Email", "status": "in_trial", "count": 2},
+    {"name": "Reach 100", "status": "in_trial", "count": 1}
+  ],
+  "capabilityMatrix": {
+    "connection": "hostinger_usings-moko",
+    "executedReadOnly": [
+      "HOSTINGER_LIST_WEBSITES",
+      "HOSTINGER_LIST_ORDERS",
+      "HOSTINGER_LIST_WEBSITE_SETUPS",
+      "HOSTINGER_LIST_SUBSCRIPTIONS"
+    ],
+    "surfacedNotExecuted": [
+      "HOSTINGER_GENERATE_FREE_SUBDOMAIN",
+      "HOSTINGER_LIST_DOMAINS",
+      "HOSTINGER_GET_DNS_RECORDS",
+      "HOSTINGER_LIST_DATA_CENTERS",
+      "HOSTINGER_LIST_VIRTUAL_MACHINES",
+      "HOSTINGER_LIST_TEMPLATES",
+      "HOSTINGER_LIST_CATALOG_ITEMS"
+    ],
+    "absentFromThisToolkitSearch": [
+      "create website / POST onboardings",
+      "delete website",
+      "Node.js build create, deploy, restart, or log read",
+      "file manager",
+      "managed-hosting SSH exec",
+      "plan quota numeric field"
+    ],
+    "githubActionsHOSTINGER_API": {
+      "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44682640483",
+      "readsConfirmed": [
+        "GET /websites?order_id=1008628483",
+        "GET /orders",
+        "GET nodejs builds/settings",
+        "GET nodejs builds"
+      ],
+      "envInventory": "HTTP 500 Hosting:9999; values not read",
+      "writesAttempted": 0
+    },
+    "comparison": "Composio on hostinger_usings-moko can inventory the correct account and expose free-subdomain generation. It does not expose Node deploy or site creation. HOSTINGER_API in GitHub Actions can read the Node build API on punctumpicture.com. Neither path was used to create or deploy."
+  },
+  "provisioning": {
+    "a2": "AWAITING_A2",
+    "a2Evidence": [
+      "PR #42 body keeps A2 pending",
+      "docs/operations/private-albums-r4/80-cycle-ao-ready-for-authorization-2026-11-20.md lists A2 unchecked",
+      "docs/operations/private-albums-r4/execution-state.json A2_R3_Hostinger_QA_staging_path = PENDING_HUMAN",
+      "PR comment 7029962772 records no site creation and does not grant A2"
+    ],
+    "siteCreated": false,
+    "isolatedQaOrigin": null,
+    "qaBuildId": null,
+    "observedCapacity": {
+      "plan": "hostinger_premium_v3",
+      "websitesOnOrder": 2,
+      "nodejsSitesOnOrder": 1,
+      "numericQuotaFromApi": null,
+      "publicV6PremiumTable": "Current Hostinger v6 Premium marketing lists Node.js as unavailable and 3 websites. This order is premium v3 and already runs one Node site, so that table is not this contract."
+    },
+    "createApiIfAuthorizedLater": "POST /api/hosting/v1/orders/{order_id}/onboardings (Hostinger docs). Deprecated alias POST /api/hosting/v1/websites. Not called.",
+    "freeSubdomainTool": "HOSTINGER_GENERATE_FREE_SUBDOMAIN exists and was not called. A free subdomain is not a Node site.",
+    "isolationNote": "menezescontabilidade.com is a builder site on the same order and username. No additional vhost was created, so per-site directory isolation was not demonstrated.",
+    "rollback": "No new Hostinger resource was created. Nothing from this cycle needs deletion."
+  }
+}
