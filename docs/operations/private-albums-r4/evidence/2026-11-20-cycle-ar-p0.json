@@ -1,0 +1,103 @@
+{
+  "cycle": "AR",
+  "observedAt": "2026-11-20T07:40:00Z",
+  "parent": "66b2c9958de14d685f561b1d0e0f2a967d28e3e2",
+  "pr": 42,
+  "branch": "cursor/r4-aj-security-phase-b-ae72",
+  "verdict": "PARTIAL_VERIFIED",
+  "production": {
+    "domain": "punctumpicture.com",
+    "http": 200,
+    "www": "308 to https://punctumpicture.com/",
+    "server": "cloudflare",
+    "worker": "punctum-picture-migration",
+    "workerHostname": "punctumpicture.com",
+    "deploymentId": "276eb966-4561-4c95-b35c-3b461ff0c18d",
+    "versionId": "e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7",
+    "versionPercentage": 100,
+    "versionCreated": "2026-10-27T00:36:39.789669Z",
+    "health": { "ok": true, "service": "punctum-picture" },
+    "anonymous": { "/admin": 303, "/admin/studio": 303, "/api/client/galleries": 404, "/albuns": 404 },
+    "cpuSince": "2026-11-19T00:00:00Z",
+    "cpuRequests": 978,
+    "cpuErrors": 0,
+    "cpuTimeP50Microseconds": 864,
+    "cpuTimeP99Microseconds": 156462,
+    "cpuNote": "Workers analytics quantiles for the live script, not the PR candidate. p99 is above the 10 ms G17 rule."
+  },
+  "dns": {
+    "zone": "punctumpicture.com",
+    "zoneId": "561d9796dd104b8563c9ab77fa4fae1d",
+    "nameservers": ["nia.ns.cloudflare.com", "pedro.ns.cloudflare.com"],
+    "apexAaaa": "100:: proxied",
+    "wwwAaaa": "100:: proxied",
+    "changeApplied": false
+  },
+  "d1": {
+    "id": "22697f13-7484-41e3-9441-f7b902c6577a",
+    "migrations": ["0001_init.sql", "0002_seed_settings.sql", "0003_operations.sql", "0004_whatsapp_contact.sql", "0005_foundation_reconcile.sql", "0006_editorial_personality.sql", "0007_site_config_versions.sql", "0008_site_media.sql"],
+    "counts": {
+      "site_settings": 1,
+      "categories": 10,
+      "albums": 20,
+      "album_categories": 20,
+      "images": 339,
+      "upload_intents": 139,
+      "inquiries": 1,
+      "audit_log": 323,
+      "rate_limit_buckets": 0,
+      "backup_runs": 89,
+      "admin_credentials": 1,
+      "site_config": 0,
+      "site_config_versions": 11,
+      "site_config_pointers": 1,
+      "site_media": 12
+    },
+    "laterTables": "0009-0015 tables are not in this database. Disposable sqlite apply of all 15 files: 25 tables, integrity ok, foreign_key_check 0."
+  },
+  "backup": {
+    "key": "backups/d1/daily/2026-11-20/2026-11-20T03-00-30-053Z.json",
+    "format": "punctum-picture-logical-backup-v1",
+    "createdAt": "2026-11-20T03:00:30.053Z",
+    "bytes": 503220,
+    "deltaVsLive": { "backup_runs": 1, "otherListedTables": 0 },
+    "deltaClass": "explained: snapshot is taken before the backup_runs insert",
+    "restored": false
+  },
+  "hostinger": {
+    "punctumAccount": "hostinger_usings-moko",
+    "alias": "Punctum Picture",
+    "orderId": 1008628483,
+    "username": "u571409090",
+    "plan": "Premium Web Hosting",
+    "website": "punctumpicture.com",
+    "websiteType": "nodejs",
+    "vpsList": [],
+    "customConnection": "custom_punctum_picture_administra_o_stamen-form",
+    "customVpsListStatus": 401,
+    "otherAccountsVpsList": "empty on hostinger_brake-angelo and hostinger_ackey-genal",
+    "vpsId": 2135319,
+    "hostname": "srv2135319.hstgr.cloud",
+    "address": "179.236.241.135",
+    "http": "308 Server Caddy",
+    "tls": "alert 80 internal error for the IP, the srv hostname, and punctumpicture.com SNI",
+    "hpanel": "no authenticated tab on this VM"
+  },
+  "clerk": {
+    "applicationId": "app_3M14L9JyjaJ9ySitVTsQFf6xJ2A",
+    "productionInstance": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+    "sessionConfig": null,
+    "sessionSchema": "lifetime is session-token seconds, default 60, max 315360000. Maximum session lifetime is not a field.",
+    "liveLogin": false
+  },
+  "local": {
+    "node": "v22.23.4",
+    "typecheck": 0,
+    "lint": 0,
+    "vitest": "333/333 files 64",
+    "nodeBuiltinCandidateAndQa": "pass except server.test before build; after build:hostinger:qa, server.test 2/2 including PUNCTUM_QA_BROWSER=1",
+    "g05Stream": "exact 26214400 accepted and 26214401 rejected",
+    "browserTransport": "6/6 after Playwright chromium install",
+    "worktree": "/workspace/.worktrees/p0-pr42"
+  }
+}
