@@ -4,12 +4,12 @@
   "round": "R4",
   "status": "TECHNICAL_DOD_PARTIAL_OPERATIONAL_BLOCKED",
   "decision": "NO_GO_PRODUCTION",
-  "statusScope": "Cycle AM 2026-11-20: G09 cookie A/B HEAD+favorites isolation; G06/G08 helper unit coverage; G19 findings stub awaiting parallel review on b0b1874. Hostinger Composio signed out; punctumpicture.com/api/health 200; aliceblue unreachable. CI on docs HEAD d5c77ad observed separately. NO_GO_PRODUCTION.",
+  "statusScope": "Cycle AN 2026-11-20: G19 reviews incorporated (Pass1 residuals R1–R4; Pass2 R4 app CLOSED). R2 admin Sair+Clerk signOut implemented fail-closed. R1 ops checklist only. G19 still BLOCKED_SECURITY (R1+R3 open). NO_GO_PRODUCTION.",
   "updatedAt": "2026-11-20",
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "baseBranch": "codex/punctum-r4-goal-20261115",
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
-  "headBeforeStateUpdate": "d5c77ad4bf85b12c9b6ad8308d6d132128895471",
+  "headBeforeStateUpdate": "750c2b64536cf83a02bb6bc8251b2afc8082cd42",
   "pullRequest": 42,
   "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
   "currentCycle20261110Z": {
@@ -4824,11 +4824,33 @@
       "writes": 0
     },
     "g19FindingsIncorporation": {
-      "status": "AWAITING_INDEPENDENT_REVIEW_RESULTS",
+      "status": "INCORPORATED_IN_CYCLE_AN_STILL_BLOCKED_SECURITY",
       "package": "docs/operations/private-albums-r4/g19-independent-review-package-2026-11-20.md",
-      "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+      "productShaReviewed": "b0b18748f64269612c15f33921045ac9afe1372d",
       "rule": "Do not set G19=PASS until signed acceptance on exact SHA; map findings to P0/P1/P2 and residualRisks only; no invented PASS",
-      "findings": []
+      "reviews": [
+        {
+          "pass": 1,
+          "agent": "bc-e0f91a0a",
+          "verdict": "G19_NOT_PASS",
+          "exploitableP0P1InAkAlFocus": false,
+          "residuals": ["R1_clerk_max_session_le_14d_proof", "R2_admin_sair_signOut", "R3_hostinger_qa", "R4_scope"]
+        },
+        {
+          "pass": 2,
+          "agent": "bc-10cb5091",
+          "verdict": "R4_CLOSED_FOR_APPLICATION_CODE",
+          "newApplicationP0P1": false,
+          "note": "Zero new P0/P1 on worker/Hostinger/private media/upload/cache/Clerk; docs/ops remainders only"
+        }
+      ],
+      "residualStatus": {
+        "R1": "OPEN_OPS_CHECKLIST_ONLY",
+        "R2": "FIXED_IN_CYCLE_AN",
+        "R3": "OPEN_HOSTINGER_QA",
+        "R4": "CLOSED_APPLICATION_CODE"
+      },
+      "gateG19": "BLOCKED_SECURITY"
     },
     "gateRecordOverrides": {
       "G06": {
@@ -4872,6 +4894,59 @@
       "G06/G08 clerk revocation helper unit tests",
       "G19 findings incorporation stub awaiting parallel review",
       "Hostinger read-only: Composio unavailable; curl health evidence only"
+    ]
+  },
+  "currentCycle20261120AN": {
+    "report": "docs/operations/private-albums-r4/79-cycle-an-g19-incorporate-r2-logout-2026-11-20.md",
+    "r1OpsChecklist": "docs/operations/private-albums-r4/r1-clerk-session-lifetime-ops-checklist-2026-11-20.md",
+    "pullRequest": 42,
+    "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+    "baselineHead": "750c2b64536cf83a02bb6bc8251b2afc8082cd42",
+    "g19FindingsIncorporation": {
+      "status": "INCORPORATED_STILL_BLOCKED_SECURITY",
+      "pass1": {
+        "agent": "bc-e0f91a0a",
+        "verdict": "G19_NOT_PASS",
+        "exploitableP0P1": false,
+        "residuals": ["R1", "R2", "R3", "R4"]
+      },
+      "pass2": {
+        "agent": "bc-10cb5091",
+        "verdict": "R4_CLOSED_FOR_APPLICATION_CODE",
+        "newApplicationP0P1": false
+      },
+      "residualStatus": {
+        "R1": "OPEN_OPS_CHECKLIST_ONLY",
+        "R2": "FIXED_IN_THIS_COMMIT",
+        "R3": "OPEN_HOSTINGER_QA",
+        "R4": "CLOSED_APPLICATION_CODE"
+      }
+    },
+    "gateRecordOverrides": {
+      "G19": {
+        "status": "BLOCKED_SECURITY",
+        "evidence": "Pass1+Pass2 incorporated; R2 fixed; R1 ops checklist only (no Dashboard proof); R3 Hostinger QA open; R4 app closed. No PASS."
+      },
+      "G05": { "status": "FAIL" },
+      "G17": { "status": "FAIL" }
+    },
+    "gateCounts": {
+      "PASS": 1,
+      "FAIL": 2,
+      "BLOCKED_EXTERNAL": 5,
+      "BLOCKED_SECURITY": 1,
+      "NOT_RUN": 15
+    },
+    "decision": "NO_GO_PRODUCTION",
+    "engineeringDod": "PARTIAL",
+    "operationalDod": "BLOCKED",
+    "productionDod": "NO_GO",
+    "productionChange": "NONE",
+    "changes": [
+      "Admin LogoutButton + performAdminLogout: Punctum DELETE then Clerk signOut when authSource=clerk",
+      "DELETE /admin/api/session returns authSource",
+      "R1 Clerk ≤14d ops checklist (no fake proof)",
+      "Fill g19FindingsIncorporation from Pass1/Pass2"
     ]
   }
 }

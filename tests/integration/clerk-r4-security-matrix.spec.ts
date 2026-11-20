@@ -645,6 +645,7 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       headers: { Cookie: adminCookie },
     });
     expect(adminLogout.status).toBe(200);
+    expect(await adminLogout.json()).toMatchObject({ ok: true, authSource: "clerk" });
     expect(
       (
         await dispatch(clerkEnv, "/admin/api/clientes", {

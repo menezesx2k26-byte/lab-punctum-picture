@@ -25,6 +25,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const links=Reflect.get(env,"PRIVATE_GALLERIES_ENABLED")==="true" ? [...navigation,
     {href:"/admin/clientes",label:"Clientes",icon:FolderHeart},
     {href:"/admin/albuns-privados",label:"Álbuns privados",icon:Camera}] : navigation;
+  const clerkPublishableKeyRaw =
+    Reflect.get(env, "CLERK_PUBLISHABLE_KEY") ??
+    Reflect.get(env, "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
+  const clerkAuthEnabled =
+    Reflect.get(env, "CLERK_AUTH_ENABLED") === "true" ||
+    Reflect.get(env, "ADMIN_AUTH_MODE") === "clerk" ||
+    Reflect.get(env, "ADMIN_AUTH_MODE") === "hybrid";
+  const clerkPublishableKey =
+    clerkAuthEnabled && typeof clerkPublishableKeyRaw === "string" && clerkPublishableKeyRaw
+      ? clerkPublishableKeyRaw
+      : undefined;
   return (
     <div className="admin-body">
       <div className="admin-shell">
@@ -46,7 +57,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <br />
             Sessão protegida por senha
           </p>
-          <LogoutButton />
+          <LogoutButton clerkPublishableKey={clerkPublishableKey} />
         </aside>
         <main className="admin-main">{children}</main>
         <nav className={"mobile-admin-nav"+(links.length>navigation.length?" private-gallery-mobile-nav":"")} aria-label="Painel no celular">

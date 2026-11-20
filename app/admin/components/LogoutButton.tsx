@@ -1,10 +1,18 @@
 "use client";
 
+import { ClerkProvider, useClerk } from "@clerk/react";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { performAdminLogout } from "./admin-logout";
 
-export function LogoutButton() {
+function LogoutControls({
+  clerkPublishableKey,
+  signOut,
+}: {
+  clerkPublishableKey?: string;
+  signOut?: () => Promise<unknown>;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -12,26 +20,51 @@ export function LogoutButton() {
   async function logout() {
     setBusy(true);
     setError("");
-    try {
-      const response = await fetch("/admin/api/session", {
-        method: "DELETE", credentials: "same-origin", cache: "no-store",
-      });
-      if (!response.ok) throw new Error("Não foi possível encerrar a sessão.");
-      router.replace("/acesso");
-      router.refresh();
-    } catch {
+    const result = await performAdminLogout({
+      clerkPublishableKey,
+      signOut,
+    });
+    if (!result.ok) {
       setError("A sessão ainda pode estar ativa. Tente sair novamente.");
       setBusy(false);
+      return;
     }
+    router.replace("/acesso");
+    router.refresh();
   }
 
   return (
     <>
-      <button className="admin-logout" type="button" onClick={logout} disabled={busy}>
+      <button className="admin-logout" type="button" onClick={() => void logout()} disabled={busy}>
         <LogOut size={15} aria-hidden="true" />
         {busy ? "Saindo…" : "Sair"}
       </button>
       {error && <span role="alert">{error}</span>}
     </>
   );
+}
+
+function ClerkAwareLogout({ clerkPublishableKey }: { clerkPublishableKey: string }) {
+  const { signOut } = useClerk();
+  return (
+    <LogoutControls
+      clerkPublishableKey={clerkPublishableKey}
+      signOut={() => signOut()}
+    />
+  );
+}
+
+export function LogoutButton({
+  clerkPublishableKey,
+}: {
+  clerkPublishableKey?: string;
+} = {}) {
+  if (clerkPublishableKey) {
+    return (
+      <ClerkProvider publishableKey={clerkPublishableKey}>
+        <ClerkAwareLogout clerkPublishableKey={clerkPublishableKey} />
+      </ClerkProvider>
+    );
+  }
+  return <LogoutControls />;
 }
