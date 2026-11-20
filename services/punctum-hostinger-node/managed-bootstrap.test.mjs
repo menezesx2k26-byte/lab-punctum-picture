@@ -12,8 +12,10 @@ test('managed bootstrap preserves existing synthetic edits and verifies snapshot
   const first = await prepareManagedQaDatabase(file, {verifyTransactions:true});
   assert.equal(first.transactionChecks.status,'PASS');
   assert.equal(first.manifest.integrity, 'ok');
-  assert.equal(Object.keys(first.manifest.tables).length, 23);
   const sql = new DatabaseSync(file);
+  const schemaTables = sql.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.name);
+  assert.deepEqual(Object.keys(first.manifest.tables).sort(), schemaTables);
+  assert.ok(schemaTables.length >= 23, 'Synthetic QA schema unexpectedly lost tables');
   sql.prepare('UPDATE site_settings SET seo_title=? WHERE id=1').run('Preserved synthetic edit');
   sql.close();
   const second = await prepareManagedQaDatabase(file);
