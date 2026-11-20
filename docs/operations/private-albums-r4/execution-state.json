@@ -13,14 +13,23 @@
   "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
   "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
   "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
-  "aoHead": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
-  "headBeforeStateUpdate": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+  "aoPackageSha": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+  "aoHead": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+  "headBeforeStateUpdate": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
   "pullRequest": 42,
   "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
   "ciOnAnHead": {
     "sha": "88970b37227e708d4ac56e26da0c851f38527513",
     "runId": 44661780547,
     "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44661780547",
+    "job": "verify",
+    "conclusion": "success",
+    "hostingerNodeQa": "skipped"
+  },
+  "ciOnAoTip": {
+    "sha": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+    "runId": 44662435650,
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44662435650",
     "job": "verify",
     "conclusion": "success",
     "hostingerNodeQa": "skipped"
@@ -4974,7 +4983,8 @@
     "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
     "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
     "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
-    "aoHead": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+    "aoPackageSha": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
+    "aoHead": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
     "baselineHead": "88970b37227e708d4ac56e26da0c851f38527513",
     "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
     "completionVerdict": "NOT_COMPLETED_VERIFIED",
@@ -4991,12 +5001,21 @@
       "conclusion": "success",
       "hostingerNodeQa": "skipped"
     },
+    "ciOnAoTip": {
+      "sha": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
+      "runId": 44662435650,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44662435650",
+      "job": "verify",
+      "conclusion": "success",
+      "hostingerNodeQa": "skipped"
+    },
     "ciKnownGreen": [
       { "runId": 44659567781, "sha": "7cef6d9", "conclusion": "success" },
       { "runId": 44660042268, "sha": "b0b1874", "conclusion": "success" },
       { "runId": 44660657613, "sha": "d5c77ad", "conclusion": "success" },
       { "runId": 44661334982, "sha": "750c2b6", "conclusion": "success" },
-      { "runId": 44661780547, "sha": "88970b3", "conclusion": "success" }
+      { "runId": 44661780547, "sha": "88970b3", "conclusion": "success" },
+      { "runId": 44662435650, "sha": "a14776a", "conclusion": "success" }
     ],
     "gateCounts": {
       "PASS": 1,
