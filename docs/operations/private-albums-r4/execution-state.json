@@ -5498,5 +5498,20 @@
     },
     "qualification": "HTTPS isolado e candidato Node com SSR confirmados na conta alternativa. Qualificação de produto, Clerk real, recuperação, capacidade e aprovações seguem com critérios próprios.",
     "nextSafeAction": "Confirmar instância e identidades Clerk QA para OTP e revogação. Ensaiar backup, restore descartável, cron e rollback do candidato. Qualificar capacidade e critérios restantes antes de qualquer release."
+  },
+  "publicHostingerCutoverIntent20261120": {
+    "date": "2026-11-20",
+    "confirmedIntent": "Servir o site público pela Hostinger mantendo https://punctumpicture.com no navegador.",
+    "scope": "Migração do site público. Ativação dos álbuns privados exige decisão de release própria.",
+    "sourceSha": "34f3e9be83081c819be108c558b1a44a5444194f",
+    "livePublic": "punctumpicture.com retornou HTTP 200 pela Cloudflare.",
+    "observedHostinger": "magic-lime-guanaco-79.hostingersite.com retornou HTTP 200 com noindex e serve a implantação sintética de QA. O hostname temporário novo é aceito somente em staging.",
+    "status": "NO_GO_SAFETY",
+    "requiredBeforePublicRouting": [
+      "Qualificar o destino de produção autorizado e a configuração do site público com os álbuns privados desligados.",
+      "Reconciliar e validar conteúdo público, mídia e estado operacional do Studio a partir de uma cópia atual protegida.",
+      "Verificar HTTPS da origem Hostinger para punctumpicture.com e ensaiar a volta ao roteamento Cloudflare preservando dados.",
+      "Aplicar o procedimento de integração e release estabelecido para publicação e roteamento na janela aprovada."
+    ]
   }
 }
