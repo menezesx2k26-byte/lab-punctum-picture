@@ -55,7 +55,7 @@ jobs:
           retention-days: 14
 
   hostinger-node-qa:
-    if: github.event_name == 'pull_request' && github.head_ref == 'agent/hostinger-node-migration-20261112'
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'agent/hostinger-') || startsWith(github.head_ref, 'cursor/r4-'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
