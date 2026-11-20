@@ -1,9 +1,11 @@
 # Cycle AR — P0 execution on PR #42
 
-Parent: `66b2c9958de14d685f561b1d0e0f2a967d28e3e2`  
+Parent: `d486a2943cd18a3d30abf025986f25786fd9c6fe`  
 Branch: `cursor/r4-aj-security-phase-b-ae72`  
 PR: https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42  
 Verdict: **PARTIAL_VERIFIED**. Production stays on the Cloudflare Worker. No DNS write, no VPS mutation, no production D1/R2 write.
+
+The sibling record [83-cycle-ar-recovery-2026-11-20.md](83-cycle-ar-recovery-2026-11-20.md) (`3845074`, CI note `d486a29`) already reconciled the live Worker, D1/R2 counts, and the empty VPS lists. This file adds the Workers analytics sample those notes did not have: live-script cpuTime p99 is 156.5 ms, so G17 stays **FAILED_VERIFIED**. That CI success belongs to `3845074`, not to this commit.
 
 Evidence: [2026-11-20-cycle-ar-p0.json](evidence/2026-11-20-cycle-ar-p0.json).
 

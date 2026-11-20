@@ -1,7 +1,8 @@
 {
   "cycle": "AR",
   "observedAt": "2026-11-20T07:40:00Z",
-  "parent": "66b2c9958de14d685f561b1d0e0f2a967d28e3e2",
+  "parent": "d486a2943cd18a3d30abf025986f25786fd9c6fe",
+  "siblingRecovery": "384507406de848e6d3b16c6264a1729e14eb46e0",
   "pr": 42,
   "branch": "cursor/r4-aj-security-phase-b-ae72",
   "verdict": "PARTIAL_VERIFIED",
