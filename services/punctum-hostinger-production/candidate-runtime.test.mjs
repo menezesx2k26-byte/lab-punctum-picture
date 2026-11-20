@@ -70,7 +70,13 @@ test("candidateConfig validates isolated private candidate environment and rejec
   assert.equal(candidateConfig().noindex, true);
   process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://punctumpicture.com";
   assert.equal(candidateConfig().noindex, false);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://magic-lime-guanaco-79.hostingersite.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
   process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "staging";
+  assert.equal(candidateConfig().publicOrigin.origin, "https://magic-lime-guanaco-79.hostingersite.com");
+  assert.equal(candidateConfig().noindex, true);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://magic-lime-guanaco-80.hostingersite.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
   process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://unrelated.example.com";
   assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
   delete process.env.PUNCTUM_CANDIDATE_PROVIDER;

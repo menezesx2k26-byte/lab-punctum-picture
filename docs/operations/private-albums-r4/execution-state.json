@@ -5434,5 +5434,32 @@
         "nextSafeAction": "Confirmar relatório, matriz coerente e commit publicado ou registrar impedimento."
       }
     }
+  },
+  "currentCycle20261120AV": {
+    "date": "2026-11-20",
+    "baselineSha": "86e169add453a716ac386ff52e520d264102ec36",
+    "baselineCi": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44817705938",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "hostinger": {
+      "scope": "Staging descartável em conta alternativa autorizada pelo proprietário",
+      "plan": "Unlimited",
+      "origin": "https://magic-lime-guanaco-79.hostingersite.com",
+      "deployment": "https://hpanel.hostinger.com/websites/magic-lime-guanaco-79.hostingersite.com/node/deployments/01a1fadc-f660-7383-b5f9-f5a6e95d8d04/details",
+      "probeArchiveSha256": "efeb61027d09243ee3627cbc6b9862048e2280d1439081367001a8c2ea51c16f",
+      "probe": "https://magic-lime-guanaco-79.hostingersite.com/health",
+      "status": "ISOLATED_HTTPS_NODE_PROBE_VERIFIED",
+      "node": "v24.22.3",
+      "httpsStatus": 200,
+      "nonceMatched": true,
+      "cacheControl": "no-store",
+      "incrementalCostBRL": 0
+    },
+    "publicHealth": {
+      "url": "https://punctumpicture.com/api/health",
+      "httpsStatus": 200
+    },
+    "qualification": "A sonda confirma provisionamento isolado, certificado e runtime Node. O candidato e os gates remotos de produto exigem validações próprias.",
+    "nextSafeAction": "Qualificar o candidato com SQLite e mídias sintéticas em armazenamento privado. Confirmar instância e identidades Clerk QA para OTP e revogação."
   }
 }

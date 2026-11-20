@@ -62,7 +62,10 @@ export function candidateConfig() {
   } catch {
     throw Error("CANDIDATE_PUBLIC_URL_INVALID");
   }
-  if (managed && !["https://aliceblue-locust-999458.hostingersite.com", "https://punctumpicture.com"].includes(publicOrigin.origin)) {
+  const alternateQaOrigin = environment === "staging" &&
+    publicOrigin.origin === "https://magic-lime-guanaco-79.hostingersite.com";
+  if (managed && !alternateQaOrigin &&
+    !["https://aliceblue-locust-999458.hostingersite.com", "https://punctumpicture.com"].includes(publicOrigin.origin)) {
     throw Error("CANDIDATE_MANAGED_HOST_INVALID");
   }
   if (
