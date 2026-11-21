@@ -20,7 +20,7 @@ async function serve(t, configure = () => undefined) {
     } else if (path.startsWith('/api/')) {
       res.end(JSON.stringify({ ok: true }));
     } else if (path === '/robots.txt') {
-      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' }).end('User-agent: *\nAllow: /\n');
+      res.writeHead(200, { 'content-type': ['text/plain', 'text/plain; charset=utf-8'] }).end('User-agent: *\nAllow: /\n');
     } else if (path === '/sitemap.xml') {
       res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8' }).end(
         '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></url></urlset>',

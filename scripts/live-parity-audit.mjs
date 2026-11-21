@@ -127,7 +127,10 @@ async function compareJson(path) {
 
 function validSeoResponse(path, response) {
   if (response.status !== 200) return false;
-  const type = response.contentType?.split(';', 1)[0].trim().toLowerCase();
+  const types = new Set((response.contentType ?? '').split(',')
+    .map(value => value.split(';', 1)[0].trim().toLowerCase()));
+  if (types.size !== 1) return false;
+  const [type] = types;
   const body = response.body.trim();
   if (path === '/robots.txt') {
     return type === 'text/plain' && /^User-agent:[ \t]*\S/im.test(body);
