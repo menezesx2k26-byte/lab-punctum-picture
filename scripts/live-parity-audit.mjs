@@ -92,23 +92,36 @@ function assetDiff(a = [], b = []) {
   };
 }
 
+function followsLoginRedirect(initial, final, origin, path) {
+  if (initial.status !== 303 || !initial.location || final.status !== 200) return false;
+  try {
+    const expectedOrigin = new URL(origin).origin;
+    return [initial.location, final.finalUrl].every(location => {
+      const url = new URL(location, origin);
+      return url.origin === expectedOrigin && url.pathname === '/acesso' && url.searchParams.get('next') === path;
+    });
+  } catch {
+    return false;
+  }
+}
+
 async function compareJson(path) {
   const [p, d] = await Promise.all([get(`${PROD}${path}`), get(`${DEST}${path}`)]);
   const parse = (r) => {
-    if (!r.ok) return { __transportError: r.error };
-    try { return JSON.parse(r.body); }
-    catch { return { __parseError: true, status: r.status, body: short(r.body, 1000) }; }
+    if (!r.ok) return { valid: false, value: { __transportError: r.error } };
+    try { return { valid: true, value: JSON.parse(r.body) }; }
+    catch { return { valid: false, value: { __parseError: true, status: r.status, body: short(r.body, 1000) } }; }
   };
   const pj = parse(p), dj = parse(d);
-  const differences = diff(pj, dj);
+  const differences = diff(pj.value, dj.value);
   return {
     productionStatus: p.status ?? null,
     destinationStatus: d.status ?? null,
-    equal: differences.length === 0,
+    equal: p.status === 200 && d.status === 200 && pj.valid && dj.valid && differences.length === 0,
     diffCount: differences.length,
     diffs: differences,
-    production: pj,
-    destination: dj,
+    production: pj.value,
+    destination: dj.value,
   };
 }
 
@@ -124,7 +137,7 @@ async function main() {
     text: {},
   };
 
-  for (const path of ['/', '/acesso', '/admin', '/admin/studio']) {
+  for (const path of ['/', '/portfolio', '/acesso', '/admin', '/admin/studio']) {
     const [pm, dm, pf, df] = await Promise.all([
       get(`${PROD}${path}`, 'manual'),
       get(`${DEST}${path}`, 'manual'),
@@ -132,14 +145,15 @@ async function main() {
       get(`${DEST}${path}`),
     ]);
     const p = htmlMeta(pf), d = htmlMeta(df);
+    const comparable = p.status === 200 && d.status === 200 && Boolean(p.title) && Boolean(d.title);
     report.routes[path] = {
       productionInitial: { status: pm.status ?? null, location: pm.location ?? null, error: pm.error ?? null },
       destinationInitial: { status: dm.status ?? null, location: dm.location ?? null, error: dm.error ?? null },
       production: p,
       destination: d,
-      sameStatus: p.status === d.status,
-      sameTitle: p.title === d.title,
-      sameBody: p.bodySha256 === d.bodySha256,
+      sameStatus: p.ok && d.ok && p.status === d.status,
+      sameTitle: comparable && p.title === d.title,
+      sameBody: comparable && p.bodySha256 === d.bodySha256,
       assetDiff: assetDiff(p.assets, d.assets),
     };
   }
@@ -153,7 +167,7 @@ async function main() {
     report.text[path] = {
       productionStatus: p.status ?? null,
       destinationStatus: d.status ?? null,
-      equal: p.body === d.body,
+      equal: p.status === 200 && d.status === 200 && p.body.length > 0 && p.body === d.body,
       productionSha256: sha(p.body),
       destinationSha256: sha(d.body),
       productionExcerpt: short(p.body, 1200),
@@ -163,10 +177,17 @@ async function main() {
     };
   }
 
+  const loginEquivalent = path => {
+    const route = report.routes[path];
+    return route.sameTitle
+      && followsLoginRedirect(route.productionInitial, route.production, PROD, path)
+      && followsLoginRedirect(route.destinationInitial, route.destination, DEST, path);
+  };
   report.summary = {
     homeHtmlEqual: report.routes['/']?.sameBody ?? false,
-    adminRouteEquivalent: report.routes['/admin']?.sameStatus && report.routes['/admin']?.sameTitle,
-    studioRouteEquivalent: report.routes['/admin/studio']?.sameStatus && report.routes['/admin/studio']?.sameTitle,
+    portfolioHtmlEqual: report.routes['/portfolio']?.sameBody ?? false,
+    adminRouteEquivalent: loginEquivalent('/admin'),
+    studioRouteEquivalent: loginEquivalent('/admin/studio'),
     publicSiteEqual: report.api['/api/public/site']?.equal ?? false,
     publicSiteDiffCount: report.api['/api/public/site']?.diffCount ?? null,
     statsEqual: report.api['/api/public/stats']?.equal ?? false,
