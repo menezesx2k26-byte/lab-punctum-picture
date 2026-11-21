@@ -16,11 +16,11 @@ const localOrigin = `http://127.0.0.1:${port}`;
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const publicReleaseOnly = process.argv.includes("--public-release-check");
 
-function exactSizePng() {
+function exactSizePng(marker = 0) {
   const chunks = [fixturePng.subarray(0, -12)];
   let remainder = requiredBytes - fixturePng.length;
   while (remainder) {
-    const payload = Buffer.alloc(Math.min(256 * 1024, remainder - 12));
+    const payload = Buffer.alloc(Math.min(256 * 1024, remainder - 12), marker);
     const type = Buffer.from("vpAg"); // Private, safe-to-copy ancillary chunk.
     const chunk = Buffer.alloc(12 + payload.length);
     chunk.writeUInt32BE(payload.length, 0);
@@ -339,8 +339,48 @@ async function main() {
         assert.equal((await res.json()).gallery.id, gallery.id, "owner gallery response identity");
       });
       checks.push("owner-gallery-bounded-concurrent-reads");
+
+      const uploads = [png, exactSizePng(1)].map((bytes) => ({ bytes, sha256: hash(bytes) }));
+      assert.notEqual(uploads[0].sha256, uploads[1].sha256);
+      const batch = await Promise.all(uploads.map(async ({ bytes, sha256 }, index) => {
+        const pending = await json(intentPath, "POST", {
+          filename: `concurrent-${index}.png`, mimeType: "image/png", sizeBytes: bytes.length, sha256,
+        }, admin, 201);
+        const url = new URL(pending.uploadUrl);
+        assert.equal(url.origin, publicOrigin);
+        assert.equal(url.pathname, `${galleryPath}/uploads/${pending.intentId}/direct`);
+        return { ...pending, bytes, sha256, url };
+      }));
+      const batchStarted = performance.now();
+      await Promise.all(batch.map(async ({ url, bytes, requiredHeaders }) => {
+        const uploaded = await expect(await req(url.pathname + url.search, "PUT", bytes, admin, {
+          ...requiredHeaders, "Content-Length": String(bytes.length),
+        }), 200, "parallel-25mib-put");
+        await uploaded.arrayBuffer();
+      }));
+      const concurrentUploadMs = elapsedMs(batchStarted);
+      await Promise.all(batch.map(({ intentId }) =>
+        json(`${galleryPath}/uploads/${intentId}/complete`, "POST", {}, admin)));
+      const findCompleted = db.prepare(`SELECT u.image_id AS imageId, u.status AS intentStatus,
+        u.sha256 AS intentDigest, m.status AS imageStatus, m.original_sha256 AS imageDigest,
+        m.size_bytes AS bytes FROM client_gallery_upload_intents AS u
+        JOIN client_gallery_images AS m ON m.id = u.image_id AND m.gallery_id = u.gallery_id
+        WHERE u.id = ? AND u.gallery_id = ?`);
+      for (const { intentId, imageId, sha256 } of batch) {
+        const original = await expect(await req(`${clientPath}/images/${imageId}/download`,
+          "GET", undefined, clients[0].cookie), 200, "parallel-25mib-owner-download");
+        const bytes = Buffer.from(await original.arrayBuffer());
+        assert.equal(bytes.length, requiredBytes);
+        assert.equal(hash(bytes), sha256);
+        assert.deepEqual({ ...await findCompleted.bind(intentId, gallery.id).first() }, {
+          imageId, intentStatus: "completed", intentDigest: sha256,
+          imageStatus: "ready", imageDigest: sha256, bytes: requiredBytes,
+        });
+      }
+      assert.deepEqual((await db.prepare("PRAGMA foreign_key_check").all()).results, []);
+      checks.push("parallel-25mib-size-digest-and-sqlite-integrity");
       console.log(JSON.stringify({ result: "PASS_LOCAL_SYNTHETIC_NODE", bytes: png.length, sha256: hash(png),
-        httpLoopbackMs: { adminLoginMs, clientLoginMs, exactUploadMs, privateGallery },
+        httpLoopbackMs: { adminLoginMs, clientLoginMs, exactUploadMs, concurrentUploadMs, privateGallery },
         checks, environment: "isolated loopback staging with synthetic legacy authentication" }));
     } finally {
       if (child.exitCode === null) {

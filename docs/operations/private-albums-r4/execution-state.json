@@ -6379,5 +6379,17 @@
     "local": "node --check and git diff --check passed. The Linux candidate build and profile are routed to CI.",
     "gates": "Preserve AY decisions for all 24 gates. The candidate HTTP profile is scoped evidence for T05. G17 retains the provider and operational qualification requirements.",
     "nextSafeAction": "Obtain the provider change on the existing Unlimited managed Node association. Recheck the exact association once. Use the managed environment and approved fixtures to complete HTTPS, authenticated and upload performance sampling, capacity and cost evidence."
+  },
+  "currentCycle20261121BD": {
+    "goal": "PUNCTUM-CLOSEOUT-2026-11-18",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baseline": "802f44d15534bfe4de35cfe91160af73af36c98d",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "scope": "T03 and T05. The compiled Node candidate proof dispatches two distinct 25 MiB files to the same synthetic gallery using parallel intents, PUTs and completion calls. Owner downloads must return each corresponding size and digest. The exact intent/image tuples and foreign keys are checked in SQLite.",
+    "measurement": "concurrentUploadMs is the wall time from the start of both PUT calls until both response bodies are consumed. Completion and download are separately required for proof success.",
+    "verification": "node --check, ledger validation and git diff --check are local. The Linux hostinger-node-qa job executes both R4 modes. The PR #45 cycle BD receipt identifies the exact verified CI run.",
+    "gates": "Preserve all 24 AY release decisions. The bounded synthetic sample does not supply G05 or G17 evidence on Unlimited.",
+    "nextSafeAction": "After Hostinger confirms the association change, recheck the exact managed target once and qualify parallel upload and performance on that environment with approved fixtures."
   }
 }
