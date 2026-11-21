@@ -17,7 +17,7 @@ import { generateTemporaryPassword } from "../client/passwords";
 import { hashClientPasswordWithProvider } from "../client/password-provider";
 import { privateJson } from "../client/response";
 import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
-import { writeAudit } from "../utils/audit";
+import { prepareAudit, writeAudit } from "../utils/audit";
 import { requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { assertRateLimit } from "../utils/rate-limit";
@@ -389,21 +389,22 @@ async function handleGalleryAdminApi(
     (action === "archive" || action === "unpublish") &&
     request.method === "POST"
   ) {
-    await db
-      .prepare("UPDATE client_galleries SET status=?,updated_at=? WHERE id=?")
-      .bind(
-        action === "archive" ? "archived" : "draft",
-        new Date().toISOString(),
+    await db.batch([
+      db
+        .prepare("UPDATE client_galleries SET status=?,updated_at=? WHERE id=?")
+        .bind(
+          action === "archive" ? "archived" : "draft",
+          new Date().toISOString(),
+          id,
+        ),
+      prepareAudit(
+        db,
+        auditPrincipal(actor),
+        "client_gallery." + action,
+        "client_gallery",
         id,
-      )
-      .run();
-    await writeAudit(
-      db,
-      auditPrincipal(actor),
-      "client_gallery." + action,
-      "client_gallery",
-      id,
-    );
+      ),
+    ]);
     return privateJson({ ok: true });
   }
   if (!action && request.method === "GET") {
