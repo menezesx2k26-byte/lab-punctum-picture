@@ -6391,5 +6391,34 @@
     "verification": "node --check, ledger validation and git diff --check are local. The Linux hostinger-node-qa job executes both R4 modes. The PR #45 cycle BD receipt identifies the exact verified CI run.",
     "gates": "Preserve all 24 AY release decisions. The bounded synthetic sample does not supply G05 or G17 evidence on Unlimited.",
     "nextSafeAction": "After Hostinger confirms the association change, recheck the exact managed target once and qualify parallel upload and performance on that environment with approved fixtures."
+  },
+  "currentCycle20261121BE": {
+    "goal": "PUNCTUM-CLOSEOUT-2026-11-18",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baseline": "12cfaa34108c7b66ef0a4004e73dcc5df62c5e45",
+    "productSha": "e4e5f1ac0ed8f28e8a845d82f6aed7030365cc7f",
+    "report": "docs/operations/private-albums-r4/89-cycle-be-vps-parity-sitemap-2026-11-21.md",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "correction": "Reject identical but invalid sitemap locations without changing serving routes or dependencies. Ten negative RED fixtures, valid urlset/index and independent canonical-host controls.",
+    "local": { "command": "node --test scripts/live-parity-audit.test.mjs scripts/ci-evidence.test.mjs", "passed": 26, "failed": 0, "exitCode": 0, "elapsedMs": 15155.528, "focusedEslint": "PASS", "diffCheck": "PASS" },
+    "vps": {
+      "id": 2135319,
+      "sourceArchiveSha256": "d44de46c656c3f7d1250028bfe8776cf7cf999549dfb1ffd24f4903c3aeb9d23",
+      "unit": "punctum-vps-qa@14-327471-999.service",
+      "command": "Dedicated strict-pinned SSH as codex-qa, fixed command smoke",
+      "passed": 25, "failed": 0, "exitCode": 0,
+      "sshElapsedMs": 9441, "journalCpuSeconds": 7.254, "sampledCgroupPeakBytes": 95776768,
+      "pidsLimitHits": 0, "availableRamBeforeKiB": 2928640,
+      "activeContainersBeforeAndAfter": 26, "wslProcessesAfter": 0,
+      "limits": { "vcpu": 1, "memoryMiB": 384, "tasks": 64, "seconds": 30, "workTmpfsMiB": 32, "swapBytes": 0 },
+      "cleanup": "Work mount inactive; socket active. Staged source retained only in the dedicated QA directory."
+    },
+    "baselineCi": { "runId": 44876223260, "verify": "success", "hostingerNodeQa": "success", "scope": "Baseline only; new head needs CI readback" },
+    "baselineBrowser": { "artifactId": 14696013041, "archiveSha256": "e1070df11309afe4d76c90c1029d0091562520de666a840e15c89985f7594a72", "zipIntegrity": "PASS", "syntheticChecks": 23, "axeAudits": 7, "checkoutDirtyAtRun": true, "trackedChangesBeforeBrowser": false, "untrackedPaths": "NOT_CAPTURED", "physicalAssistive": "NOT_RUN" },
+    "independentReview": { "status": "DEGRADED", "cosOwnerId": "01a1fcde-9753-76e3-9866-74f4d53fdb1c", "cosRunId": "b6d06dc6-c825-4c29-b445-472824baba58", "cos": "Both workers failed before startup; exact failure messages read and acknowledged", "gemini": "Read-only review exited 3 after successful health and model discovery", "next": "Native read-only review of the exact correction", "formalG19": "HOLD" },
+    "continuity": { "drive": "Read and reconciled through BD; BE mirror not updated", "persistFlow": "No accessible verified tool or handle" },
+    "gates": "All 24 release decisions are preserved exactly in currentCycle20261121AY.gateRecords. This cycle adds focused technical evidence without promoting G19 or any managed-target gate.",
+    "nextSafeAction": "Read final exact-SHA CI and independent correction review. After an objective provider association change, recheck the existing Unlimited Node once and qualify the managed target. Keep both releases NO_GO."
   }
 }

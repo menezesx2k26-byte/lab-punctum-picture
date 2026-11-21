@@ -15,6 +15,8 @@ Session dates: 2026-11-14–15, America/Sao_Paulo. Individual workflow receipts 
 
 ## Gates
 
+Cycle BE (2026-11-21): [bounded Linux QA and sitemap audit receipt](private-albums-r4/89-cycle-be-vps-parity-sitemap-2026-11-21.md) supersedes older runner/test counts for its exact correction SHA. The VPS passed 25 focused synthetic tests with a 91.3 MiB sampled peak and no WSL. Final CI and independent review remain pending in that receipt. Both releases remain `PRODUCTION_NO_GO`; the domain registration is Active, while issue #44 governs the unresolved managed Node association.
+
 PASS below is scoped to the tested managed candidate. Public production acceptance remains gated by cutover.
 
 | Gate | Status | Verified evidence / remaining limit |
