@@ -5540,8 +5540,29 @@
     "report": "87-cycle-aw-unlimited-release-execution-2026-11-20.md",
     "result": "PARTIAL_VERIFIED",
     "production": "NO_GO",
-    "task0": "BASELINE_RECONCILED",
-    "task1": "IN_PROGRESS",
+    "task0": {
+      "status": "BASELINE_RECONCILED",
+      "commit": "e3e1472664fea59c0e889ffdaadcaa8be2f6072b"
+    },
+    "task1": {
+      "status": "BLOCKED_PROVIDER",
+      "diagnosis": "VERIFIED_LEGACY_ATTACHMENT_AND_NO_CHALLENGE",
+      "sourceSha": "ec485b53b17a223ae8b91329b82616da9b71df17",
+      "preflight": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44844352259",
+      "artifactId": 14682491522,
+      "artifactSha256": "88852f53292d6ece7ea651ae90d9e82e0a9173bfe46eebd2b08de25495a19a82",
+      "accountConfirmed": true,
+      "orderId": 1008583103,
+      "username": "u775492464",
+      "website": "magic-lime-guanaco-79.hostingersite.com",
+      "ownershipHttp": 200,
+      "isAccessible": false,
+      "challengeLength": 0,
+      "correlationId": "a3463f87-659c-410b-8ad8-5e5e6b4289a5",
+      "issue": "https://github.com/menezesx2k26-byte/lab-punctum-picture/issues/44",
+      "providerTicket": null,
+      "dnsWrites": 0
+    },
     "delegation": {
       "cosOwnerId": "066f22a7-1265-419a-8ddf-f7afcfba2d10",
       "cosRunId": "8adddc99-71cb-44e3-8f31-96d6498e92c6",
@@ -5549,8 +5570,27 @@
         "worker-1",
         "worker-2"
       ],
-      "geminiResult": "FAILED_EXIT_3_NO_REPORT"
+      "geminiResult": "FAILED_EXIT_3_NO_REPORT",
+      "cosResult": "READ_ONLY_RESEARCH_RECEIVED_NO_MUTATIONS",
+      "reports": [
+        "025f51dd",
+        "9d590355"
+      ]
     },
-    "nextSafeAction": "Test and run fixed-account Unlimited preflight without DNS writes."
+    "nextSafeAction": "Await owner/provider response on issue44 before retrying association. Independent queue: default-OFF public candidate flag, current source delta, disposable Unlimited restore, exact-SHA CI and independent review.",
+    "dnsBaseline": {
+      "sourceSha": "9633a36bb79ad5fd04f7eac9447348a28cafddab",
+      "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44844658022",
+      "artifactId": 14682930650,
+      "artifactSha256": "9bf0722554208f4282bb409c720ce42a0c860e7ebd302c4b16865fbd30096591",
+      "recordsSha256": "4eaec7ca0018c0b77ba668f1829338631399fb91d65686e5282859e6af9cce19",
+      "mutations": 0
+    },
+    "tests": {
+      "command": "python -m unittest discover -s scripts -p 'punctum_*_preflight_test.py'",
+      "passed": 11,
+      "redGreen": true,
+      "fullCiForChangedCode": "PENDING"
+    }
   }
 }
