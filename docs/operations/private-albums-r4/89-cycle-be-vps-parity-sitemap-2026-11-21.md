@@ -1,4 +1,4 @@
-# Cycle BE: sitemap parity and bounded Linux QA
+# Cycles BE/BF: parity, audit integrity and bounded Linux QA
 
 2026-11-21, America/Sao_Paulo. `PARTIAL_VERIFIED / PRODUCTION_NO_GO` for both releases. Branch `codex/punctum-unlimited-release-20261120`, PR #45. Baseline `12cfaa34108c7b66ef0a4004e73dcc5df62c5e45`; correction `e4e5f1ac0ed8f28e8a845d82f6aed7030365cc7f`.
 
@@ -8,7 +8,7 @@ The parity audit accepted identical XML containing relative URLs, protocol-relat
 
 Contract: [Sitemaps protocol](https://www.sitemaps.org/protocol.html), required absolute locations under 2,048 characters and one hostname. This focused validator is not a complete XSD/RFC validator.
 
-Windows command `node --test scripts/live-parity-audit.test.mjs scripts/ci-evidence.test.mjs`: 26 PASS, exit 0, 15.16 seconds. Focused ESLint and `git diff --check`: exit 0. Callers remain the existing v2 parity workflow, main CI and isolated VPS smoke.
+Windows command `node --test scripts/live-parity-audit.test.mjs scripts/ci-evidence.test.mjs`: 26 PASS, exit 0, 15.16 seconds. `git diff --check`: exit 0. Correction to the original validation record: local ESLint did not run because the conditional command skipped the absent executable. Lint was subsequently verified by CI at `0ffb03d7`, not locally. Callers remain the existing v2 parity workflow, main CI and isolated VPS smoke.
 
 ## VPS receipt
 
@@ -76,3 +76,31 @@ These are the unchanged AY decisions inherited by AZ through BD. New synthetic e
 | G24 | PASS | Versioned continuity; this cycle's mirror remains pending. |
 
 Next: read the correction's independent review and final CI. Externally, the owner/Hostinger must reconcile the existing Unlimited Node association in issue #44, preserving data and Cloudflare nameservers. Do not request another registration transfer. After an objective provider change, perform one exact-account readback, then qualify the managed target. No merge, deploy, cutover, production migration, billing, public R4 activation or contact with support was performed.
+
+## Cycle BF: independent findings and follow-up
+
+The preceding turn made progress through a committed correction, measured Linux QA and verified Drive persistence. No blocked-goal decision is warranted while review findings can be corrected safely.
+
+Both jobs of [CI 44879855658](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44879855658) passed at exactly `0ffb03d7e5ad18f4235faad1be7a90d1eb0e4020`. Both artifact ZIPs were downloaded through the connector, their API SHA-256 digests matched and ZIP integrity passed:
+
+| Artifact | SHA-256 | Verified scope |
+| --- | --- | --- |
+| `14697209677` | `4b29f054ed519b4891822f8fd04c713e7d715be81df7a397cc063c0b20b60f5c` | 23 synthetic Worker Chromium checks, seven axe audits, real zoom; zero page/console/server errors. |
+| `14698055222` | `af2a7c1ffc3a05b760e84793c002e1659c97ddb8f003c23e76f8c498a38bba8b` | Synthetic Node mobile/desktop HTTP 200, no overflow or page errors; `managedQa=NOT_TESTED`. |
+
+Both reports name the exact CI SHA and retain `checkoutDirtyAtRun=true`. No completely clean-checkout or managed-provider claim is made. Manual inspection used candidate synthetic captures only: public mobile/desktop hero, private mobile gallery/editor and zoomed lightbox. Those views retain their incumbent layout and show no obvious horizontal clipping. Private media are solid synthetic fixtures, which cannot qualify photographic content/crops. The admin full-page capture has an unexplained white band in its upload area; its cause is not established. The gallery also shows the minor pre-existing copy issue `1 favoritas`. T04 remains partial; there is no new frontend approval, redesign or physical assistive proof.
+
+Native reviewers inspected the baseline read-only:
+
+- Franklin, agent `01a1fcfc-bbb8-7e52-a7b4-30eda72d1689`, reproduced mixed-scheme, mixed-port and nested-`loc` false positives. The correction in `28d0c7581987013bf044246dcd388d5d5e9c6cdf` compares normalized internal origins and forbids child elements in `loc`. A positive control preserves implicit/explicit default HTTPS-port equivalence and the independent canonical QA hostname. Three negative HTTP fixtures failed before the patch and passed afterward. [Protocol](https://www.sitemaps.org/protocol.html#location).
+- Confucius, agent `01a1fcfc-cef4-7122-af4e-9e026a706c7b`, reproduced archive committing before its audit insert failed. `a81c07a6f91fe965b6981e3ffd07ab3b1ae08e4b` prepares the existing audit insert and submits it with archive/unpublish updates in the existing D1 batch. The `writeAudit` signature, payload and identity contract remain compatible. `4d8d87207144cebdbe50bb7277c77ce725d404a5` prepares the test trigger as one D1 statement, avoiding `exec` newline splitting. The two integration regressions require HTTP 500, unchanged gallery state/timestamp, no audit row, then a successful retry and attributed event after removing the failure trigger. These versioned integration cases are pending CI; the prior independent reproduction is not a claim that those cases ran locally. [D1 transaction contract](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch).
+
+This follow-up corrects the reviewed archive/unpublish paths. It does not claim transactional auditing for every other administrative write; other mutation-then-audit paths need separate qualification. Neither scoped reviewer granted formal G19 or LGPD controller approval. Follow-up review of the corrective diffs is pending.
+
+Local follow-up: 29 focused parity/CI-evidence tests PASS, exit 0, 18.07 seconds. Native Node syntax checks passed for the three changed audit TypeScript files. Direct assertions against the actual audit utility verified that preparing an event defers execution and the legacy writer executes once with unchanged data serialization. Typecheck, ESLint and the D1 integration/runtime tests were not run locally because dependencies are absent; they are routed to CI.
+
+VPS follow-up preflight at 07:35 UTC: 2,856,628 KiB available RAM, zero swap, load 0.04/0.05/0.08, 54,624,040 KiB available disk, 319 processes, 26 containers, no running auxiliary job. Thirteen QA source files from `a81c07a6` were staged with TAR SHA-256 `3c04195edba962ec91a2639b7720fb1ddc37152e0b1d04e4e6321f89e4ef7f5c`, verified before extraction into the same dedicated root. Those selected source files are unchanged in `4d8d8720`.
+
+The nonadmin fixed `smoke` command passed 28 tests and the separate exact 25 MiB decode/hash fixture, exit 0. Unit `punctum-vps-qa@15-336871-999.service`; SSH duration 10,766 ms, journal CPU 8.476 seconds, sampled cgroup peak 95,100,928 bytes (90.7 MiB), zero PID-limit hits. Limits remain 1 vCPU/384 MiB/64 tasks/30 seconds/32 MiB tmpfs/zero swap. Work mount inactive, socket active, 26 containers afterward and zero Windows WSL/vmmem processes. The VPS smoke covers parity, SQLite restore and Sharp, not the newly added administrative HTTP rollback tests.
+
+The final documentary HEAD needs its own CI receipt. T02/T05 remain partial until the new integration cases and reviewer follow-up pass. The previous T00-T06 matrix otherwise remains applicable, and all 24 AY release decisions are preserved. Both phases remain `PARTIAL_VERIFIED / PRODUCTION_NO_GO`. Existing association, real Clerk, target recovery/rollback, capacity, physical accessibility and human approval gates remain open. Drive BE was updated and read back after the original BE commit; BF mirror and final PR receipt are still pending at this checkpoint.
