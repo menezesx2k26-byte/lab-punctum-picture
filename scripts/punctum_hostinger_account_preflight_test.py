@@ -82,7 +82,7 @@ class UnlimitedDomainPreflightTest(unittest.TestCase):
         }
         self.order = {"id": 1008583103, "status": "active", "plan": "hostinger_unlimited"}
 
-    def report(self, ownership, *, website=None, order=None):
+    def report(self, ownership, *, website=None, order=None, portfolio=None, incoming=None):
         def api(token, path, **kwargs):
             if path.startswith("/websites?"):
                 return 200, [website or self.website], None
@@ -91,6 +91,9 @@ class UnlimitedDomainPreflightTest(unittest.TestCase):
             if path == "/domains/verify-ownership":
                 self.assertEqual(kwargs["body"], {"domain": "punctumpicture.com"})
                 return 200, ownership, None
+            if path in ("/portfolio/punctumpicture.com", "/move/incoming/punctumpicture.com?force_sync=true"):
+                self.assertEqual(kwargs["api"], "https://developers.hostinger.com/api/domains/v1")
+                return 200, portfolio if path.startswith("/portfolio/") else incoming, None
             return 200, {}, None
 
         with patch.object(self.module, "call", side_effect=api) as call:
@@ -147,6 +150,18 @@ class UnlimitedDomainPreflightTest(unittest.TestCase):
         self.assertNotEqual(result, 0)
         self.assertEqual(call.call_count, 0)
         self.assertFalse(json.loads(output.getvalue())["accountConfirmed"])
+
+    def test_completed_registration_move_is_separate_from_site_access_and_omits_contacts(self):
+        report, _ = self.report(
+            {"domain": "punctumpicture.com", "is_accessible": False, "txt_to_verify": ""},
+            portfolio={"domain": "punctumpicture.com", "status": "active", "contacts": {"email": "private-owner@example.test"}},
+            incoming={"domain": "punctumpicture.com", "status": "completed", "new_customer_email": "private-owner@example.test"},
+        )
+        self.assertEqual(report["domainPortfolio"]["http"], 200)
+        self.assertEqual(report["domainPortfolio"]["status"], "active")
+        self.assertEqual(report["incomingMove"]["status"], "completed")
+        self.assertEqual(report["domainAssociation"]["status"], "BLOCKED_PROVIDER_NO_CHALLENGE")
+        self.assertNotIn("private-owner@example.test", json.dumps(report))
 
 
 if __name__ == "__main__":

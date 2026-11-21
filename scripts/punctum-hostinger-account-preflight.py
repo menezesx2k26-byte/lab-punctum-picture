@@ -22,6 +22,7 @@ USERNAME = "u571409090"
 MAIN_DOMAIN = "punctumpicture.com"
 TEMP_DOMAIN = "aliceblue-locust-999458.hostingersite.com"
 API = "https://developers.hostinger.com/api/hosting/v1"
+DOMAINS_API = "https://developers.hostinger.com/api/domains/v1"
 FORBIDDEN_TOUCH = "menezescontabilidade.com"
 TARGETS = {
     "premium": (ORDER_ID, USERNAME, MAIN_DOMAIN, TEMP_DOMAIN, "HOSTINGER_API"),
@@ -40,9 +41,9 @@ def mask(text: str, token: str) -> str:
     return text.replace(token, "[redacted]") if token else text
 
 
-def call(token: str, path: str, timeout: int = 20, *, body=None, request_ids=None):
+def call(token: str, path: str, timeout: int = 20, *, body=None, request_ids=None, api=API):
     req = urllib.request.Request(
-        API + path,
+        api + path,
         headers={
             "Authorization": "Bearer " + token,
             "Accept": "application/json",
@@ -246,6 +247,14 @@ def build_report(token: str, *, target: str = "premium", check_domain: bool = Fa
         failed = [k for k, v in report["checks"].items() if k.startswith("build") and v.get("http") not in (200,)]
         report["blockingCall"] = failed[0] if failed else "nodejs builds endpoints non-200"
     if check_domain:
+        for label, path in (("domainPortfolio", f"/portfolio/{MAIN_DOMAIN}"),
+                            ("incomingMove", f"/move/incoming/{MAIN_DOMAIN}?force_sync=true")):
+            status, data, _ = call(token, path, api=DOMAINS_API, request_ids=report["requestIds"])
+            report[label] = {"http": status}
+            if isinstance(data, dict):
+                report[label].update({key: value for key in ("domain", "status")
+                                      if isinstance(value := data.get(key), str)
+                                      and re.fullmatch(r"[A-Za-z0-9_.-]{1,253}", value)})
         status, data, err = call(token, "/domains/verify-ownership", body={"domain": MAIN_DOMAIN}, request_ids=report["requestIds"])
         valid = status == 200 and isinstance(data, dict) and data.get("domain") == MAIN_DOMAIN
         accessible = data.get("is_accessible") if valid else None
