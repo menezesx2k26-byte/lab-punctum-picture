@@ -44,7 +44,7 @@ jobs:
       - run: node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
       - run: node --test scripts/punctum-clerk-instance-readonly.test.mjs
-      - run: python3 -m unittest discover -s scripts -p punctum_hostinger_account_preflight_test.py
+      - run: python3 -m unittest discover -s scripts -p 'punctum_*_preflight_test.py'
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
       - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
@@ -59,7 +59,7 @@ jobs:
           retention-days: 14
 
   hostinger-node-qa:
-    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'agent/hostinger-') || startsWith(github.head_ref, 'cursor/r4-'))
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'agent/hostinger-') || startsWith(github.head_ref, 'cursor/r4-') || startsWith(github.head_ref, 'codex/punctum-unlimited-release-'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
