@@ -6334,5 +6334,29 @@
       "gates": "G18 and G23 stay BLOCKED for the required managed environment. G19 retains its formal HOLD. All other release gate decisions from AY are preserved."
     },
     "nextSafeAction": "After a provider change, check the exact Unlimited association once. Exercise backup retention, isolated restore and operational rollback including new writes against the approved managed target. Keep the public release and R4 activation gated separately."
+  },
+  "currentCycle20261121BB": {
+    "goal": "PUNCTUM-CLOSEOUT-2026-11-18",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baseline": "b59486ec1d9f4c00477c2eb024fe4e3e23f56a32",
+    "proofSha": "06e689b847b0496935a19871e09499a1d438b70c",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "candidateLgpd": {
+      "scope": "Compiled managed Node candidate over loopback with the real SQLite batch adapter, two synthetic subjects and legacy synthetic authentication. The provider configuration, data and identity settings of the destination are outside this proof.",
+      "command": "node scripts/hostinger-r4-25mib-local-proof.mjs",
+      "ciJob": "hostinger-node-qa on PR #45 with exact checkout of the PR head.",
+      "resultLocator": "Read the exact run and the lgpd-export-retained-states-isolation-and-audit marker in the job log. The PR #45 cycle BB comment is the runtime receipt.",
+      "assertions": [
+        "Guest and both client sessions denied on the admin-only endpoint.",
+        "Separate administrator exports for two synthetic accounts and their own galleries.",
+        "Retained pending, failed and logically deleted metadata included, ready-only gallery listing preserved.",
+        "Per-subject favorites, private/no-store and noindex, storage paths and credential fields excluded.",
+        "Two audit records attributed to the shared password, with no export body retained in the log."
+      ]
+    },
+    "local": "node --check on the modified proof and git diff --check passed. The full compiled exercise is routed to GitHub Actions.",
+    "gates": "Preserve AY release decisions. G19 formal review and G20 controller approval remain on hold. G17 requires qualified provider evidence beyond local wall latency. Issue #44 still governs the managed association block.",
+    "nextSafeAction": "Obtain the Hostinger association confirmation or protocol, then recheck the exact Unlimited target and qualify both releases independently. G20 still requires the controller's private, dated approval and a delivery channel."
   }
 }
