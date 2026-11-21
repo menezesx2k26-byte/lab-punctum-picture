@@ -5978,5 +5978,145 @@
       "engram": "No verified writable route for this chat.",
       "persistFlow": "No verified live execution record for this chat."
     }
+  },
+  "vpsAuxiliaryQaTakeover20261121": {
+    "status": "PARTIAL_VERIFIED",
+    "productionDecision": "NO_GO_PRODUCTION",
+    "observedAt": "2026-11-21T04:22:33.000Z",
+    "baseline": {
+      "branch": "codex/punctum-unlimited-release-20261120",
+      "sha": "ec6ef4cc208a08e7c05b190cf2575b44440e300f",
+      "pr": 45,
+      "ciRunId": 44862636874,
+      "ciJobs": {
+        "verify": "success",
+        "hostingerNodeQa": "success"
+      },
+      "artifacts": [
+        {
+          "id": 14691010045,
+          "name": "r4-browser-evidence",
+          "digest": "sha256:6cf269345741f9b0aef6deb713f8a131c2a451043b9bc7325ff49a93e4866b6a"
+        },
+        {
+          "id": 14690258193,
+          "name": "punctum-hostinger-node-browser",
+          "digest": "sha256:f139072f8722fda40c1e5b0dbbec3f62628a98377c9e96781cfe8367b55d"
+        }
+      ],
+      "artifactStatus": "GitHub artifact metadata read back. Archive contents were not examined in this checkpoint."
+    },
+    "t00": {
+      "status": "PARTIAL_VERIFIED",
+      "prHeads": {
+        "39": {
+          "sha": "8abb9f38a0bc7a265ddde10e71686964f21a5dd9",
+          "ci": 43753407562,
+          "result": "verify success, Node QA skipped"
+        },
+        "40": {
+          "sha": "f0f951d9f30225d717c1f82df7661889e287ec34",
+          "ci": 44456998296,
+          "result": "npm audit failed, Node QA skipped"
+        },
+        "42": {
+          "sha": "c15e548eababf37e567a84377223f55bbbe6c609",
+          "ci": 44838542291,
+          "result": "verify and Node QA passed"
+        },
+        "43": {
+          "sha": "a44397d79dcc0b9835f7253dfc8cb20c0681f4ea",
+          "ci": 44842815770,
+          "result": "verify success, Node QA skipped"
+        }
+      },
+      "provider": "Issue #44 remains BLOCKED_EXTERNAL. The latest authenticated report showed Active in Unlimited and hosting association refused with an empty challenge. Wait for a provider change before another ownership probe.",
+      "liveReadback": {
+        "checkedAt": "2026-11-21T04:21:40Z",
+        "cloudflareNameservers": [
+          "nia.ns.cloudflare.com",
+          "pedro.ns.cloudflare.com"
+        ],
+        "publicHttps": 200,
+        "temporaryManagedHttps": 200,
+        "canonicalManagedBinding": "NOT_VERIFIED"
+      }
+    },
+    "t01": {
+      "status": "PARTIAL_VERIFIED",
+      "vpsId": 2135319,
+      "hostname": "srv2135319.hstgr.cloud",
+      "hostKey": "SHA256:YDU8L01elnOngxVzl+B9HQyyuC09DWWdsJGvMZ3F6zg",
+      "hostKeyVerification": "Matched the independently trusted fingerprint in the goal. Existing Windows known_hosts was not replaced.",
+      "runner": "One-shot systemd service punctum-qa-isolation-smoke.service, DynamicUser=codex-qa, private network with loopback, restricted filesystem and no sudo or docker group.",
+      "invocationId": "f269d73e892244bfa711060b2fa08e55",
+      "exitCode": 0,
+      "preflight": {
+        "memoryAvailableKiB": 2203124,
+        "swapKiB": 0,
+        "load": [
+          0.31,
+          0.22,
+          0.15
+        ],
+        "availableDiskKiB": 54785548,
+        "processCount": 339,
+        "containersBefore": 29,
+        "containersAfter": 29
+      },
+      "limits": {
+        "cpuVcpu": 1,
+        "memoryBytes": 268435456,
+        "processes": 24,
+        "seconds": 30,
+        "workTmpfsKiB": 32768,
+        "otherTmpfsKiB": 16384
+      },
+      "measurements": {
+        "elapsedMilliseconds": 291,
+        "memoryPeakCgroupBytes": 5115904,
+        "cpuUsageMicroseconds": 251350,
+        "workUsedKiB": 4,
+        "syntheticBytes": 23,
+        "dockerSocketConnectDeniedErrno": 13,
+        "wslProcessesBefore": 0,
+        "wslProcessesAfter": 0
+      },
+      "pending": "Qualify a reusable key-only nonadmin entry point, exact commit snapshot, Linux Node 24/npm/Sharp, and a bounded Punctum synthetic test. The diagnostic shell smoke did not use product code or data."
+    },
+    "t02": {
+      "status": "PARTIAL_VERIFIED",
+      "windowsCommand": "node --test scripts/live-parity-audit.test.mjs",
+      "nodeVersion": "24.19.0",
+      "passed": 4,
+      "failed": 0,
+      "exitCode": 0,
+      "gitDiffCheck": "PASS",
+      "wslProcessesBefore": 0,
+      "wslProcessesAfter": 0,
+      "independentFinalReview": "NOT_RUN"
+    },
+    "t03": {
+      "status": "PARTIAL_VERIFIED",
+      "evidence": "Exact candidate CI passed public OFF, R4 opt-in and synthetic Node suites. Real Unlimited Clerk, retained backup and target rollback remain open."
+    },
+    "t04": {
+      "status": "PARTIAL_VERIFIED",
+      "evidence": "The exact CI produced browser artifacts. The physical accessibility gates and final independent security review remain open."
+    },
+    "t05": {
+      "status": "PARTIAL_VERIFIED",
+      "evidence": "Exact-SHA CI passed the two-build equivalence comparison and exercised Worker, Node/Sharp and browser QA. No heavy local or VPS build was started."
+    },
+    "continuity": {
+      "status": "CHECKPOINT",
+      "quotaBand": "ROLLOVER",
+      "quotaPrimaryUsedPercent": 51,
+      "burnPercentagePointsPerMinute": 2.33,
+      "externalWorkersDispatched": 0,
+      "persistFlow": "NOT_VERIFIED",
+      "gates": "AY G01–G24 values are preserved. This checkpoint does not promote any release gate."
+    },
+    "nextSafeAction": "Reuse the proven transient sandbox to run the parity fixtures from the exact release SHA using a verified Node 24 distribution, then qualify the durable SSH entry point and native Sharp QA within the measured limits. Keep the full builds in GitHub Actions."
   }
 }
