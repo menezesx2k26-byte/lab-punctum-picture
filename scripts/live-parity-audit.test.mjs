@@ -105,6 +105,52 @@ test('matching malformed sitemap bodies do not qualify', async t => {
   assert.equal((await audit(t, prod, dest)).summary.sitemapEqual, false);
 });
 
+test('sitemap locations must be unambiguous absolute URLs on one host', async t => {
+  const url = location => `<url><loc>${location}</loc></url>`;
+  const cases = [
+    ['relative', url('/portfolio')],
+    ['protocol relative', url('//example.test/portfolio')],
+    ['non-web scheme', url('javascript:alert(1)')],
+    ['missing host', url('https:///portfolio')],
+    ['leading whitespace', url(' https://example.test/')],
+    ['embedded whitespace', url('https://example.test/a b')],
+    ['invalid port', url('https://example.test:invalid/')],
+    ['oversized', url('https://example.test/' + 'a'.repeat(2048))],
+    ['mixed hosts', url('https://example.test/') + url('https://other.test/')],
+    ['duplicate loc', '<url><loc>https://example.test/</loc><loc>https://other.test/</loc></url>'],
+  ];
+  for (const [name, entries] of cases) {
+    await t.test(name, async t => {
+      const invalid = (path, res) => path === '/sitemap.xml'
+        && res.writeHead(200, { 'content-type': 'application/xml' }).end(
+          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries}</urlset>`,
+        );
+      const prod = await serve(t, invalid);
+      const dest = await serve(t, invalid);
+      const report = await audit(t, prod, dest);
+      assert.equal(report.summary.sitemapEqual, false);
+      assert.equal(report.text['/sitemap.xml'].productionValid, false);
+      assert.equal(report.text['/sitemap.xml'].destinationValid, false);
+    });
+  }
+});
+
+test('valid sitemap indexes and canonical URLs independent of the fetch host qualify', async t => {
+  for (const [root, entry] of [['urlset', 'url'], ['sitemapindex', 'sitemap']]) {
+    await t.test(root, async t => {
+      const valid = (path, res) => path === '/sitemap.xml'
+        && res.writeHead(200, { 'content-type': 'application/xml' }).end(
+          `<${root} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><${entry}>`
+          + '<loc>https://example.test/portfolio?a=1&amp;b=2</loc>'
+          + `</${entry}></${root}>`,
+        );
+      const prod = await serve(t, valid);
+      const dest = await serve(t, valid);
+      assert.equal((await audit(t, prod, dest)).summary.sitemapEqual, true);
+    });
+  }
+});
+
 test('matching JSON null and HTML maintenance responses do not qualify', async t => {
   const fallback = (path, res) => {
     if (path === '/api/public/stats') return res.end('null');

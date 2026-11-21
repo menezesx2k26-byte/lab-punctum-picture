@@ -20,6 +20,7 @@ const publicContracts = {
 const validateSitemap = `
 import sys
 from xml.etree.ElementTree import ParseError, fromstring
+from urllib.parse import urlsplit
 
 ns = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
 try:
@@ -27,10 +28,23 @@ try:
 except ParseError:
     sys.exit(1)
 entry_tag = {ns + "urlset": ns + "url", ns + "sitemapindex": ns + "sitemap"}.get(root.tag)
-sys.exit(0 if entry_tag and len(root) and all(
-    entry.tag == entry_tag and entry.findtext(ns + "loc", "").strip()
+if not (entry_tag and len(root) and all(
+    entry.tag == entry_tag and len(entry.findall(ns + "loc")) == 1
     for entry in root
-) else 1)
+)):
+    sys.exit(1)
+locations = [entry.findtext(ns + "loc", "") for entry in root]
+try:
+    urls = [urlsplit(location) for location in locations]
+    valid = all(
+        0 < len(location) < 2048 and not any(char.isspace() for char in location)
+        and url.scheme in ("http", "https") and url.hostname
+        and (url.port is None or 1 <= url.port <= 65535)
+        for location, url in zip(locations, urls)
+    ) and len({url.hostname for url in urls}) == 1
+except ValueError:
+    valid = False
+sys.exit(0 if valid else 1)
 `;
 
 const sha = (s) => crypto.createHash('sha256').update(String(s ?? '')).digest('hex');
