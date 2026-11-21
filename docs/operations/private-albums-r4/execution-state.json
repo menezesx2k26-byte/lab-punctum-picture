@@ -5531,5 +5531,26 @@
       "Verificar HTTPS da origem Hostinger para punctumpicture.com e ensaiar a volta ao roteamento Cloudflare preservando dados.",
       "Aplicar o procedimento de integração e release estabelecido para publicação e roteamento na janela aprovada."
     ]
+  },
+  "currentCycle20261120AW": {
+    "plan": "docs/superpowers/plans/2026-11-20-punctum-unlimited-domain-unblock-and-r4-release.md",
+    "baselineSha": "a44397d79dcc0b9835f7253dfc8cb20c0681f4ea",
+    "pr42Head": "c15e548eababf37e567a84377223f55bbbe6c609",
+    "baselineCi": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44838542291",
+    "report": "87-cycle-aw-unlimited-release-execution-2026-11-20.md",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "task0": "BASELINE_RECONCILED",
+    "task1": "IN_PROGRESS",
+    "delegation": {
+      "cosOwnerId": "066f22a7-1265-419a-8ddf-f7afcfba2d10",
+      "cosRunId": "8adddc99-71cb-44e3-8f31-96d6498e92c6",
+      "workers": [
+        "worker-1",
+        "worker-2"
+      ],
+      "geminiResult": "FAILED_EXIT_3_NO_REPORT"
+    },
+    "nextSafeAction": "Test and run fixed-account Unlimited preflight without DNS writes."
   }
 }
