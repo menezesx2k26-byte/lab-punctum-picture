@@ -6082,7 +6082,51 @@
         "wslProcessesBefore": 0,
         "wslProcessesAfter": 0
       },
-      "pending": "Qualify a reusable key-only nonadmin entry point, exact commit snapshot, Linux Node 24/npm/Sharp, and a bounded Punctum synthetic test. The diagnostic shell smoke did not use product code or data."
+      "nodeSyntheticQa": {
+        "observedAt": "2026-11-21T04:27:02.775Z",
+        "status": "PASS_BOUNDED_SYNTHETIC",
+        "productSha": "ec6ef4cc208a08e7c05b190cf2575b44440e300f",
+        "nodeVersion": "24.19.0",
+        "npmVersion": "11.17.0",
+        "nodeArchiveSha256": "14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647",
+        "sourceArchiveSha256": "4783d6086bf576ae8fcd711bf9878b1df92d3c5d99448d0e147dd7c29af75288",
+        "command": "node --test --test-concurrency=1 scripts/live-parity-audit.test.mjs scripts/r4-g18-local-sqlite-restore-demo.test.mjs",
+        "tests": {
+          "parityPassed": 4,
+          "sqliteRestorePassed": 1,
+          "failed": 0,
+          "exitCode": 0
+        },
+        "scope": "Git archive of exactly five tracked source and fixture files. SQLite restore with two synthetic clients, two galleries, ten objects and embedded NUL text. Sharp was not installed for this run.",
+        "invocationId": "74185905c57747fa84b330a6c72d7870",
+        "preflight": {
+          "availableRamKiB": 2172984,
+          "availableDiskKiB": 54785492,
+          "activeContainers": 29,
+          "processes": 343
+        },
+        "measurements": {
+          "elapsedMs": 1682,
+          "cpuUsageMicroseconds": 1640119,
+          "peakRamBytes": 75837440,
+          "nodeStageDiskKiB": 240268,
+          "workVolumeKiB": 32768,
+          "workUsedKiB": 428,
+          "containersAfter": 29,
+          "wslProcessesBefore": 0,
+          "wslProcessesAfter": 0
+        },
+        "limits": {
+          "vcpu": 1,
+          "memoryBytes": 402653184,
+          "processes": 32,
+          "seconds": 30,
+          "swapBytes": 0
+        },
+        "storageCorrection": "First run passed its tests but /tmp used host disk. The repeat directed TMPDIR into /mnt on a 32 MiB tmpfs and asserted /tmp, /var/tmp and /dev/shm were not writable.",
+        "provenance": "Node distribution checksum read over HTTPS from nodejs.org and independently matched on the VPS. Source tarball produced by git archive and checked on the VPS before extraction."
+      },
+      "pending": "Qualify a reusable key-only nonadmin entry point, Linux Sharp from the release lockfile, and the wider Punctum runtime behavior within the sandbox capacity."
     },
     "t02": {
       "status": "PARTIAL_VERIFIED",
@@ -6117,6 +6161,6 @@
       "persistFlow": "NOT_VERIFIED",
       "gates": "AY G01–G24 values are preserved. This checkpoint does not promote any release gate."
     },
-    "nextSafeAction": "Reuse the proven transient sandbox to run the parity fixtures from the exact release SHA using a verified Node 24 distribution, then qualify the durable SSH entry point and native Sharp QA within the measured limits. Keep the full builds in GitHub Actions."
+    "nextSafeAction": "Qualify the durable key-only QA entry point with verified storage and process limits, then exercise Linux Sharp using the release lockfile. Keep full builds in GitHub Actions. Do not repeat ownership verification until the provider state changes."
   }
 }
