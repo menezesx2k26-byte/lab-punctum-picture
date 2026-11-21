@@ -234,8 +234,63 @@ async function main() {
         assert(!denied.headers.get('Content-Type')?.startsWith('image/'), 'no public image content type');
         assert(!deniedBytes.subarray(0, 8).equals(png.subarray(0, 8)), 'no public PNG raster');
       }
+      const { gallery: foreignGallery } = await json("/admin/api/albuns-privados", "POST", {
+        clientId: clients[1].id, title: "Synthetic B export control", theme: "warm",
+      }, admin, 201);
+      const now = new Date().toISOString();
+      const seedMetadata = db.prepare(`INSERT INTO client_gallery_images
+        (id, gallery_id, storage_key, original_filename, mime_type, size_bytes, position, status,
+         created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, 'image/png', 1, 1, ?, ?, ?, ?)`);
+      for (const [id, ownerGallery, status, deletedAt] of [
+        ["qa-pending", gallery.id, "pending", null],
+        ["qa-failed", gallery.id, "failed", null],
+        ["qa-deleted", gallery.id, "ready", now],
+        ["qa-foreign", foreignGallery.id, "pending", null],
+      ]) {
+        await seedMetadata.bind(id, ownerGallery, `client-galleries/${ownerGallery}/${id}.png`,
+          id + ".png", status, now, now, deletedAt).run();
+      }
+      await json(favoritePath, "PUT", undefined, clients[0].cookie);
+
+      const exportPath = (id) => `/admin/api/clientes/${id}/lgpd-export`;
+      for (const [role, session] of [["guest", undefined], ["A", clients[0].cookie], ["B", clients[1].cookie]]) {
+        const denied = await expect(await req(exportPath(clients[0].id), "GET", undefined, session),
+          403, `lgpd-export-${role}-denied`);
+        assert(!(await denied.text()).includes(clients[0].id));
+      }
+      const exported = [];
+      for (const [index, client] of clients.entries()) {
+        const res = await expect(await req(exportPath(client.id), "GET", undefined, admin), 200, "lgpd-export-admin");
+        assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+        assert.equal(res.headers.get("Vary"), "Cookie");
+        assert.match(res.headers.get("X-Robots-Tag") ?? "", /(?:^|,\s*)noindex(?:,|$)/);
+        const body = await res.text();
+        assert(!body.includes(clients[1 - index].id));
+        assert.doesNotMatch(body, /password_?(?:hash|salt|iterations)|session_?version|storage_?key|client-galleries\//i);
+        const snapshot = JSON.parse(body);
+        assert.equal(snapshot.schemaVersion, 1);
+        assert.equal(snapshot.titular.id, client.id);
+        exported.push(snapshot);
+      }
+      const [owner, foreign] = exported;
+      assert.deepEqual(owner.galleries.map((g) => g.id), [gallery.id]);
+      assert.deepEqual(owner.galleries[0].images.map((image) => image.id), [intent.imageId]);
+      assert.deepEqual(owner.favorites.map((f) => [f.galleryId, f.imageId]), [[gallery.id, intent.imageId]]);
+      assert.deepEqual(new Map(owner.retainedImageMetadata.map((image) => [image.id, [image.status, image.deletedAt]])),
+        new Map([[intent.imageId, ["ready", null]], ["qa-pending", ["pending", null]],
+          ["qa-failed", ["failed", null]], ["qa-deleted", ["ready", now]]]));
+      assert.deepEqual(foreign.galleries.map((g) => g.id), [foreignGallery.id]);
+      assert.deepEqual(foreign.retainedImageMetadata.map((image) => image.id), ["qa-foreign"]);
+      const { results: exportAudit } = await db.prepare(`SELECT actor_email AS actor, entity_type AS type, entity_id AS id, data_json AS details
+        FROM audit_log WHERE action = 'client.lgpd_exported' ORDER BY entity_id`).all();
+      assert.deepEqual(exportAudit.map((entry) => ({ ...entry })),
+        clients.map(({ id }) => id).sort().map((id) => ({
+          actor: "shared-password@punctum.invalid", type: "client_account", id, details: null,
+        })));
+      checks.push("lgpd-export-retained-states-isolation-and-audit");
+
       console.log(JSON.stringify({ result: "PASS_LOCAL_SYNTHETIC_NODE", bytes: png.length, sha256: hash(png),
-        checks, environment: "isolated POSIX WSL staging; legacy synthetic auth; no remote access" }));
+        checks, environment: "isolated loopback staging with synthetic legacy authentication" }));
     } finally {
       if (child.exitCode === null) {
         const exited = new Promise((resolve) => child.once("exit", resolve));
