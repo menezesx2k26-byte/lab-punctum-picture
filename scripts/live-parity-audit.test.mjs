@@ -19,6 +19,12 @@ async function serve(t, configure = () => undefined) {
       res.writeHead(303, { location: '/acesso?next=' + encodeURIComponent(path) }).end();
     } else if (path.startsWith('/api/')) {
       res.end(JSON.stringify({ ok: true }));
+    } else if (path === '/robots.txt') {
+      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' }).end('User-agent: *\nAllow: /\n');
+    } else if (path === '/sitemap.xml') {
+      res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8' }).end(
+        '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></url></urlset>',
+      );
     } else {
       res.end('<title>Punctum</title>');
     }
@@ -70,6 +76,17 @@ test('matching login-page titles do not hide an incorrect redirect target', asyn
   const { summary } = await audit(t, prod, dest);
   assert.equal(summary.adminRouteEquivalent, false);
   assert.equal(summary.studioRouteEquivalent, true);
+});
+
+test('matching 200 SEO fallbacks do not qualify as robots or sitemap', async t => {
+  const fallback = (path, res) => {
+    if (path === '/robots.txt') return res.writeHead(200, { 'content-type': 'text/plain' }).end(' \r\n');
+    if (path === '/sitemap.xml') return res.writeHead(200, { 'content-type': 'application/xml' }).end('<html>Not a sitemap</html>');
+  };
+  const prod = await serve(t, fallback);
+  const dest = await serve(t, fallback);
+  const { summary } = await audit(t, prod, dest);
+  assert.deepEqual([summary.robotsEqual, summary.sitemapEqual], [false, false]);
 });
 
 test('correct redirects to matching failed login pages do not qualify', async t => {

@@ -125,6 +125,17 @@ async function compareJson(path) {
   };
 }
 
+function validSeoResponse(path, response) {
+  if (response.status !== 200) return false;
+  const type = response.contentType?.split(';', 1)[0].trim().toLowerCase();
+  const body = response.body.trim();
+  if (path === '/robots.txt') {
+    return type === 'text/plain' && /^User-agent:[ \t]*\S/im.test(body);
+  }
+  return (type === 'application/xml' || type === 'text/xml')
+    && /^(?:<\?xml\s+[^?]+\?>\s*)?<(urlset|sitemapindex)\b[^>]*>[\s\S]*<loc>\s*\S[\s\S]*?<\/loc>[\s\S]*<\/\1>$/.test(body);
+}
+
 async function main() {
   const report = {
     checkedAt: new Date().toISOString(),
@@ -164,10 +175,14 @@ async function main() {
 
   for (const path of ['/sitemap.xml', '/robots.txt']) {
     const [p, d] = await Promise.all([get(`${PROD}${path}`), get(`${DEST}${path}`)]);
+    const productionValid = validSeoResponse(path, p);
+    const destinationValid = validSeoResponse(path, d);
     report.text[path] = {
       productionStatus: p.status ?? null,
       destinationStatus: d.status ?? null,
-      equal: p.status === 200 && d.status === 200 && p.body.length > 0 && p.body === d.body,
+      productionValid,
+      destinationValid,
+      equal: productionValid && destinationValid && p.body === d.body,
       productionSha256: sha(p.body),
       destinationSha256: sha(d.body),
       productionExcerpt: short(p.body, 1200),
