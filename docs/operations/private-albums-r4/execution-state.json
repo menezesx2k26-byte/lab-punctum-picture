@@ -5592,5 +5592,83 @@
       "redGreen": true,
       "fullCiForChangedCode": "PENDING"
     }
+  },
+  "currentCycle20261120AX": {
+    "plan": "docs/superpowers/plans/2026-11-20-punctum-unlimited-domain-unblock-and-r4-release.md",
+    "report": "88-cycle-ax-public-flag-and-domain-readback-2026-11-20.md",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "runtimeCodeSha": "b745e7f9fa39cc5fadeac7a733016eb1577054af",
+    "domainDiagnosticSha": "6679dba4c051e9f8c9117b1ce6b2e9d6643a80ab",
+    "sourcePreflightSha": "e082701dbc2680f12dea5ed9a80fd81ce8c3bd8b",
+    "tests": {
+      "runtimeConfig": {
+        "pass": 2,
+        "skip": 0,
+        "redObserved": true
+      },
+      "publicReleaseOff": {
+        "pass": 8,
+        "redObserved": "previous bundle /albuns returned303 instead404"
+      },
+      "privateSyntheticOptIn": {
+        "pass": 49,
+        "bytes": 26214400,
+        "sha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce"
+      },
+      "pythonPreflights": {
+        "pass": 12,
+        "redGreen": true
+      },
+      "candidateBuild": "PASS_LOCAL",
+      "fullCiForNewHead": "PENDING_READBACK"
+    },
+    "publicParity": {
+      "measuredAt": "2026-11-21T00:45:19.056Z",
+      "status": "FAIL_NOT_READY_FOR_CUTOVER",
+      "siteDiffCount": 10,
+      "statsDiffCount": 3,
+      "albumsDiffCount": 45,
+      "archiveDiffCountCappedAt": 300,
+      "authenticatedAdminCompared": false
+    },
+    "domain": {
+      "ownerReportedMove": "COMPLETED_IN_UNLIMITED",
+      "apiReadbackSourceSha": "0e8c9678310cd2c3b6e5905464b150ab27fa0266",
+      "apiReadbackRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44848073497",
+      "artifactId": 14683926619,
+      "artifactSha256": "0277205f17d4feae708e3a9dba51c57885f74d5fa704f4bf687896952e09bf13",
+      "accountConfirmed": true,
+      "ownershipHttp": 200,
+      "isAccessible": false,
+      "challengeLength": 0,
+      "correlationId": "a3464be9-2dbd-42d4-8d5b-4adda203d6b0",
+      "issue": "https://github.com/menezesx2k26-byte/lab-punctum-picture/issues/44",
+      "providerTicket": null,
+      "next": "Read actual portfolio and incoming move from next instrumented preflight; do not repeat owner move."
+    },
+    "dns": {
+      "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44848076084",
+      "artifactId": 14684111608,
+      "artifactSha256": "00591bbb5d207e7cc5342f0e0c611928721f6a3543701e972b25732166d086b7",
+      "recordsSha256": "4eaec7ca0018c0b77ba668f1829338631399fb91d65686e5282859e6af9cce19",
+      "matchesPreviousBaseline": true,
+      "mutations": 0,
+      "publicRouting": "APEX_AND_WWW_CLOUDFLARE_WORKER_PRODUCTION"
+    },
+    "tasks": {
+      "0": "BASELINE_RECONCILED",
+      "1": "OWNER_COMPLETE_API_RECONCILIATION_PENDING",
+      "2": "BLOCKED_PENDING_ASSOCIATION_AND_TLS",
+      "3": "PARTIAL_LOCAL_FLAG_FIX_REMOTE_PUBLIC_PARITY_FAIL",
+      "4": "PENDING_REAL_CLERK_QA_AND_IDENTITIES",
+      "5": "READ_ONLY_SOURCE_PREFLIGHT_ENABLED_PENDING_RUN",
+      "6": "PENDING_EXACT_SHA_REVIEW_PHYSICAL_A11Y_CONTROLLER",
+      "7": "NO_GO_PUBLIC_RELEASE",
+      "8": "NO_GO_R4_RELEASE",
+      "9": "REPO_CHECKPOINT_UPDATED_EXTERNAL_PERSISTENCE_PENDING"
+    },
+    "quotaGuard": "ROLLOVER_77_PERCENT_NO_NEW_HEAVY_AGENTS",
+    "nextSafeAction": "Read instrumented account preflight, new CI and current-source delta artifacts on exact pushed HEAD; then continue plan tasks without production mutations."
   }
 }
