@@ -6298,5 +6298,41 @@
       "gateRecords": "Preserve the release decisions in currentCycle20261121AY. New synthetic runner and CI evidence do not qualify G05, G17, G18 or G19 on the required release environments."
     },
     "nextSafeAction": "Obtain the provider protocol or confirmation of association to the existing Unlimited managed Node. After a provider change, perform one exact account readback. Qualify isolated Unlimited TLS, parity, real Clerk, retained restore and rollback, capacity, physical accessibility, independent security and controller approvals before either release."
+  },
+  "currentCycle20261121BA": {
+    "goal": "PUNCTUM-CLOSEOUT-2026-11-18",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baseline": "7647b57cdc7aa2ee810f39947fddb34a2d601391",
+    "productSha": "60f3be375f7c4d4d0efa1291c3d71dfc254bb5d2",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "provider": "BLOCKED_EXTERNAL. Issue #44 still contains the same failed association readback and no provider protocol. Registry Active in Unlimited was already verified.",
+    "recovery": {
+      "gap": "The backup could accept a ready private image when its persisted digest disagreed with the verified archived bytes. The ready private metadata now checks the recorded size and checks SHA-256 when present. The migration 0009 schema and NULL values after migration 0011 remain compatible.",
+      "proof": "The actual managed backup created a checkpoint, then captured a subsequent committed private media write in a fresh snapshot. Verified original bytes, the prior TAR's hash, and rejection of separate digest and size mismatches. Both verified TARs remained intact.",
+      "command": "node --test --test-name-pattern='managed backups preserve post-checkpoint' services/punctum-hostinger-production/managed-restore-check.test.mjs",
+      "windows": { "pass": 3, "skippedLinuxCases": 7, "exitCode": 0 },
+      "linuxVps": {
+        "runnerInvocation": "punctum-vps-qa@12-280451-999.service",
+        "redExitCode": 1,
+        "red": "Missing expected rejection with base product file and the new synthetic test.",
+        "redArchiveSha256": "25ee7486eb99419cd5e68d9356600e0b6e3e56f7f71af640e2d2033adfce2538",
+        "greenExitCode": 0,
+        "greenFileSha256": "8450cca27a89217db40a0ed4363f80dfebb86e104aed705defd59db49ede3b2a",
+        "greenTestSha256": "df3c590a9130ac5e574a9fc5a2ee924163d7b2934dffc82c5148da74301398e9",
+        "focusedPass": 1,
+        "additionalSmokePass": 11,
+        "elapsedMsOverSsh": 6255,
+        "consumedCpuSeconds": 4.083,
+        "configuredMemoryBytes": 402653184,
+        "wslProcessesBefore": 0,
+        "wslProcessesAfter": 0,
+        "containerCountBeforeAndAfter": 26,
+        "cleanup": "Temporary test files removed. The restored smoke script matched SHA-256 67572cd9561ed805579ab7ae3ca1f5eafb1885d7f856e1d8ec1c3fc9e667014f. Socket active and idle. Per-job tmpfs inactive."
+      },
+      "independentReview": "CoS worker-1 report d4b55750 independently confirmed both gaps in the exact baseline files and the historical schema compatibility requirement.",
+      "gates": "G18 and G23 stay BLOCKED for the required managed environment. G19 retains its formal HOLD. All other release gate decisions from AY are preserved."
+    },
+    "nextSafeAction": "After a provider change, check the exact Unlimited association once. Exercise backup retention, isolated restore and operational rollback including new writes against the approved managed target. Keep the public release and R4 activation gated separately."
   }
 }
