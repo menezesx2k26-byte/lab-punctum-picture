@@ -127,6 +127,50 @@ test("daily backup retention removes only old daily TARs and preserves golden sn
   assert.equal(result.retentionDays, 7);
 });
 
+test("managed backups preserve post-checkpoint private writes and reject inconsistent original metadata", linuxOnly, async (t) => {
+  const f = fixture(t);
+  const original = "client-galleries/synthetic/before.png";
+  const added = "client-galleries/synthetic/after.png";
+  const digest = sha(png);
+  const writer = new DatabaseSync(f.dbFile);
+  let checkpoint, latest;
+  try {
+    writer.exec("CREATE TABLE client_gallery_images(storage_key TEXT PRIMARY KEY, size_bytes INTEGER NOT NULL, status TEXT NOT NULL)");
+    stageOriginal(f.originals, original, png, "image/png", digest);
+    writer.prepare("INSERT INTO client_gallery_images VALUES(?,?,'ready')").run(original, png.length);
+    checkpoint = await createManagedBackup(f);
+    assert.equal(checkpoint.objects, 2);
+
+    writer.exec("ALTER TABLE client_gallery_images ADD COLUMN original_sha256 TEXT");
+    stageOriginal(f.originals, added, png, "image/png", digest);
+    writer.prepare("INSERT INTO client_gallery_images VALUES(?,?,'ready',?)").run(added, png.length, digest);
+    latest = await createManagedBackup(f);
+    assert.equal(latest.objects, 3);
+    assert.equal(sha(readFileSync(checkpoint.archiveFile)), checkpoint.archiveSha256);
+    assert.equal(await privateOriginals(join(checkpoint.restoredRoot, "originals")).get(added), null);
+    const restored = new DatabaseSync(join(latest.restoredRoot, "application.sqlite"), { readOnly: true });
+    try {
+      assert.equal(restored.prepare("SELECT count(*) AS n FROM client_gallery_images").get().n, 2);
+      assert.equal(restored.prepare("SELECT original_sha256 AS digest FROM client_gallery_images WHERE storage_key=?").get(added).digest, digest);
+    } finally { restored.close(); }
+    const restoredObject = await privateOriginals(join(latest.restoredRoot, "originals")).get(added);
+    assert.equal(sha(Buffer.from(await restoredObject.arrayBuffer())), digest);
+
+    const mismatch = (error) => error.message === "MANAGED_BACKUP_RESTORE_FAILED" &&
+      error.cause?.message === "MANAGED_RESTORE_REFERENCE_MISMATCH";
+    writer.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE storage_key=?").run(sha("different"), added);
+    await assert.rejects(createManagedBackup(f), mismatch);
+    writer.prepare("UPDATE client_gallery_images SET original_sha256=?, size_bytes=? WHERE storage_key=?")
+      .run(digest, png.length + 1, added);
+    await assert.rejects(createManagedBackup(f), mismatch);
+    assert.equal(readdirSync(dirname(latest.archiveFile)).filter((name) => name.endsWith(".tar")).length, 2);
+  } finally {
+    latest?.cleanup();
+    checkpoint?.cleanup();
+    writer.close();
+  }
+});
+
 test("original enumeration crosses the 1000-object page without omissions", linuxOnly, async (t) => {
   const f = fixture(t, 1001), saved = await createManagedBackup(f);
   try { assert.equal(saved.objects, 1001); assert.equal(saved.bytes, 1001 * png.length); }
