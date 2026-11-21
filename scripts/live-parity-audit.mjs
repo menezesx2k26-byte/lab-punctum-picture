@@ -6,9 +6,13 @@ const PROD = process.env.PROD_ORIGIN ?? 'https://punctumpicture.com';
 const DEST = process.env.DEST_ORIGIN ?? 'https://punctum-picture-migration.menezesx2k26.workers.dev';
 const outPath = process.env.AUDIT_OUT ?? 'requests/live-parity-audit-result.json';
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isCount = value => Number.isSafeInteger(value) && value >= 0;
 const publicContracts = {
-  '/api/public/site': value => isRecord(value.site) && isRecord(value.siteConfig),
-  '/api/public/stats': value => isRecord(value.stats),
+  '/api/public/site': value => isRecord(value.site) && typeof value.site.brandName === 'string'
+    && Boolean(value.site.brandName.trim()) && isRecord(value.siteConfig)
+    && Number.isSafeInteger(value.siteConfig.schemaVersion) && value.siteConfig.schemaVersion > 0,
+  '/api/public/stats': value => isRecord(value.stats)
+    && ['photoCount', 'albumCount', 'categoryCount'].every(field => isCount(value.stats[field])),
   '/api/public/albums?limit=100': value => Array.isArray(value.albums)
     && Number.isInteger(value.page) && Number.isInteger(value.limit),
   '/api/public/archive': value => Array.isArray(value.images),
@@ -108,6 +112,7 @@ function htmlMeta(r) {
     location: r.location,
     title,
     canonicalPath: canonical && URL.canParse(canonical, r.url) ? new URL(canonical, r.url).pathname : null,
+    hasPrimaryContent: /<main\b[^>]*>[\s\S]*?<h1\b[^>]*>/.test(r.body),
     bodyBytes: Buffer.byteLength(r.body),
     bodySha256: sha(r.body),
     assets,
@@ -200,7 +205,8 @@ async function main() {
     const p = htmlMeta(pf), d = htmlMeta(df);
     const publicPage = path === '/' || path === '/portfolio';
     const comparable = p.status === 200 && d.status === 200 && Boolean(p.title) && Boolean(d.title)
-      && (!publicPage || (p.canonicalPath === path && d.canonicalPath === path));
+      && (!publicPage || (p.canonicalPath === path && d.canonicalPath === path
+        && p.hasPrimaryContent && d.hasPrimaryContent));
     report.routes[path] = {
       productionInitial: { status: pm.status ?? null, location: pm.location ?? null, error: pm.error ?? null },
       destinationInitial: { status: dm.status ?? null, location: dm.location ?? null, error: dm.error ?? null },

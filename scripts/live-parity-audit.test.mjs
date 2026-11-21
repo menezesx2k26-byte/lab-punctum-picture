@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 const run = promisify(execFile);
 const script = fileURLToPath(new URL('./live-parity-audit.mjs', import.meta.url));
 const publicResponses = {
-  '/api/public/site': { site: {}, siteConfig: {} },
-  '/api/public/stats': { stats: {} },
+  '/api/public/site': { site: { brandName: 'Punctum' }, siteConfig: { schemaVersion: 1 } },
+  '/api/public/stats': { stats: { photoCount: 0, albumCount: 0, categoryCount: 0 } },
   '/api/public/albums': { albums: [], page: 1, limit: 100 },
   '/api/public/archive': { images: [] },
 };
@@ -32,7 +32,7 @@ async function serve(t, configure = () => undefined) {
         '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></url></urlset>',
       );
     } else {
-      res.end('<title>Punctum</title><link rel="canonical" href="https://example.test' + path + '">');
+      res.end('<title>Punctum</title><link rel="canonical" href="https://example.test' + path + '"><main><h1>Punctum</h1></main>');
     }
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -108,12 +108,15 @@ test('matching malformed sitemap bodies do not qualify', async t => {
 test('matching JSON null and HTML maintenance responses do not qualify', async t => {
   const fallback = (path, res) => {
     if (path === '/api/public/stats') return res.end('null');
-    if (path === '/portfolio') return res.end('<title>Maintenance</title>');
+    if (path === '/api/public/site') return res.end('{"site":{},"siteConfig":{}}');
+    if (path === '/portfolio') return res.end(
+      '<title>Maintenance</title><link rel="canonical" href="https://example.test/portfolio">',
+    );
   };
   const prod = await serve(t, fallback);
   const dest = await serve(t, fallback);
   const { summary } = await audit(t, prod, dest);
-  assert.deepEqual([summary.statsEqual, summary.portfolioHtmlEqual], [false, false]);
+  assert.deepEqual([summary.statsEqual, summary.publicSiteEqual, summary.portfolioHtmlEqual], [false, false, false]);
 });
 
 test('correct redirects to matching failed login pages do not qualify', async t => {

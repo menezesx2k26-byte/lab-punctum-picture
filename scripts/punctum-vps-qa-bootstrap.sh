@@ -47,6 +47,7 @@ import os
 import socket
 import sqlite3
 import subprocess
+import sys
 from pathlib import Path
 
 assert os.getuid() != 0
@@ -80,13 +81,22 @@ connection.close()
 print(f"sqlite={sqlite3.sqlite_version} uid={os.getuid()} tmpfs_bytes={capacity}", flush=True)
 release = Path("/qa/release")
 node = release / "node"
-if node.is_file():
-    print(f"source_sha={(release / 'source-sha').read_text().strip()}", flush=True)
-    subprocess.run([node, "--version"], check=True)
-    subprocess.run([node, "--test", "--test-concurrency=1", "scripts/live-parity-audit.test.mjs",
-                    "scripts/r4-g18-local-sqlite-restore-demo.test.mjs",
-                    "services/punctum-hostinger-node/isolated-sharp.test.mjs"], cwd=release, check=True)
-    subprocess.run([node, "scripts/hostinger-r4-25mib-local-proof.mjs", "--fixture-check"], cwd=release, check=True)
+if not node.is_file():
+    sys.exit("The verified release runtime must be staged before requesting smoke.")
+print(f"source_sha={(release / 'source-sha').read_text().strip()}", flush=True)
+checks = [
+    ["--version"],
+    ["--test", "--test-concurrency=1", "scripts/live-parity-audit.test.mjs",
+     "scripts/r4-g18-local-sqlite-restore-demo.test.mjs",
+     "services/punctum-hostinger-node/isolated-sharp.test.mjs"],
+    ["scripts/hostinger-r4-25mib-local-proof.mjs", "--fixture-check"],
+]
+try:
+    output = [subprocess.check_output([node, *args], cwd=release, text=True) for args in checks]
+except subprocess.CalledProcessError as error:
+    print(error.stdout, file=sys.stderr)
+    raise
+print("".join(output), end="")
 print("PUNCTUM_QA_EXIT=0")
 PY
 
