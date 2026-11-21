@@ -30,6 +30,7 @@ except ParseError:
 entry_tag = {ns + "urlset": ns + "url", ns + "sitemapindex": ns + "sitemap"}.get(root.tag)
 if not (entry_tag and len(root) and all(
     entry.tag == entry_tag and len(entry.findall(ns + "loc")) == 1
+    and len(entry.find(ns + "loc")) == 0
     for entry in root
 )):
     sys.exit(1)
@@ -41,7 +42,8 @@ try:
         and url.scheme in ("http", "https") and url.hostname
         and (url.port is None or 1 <= url.port <= 65535)
         for location, url in zip(locations, urls)
-    ) and len({url.hostname for url in urls}) == 1
+    ) and len({(url.scheme, url.hostname, url.port or (443 if url.scheme == "https" else 80))
+               for url in urls}) == 1
 except ValueError:
     valid = False
 sys.exit(0 if valid else 1)

@@ -117,7 +117,10 @@ test('sitemap locations must be unambiguous absolute URLs on one host', async t 
     ['invalid port', url('https://example.test:invalid/')],
     ['oversized', url('https://example.test/' + 'a'.repeat(2048))],
     ['mixed hosts', url('https://example.test/') + url('https://other.test/')],
+    ['mixed schemes', url('http://example.test/a') + url('https://example.test/b')],
+    ['mixed ports', url('https://example.test:8443/a') + url('https://example.test:9443/b')],
     ['duplicate loc', '<url><loc>https://example.test/</loc><loc>https://other.test/</loc></url>'],
+    ['nested loc content', '<url><loc>https://example.test/<part>not-a-url</part></loc></url>'],
   ];
   for (const [name, entries] of cases) {
     await t.test(name, async t => {
@@ -142,7 +145,7 @@ test('valid sitemap indexes and canonical URLs independent of the fetch host qua
         && res.writeHead(200, { 'content-type': 'application/xml' }).end(
           `<${root} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><${entry}>`
           + '<loc>https://example.test/portfolio?a=1&amp;b=2</loc>'
-          + `</${entry}></${root}>`,
+          + `</${entry}><${entry}><loc>https://example.test:443/other</loc></${entry}></${root}>`,
         );
       const prod = await serve(t, valid);
       const dest = await serve(t, valid);
