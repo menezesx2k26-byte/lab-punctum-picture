@@ -90,6 +90,8 @@ Measured Cloudflare versus managed p50/p95 milliseconds (13 responses per route/
 
 All observations were200. Cache/runtime conditions differ. This sample does not qualify p99 or final authentication/upload load.
 
+Cycle BC adds a separately scoped profile in the existing Linux candidate CI proof. It measures a first read after application setup and 100 subsequent HTTP loopback reads at concurrency two for public Home with R4 off and an authenticated private gallery in the separate synthetic R4 run. Quantiles use nearest rank. Existing login and 25 MiB transfer checks emit individual elapsed times. `httpLoopbackMs` is emitted only after the corresponding assertions pass. The exact run and measurements belong to PR #45. Provider TLS, capacity, costs, Cloudflare cold CPU and concurrent upload acceptance remain open in G17.
+
 ## Backup, jobs and rollback
 
 [43662472112 attempt2](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/43662472112) proved hourly/daily execution, physical daily backup, isolated restore and current→previous→current application rollback on the same private storage. Studio and the media hash passed on both versions. Final rollforward build was `01a1dcd7-af2f-71f5-a9d3-5b6233c3ef77`; the newer approved-link build is recorded above.

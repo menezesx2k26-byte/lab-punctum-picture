@@ -6361,5 +6361,23 @@
     "performanceReview": "CoS worker-1 report e710746e reconciled the historical Cloudflare CPU and managed latency evidence against the G17 plan. The required final-HEAD cold invocation CPU and quota evidence, and managed TLS latency, authenticated sessions and upload sampling, remain pending.",
     "gates": "Preserve AY release decisions. G19 formal review and G20 controller approval remain on hold. G17 requires qualified provider evidence beyond local wall latency. Issue #44 still governs the managed association block.",
     "nextSafeAction": "Obtain the Hostinger association confirmation or protocol, then recheck the exact Unlimited target and qualify both releases independently. G20 still requires the controller's private, dated approval and a delivery channel."
+  },
+  "currentCycle20261121BC": {
+    "goal": "PUNCTUM-CLOSEOUT-2026-11-18",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baseline": "d680036d7abdcaa8dd5dd672ec155be927756f44",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "g17CandidateProfile": {
+      "source": "scripts/hostinger-r4-25mib-local-proof.mjs",
+      "ci": "The existing hostinger-node-qa PR job builds the exact candidate and runs the proof with default public R4 OFF and synthetic private R4 ON separately. The PR #45 cycle BC comment records the completed exact-SHA run and measured results.",
+      "scope": "Compiled Node candidate with synthetic SQLite and files in the Linux CI runner. HTTP loopback latency through response body consumption and validation. Timings include client-side loopback and parsing overhead.",
+      "sampling": "One first read after prior setup and 100 subsequent reads per route at concurrency two. The public home requires 200 and a nonempty HTML title. The authenticated private gallery requires 200, private/no-store and the expected gallery ID on every read.",
+      "summary": "Nearest rank p50, p95, p99 and maximum. Admin login, two legacy client logins and the first successful 25 MiB transfer are individual observations.",
+      "outOfScope": "Provider TLS latency, provider capacity and quotas, Cloudflare Free cold CPU per invocation, concurrent upload load and a release latency acceptance threshold remain unverified."
+    },
+    "local": "node --check and git diff --check passed. The Linux candidate build and profile are routed to CI.",
+    "gates": "Preserve AY decisions for all 24 gates. The candidate HTTP profile is scoped evidence for T05. G17 retains the provider and operational qualification requirements.",
+    "nextSafeAction": "Obtain the provider change on the existing Unlimited managed Node association. Recheck the exact association once. Use the managed environment and approved fixtures to complete HTTPS, authenticated and upload performance sampling, capacity and cost evidence."
   }
 }

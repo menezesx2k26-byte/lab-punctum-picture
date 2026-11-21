@@ -42,6 +42,28 @@ function cookie(response) {
   return header.split(";", 1)[0];
 }
 
+const elapsedMs = (started) => Math.round((performance.now() - started) * 100) / 100;
+
+async function readTimings(read) {
+  const timedRead = async () => {
+    const started = performance.now();
+    await read();
+    return elapsedMs(started);
+  };
+  const firstReadMs = await timedRead();
+  const samples = [];
+  const concurrency = 2;
+  for (let round = 0; round < 50; round++) {
+    samples.push(...await Promise.all(Array.from({ length: concurrency }, timedRead)));
+  }
+  samples.sort((a, b) => a - b);
+  assert.equal(samples.length, 100);
+  assert(samples.every((ms) => Number.isFinite(ms) && ms >= 0));
+  const percentile = (q) => samples[Math.ceil(q * samples.length) - 1];
+  return { concurrency, samples: samples.length, firstReadMs,
+    p50Ms: percentile(0.50), p95Ms: percentile(0.95), p99Ms: percentile(0.99), maxMs: samples.at(-1) };
+}
+
 async function main() {
   const png = exactSizePng();
   const sharp = (await import("sharp")).default;
@@ -105,11 +127,20 @@ async function main() {
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
       assert(ready, `candidate unavailable: ${errors}`);
-      const admin = cookie(await expect(await req("/admin/api/session", "POST", {
+      const adminStarted = performance.now();
+      const adminLogin = await expect(await req("/admin/api/session", "POST", {
         email: "qa-admin@example.test", password,
-      }), 200, "admin-login"));
+      }), 200, "admin-login");
+      const admin = cookie(adminLogin);
+      await adminLogin.arrayBuffer();
+      const adminLoginMs = elapsedMs(adminStarted);
       if (publicReleaseOnly) {
-        await expect(await req("/"), 200, "public-home-with-R4-off");
+        const home = await readTimings(async () => {
+          const res = await req("/");
+          assert.equal(res.status, 200, "public home HTTP status");
+          assert.match(await res.text(), /<title[^>]*>[^<]+<\/title>/i, "public home HTML title");
+        });
+        checks.push("public-home-with-R4-off");
         for (const path of ["/albuns", "/api/client/me", "/admin/api/clientes", "/admin/api/albuns-privados"]) {
           await expect(await req(path, "GET", undefined, admin), 404, "default-off:" + path);
         }
@@ -119,14 +150,21 @@ async function main() {
           assert.match(denied.headers.get("cache-control"), /private.*no-store/);
           assert.equal((await denied.arrayBuffer()).byteLength, 0);
         }
-        console.log(JSON.stringify({ status: "PUBLIC_RELEASE_R4_OFF_LOCAL_SYNTHETIC_PASS", checksPassed: checks.length }));
+        console.log(JSON.stringify({ status: "PUBLIC_RELEASE_R4_OFF_LOCAL_SYNTHETIC_PASS", checksPassed: checks.length,
+          httpLoopbackMs: { adminLoginMs, home } }));
         return;
       }
       const clients = [];
+      const clientLoginMs = [];
       for (const suffix of ["a", "b"]) {
         const email = `synthetic-${suffix}@example.test`;
         const { client, temporaryPassword } = await json("/admin/api/clientes", "POST", { name: `Synthetic ${suffix}`, email }, admin, 201);
-        const temp = cookie(await expect(await req("/api/client/session", "POST", { email, password: temporaryPassword }), 200, `client-${suffix}-login`));
+        const loginStarted = performance.now();
+        const login = await expect(await req("/api/client/session", "POST", { email, password: temporaryPassword }),
+          200, `client-${suffix}-login`);
+        const temp = cookie(login);
+        await login.arrayBuffer();
+        clientLoginMs.push(elapsedMs(loginStarted));
         const rotated = cookie(await expect(await req("/api/client/password", "POST", {
           password: `Synthetic ${suffix} QA password 2026!`,
         }, temp), 200, `client-${suffix}-rotation`));
@@ -176,7 +214,10 @@ async function main() {
       assert.deepEqual(readdirSync(join(directory, "originals"), { recursive: true }), [],
         "aborted upload must not stage any original bytes");
       checks.push("partial-network-abort-pending");
-      await expect(await put(png), 200, "accept-exact-25mib");
+      const uploadStarted = performance.now();
+      const accepted = await expect(await put(png), 200, "accept-exact-25mib");
+      await accepted.arrayBuffer();
+      const exactUploadMs = elapsedMs(uploadStarted);
       await expect(await put(png), 200, "idempotent-retry");
       await json(`${galleryPath}/uploads/${intent.intentId}/complete`, "POST", {}, admin);
       await json(`${galleryPath}/uploads/${intent.intentId}/complete`, "POST", {}, admin);
@@ -291,7 +332,15 @@ async function main() {
         })));
       checks.push("lgpd-export-retained-states-isolation-and-audit");
 
+      const privateGallery = await readTimings(async () => {
+        const res = await req(clientPath, "GET", undefined, clients[0].cookie);
+        assert.equal(res.status, 200, "owner gallery HTTP status");
+        assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+        assert.equal((await res.json()).gallery.id, gallery.id, "owner gallery response identity");
+      });
+      checks.push("owner-gallery-bounded-concurrent-reads");
       console.log(JSON.stringify({ result: "PASS_LOCAL_SYNTHETIC_NODE", bytes: png.length, sha256: hash(png),
+        httpLoopbackMs: { adminLoginMs, clientLoginMs, exactUploadMs, privateGallery },
         checks, environment: "isolated loopback staging with synthetic legacy authentication" }));
     } finally {
       if (child.exitCode === null) {
