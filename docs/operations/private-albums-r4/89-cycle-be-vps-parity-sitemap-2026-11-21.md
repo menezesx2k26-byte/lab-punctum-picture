@@ -137,3 +137,25 @@ Clerk Frontend API, Account portal and Email3/3 show Verified, certificates Issu
 | T06 | Incremental versioned report/ledger;24gates unchanged; final SHA,CI,hashes and Drive readback in existing closeout receipts |
 
 G01-G24 retain every canonical AY record unchanged, including G03 NOT_VERIFIED,G06-G10 BLOCKED,G13 NOT_VERIFIED,G19/G20/G21/G22 HOLD. Identifying a Production Clerk instance does not qualify isolated QA or authorize its activation. Both releases remain PARTIAL_VERIFIED / PRODUCTION_NO_GO. Public candidate private galleries OFF and Clerk pilot OFF remain required. Incremental spend R$0; no merge, deploy, DNS/NS/TXT, cutover, production data migration, Clerk changes, R4 activation, billing or destructive restore. No stable cross-project user fact arose; only project execution evidence was persisted.
+
+
+## BH verified closeout and continuation references
+
+This verified receipt supersedes the earlier pending CI/review/Drive statements in the BH section. Product SHA `f020e1b1a1e1667029fc0bb50c7073d23a117d79`, branch `codex/punctum-unlimited-release-20261120`, was pushed and the worktree was clean. [CI 44889674474](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44889674474) completed successfully in both jobs: verify `136802555900` and hostinger-node-qa `136802555730`. The Linux log names the new Access rollback/retry regression and reports five administrative audit cases, 336 tests across 64 files, seven Colagem tests and zero dependency-audit vulnerabilities. Lint succeeded with ten pre-existing warnings outside the two changed TypeScript files.
+
+Native reviewer `01a1fd64-e161-72e0-af46-78bbe7403b41` completed the corrective diff review at `2026-11-21T09:22:11.412Z`: scoped approval, no blockers. This is separate from the ten-path residual inventory and does not grant formal G19 approval. Local RED/GREEN, typecheck and focused lint are retained from BH; no new product validation was run to prepare these documentation references.
+
+| Artifact | SHA-256 | Verified scope |
+| --- | --- | --- |
+| `14700793626` / r4-browser-evidence | `a0e653ca6571ac75cf7b6712213076e7c1c02cef082d2279335fdd4851143170` | ZIP intact, exact sourceSha, PASS_LOCAL, 23 checks, seven axe audits, no page/console/server errors; synthetic sessions only; no physical device/screen reader |
+| `14700733774` / punctum-hostinger-node-browser | `ed5521dbf408caf29d5ee1c65fc96a25138a1b8aff37a92e663b3823e03b9bf4` | ZIP intact, exact sourceSha, managedQa NOT_TESTED, manifest integrity ok, zero missing originals/FK violations |
+
+Both artifacts preserve checkoutDirtyAtRun=true. No clean-checkout, real managed-provider, real Clerk or visual/human approval is inferred. Direct gh download returned401; the existing authenticated GitHub connector supplied the verified archives without changing authentication.
+
+The existing [Sgtmenezes checkpoint](https://drive.google.com/file/d/1x7-qc48BbWYdCvVuuXZKD4UOazuIMtWe/view) was updated at `2026-11-21T09:34:12.977Z` with every previous character preserved. Exact UTF-8 readback matched all 17,699 bytes; SHA-256 `03ce67007c3c46b030d948f78ba527a16631fa44ba04327dd499df31ffe5efc5`. PR45 description was updated and read back, OPEN/DRAFT/not merged. Final historical guard was PRESSURE, primary33%, weekly67%, context52.10%; sample again before new implementation.
+
+Effective task state: T00 reconciled; T01 prior VPS proof reused; T02 Access correction/RED-GREEN/CI/scoped review verified; T03 association/TLS BLOCKED_PROVIDER; T04 prior synthetic evidence retained with no new UI approval; T05 exact-SHA jobs/logs/artifacts verified; T06 versioned report/ledger and Drive byte readback verified. All24AY release records remain unchanged. The technical takeover DoD is verified; the project remains PARTIAL_VERIFIED / PRODUCTION_NO_GO for both releases.
+
+The [complete next-agent prompt](../../superpowers/plans/2026-11-21-punctum-continuation-bh-tasks-gates.md) publishes the operational continuation, T00-T06, all24gates, supplemental Hero checks, source files, commands, dependencies and explicit release boundaries. The [historical Hero plan](../../superpowers/plans/2026-08-25-direct-hero-upload.md) now points to its real implementation and records the migration/component/test/resolution/transport differences. This reconciliation changes documentation only; it does not replace the incumbent1280x720/720x1280 rule, accept new visuals, execute a deployment or prove the missing Hero contracts. Supplemental H01-H06 are NOT_VERIFIED and do not renumber or replace G01-G24.
+
+Clerk application/instance identity is reconciled as recorded above. Its Allowed subdomains restriction is OFF; remote Worker authorizedParties and a separately authorized QA instance remain unverified. Issue44 still governs association to the existing Unlimited Node. Cost incrementR$0; no production action or support contact. No stable cross-project memory fact arose; these facts are project-specific.
