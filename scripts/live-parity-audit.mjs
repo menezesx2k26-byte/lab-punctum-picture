@@ -1,9 +1,33 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const PROD = process.env.PROD_ORIGIN ?? 'https://punctumpicture.com';
 const DEST = process.env.DEST_ORIGIN ?? 'https://punctum-picture-migration.menezesx2k26.workers.dev';
 const outPath = process.env.AUDIT_OUT ?? 'requests/live-parity-audit-result.json';
+const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const publicContracts = {
+  '/api/public/site': value => isRecord(value.site) && isRecord(value.siteConfig),
+  '/api/public/stats': value => isRecord(value.stats),
+  '/api/public/albums?limit=100': value => Array.isArray(value.albums)
+    && Number.isInteger(value.page) && Number.isInteger(value.limit),
+  '/api/public/archive': value => Array.isArray(value.images),
+};
+const validateSitemap = `
+import sys
+from xml.etree.ElementTree import ParseError, fromstring
+
+ns = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
+try:
+    root = fromstring(sys.stdin.read())
+except ParseError:
+    sys.exit(1)
+entry_tag = {ns + "urlset": ns + "url", ns + "sitemapindex": ns + "sitemap"}.get(root.tag)
+sys.exit(0 if entry_tag and len(root) and all(
+    entry.tag == entry_tag and entry.findtext(ns + "loc", "").strip()
+    for entry in root
+) else 1)
+`;
 
 const sha = (s) => crypto.createHash('sha256').update(String(s ?? '')).digest('hex');
 const short = (v, n = 400) => {
@@ -58,8 +82,11 @@ function diff(a, b, path = '$', out = []) {
   if (typeof a === 'object') {
     const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])].sort();
     for (const k of keys) {
-      if (!(k in a) || !(k in b)) out.push({ path: `${path}.${k}`, production: short(a[k]), destination: short(b[k]) });
-      else diff(a[k], b[k], `${path}.${k}`, out);
+      if (!Object.hasOwn(a, k) || !Object.hasOwn(b, k)) {
+        out.push({ path: `${path}.${k}`, production: short(a[k]), destination: short(b[k]) });
+      } else {
+        diff(a[k], b[k], `${path}.${k}`, out);
+      }
       if (out.length >= 300) break;
     }
     return out;
@@ -71,6 +98,8 @@ function diff(a, b, path = '$', out = []) {
 function htmlMeta(r) {
   if (!r.ok) return { ok: false, error: r.error };
   const title = r.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, ' ').trim() ?? null;
+  const canonicalLink = r.body.match(/<link\b[^>]*\srel\s*=\s*(['"])canonical\1[^>]*>/i)?.[0];
+  const canonical = canonicalLink?.match(/\shref\s*=\s*(['"])(.*?)\1/i)?.[2];
   const assets = [...new Set([...r.body.matchAll(/(?:src|href)=["']([^"']+)["']/gi)].map(m => m[1]).filter(v => v.startsWith('/') || v.startsWith('http')))].sort();
   return {
     ok: true,
@@ -78,6 +107,7 @@ function htmlMeta(r) {
     finalUrl: r.url,
     location: r.location,
     title,
+    canonicalPath: canonical && URL.canParse(canonical, r.url) ? new URL(canonical, r.url).pathname : null,
     bodyBytes: Buffer.byteLength(r.body),
     bodySha256: sha(r.body),
     assets,
@@ -109,8 +139,12 @@ async function compareJson(path) {
   const [p, d] = await Promise.all([get(`${PROD}${path}`), get(`${DEST}${path}`)]);
   const parse = (r) => {
     if (!r.ok) return { valid: false, value: { __transportError: r.error } };
-    try { return { valid: true, value: JSON.parse(r.body) }; }
-    catch { return { valid: false, value: { __parseError: true, status: r.status, body: short(r.body, 1000) } }; }
+    try {
+      const value = JSON.parse(r.body);
+      return { valid: isRecord(value) && publicContracts[path](value), value };
+    } catch {
+      return { valid: false, value: { __parseError: true, status: r.status, body: short(r.body, 1000) } };
+    }
   };
   const pj = parse(p), dj = parse(d);
   const differences = diff(pj.value, dj.value);
@@ -135,8 +169,13 @@ function validSeoResponse(path, response) {
   if (path === '/robots.txt') {
     return type === 'text/plain' && /^User-agent:[ \t]*\S/im.test(body);
   }
-  return (type === 'application/xml' || type === 'text/xml')
-    && /^(?:<\?xml\s+[^?]+\?>\s*)?<(urlset|sitemapindex)\b[^>]*>[\s\S]*<loc>\s*\S[\s\S]*?<\/loc>[\s\S]*<\/\1>$/.test(body);
+  if ((type !== 'application/xml' && type !== 'text/xml') || !body || body.includes('<!DOCTYPE')) return false;
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-I', '-c', validateSitemap], {
+    input: body,
+    timeout: 5000,
+  });
+  if (result.error) throw result.error;
+  return result.status === 0;
 }
 
 async function main() {
@@ -159,7 +198,9 @@ async function main() {
       get(`${DEST}${path}`),
     ]);
     const p = htmlMeta(pf), d = htmlMeta(df);
-    const comparable = p.status === 200 && d.status === 200 && Boolean(p.title) && Boolean(d.title);
+    const publicPage = path === '/' || path === '/portfolio';
+    const comparable = p.status === 200 && d.status === 200 && Boolean(p.title) && Boolean(d.title)
+      && (!publicPage || (p.canonicalPath === path && d.canonicalPath === path));
     report.routes[path] = {
       productionInitial: { status: pm.status ?? null, location: pm.location ?? null, error: pm.error ?? null },
       destinationInitial: { status: dm.status ?? null, location: dm.location ?? null, error: dm.error ?? null },
@@ -172,7 +213,7 @@ async function main() {
     };
   }
 
-  for (const path of ['/api/public/site', '/api/public/stats', '/api/public/albums?limit=100', '/api/public/archive']) {
+  for (const path of Object.keys(publicContracts)) {
     report.api[path] = await compareJson(path);
   }
 

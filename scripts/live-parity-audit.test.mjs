@@ -10,6 +10,12 @@ import { fileURLToPath } from 'node:url';
 
 const run = promisify(execFile);
 const script = fileURLToPath(new URL('./live-parity-audit.mjs', import.meta.url));
+const publicResponses = {
+  '/api/public/site': { site: {}, siteConfig: {} },
+  '/api/public/stats': { stats: {} },
+  '/api/public/albums': { albums: [], page: 1, limit: 100 },
+  '/api/public/archive': { images: [] },
+};
 
 async function serve(t, configure = () => undefined) {
   const server = createServer((req, res) => {
@@ -17,8 +23,8 @@ async function serve(t, configure = () => undefined) {
     if (configure(path, res)) return;
     if (path.startsWith('/admin')) {
       res.writeHead(303, { location: '/acesso?next=' + encodeURIComponent(path) }).end();
-    } else if (path.startsWith('/api/')) {
-      res.end(JSON.stringify({ ok: true }));
+    } else if (Object.hasOwn(publicResponses, path)) {
+      res.end(JSON.stringify(publicResponses[path]));
     } else if (path === '/robots.txt') {
       res.writeHead(200, { 'content-type': ['text/plain', 'text/plain; charset=utf-8'] }).end('User-agent: *\nAllow: /\n');
     } else if (path === '/sitemap.xml') {
@@ -26,7 +32,7 @@ async function serve(t, configure = () => undefined) {
         '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></url></urlset>',
       );
     } else {
-      res.end('<title>Punctum</title>');
+      res.end('<title>Punctum</title><link rel="canonical" href="https://example.test' + path + '">');
     }
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -87,6 +93,27 @@ test('matching 200 SEO fallbacks do not qualify as robots or sitemap', async t =
   const dest = await serve(t, fallback);
   const { summary } = await audit(t, prod, dest);
   assert.deepEqual([summary.robotsEqual, summary.sitemapEqual], [false, false]);
+});
+
+test('matching malformed sitemap bodies do not qualify', async t => {
+  const malformed = (path, res) => path === '/sitemap.xml'
+    && res.writeHead(200, { 'content-type': 'application/xml' }).end(
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.test/</loc></urlset>',
+    );
+  const prod = await serve(t, malformed);
+  const dest = await serve(t, malformed);
+  assert.equal((await audit(t, prod, dest)).summary.sitemapEqual, false);
+});
+
+test('matching JSON null and HTML maintenance responses do not qualify', async t => {
+  const fallback = (path, res) => {
+    if (path === '/api/public/stats') return res.end('null');
+    if (path === '/portfolio') return res.end('<title>Maintenance</title>');
+  };
+  const prod = await serve(t, fallback);
+  const dest = await serve(t, fallback);
+  const { summary } = await audit(t, prod, dest);
+  assert.deepEqual([summary.statsEqual, summary.portfolioHtmlEqual], [false, false]);
 });
 
 test('correct redirects to matching failed login pages do not qualify', async t => {

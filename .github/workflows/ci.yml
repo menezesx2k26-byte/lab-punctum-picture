@@ -51,6 +51,8 @@ jobs:
       - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: node --test scripts/access-cookie-navigation.test.mjs scripts/e2e/browser-zoom-launch.test.mjs scripts/e2e/browser-zoom-evidence.test.mjs scripts/e2e/contrast-pixel-evidence.test.mjs
+      - name: Record tracked changes before browser QA
+        run: git status --short --untracked-files=no
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v6
         if: always()
@@ -87,6 +89,8 @@ jobs:
       - run: node scripts/hostinger-r4-25mib-local-proof.mjs --public-release-check
       - run: node scripts/hostinger-r4-25mib-local-proof.mjs
       - run: npx playwright install --with-deps chromium
+      - name: Record tracked changes before browser QA
+        run: git status --short --untracked-files=no
       - run: node --test services/punctum-hostinger-node/*.test.mjs
         env:
           PUNCTUM_QA_BROWSER: "1"
