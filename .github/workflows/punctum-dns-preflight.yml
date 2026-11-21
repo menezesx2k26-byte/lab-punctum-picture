@@ -2,7 +2,7 @@ name: Punctum read-only Cloudflare preflight
 on:
   workflow_dispatch:
   push:
-    branches: [codex/punctum-managed-production-20261114, cursor/r4-aj-security-phase-b-ae72]
+    branches: [codex/punctum-managed-production-20261114, cursor/r4-aj-security-phase-b-ae72, codex/punctum-unlimited-release-20261120]
     paths: [.github/workflows/punctum-dns-preflight.yml]
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
           WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           python3 - <<'PY'
-          import collections, json, os, pathlib, urllib.error, urllib.parse, urllib.request
+          import collections, hashlib, json, os, pathlib, urllib.error, urllib.parse, urllib.request
           account = '257bca437616da74ece1ce4bbaf0bd89'
           domain = 'punctumpicture.com'
           report = {'account': account, 'domain': domain, 'mutations': 0, 'checks': {}}
@@ -50,6 +50,12 @@ jobs:
                   records.extend(response.get('result', []))
                   if page >= response.get('result_info',{}).get('total_pages',1): break
               report['types'] = dict(collections.Counter(r['type'] for r in records))
+              baseline = [{k:r.get(k) for k in ('id','name','type','content','ttl','proxied','priority','data')}
+                          for r in sorted(records, key=lambda r:r['id'])]
+              report['recordsSha256'] = hashlib.sha256(json.dumps(baseline,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+              report['nonRoutingRecords'] = [{**{k:r.get(k) for k in ('id','name','type','ttl','priority')},
+                  'contentSha256':hashlib.sha256((r.get('content') or '').encode()).hexdigest()}
+                  for r in baseline if r['type'] in ('TXT','MX','CAA')]
               relevant = {domain, 'www.' + domain, 'clerk.' + domain, 'accounts.' + domain, 'clkmail.' + domain,
                           'clk._domainkey.' + domain, 'clk2._domainkey.' + domain}
               report['routingRecords'] = [{k:r.get(k) for k in ('id','name','type','content','ttl','proxied')}

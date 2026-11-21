@@ -85,11 +85,23 @@ function inventory(dbFile, objects) {
   const db = new DatabaseSync(dbFile, { readOnly: true });
   try {
     if (db.prepare("PRAGMA integrity_check").get().integrity_check !== "ok" || db.prepare("PRAGMA foreign_key_check").all().length) throw Error("MANAGED_RESTORE_INTEGRITY_FAILED");
-    const keys = new Set(objects.map((item) => item.key));
+    const originals = new Map(objects.map((item) => [item.key, item]));
     for (const [table, column] of [["images", "original_key"], ["site_media", "storage_key"], ["client_gallery_images", "storage_key"]]) {
       if (!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)) continue;
-      for (const row of db.prepare(`SELECT ${column} AS key FROM ${table} WHERE status='ready'`).iterate()) {
-        if (typeof row.key !== "string" || (!row.key.startsWith("static:") && !keys.has(row.key))) throw Error("MANAGED_RESTORE_REFERENCE_MISSING");
+      const isPrivate = table === "client_gallery_images";
+      let metadata = "";
+      if (isPrivate) {
+        const hasDigest = db.prepare("SELECT 1 FROM pragma_table_info('client_gallery_images') WHERE name='original_sha256'").get();
+        metadata = `, size_bytes AS size, ${hasDigest ? "original_sha256" : "NULL"} AS digest`;
+      }
+      for (const row of db.prepare(`SELECT ${column} AS key${metadata} FROM ${table} WHERE status='ready'`).iterate()) {
+        if (typeof row.key !== "string") throw Error("MANAGED_RESTORE_REFERENCE_MISSING");
+        if (row.key.startsWith("static:")) continue;
+        const original = originals.get(row.key);
+        if (!original) throw Error("MANAGED_RESTORE_REFERENCE_MISSING");
+        if (isPrivate && (row.size !== original.size || (row.digest !== null && row.digest !== original.sha256))) {
+          throw Error("MANAGED_RESTORE_REFERENCE_MISMATCH");
+        }
       }
     }
     return databaseInventory(db);

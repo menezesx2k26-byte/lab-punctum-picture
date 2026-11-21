@@ -70,5 +70,99 @@ class HostingerPreflightSanitizeTest(unittest.TestCase):
         self.assertIsNone(module.sanitize_order("nope"))
 
 
+class UnlimitedDomainPreflightTest(unittest.TestCase):
+    def setUp(self):
+        self.module = load_preflight()
+        self.website = {
+            "domain": "magic-lime-guanaco-79.hostingersite.com",
+            "username": "u775492464",
+            "order_id": 1008583103,
+            "website_type": "nodejs",
+            "is_enabled": True,
+        }
+        self.order = {"id": 1008583103, "status": "active", "plan": "hostinger_unlimited"}
+
+    def report(self, ownership, *, website=None, order=None, portfolio=None, incoming=None):
+        def api(token, path, **kwargs):
+            if path.startswith("/websites?"):
+                return 200, [website or self.website], None
+            if path.startswith("/orders?"):
+                return 200, [order or self.order], None
+            if path == "/domains/verify-ownership":
+                self.assertEqual(kwargs["body"], {"domain": "punctumpicture.com"})
+                return 200, ownership, None
+            if path in ("/portfolio/punctumpicture.com", "/move/incoming/punctumpicture.com?force_sync=true"):
+                self.assertEqual(kwargs["api"], "https://developers.hostinger.com/api/domains/v1")
+                return 200, portfolio if path.startswith("/portfolio/") else incoming, None
+            return 200, {}, None
+
+        with patch.object(self.module, "call", side_effect=api) as call:
+            report = self.module.build_report("synthetic-credential", target="unlimited", check_domain=True)
+        return report, call
+
+    def test_unlimited_account_is_verified_before_no_challenge_blocker(self):
+        report, _ = self.report({"domain": "punctumpicture.com", "is_accessible": False, "txt_to_verify": ""})
+        self.assertTrue(report["accountConfirmed"])
+        self.assertEqual(report["expected"]["order_id"], 1008583103)
+        self.assertEqual(report["expected"]["username"], "u775492464")
+        self.assertEqual(report["domainAssociation"]["status"], "BLOCKED_PROVIDER_NO_CHALLENGE")
+        self.assertEqual(report["domainAssociation"]["http"], 200)
+        self.assertEqual(report["domainAssociation"]["challengeLength"], 0)
+        self.assertEqual(report["dnsWrites"], 0)
+
+    def test_wrong_order_user_or_domain_denies_site_specific_probes(self):
+        for field, value in (("order_id", 1008628483), ("username", "u571409090"),
+                             ("domain", "unrelated.example"), ("is_enabled", False)):
+            with self.subTest(field=field):
+                report, call = self.report({}, website={**self.website, field: value})
+                self.assertFalse(report["accountConfirmed"])
+                self.assertEqual(call.call_count, 2)
+                self.assertNotIn("domainAssociation", report)
+
+    def test_inactive_unlimited_order_stops_before_ownership(self):
+        report, call = self.report({}, order={**self.order, "status": "cancelled"})
+        self.assertFalse(report["accountConfirmed"])
+        self.assertEqual(call.call_count, 2)
+
+    def test_real_challenge_is_summarized_without_dns_write_or_value_leak(self):
+        challenge = "hostinger-verify=synthetic-provider-challenge"
+        report, _ = self.report({"domain": "punctumpicture.com", "is_accessible": False, "txt_to_verify": challenge})
+        self.assertEqual(report["domainAssociation"]["status"], "OWNERSHIP_TXT_REQUIRES_AUTHORIZATION")
+        self.assertNotIn(challenge, json.dumps(report))
+        self.assertEqual(report["dnsWrites"], 0)
+
+    def test_accessible_domain_is_not_reported_as_bound_or_deployed(self):
+        report, _ = self.report({"domain": "punctumpicture.com", "is_accessible": True, "txt_to_verify": ""})
+        self.assertEqual(report["domainAssociation"]["status"], "ACCESSIBLE_NOT_BOUND")
+        self.assertEqual(report["writesAttempted"], 0)
+
+    def test_malformed_provider_response_never_claims_domain_access(self):
+        for response in ({"is_accessible": "false"}, {"domain": "other.example", "is_accessible": True}, None):
+            with self.subTest(response=response):
+                report, _ = self.report(response)
+                self.assertEqual(report["domainAssociation"]["status"], "INVALID_PROVIDER_RESPONSE")
+
+    def test_unlimited_main_never_falls_back_to_legacy_credential(self):
+        output = io.StringIO()
+        with patch.dict("os.environ", {"HOSTINGER_API": "legacy-secret", "HOSTINGER_UNLIMITED_API": ""}, clear=True), \
+                patch.object(self.module, "call") as call, redirect_stdout(output):
+            result = self.module.main(["--target", "unlimited", "--check-domain"])
+        self.assertNotEqual(result, 0)
+        self.assertEqual(call.call_count, 0)
+        self.assertFalse(json.loads(output.getvalue())["accountConfirmed"])
+
+    def test_completed_registration_move_is_separate_from_site_access_and_omits_contacts(self):
+        report, _ = self.report(
+            {"domain": "punctumpicture.com", "is_accessible": False, "txt_to_verify": ""},
+            portfolio={"domain": "punctumpicture.com", "status": "active", "contacts": {"email": "private-owner@example.test"}},
+            incoming={"domain": "punctumpicture.com", "status": "completed", "new_customer_email": "private-owner@example.test"},
+        )
+        self.assertEqual(report["domainPortfolio"]["http"], 200)
+        self.assertEqual(report["domainPortfolio"]["status"], "active")
+        self.assertEqual(report["incomingMove"]["status"], "completed")
+        self.assertEqual(report["domainAssociation"]["status"], "BLOCKED_PROVIDER_NO_CHALLENGE")
+        self.assertNotIn("private-owner@example.test", json.dumps(report))
+
+
 if __name__ == "__main__":
     unittest.main()

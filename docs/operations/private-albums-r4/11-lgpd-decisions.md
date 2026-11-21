@@ -57,3 +57,7 @@ Na PR #20 foi acrescentada a seção `retainedImageMetadata` do export, incluind
 A leitura de conta/galerias/imagens/favoritos agora ocorre num único `D1.batch` transacional, e não em quatro chamadas independentes. Testes de RED–GREEN e integração com D1 local sintético estão versionados. Não houve exportação de dados reais nem alteração de armazenamento remoto.
 
 **Limite de governança:** a controladora precisa definir se metadados de terceiros incidentais devem ser revisados antes da entrega, quem atende o titular, categorias de retenção, prazo de descarte, políticas sobre fotos soft-deleted e meios seguros de envio. A implementação é técnica, não uma aprovação de conformidade jurídica. Issue #22 documenta governança e verificação real, permanecendo aberta. **G20 = BLOCKED_GOVERNANCE.**
+
+## Prova HTTP do candidato Node em 21/11/2026
+
+A suíte Linux da PR #45 passou a exercitar o endpoint de exportação no candidato Node compilado, com SQLite e dois titulares sintéticos. O teste exige separação entre titulares, rejeição de convidados e clientes na rota administrativa, os quatro estados de imagem retidos, respostas privadas com `noindex` e auditoria atribuída à senha compartilhada. A configuração do destino, a aprovação da controladora e o canal de entrega seguem pendentes. O resultado executado por SHA fica na PR #45, com o contrato registrado no ciclo BB do ledger.

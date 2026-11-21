@@ -1,9 +1,53 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const PROD = process.env.PROD_ORIGIN ?? 'https://punctumpicture.com';
 const DEST = process.env.DEST_ORIGIN ?? 'https://punctum-picture-migration.menezesx2k26.workers.dev';
 const outPath = process.env.AUDIT_OUT ?? 'requests/live-parity-audit-result.json';
+const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isCount = value => Number.isSafeInteger(value) && value >= 0;
+const publicContracts = {
+  '/api/public/site': value => isRecord(value.site) && typeof value.site.brandName === 'string'
+    && Boolean(value.site.brandName.trim()) && isRecord(value.siteConfig)
+    && Number.isSafeInteger(value.siteConfig.schemaVersion) && value.siteConfig.schemaVersion > 0,
+  '/api/public/stats': value => isRecord(value.stats)
+    && ['photoCount', 'albumCount', 'categoryCount'].every(field => isCount(value.stats[field])),
+  '/api/public/albums?limit=100': value => Array.isArray(value.albums)
+    && Number.isInteger(value.page) && Number.isInteger(value.limit),
+  '/api/public/archive': value => Array.isArray(value.images),
+};
+const validateSitemap = `
+import sys
+from xml.etree.ElementTree import ParseError, fromstring
+from urllib.parse import urlsplit
+
+ns = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
+try:
+    root = fromstring(sys.stdin.read())
+except ParseError:
+    sys.exit(1)
+entry_tag = {ns + "urlset": ns + "url", ns + "sitemapindex": ns + "sitemap"}.get(root.tag)
+if not (entry_tag and len(root) and all(
+    entry.tag == entry_tag and len(entry.findall(ns + "loc")) == 1
+    and len(entry.find(ns + "loc")) == 0
+    for entry in root
+)):
+    sys.exit(1)
+locations = [entry.findtext(ns + "loc", "") for entry in root]
+try:
+    urls = [urlsplit(location) for location in locations]
+    valid = all(
+        0 < len(location) < 2048 and not any(char.isspace() for char in location)
+        and url.scheme in ("http", "https") and url.hostname
+        and (url.port is None or 1 <= url.port <= 65535)
+        for location, url in zip(locations, urls)
+    ) and len({(url.scheme, url.hostname, url.port or (443 if url.scheme == "https" else 80))
+               for url in urls}) == 1
+except ValueError:
+    valid = False
+sys.exit(0 if valid else 1)
+`;
 
 const sha = (s) => crypto.createHash('sha256').update(String(s ?? '')).digest('hex');
 const short = (v, n = 400) => {
@@ -58,8 +102,11 @@ function diff(a, b, path = '$', out = []) {
   if (typeof a === 'object') {
     const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])].sort();
     for (const k of keys) {
-      if (!(k in a) || !(k in b)) out.push({ path: `${path}.${k}`, production: short(a[k]), destination: short(b[k]) });
-      else diff(a[k], b[k], `${path}.${k}`, out);
+      if (!Object.hasOwn(a, k) || !Object.hasOwn(b, k)) {
+        out.push({ path: `${path}.${k}`, production: short(a[k]), destination: short(b[k]) });
+      } else {
+        diff(a[k], b[k], `${path}.${k}`, out);
+      }
       if (out.length >= 300) break;
     }
     return out;
@@ -71,6 +118,8 @@ function diff(a, b, path = '$', out = []) {
 function htmlMeta(r) {
   if (!r.ok) return { ok: false, error: r.error };
   const title = r.body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, ' ').trim() ?? null;
+  const canonicalLink = r.body.match(/<link\b[^>]*\srel\s*=\s*(['"])canonical\1[^>]*>/i)?.[0];
+  const canonical = canonicalLink?.match(/\shref\s*=\s*(['"])(.*?)\1/i)?.[2];
   const assets = [...new Set([...r.body.matchAll(/(?:src|href)=["']([^"']+)["']/gi)].map(m => m[1]).filter(v => v.startsWith('/') || v.startsWith('http')))].sort();
   return {
     ok: true,
@@ -78,6 +127,8 @@ function htmlMeta(r) {
     finalUrl: r.url,
     location: r.location,
     title,
+    canonicalPath: canonical && URL.canParse(canonical, r.url) ? new URL(canonical, r.url).pathname : null,
+    hasPrimaryContent: /<main\b[^>]*>[\s\S]*?<h1\b[^>]*>/.test(r.body),
     bodyBytes: Buffer.byteLength(r.body),
     bodySha256: sha(r.body),
     assets,
@@ -92,24 +143,60 @@ function assetDiff(a = [], b = []) {
   };
 }
 
+function followsLoginRedirect(initial, final, origin, path) {
+  if (initial.status !== 303 || !initial.location || final.status !== 200) return false;
+  try {
+    const expectedOrigin = new URL(origin).origin;
+    return [initial.location, final.finalUrl].every(location => {
+      const url = new URL(location, origin);
+      return url.origin === expectedOrigin && url.pathname === '/acesso' && url.searchParams.get('next') === path;
+    });
+  } catch {
+    return false;
+  }
+}
+
 async function compareJson(path) {
   const [p, d] = await Promise.all([get(`${PROD}${path}`), get(`${DEST}${path}`)]);
   const parse = (r) => {
-    if (!r.ok) return { __transportError: r.error };
-    try { return JSON.parse(r.body); }
-    catch { return { __parseError: true, status: r.status, body: short(r.body, 1000) }; }
+    if (!r.ok) return { valid: false, value: { __transportError: r.error } };
+    try {
+      const value = JSON.parse(r.body);
+      return { valid: isRecord(value) && publicContracts[path](value), value };
+    } catch {
+      return { valid: false, value: { __parseError: true, status: r.status, body: short(r.body, 1000) } };
+    }
   };
   const pj = parse(p), dj = parse(d);
-  const differences = diff(pj, dj);
+  const differences = diff(pj.value, dj.value);
   return {
     productionStatus: p.status ?? null,
     destinationStatus: d.status ?? null,
-    equal: differences.length === 0,
+    equal: p.status === 200 && d.status === 200 && pj.valid && dj.valid && differences.length === 0,
     diffCount: differences.length,
     diffs: differences,
-    production: pj,
-    destination: dj,
+    production: pj.value,
+    destination: dj.value,
   };
+}
+
+function validSeoResponse(path, response) {
+  if (response.status !== 200) return false;
+  const types = new Set((response.contentType ?? '').split(',')
+    .map(value => value.split(';', 1)[0].trim().toLowerCase()));
+  if (types.size !== 1) return false;
+  const [type] = types;
+  const body = response.body.trim();
+  if (path === '/robots.txt') {
+    return type === 'text/plain' && /^User-agent:[ \t]*\S/im.test(body);
+  }
+  if ((type !== 'application/xml' && type !== 'text/xml') || !body || body.includes('<!DOCTYPE')) return false;
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-I', '-c', validateSitemap], {
+    input: body,
+    timeout: 5000,
+  });
+  if (result.error) throw result.error;
+  return result.status === 0;
 }
 
 async function main() {
@@ -124,7 +211,7 @@ async function main() {
     text: {},
   };
 
-  for (const path of ['/', '/acesso', '/admin', '/admin/studio']) {
+  for (const path of ['/', '/portfolio', '/acesso', '/admin', '/admin/studio']) {
     const [pm, dm, pf, df] = await Promise.all([
       get(`${PROD}${path}`, 'manual'),
       get(`${DEST}${path}`, 'manual'),
@@ -132,28 +219,36 @@ async function main() {
       get(`${DEST}${path}`),
     ]);
     const p = htmlMeta(pf), d = htmlMeta(df);
+    const publicPage = path === '/' || path === '/portfolio';
+    const comparable = p.status === 200 && d.status === 200 && Boolean(p.title) && Boolean(d.title)
+      && (!publicPage || (p.canonicalPath === path && d.canonicalPath === path
+        && p.hasPrimaryContent && d.hasPrimaryContent));
     report.routes[path] = {
       productionInitial: { status: pm.status ?? null, location: pm.location ?? null, error: pm.error ?? null },
       destinationInitial: { status: dm.status ?? null, location: dm.location ?? null, error: dm.error ?? null },
       production: p,
       destination: d,
-      sameStatus: p.status === d.status,
-      sameTitle: p.title === d.title,
-      sameBody: p.bodySha256 === d.bodySha256,
+      sameStatus: p.ok && d.ok && p.status === d.status,
+      sameTitle: comparable && p.title === d.title,
+      sameBody: comparable && p.bodySha256 === d.bodySha256,
       assetDiff: assetDiff(p.assets, d.assets),
     };
   }
 
-  for (const path of ['/api/public/site', '/api/public/stats', '/api/public/albums?limit=100', '/api/public/archive']) {
+  for (const path of Object.keys(publicContracts)) {
     report.api[path] = await compareJson(path);
   }
 
   for (const path of ['/sitemap.xml', '/robots.txt']) {
     const [p, d] = await Promise.all([get(`${PROD}${path}`), get(`${DEST}${path}`)]);
+    const productionValid = validSeoResponse(path, p);
+    const destinationValid = validSeoResponse(path, d);
     report.text[path] = {
       productionStatus: p.status ?? null,
       destinationStatus: d.status ?? null,
-      equal: p.body === d.body,
+      productionValid,
+      destinationValid,
+      equal: productionValid && destinationValid && p.body === d.body,
       productionSha256: sha(p.body),
       destinationSha256: sha(d.body),
       productionExcerpt: short(p.body, 1200),
@@ -163,10 +258,17 @@ async function main() {
     };
   }
 
+  const loginEquivalent = path => {
+    const route = report.routes[path];
+    return route.sameTitle
+      && followsLoginRedirect(route.productionInitial, route.production, PROD, path)
+      && followsLoginRedirect(route.destinationInitial, route.destination, DEST, path);
+  };
   report.summary = {
     homeHtmlEqual: report.routes['/']?.sameBody ?? false,
-    adminRouteEquivalent: report.routes['/admin']?.sameStatus && report.routes['/admin']?.sameTitle,
-    studioRouteEquivalent: report.routes['/admin/studio']?.sameStatus && report.routes['/admin/studio']?.sameTitle,
+    portfolioHtmlEqual: report.routes['/portfolio']?.sameBody ?? false,
+    adminRouteEquivalent: loginEquivalent('/admin'),
+    studioRouteEquivalent: loginEquivalent('/admin/studio'),
     publicSiteEqual: report.api['/api/public/site']?.equal ?? false,
     publicSiteDiffCount: report.api['/api/public/site']?.diffCount ?? null,
     statsEqual: report.api['/api/public/stats']?.equal ?? false,

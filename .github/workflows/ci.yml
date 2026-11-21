@@ -43,13 +43,16 @@ jobs:
       - run: node --test services/punctum-hostinger-production/managed-d1-export.test.mjs
       - run: node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs
       - run: node --test scripts/ci-evidence.test.mjs
+      - run: node --test scripts/live-parity-audit.test.mjs
       - run: node --test scripts/punctum-clerk-instance-readonly.test.mjs
-      - run: python3 -m unittest discover -s scripts -p punctum_hostinger_account_preflight_test.py
+      - run: python3 -m unittest discover -s scripts -p 'punctum_*_preflight_test.py'
       - run: npm run build
       - run: node --test scripts/ssr-route-imports.test.mjs
       - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: node --test scripts/access-cookie-navigation.test.mjs scripts/e2e/browser-zoom-launch.test.mjs scripts/e2e/browser-zoom-evidence.test.mjs scripts/e2e/contrast-pixel-evidence.test.mjs
+      - name: Record tracked changes before browser QA
+        run: git status --short --untracked-files=no
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v6
         if: always()
@@ -59,7 +62,7 @@ jobs:
           retention-days: 14
 
   hostinger-node-qa:
-    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'agent/hostinger-') || startsWith(github.head_ref, 'cursor/r4-'))
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'agent/hostinger-') || startsWith(github.head_ref, 'cursor/r4-') || startsWith(github.head_ref, 'codex/punctum-unlimited-release-'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -74,7 +77,20 @@ jobs:
       - run: npm ci
       - run: npm run build:hostinger:qa
       - run: node --test services/punctum-hostinger-production/*.test.mjs
+      - run: npm run build:hostinger:candidate
+      - name: Compare managed candidate builds
+        shell: bash
+        run: |
+          first="$(mktemp -d "$RUNNER_TEMP/punctum-candidate.XXXXXX")/candidate"
+          mv -- dist/hostinger-candidate "$first"
+          npm run build:hostinger:candidate
+          node scripts/hostinger-candidate-build-equivalence.mjs "$first" dist/hostinger-candidate
+      - run: npm run build:hostinger:scheduled
+      - run: node scripts/hostinger-r4-25mib-local-proof.mjs --public-release-check
+      - run: node scripts/hostinger-r4-25mib-local-proof.mjs
       - run: npx playwright install --with-deps chromium
+      - name: Record tracked changes before browser QA
+        run: git status --short --untracked-files=no
       - run: node --test services/punctum-hostinger-node/*.test.mjs
         env:
           PUNCTUM_QA_BROWSER: "1"

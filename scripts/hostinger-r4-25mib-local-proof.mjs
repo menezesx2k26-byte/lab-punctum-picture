@@ -14,12 +14,13 @@ const publicOrigin = "https://punctumpicture.com";
 const port = 3025;
 const localOrigin = `http://127.0.0.1:${port}`;
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const publicReleaseOnly = process.argv.includes("--public-release-check");
 
-function exactSizePng() {
+function exactSizePng(marker = 0) {
   const chunks = [fixturePng.subarray(0, -12)];
   let remainder = requiredBytes - fixturePng.length;
   while (remainder) {
-    const payload = Buffer.alloc(Math.min(256 * 1024, remainder - 12));
+    const payload = Buffer.alloc(Math.min(256 * 1024, remainder - 12), marker);
     const type = Buffer.from("vpAg"); // Private, safe-to-copy ancillary chunk.
     const chunk = Buffer.alloc(12 + payload.length);
     chunk.writeUInt32BE(payload.length, 0);
@@ -39,6 +40,28 @@ function cookie(response) {
   const header = response.headers.getSetCookie().find((value) => value.startsWith("punctum_"));
   assert(header && ["Secure", "HttpOnly", "SameSite=Strict"].every((part) => header.includes(part)));
   return header.split(";", 1)[0];
+}
+
+const elapsedMs = (started) => Math.round((performance.now() - started) * 100) / 100;
+
+async function readTimings(read) {
+  const timedRead = async () => {
+    const started = performance.now();
+    await read();
+    return elapsedMs(started);
+  };
+  const firstReadMs = await timedRead();
+  const samples = [];
+  const concurrency = 2;
+  for (let round = 0; round < 50; round++) {
+    samples.push(...await Promise.all(Array.from({ length: concurrency }, timedRead)));
+  }
+  samples.sort((a, b) => a - b);
+  assert.equal(samples.length, 100);
+  assert(samples.every((ms) => Number.isFinite(ms) && ms >= 0));
+  const percentile = (q) => samples[Math.ceil(q * samples.length) - 1];
+  return { concurrency, samples: samples.length, firstReadMs,
+    p50Ms: percentile(0.50), p95Ms: percentile(0.95), p99Ms: percentile(0.99), maxMs: samples.at(-1) };
 }
 
 async function main() {
@@ -68,6 +91,7 @@ async function main() {
         PUNCTUM_CANDIDATE_CLIENT_SESSION_SECRET: randomBytes(48).toString("hex"),
         PUNCTUM_CANDIDATE_ADMIN_AUTH_MODE: "legacy", PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE: "password",
         PUNCTUM_CANDIDATE_CLERK_AUTH_ENABLED: "false",
+        ...(publicReleaseOnly ? {} : { PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED: "true" }),
       },
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -103,14 +127,44 @@ async function main() {
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
       assert(ready, `candidate unavailable: ${errors}`);
-      const admin = cookie(await expect(await req("/admin/api/session", "POST", {
+      const adminStarted = performance.now();
+      const adminLogin = await expect(await req("/admin/api/session", "POST", {
         email: "qa-admin@example.test", password,
-      }), 200, "admin-login"));
+      }), 200, "admin-login");
+      const admin = cookie(adminLogin);
+      await adminLogin.arrayBuffer();
+      const adminLoginMs = elapsedMs(adminStarted);
+      if (publicReleaseOnly) {
+        const home = await readTimings(async () => {
+          const res = await req("/");
+          assert.equal(res.status, 200, "public home HTTP status");
+          assert.match(await res.text(), /<title[^>]*>[^<]+<\/title>/i, "public home HTML title");
+        });
+        checks.push("public-home-with-R4-off");
+        for (const path of ["/albuns", "/api/client/me", "/admin/api/clientes", "/admin/api/albuns-privados"]) {
+          await expect(await req(path, "GET", undefined, admin), 404, "default-off:" + path);
+        }
+        const media = "/api/client/galleries/11111111-1111-4111-8111-111111111111/images/22222222-2222-4222-8222-222222222222/download";
+        for (const method of ["GET", "HEAD"]) {
+          const denied = await expect(await req(media, method), 404, "default-off-media:" + method);
+          assert.match(denied.headers.get("cache-control"), /private.*no-store/);
+          assert.equal((await denied.arrayBuffer()).byteLength, 0);
+        }
+        console.log(JSON.stringify({ status: "PUBLIC_RELEASE_R4_OFF_LOCAL_SYNTHETIC_PASS", checksPassed: checks.length,
+          httpLoopbackMs: { adminLoginMs, home } }));
+        return;
+      }
       const clients = [];
+      const clientLoginMs = [];
       for (const suffix of ["a", "b"]) {
         const email = `synthetic-${suffix}@example.test`;
         const { client, temporaryPassword } = await json("/admin/api/clientes", "POST", { name: `Synthetic ${suffix}`, email }, admin, 201);
-        const temp = cookie(await expect(await req("/api/client/session", "POST", { email, password: temporaryPassword }), 200, `client-${suffix}-login`));
+        const loginStarted = performance.now();
+        const login = await expect(await req("/api/client/session", "POST", { email, password: temporaryPassword }),
+          200, `client-${suffix}-login`);
+        const temp = cookie(login);
+        await login.arrayBuffer();
+        clientLoginMs.push(elapsedMs(loginStarted));
         const rotated = cookie(await expect(await req("/api/client/password", "POST", {
           password: `Synthetic ${suffix} QA password 2026!`,
         }, temp), 200, `client-${suffix}-rotation`));
@@ -160,7 +214,10 @@ async function main() {
       assert.deepEqual(readdirSync(join(directory, "originals"), { recursive: true }), [],
         "aborted upload must not stage any original bytes");
       checks.push("partial-network-abort-pending");
-      await expect(await put(png), 200, "accept-exact-25mib");
+      const uploadStarted = performance.now();
+      const accepted = await expect(await put(png), 200, "accept-exact-25mib");
+      await accepted.arrayBuffer();
+      const exactUploadMs = elapsedMs(uploadStarted);
       await expect(await put(png), 200, "idempotent-retry");
       await json(`${galleryPath}/uploads/${intent.intentId}/complete`, "POST", {}, admin);
       await json(`${galleryPath}/uploads/${intent.intentId}/complete`, "POST", {}, admin);
@@ -218,8 +275,113 @@ async function main() {
         assert(!denied.headers.get('Content-Type')?.startsWith('image/'), 'no public image content type');
         assert(!deniedBytes.subarray(0, 8).equals(png.subarray(0, 8)), 'no public PNG raster');
       }
+      const { gallery: foreignGallery } = await json("/admin/api/albuns-privados", "POST", {
+        clientId: clients[1].id, title: "Synthetic B export control", theme: "warm",
+      }, admin, 201);
+      const now = new Date().toISOString();
+      const seedMetadata = db.prepare(`INSERT INTO client_gallery_images
+        (id, gallery_id, storage_key, original_filename, mime_type, size_bytes, position, status,
+         created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, 'image/png', 1, 1, ?, ?, ?, ?)`);
+      for (const [id, ownerGallery, status, deletedAt] of [
+        ["qa-pending", gallery.id, "pending", null],
+        ["qa-failed", gallery.id, "failed", null],
+        ["qa-deleted", gallery.id, "ready", now],
+        ["qa-foreign", foreignGallery.id, "pending", null],
+      ]) {
+        await seedMetadata.bind(id, ownerGallery, `client-galleries/${ownerGallery}/${id}.png`,
+          id + ".png", status, now, now, deletedAt).run();
+      }
+      await json(favoritePath, "PUT", undefined, clients[0].cookie);
+
+      const exportPath = (id) => `/admin/api/clientes/${id}/lgpd-export`;
+      for (const [role, session] of [["guest", undefined], ["A", clients[0].cookie], ["B", clients[1].cookie]]) {
+        const denied = await expect(await req(exportPath(clients[0].id), "GET", undefined, session),
+          403, `lgpd-export-${role}-denied`);
+        assert(!(await denied.text()).includes(clients[0].id));
+      }
+      const exported = [];
+      for (const [index, client] of clients.entries()) {
+        const res = await expect(await req(exportPath(client.id), "GET", undefined, admin), 200, "lgpd-export-admin");
+        assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+        assert.equal(res.headers.get("Vary"), "Cookie");
+        assert.match(res.headers.get("X-Robots-Tag") ?? "", /(?:^|,\s*)noindex(?:,|$)/);
+        const body = await res.text();
+        assert(!body.includes(clients[1 - index].id));
+        assert.doesNotMatch(body, /password_?(?:hash|salt|iterations)|session_?version|storage_?key|client-galleries\//i);
+        const snapshot = JSON.parse(body);
+        assert.equal(snapshot.schemaVersion, 1);
+        assert.equal(snapshot.titular.id, client.id);
+        exported.push(snapshot);
+      }
+      const [owner, foreign] = exported;
+      assert.deepEqual(owner.galleries.map((g) => g.id), [gallery.id]);
+      assert.deepEqual(owner.galleries[0].images.map((image) => image.id), [intent.imageId]);
+      assert.deepEqual(owner.favorites.map((f) => [f.galleryId, f.imageId]), [[gallery.id, intent.imageId]]);
+      assert.deepEqual(new Map(owner.retainedImageMetadata.map((image) => [image.id, [image.status, image.deletedAt]])),
+        new Map([[intent.imageId, ["ready", null]], ["qa-pending", ["pending", null]],
+          ["qa-failed", ["failed", null]], ["qa-deleted", ["ready", now]]]));
+      assert.deepEqual(foreign.galleries.map((g) => g.id), [foreignGallery.id]);
+      assert.deepEqual(foreign.galleries[0].images, []);
+      assert.deepEqual(foreign.favorites, []);
+      assert.deepEqual(foreign.retainedImageMetadata.map((image) => image.id), ["qa-foreign"]);
+      const { results: exportAudit } = await db.prepare(`SELECT actor_email AS actor, entity_type AS type, entity_id AS id, data_json AS details
+        FROM audit_log WHERE action = 'client.lgpd_exported' ORDER BY entity_id`).all();
+      assert.deepEqual(exportAudit.map((entry) => ({ ...entry })),
+        clients.map(({ id }) => id).sort().map((id) => ({
+          actor: "shared-password@punctum.invalid", type: "client_account", id, details: null,
+        })));
+      checks.push("lgpd-export-retained-states-isolation-and-audit");
+
+      const privateGallery = await readTimings(async () => {
+        const res = await req(clientPath, "GET", undefined, clients[0].cookie);
+        assert.equal(res.status, 200, "owner gallery HTTP status");
+        assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+        assert.equal((await res.json()).gallery.id, gallery.id, "owner gallery response identity");
+      });
+      checks.push("owner-gallery-bounded-concurrent-reads");
+
+      const uploads = [png, exactSizePng(1)].map((bytes) => ({ bytes, sha256: hash(bytes) }));
+      assert.notEqual(uploads[0].sha256, uploads[1].sha256);
+      const batch = await Promise.all(uploads.map(async ({ bytes, sha256 }, index) => {
+        const pending = await json(intentPath, "POST", {
+          filename: `concurrent-${index}.png`, mimeType: "image/png", sizeBytes: bytes.length, sha256,
+        }, admin, 201);
+        const url = new URL(pending.uploadUrl);
+        assert.equal(url.origin, publicOrigin);
+        assert.equal(url.pathname, `${galleryPath}/uploads/${pending.intentId}/direct`);
+        return { ...pending, bytes, sha256, url };
+      }));
+      const batchStarted = performance.now();
+      await Promise.all(batch.map(async ({ url, bytes, requiredHeaders }) => {
+        const uploaded = await expect(await req(url.pathname + url.search, "PUT", bytes, admin, {
+          ...requiredHeaders, "Content-Length": String(bytes.length),
+        }), 200, "parallel-25mib-put");
+        await uploaded.arrayBuffer();
+      }));
+      const concurrentUploadMs = elapsedMs(batchStarted);
+      await Promise.all(batch.map(({ intentId }) =>
+        json(`${galleryPath}/uploads/${intentId}/complete`, "POST", {}, admin)));
+      const findCompleted = db.prepare(`SELECT u.image_id AS imageId, u.status AS intentStatus,
+        u.sha256 AS intentDigest, m.status AS imageStatus, m.original_sha256 AS imageDigest,
+        m.size_bytes AS bytes FROM client_gallery_upload_intents AS u
+        JOIN client_gallery_images AS m ON m.id = u.image_id AND m.gallery_id = u.gallery_id
+        WHERE u.id = ? AND u.gallery_id = ?`);
+      for (const { intentId, imageId, sha256 } of batch) {
+        const original = await expect(await req(`${clientPath}/images/${imageId}/download`,
+          "GET", undefined, clients[0].cookie), 200, "parallel-25mib-owner-download");
+        const bytes = Buffer.from(await original.arrayBuffer());
+        assert.equal(bytes.length, requiredBytes);
+        assert.equal(hash(bytes), sha256);
+        assert.deepEqual({ ...await findCompleted.bind(intentId, gallery.id).first() }, {
+          imageId, intentStatus: "completed", intentDigest: sha256,
+          imageStatus: "ready", imageDigest: sha256, bytes: requiredBytes,
+        });
+      }
+      assert.deepEqual((await db.prepare("PRAGMA foreign_key_check").all()).results, []);
+      checks.push("parallel-25mib-size-digest-and-sqlite-integrity");
       console.log(JSON.stringify({ result: "PASS_LOCAL_SYNTHETIC_NODE", bytes: png.length, sha256: hash(png),
-        checks, environment: "isolated POSIX WSL staging; legacy synthetic auth; no remote access" }));
+        httpLoopbackMs: { adminLoginMs, clientLoginMs, exactUploadMs, concurrentUploadMs, privateGallery },
+        checks, environment: "isolated loopback staging with synthetic legacy authentication" }));
     } finally {
       if (child.exitCode === null) {
         const exited = new Promise((resolve) => child.once("exit", resolve));

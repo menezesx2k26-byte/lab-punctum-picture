@@ -17,7 +17,7 @@ import { generateTemporaryPassword } from "../client/passwords";
 import { hashClientPasswordWithProvider } from "../client/password-provider";
 import { privateJson } from "../client/response";
 import { assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
-import { writeAudit } from "../utils/audit";
+import { prepareAudit, writeAudit } from "../utils/audit";
 import { requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { assertRateLimit } from "../utils/rate-limit";
@@ -146,15 +146,16 @@ export async function handleClientAdminApi(
   }
   if (match[2] === "reset-password" && request.method === "POST") {
     if (mode === "access") {
-      await db
-        .prepare(
-          `UPDATE client_accounts SET password_hash='ACCESS_ONLY',password_salt='ACCESS_ONLY',
+      await db.batch([
+        db
+          .prepare(
+            `UPDATE client_accounts SET password_hash='ACCESS_ONLY',password_salt='ACCESS_ONLY',
           password_iterations=310000,must_change_password=0,
           session_version=session_version+1,updated_at=? WHERE id=?`,
-        )
-        .bind(new Date().toISOString(), id)
-        .run();
-      await writeAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id);
+          )
+          .bind(new Date().toISOString(), id),
+        prepareAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id),
+      ]);
       return privateJson({ ok: true, authMode: mode });
     }
     const temporaryPassword = generateTemporaryPassword();
@@ -389,21 +390,22 @@ async function handleGalleryAdminApi(
     (action === "archive" || action === "unpublish") &&
     request.method === "POST"
   ) {
-    await db
-      .prepare("UPDATE client_galleries SET status=?,updated_at=? WHERE id=?")
-      .bind(
-        action === "archive" ? "archived" : "draft",
-        new Date().toISOString(),
+    await db.batch([
+      db
+        .prepare("UPDATE client_galleries SET status=?,updated_at=? WHERE id=?")
+        .bind(
+          action === "archive" ? "archived" : "draft",
+          new Date().toISOString(),
+          id,
+        ),
+      prepareAudit(
+        db,
+        auditPrincipal(actor),
+        "client_gallery." + action,
+        "client_gallery",
         id,
-      )
-      .run();
-    await writeAudit(
-      db,
-      auditPrincipal(actor),
-      "client_gallery." + action,
-      "client_gallery",
-      id,
-    );
+      ),
+    ]);
     return privateJson({ ok: true });
   }
   if (!action && request.method === "GET") {

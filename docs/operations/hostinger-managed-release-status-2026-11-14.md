@@ -15,6 +15,8 @@ Session dates: 2026-11-14–15, America/Sao_Paulo. Individual workflow receipts 
 
 ## Gates
 
+Cycle BE (2026-11-21): [bounded Linux QA and sitemap audit receipt](private-albums-r4/89-cycle-be-vps-parity-sitemap-2026-11-21.md) supersedes older runner/test counts for its exact correction SHA. The VPS passed 25 focused synthetic tests with a 91.3 MiB sampled peak and no WSL. Final CI and independent review remain pending in that receipt. Both releases remain `PRODUCTION_NO_GO`; the domain registration is Active, while issue #44 governs the unresolved managed Node association.
+
 PASS below is scoped to the tested managed candidate. Public production acceptance remains gated by cutover.
 
 | Gate | Status | Verified evidence / remaining limit |
@@ -89,6 +91,10 @@ Measured Cloudflare versus managed p50/p95 milliseconds (13 responses per route/
 | WebP sample |541 /1032 |17 /480 |
 
 All observations were200. Cache/runtime conditions differ. This sample does not qualify p99 or final authentication/upload load.
+
+Cycle BC adds a separately scoped profile in the existing Linux candidate CI proof. It measures a first read after application setup and 100 subsequent HTTP loopback reads at concurrency two for public Home with R4 off and an authenticated private gallery in the separate synthetic R4 run. Quantiles use nearest rank. Existing login and 25 MiB transfer checks emit individual elapsed times. `httpLoopbackMs` is emitted only after the corresponding assertions pass. The exact run and measurements belong to PR #45. Provider TLS, capacity, costs, Cloudflare cold CPU and concurrent upload acceptance remain open in G17.
+
+Cycle BD extends the private candidate proof with two distinct 25 MiB PNGs in the same synthetic gallery. The test dispatches both intents, both transfers and both completion requests in parallel within each stage. It checks the length and SHA-256 of each owner download, the completed intent and ready image rows, and SQLite foreign keys. The batch timing covers both loopback PUT responses. Provider upload and performance acceptance remain pending under G05 and G17.
 
 ## Backup, jobs and rollback
 

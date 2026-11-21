@@ -24,7 +24,7 @@ const backups = candidateLocalBackups(config.backupsRoot);
 
 const env = {
   ENVIRONMENT: config.environment,
-  PRIVATE_GALLERIES_ENABLED: "true",
+  PRIVATE_GALLERIES_ENABLED: String(config.privateGalleriesEnabled),
   CLIENT_AUTH_MODE:
     process.env.PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE ||
     process.env.CLIENT_AUTH_MODE ||

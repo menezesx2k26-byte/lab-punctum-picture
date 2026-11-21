@@ -1,5 +1,25 @@
 # Direct Studio Hero Upload Implementation Plan
 
+## Nota de continuidade — 21/11/2026
+
+Este plano registra a proposta original. O upload Hero já possui implementação; as caixas desmarcadas abaixo não provam ausência da funcionalidade. Para a continuidade completa de Hostinger, Clerk, R4 e Hero, usar o [prompt pós-BH com tasks e gates](2026-11-21-punctum-continuation-bh-tasks-gates.md), o [ledger atual](../../operations/private-albums-r4/execution-state.json) e o [fechamento BH](../../operations/private-albums-r4/89-cycle-be-vps-parity-sitemap-2026-11-21.md).
+
+| Proposta histórica | Referência efetiva no código BH |
+| --- | --- |
+| `migrations/0006_site_media.sql` | `migrations/0008_site_media.sql`; não renumerar migrações |
+| `shared/config.ts` | Módulos existentes em `shared/config/`, exportados por `index.ts` |
+| `app/lib/hero-media.ts` | `app/lib/public-visuals.ts`, com `resolveConfiguredHeroVisual` |
+| `HeroUploadControl.tsx` separado | Upload implementado em `app/admin/components/studio/StudioPhotosPanel.tsx` |
+| Seleção do Hero | `app/admin/components/studio/hero-media.ts` |
+| `config.spec.ts`, `hero-media.spec.ts`, `studio-hero-upload.spec.tsx` | `site-config.spec.ts`, `public-visuals.spec.ts`, `studio-hero-media.spec.ts`, `site-media-suitability.spec.ts` e `tests/integration/site-media.spec.ts` |
+| Upload por XHR/direto R2 | Fluxo atual usa `fetch` e PUT na rota administrativa `/admin/api/site-media/:id/direct`; não trocar o transporte apenas para reproduzir esta proposta |
+
+O mínimo original de 1920×1080/1080 no lado curto diverge da implementação atual (`isSuitableHeroSource`: 1280×720 ou 720×1280) e do teste que preserva a aceitação de 1536×961. Identificar a decisão posterior e reconciliar o contrato antes de alterar os limites; esta nota não aprova nem revoga um limite por inferência.
+
+A construção de uma URL no resolver não comprova o contrato completo de prontidão, publicação e fallback. Rastrear storage/publicação/serving e acrescentar prova de integração para lacunas reproduzidas, conforme T04.H do prompt. Não recriar componentes, helpers ou tabelas já existentes.
+
+**A Task 6 histórica abaixo não autoriza merge, migração, deploy ou teste mutável em produção.** Permanecem necessários os aceites separados de release, os gates G01–G24 e as provas de QA. Nesta retomada houve somente reconciliação documental; nenhum comportamento de Hero foi alterado ou novamente homologado.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let Studio upload a Home hero directly from a phone, store it independently from albums, preview/select it in the draft, and publish it safely without a code deploy.
