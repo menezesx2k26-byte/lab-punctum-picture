@@ -5621,7 +5621,32 @@
         "redGreen": true
       },
       "candidateBuild": "PASS_LOCAL",
-      "fullCiForNewHead": "PENDING_READBACK"
+      "fullCiForNewHead": {
+        "sourceSha": "34dbd668af619c4f18854cc15de705c50dcb0fb5",
+        "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44849260865",
+        "jobs": {
+          "verify": "success",
+          "hostinger-node-qa": "success"
+        },
+        "vitest": {
+          "passed": 333,
+          "files": 64
+        },
+        "collage": {
+          "passed": 7
+        },
+        "managedNode": {
+          "passed": 75,
+          "skipped": 1,
+          "skip": "managed HTTP proof refuses unsupported process-group platforms"
+        },
+        "qaNode": {
+          "passed": 40,
+          "skipped": 0
+        },
+        "auditVulnerabilities": 0,
+        "scope": "Exact pre-checkpoint SHA; subsequent documentary HEAD CI must be read separately."
+      }
     },
     "publicParity": {
       "measuredAt": "2026-11-21T00:45:19.056Z",
@@ -5634,18 +5659,29 @@
     },
     "domain": {
       "ownerReportedMove": "COMPLETED_IN_UNLIMITED",
-      "apiReadbackSourceSha": "0e8c9678310cd2c3b6e5905464b150ab27fa0266",
-      "apiReadbackRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44848073497",
-      "artifactId": 14683926619,
-      "artifactSha256": "0277205f17d4feae708e3a9dba51c57885f74d5fa704f4bf687896952e09bf13",
+      "apiReadbackSourceSha": "34dbd668af619c4f18854cc15de705c50dcb0fb5",
+      "apiReadbackRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44849256884",
+      "artifactId": 14683749213,
+      "artifactSha256": "f273b2a33186307c910ec31765538828f66fb1365770132d5ee3d6c3d3b1c37f",
       "accountConfirmed": true,
       "ownershipHttp": 200,
       "isAccessible": false,
       "challengeLength": 0,
-      "correlationId": "a3464be9-2dbd-42d4-8d5b-4adda203d6b0",
+      "correlationId": "a3464ffe-28de-4c01-8ff8-ca32b6f356a9",
       "issue": "https://github.com/menezesx2k26-byte/lab-punctum-picture/issues/44",
       "providerTicket": null,
-      "next": "Read actual portfolio and incoming move from next instrumented preflight; do not repeat owner move."
+      "next": "Provider must reconcile hosting association. Registration already confirmed; do not request it again.",
+      "previousApiReadbackRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44848073497",
+      "registrationConfirmed": true,
+      "domainPortfolio": {
+        "http": 200,
+        "domain": "punctumpicture.com",
+        "status": "Active"
+      },
+      "incomingMove": {
+        "http": 422,
+        "status": "NOT_QUALIFIED"
+      }
     },
     "dns": {
       "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44848076084",
@@ -5658,17 +5694,37 @@
     },
     "tasks": {
       "0": "BASELINE_RECONCILED",
-      "1": "OWNER_COMPLETE_API_RECONCILIATION_PENDING",
+      "1": "REGISTRATION_CONFIRMED_HOSTING_ASSOCIATION_BLOCKED_PROVIDER",
       "2": "BLOCKED_PENDING_ASSOCIATION_AND_TLS",
       "3": "PARTIAL_LOCAL_FLAG_FIX_REMOTE_PUBLIC_PARITY_FAIL",
       "4": "PENDING_REAL_CLERK_QA_AND_IDENTITIES",
-      "5": "READ_ONLY_SOURCE_PREFLIGHT_ENABLED_PENDING_RUN",
+      "5": "SOURCE_EXPORT_READBACK_VERIFIED_REMOTE_RESTORE_PENDING",
       "6": "PENDING_EXACT_SHA_REVIEW_PHYSICAL_A11Y_CONTROLLER",
       "7": "NO_GO_PUBLIC_RELEASE",
       "8": "NO_GO_R4_RELEASE",
       "9": "REPO_CHECKPOINT_UPDATED_EXTERNAL_PERSISTENCE_PENDING"
     },
     "quotaGuard": "ROLLOVER_77_PERCENT_NO_NEW_HEAVY_AGENTS",
-    "nextSafeAction": "Read instrumented account preflight, new CI and current-source delta artifacts on exact pushed HEAD; then continue plan tasks without production mutations."
+    "nextSafeAction": "Provider reconciliation of hosting association using confirmed Active portfolio and refusal correlation ID; preserve Cloudflare. Resume remaining public parity, isolated remote restore, TLS/capacity and separate human/security gates.",
+    "sourceDelta": {
+      "objects": 230,
+      "bytes": 372040548,
+      "sqlSha256": "b05b8e933b938e0171ab96342f146d1a3034d1f8d37acfba58062c80eaaec66f",
+      "originalsManifestSha256": "c6524fdd07ca8fc624b731ea21b609a292ef4d044ffcae3c973a8d8e0f76bf92",
+      "sourceSha": "34dbd668af619c4f18854cc15de705c50dcb0fb5",
+      "sourceWrites": 0,
+      "changedTables": [
+        "backup_runs"
+      ],
+      "sqlUnchanged": false,
+      "everyOriginalUnchanged": true,
+      "writeFreezeApplied": false,
+      "run": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44849256823",
+      "artifactId": 14684043230,
+      "artifactSha256": "278160674138043538812453ccd7fc7a6b83ff7d3a3cf3cfafbf76b52b66aa64",
+      "remoteImportVerified": false,
+      "retainedEncryptedBackupVerified": false,
+      "remoteRestoreVerified": false
+    }
   }
 }
