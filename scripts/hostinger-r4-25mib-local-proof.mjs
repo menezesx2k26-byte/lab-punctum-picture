@@ -14,6 +14,7 @@ const publicOrigin = "https://punctumpicture.com";
 const port = 3025;
 const localOrigin = `http://127.0.0.1:${port}`;
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const publicReleaseOnly = process.argv.includes("--public-release-check");
 
 function exactSizePng() {
   const chunks = [fixturePng.subarray(0, -12)];
@@ -68,6 +69,7 @@ async function main() {
         PUNCTUM_CANDIDATE_CLIENT_SESSION_SECRET: randomBytes(48).toString("hex"),
         PUNCTUM_CANDIDATE_ADMIN_AUTH_MODE: "legacy", PUNCTUM_CANDIDATE_CLIENT_AUTH_MODE: "password",
         PUNCTUM_CANDIDATE_CLERK_AUTH_ENABLED: "false",
+        ...(publicReleaseOnly ? {} : { PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED: "true" }),
       },
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -106,6 +108,20 @@ async function main() {
       const admin = cookie(await expect(await req("/admin/api/session", "POST", {
         email: "qa-admin@example.test", password,
       }), 200, "admin-login"));
+      if (publicReleaseOnly) {
+        await expect(await req("/"), 200, "public-home-with-R4-off");
+        for (const path of ["/albuns", "/api/client/me", "/admin/api/clientes", "/admin/api/albuns-privados"]) {
+          await expect(await req(path, "GET", undefined, admin), 404, "default-off:" + path);
+        }
+        const media = "/api/client/galleries/11111111-1111-4111-8111-111111111111/images/22222222-2222-4222-8222-222222222222/download";
+        for (const method of ["GET", "HEAD"]) {
+          const denied = await expect(await req(media, method), 404, "default-off-media:" + method);
+          assert.match(denied.headers.get("cache-control"), /private.*no-store/);
+          assert.equal((await denied.arrayBuffer()).byteLength, 0);
+        }
+        console.log(JSON.stringify({ status: "PUBLIC_RELEASE_R4_OFF_LOCAL_SYNTHETIC_PASS", checksPassed: checks.length }));
+        return;
+      }
       const clients = [];
       for (const suffix of ["a", "b"]) {
         const email = `synthetic-${suffix}@example.test`;

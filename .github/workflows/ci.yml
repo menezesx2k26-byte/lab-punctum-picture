@@ -74,6 +74,10 @@ jobs:
       - run: npm ci
       - run: npm run build:hostinger:qa
       - run: node --test services/punctum-hostinger-production/*.test.mjs
+      - run: npm run build:hostinger:candidate
+      - run: npm run build:hostinger:scheduled
+      - run: node scripts/hostinger-r4-25mib-local-proof.mjs --public-release-check
+      - run: node scripts/hostinger-r4-25mib-local-proof.mjs
       - run: npx playwright install --with-deps chromium
       - run: node --test services/punctum-hostinger-node/*.test.mjs
         env:

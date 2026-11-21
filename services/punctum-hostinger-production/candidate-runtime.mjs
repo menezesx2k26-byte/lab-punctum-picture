@@ -107,6 +107,7 @@ export function candidateConfig() {
     managed,
     noindex: environment !== "production" || publicOrigin.hostname === "aliceblue-locust-999458.hostingersite.com",
     environment,
+    privateGalleriesEnabled: process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED === "true",
     origin,
     publicOrigin,
     dbFile,

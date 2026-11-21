@@ -13,7 +13,9 @@ export const env = {
   get ENVIRONMENT() {
     return config().environment;
   },
-  PRIVATE_GALLERIES_ENABLED: "true",
+  get PRIVATE_GALLERIES_ENABLED() {
+    return String(config().privateGalleriesEnabled);
+  },
   get MAX_UPLOAD_BYTES() {
     return config().managed ? "20000000" : "26214400";
   },

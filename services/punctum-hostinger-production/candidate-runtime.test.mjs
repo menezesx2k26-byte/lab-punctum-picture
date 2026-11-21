@@ -58,6 +58,12 @@ test("candidateConfig validates isolated private candidate environment and rejec
   assert.equal(cfg.origin.port, "3025");
   assert.equal(cfg.publicOrigin.origin, "https://127.0.0.1:8443");
   assert.equal(cfg.trustedProxy, "caddy");
+  assert.equal(cfg.privateGalleriesEnabled, false, "public release defaults to R4 disabled");
+  process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED = "true";
+  assert.equal(candidateConfig().privateGalleriesEnabled, true);
+  process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED = "false";
+  assert.equal(candidateConfig().privateGalleriesEnabled, false);
+  delete process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED;
 
   process.env.PUNCTUM_CANDIDATE_PROVIDER = "hostinger-managed";
   process.env.PORT = "34567";
@@ -70,6 +76,7 @@ test("candidateConfig validates isolated private candidate environment and rejec
   assert.equal(candidateConfig().noindex, true);
   process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://punctumpicture.com";
   assert.equal(candidateConfig().noindex, false);
+  assert.equal(candidateConfig().privateGalleriesEnabled, false);
   process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://magic-lime-guanaco-79.hostingersite.com";
   assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
   process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "staging";
