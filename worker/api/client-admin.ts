@@ -146,15 +146,16 @@ export async function handleClientAdminApi(
   }
   if (match[2] === "reset-password" && request.method === "POST") {
     if (mode === "access") {
-      await db
-        .prepare(
-          `UPDATE client_accounts SET password_hash='ACCESS_ONLY',password_salt='ACCESS_ONLY',
+      await db.batch([
+        db
+          .prepare(
+            `UPDATE client_accounts SET password_hash='ACCESS_ONLY',password_salt='ACCESS_ONLY',
           password_iterations=310000,must_change_password=0,
           session_version=session_version+1,updated_at=? WHERE id=?`,
-        )
-        .bind(new Date().toISOString(), id)
-        .run();
-      await writeAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id);
+          )
+          .bind(new Date().toISOString(), id),
+        prepareAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id),
+      ]);
       return privateJson({ ok: true, authMode: mode });
     }
     const temporaryPassword = generateTemporaryPassword();
