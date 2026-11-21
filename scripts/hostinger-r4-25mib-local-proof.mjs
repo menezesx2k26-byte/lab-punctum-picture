@@ -280,6 +280,8 @@ async function main() {
         new Map([[intent.imageId, ["ready", null]], ["qa-pending", ["pending", null]],
           ["qa-failed", ["failed", null]], ["qa-deleted", ["ready", now]]]));
       assert.deepEqual(foreign.galleries.map((g) => g.id), [foreignGallery.id]);
+      assert.deepEqual(foreign.galleries[0].images, []);
+      assert.deepEqual(foreign.favorites, []);
       assert.deepEqual(foreign.retainedImageMetadata.map((image) => image.id), ["qa-foreign"]);
       const { results: exportAudit } = await db.prepare(`SELECT actor_email AS actor, entity_type AS type, entity_id AS id, data_json AS details
         FROM audit_log WHERE action = 'client.lgpd_exported' ORDER BY entity_id`).all();

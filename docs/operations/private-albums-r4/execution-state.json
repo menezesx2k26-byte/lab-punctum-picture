@@ -6347,6 +6347,8 @@
       "command": "node scripts/hostinger-r4-25mib-local-proof.mjs",
       "ciJob": "hostinger-node-qa on PR #45 with exact checkout of the PR head.",
       "resultLocator": "Read the exact run and the lgpd-export-retained-states-isolation-and-audit marker in the job log. The PR #45 cycle BB comment is the runtime receipt.",
+      "firstRun": { "head": "5d2aa0b4388582cd3c9fa174b7579bf5796f27b2", "runId": 44873603276, "result": "success", "checks": 57 },
+      "independentReview": "CoS worker-1 report 623593b0 found that the first passing oracle did not check subject B's nested gallery images. The follow-up requires both the nested images and favorites to be empty in that fixture, while positively checking B's retained metadata.",
       "assertions": [
         "Guest and both client sessions denied on the admin-only endpoint.",
         "Separate administrator exports for two synthetic accounts and their own galleries.",
@@ -6356,6 +6358,7 @@
       ]
     },
     "local": "node --check on the modified proof and git diff --check passed. The full compiled exercise is routed to GitHub Actions.",
+    "performanceReview": "CoS worker-1 report e710746e reconciled the historical Cloudflare CPU and managed latency evidence against the G17 plan. The required final-HEAD cold invocation CPU and quota evidence, and managed TLS latency, authenticated sessions and upload sampling, remain pending.",
     "gates": "Preserve AY release decisions. G19 formal review and G20 controller approval remain on hold. G17 requires qualified provider evidence beyond local wall latency. Issue #44 still governs the managed association block.",
     "nextSafeAction": "Obtain the Hostinger association confirmation or protocol, then recheck the exact Unlimited target and qualify both releases independently. G20 still requires the controller's private, dated approval and a delivery channel."
   }
