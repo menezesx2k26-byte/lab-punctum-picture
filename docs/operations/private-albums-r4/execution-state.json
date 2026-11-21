@@ -6126,7 +6126,55 @@
         "storageCorrection": "First run passed its tests but /tmp used host disk. The repeat directed TMPDIR into /mnt on a 32 MiB tmpfs and asserted /tmp, /var/tmp and /dev/shm were not writable.",
         "provenance": "Node distribution checksum read over HTTPS from nodejs.org and independently matched on the VPS. Source tarball produced by git archive and checked on the VPS before extraction."
       },
-      "pending": "Qualify a reusable key-only nonadmin entry point, Linux Sharp from the release lockfile, and the wider Punctum runtime behavior within the sandbox capacity."
+      "sharpSyntheticQa": {
+        "observedAt": "2026-11-21T04:32:36.818Z",
+        "status": "PASS_BOUNDED_SYNTHETIC",
+        "productSha": "ec6ef4cc208a08e7c05b190cf2575b44440e300f",
+        "sourceArchiveSha256": "e3e90248ef24237ce1d24a464fd5f64e0a571fa00c37142c3d88dc7124831cd6",
+        "node": "24.19.0",
+        "npm": "11.17.0",
+        "sharp": "0.35.5",
+        "libvips": "8.18.7",
+        "webp": "1.6.0",
+        "dependencyProof": "Six npm tarballs in the Linux x64 Sharp dependency closure matched the SHA-512 SRI digests in the exact release lockfile. No lifecycle scripts or full npm ci.",
+        "command": "node --test --test-concurrency=1 scripts/live-parity-audit.test.mjs scripts/r4-g18-local-sqlite-restore-demo.test.mjs services/punctum-hostinger-node/isolated-sharp.test.mjs",
+        "reproducibleFailure": "Two exact runs with TasksMax=32 failed only the WebP equivalence case, 7/8. Sandbox-only instrumentation exposed GLib Error creating thread: Resource temporarily unavailable. Both direct calls without the Node test runner succeeded.",
+        "correction": "TasksMax raised to 64 within the QA unit only. The exact source and existing test oracle were unchanged. With the same memory, CPU, time and disk limits, the exact suite passed 8/8 with pids.events max 0.",
+        "tests": {
+          "pass": 8,
+          "fail": 0,
+          "exitCode": 0
+        },
+        "limits": {
+          "cpuVcpu": 1,
+          "ramMiB": 384,
+          "tasks": 64,
+          "seconds": 30,
+          "temporaryWorkMiB": 32,
+          "swapBytes": 0
+        },
+        "measured": {
+          "elapsedMs": 3150,
+          "cpuUsageMicroseconds": 3001593,
+          "memoryPeakBytes": 76210176,
+          "workUsedKiB": 428,
+          "stagedRuntimeKiB": 260576,
+          "ramAvailableBeforeKiB": 2050748,
+          "pidsLimitHits": 0,
+          "containersBefore": 29,
+          "containersAfter": 29,
+          "wslProcessesBefore": 0,
+          "wslProcessesAfter": 0
+        },
+        "currentPublishedCheckpointCi": {
+          "sha": "82adf8fa6752fbb56ae4ca27e411bb011b75e61c",
+          "runId": 44866328536,
+          "verify": "success",
+          "hostingerNodeQa": "success"
+        },
+        "next": "Install and verify the dedicated key-only QA entry point. Reuse systemd's per-job isolation and the verified limits. Permanent runner and Unlimited staging are not qualified by this smoke."
+      },
+      "pending": "Qualify the reusable key-only nonadmin entry point and wider runtime tests, including the 25 MiB upload path. Keep builds in CI."
     },
     "t02": {
       "status": "PARTIAL_VERIFIED",
@@ -6161,6 +6209,6 @@
       "persistFlow": "NOT_VERIFIED",
       "gates": "AY G01–G24 values are preserved. This checkpoint does not promote any release gate."
     },
-    "nextSafeAction": "Qualify the durable key-only QA entry point with verified storage and process limits, then exercise Linux Sharp using the release lockfile. Keep full builds in GitHub Actions. Do not repeat ownership verification until the provider state changes."
+    "nextSafeAction": "Qualify the durable key-only QA entry point with the verified Linux Node/Sharp, storage and process limits, then exercise the bounded R4 runtime proof. Keep full builds in GitHub Actions. Do not repeat ownership verification until the provider state changes."
   }
 }
