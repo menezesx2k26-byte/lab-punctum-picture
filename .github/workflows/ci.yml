@@ -76,6 +76,13 @@ jobs:
       - run: npm run build:hostinger:qa
       - run: node --test services/punctum-hostinger-production/*.test.mjs
       - run: npm run build:hostinger:candidate
+      - name: Compare managed candidate builds
+        shell: bash
+        run: |
+          first="$(mktemp -d "$RUNNER_TEMP/punctum-candidate.XXXXXX")/candidate"
+          mv -- dist/hostinger-candidate "$first"
+          npm run build:hostinger:candidate
+          node scripts/hostinger-candidate-build-equivalence.mjs "$first" dist/hostinger-candidate
       - run: npm run build:hostinger:scheduled
       - run: node scripts/hostinger-r4-25mib-local-proof.mjs --public-release-check
       - run: node scripts/hostinger-r4-25mib-local-proof.mjs

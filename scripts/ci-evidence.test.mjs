@@ -19,6 +19,12 @@ test('PR verification uses a read-only token and covers the managed Node adapter
   assert.ok(nodeJob.includes('node --test services/punctum-hostinger-production/*.test.mjs'));
 });
 
+test('managed Node CI compares two candidate builds with a clean second output directory', () => {
+  const nodeJob = workflow.split('  hostinger-node-qa:')[1];
+  assert.match(nodeJob, /npm run build:hostinger:candidate\s+- name: Compare managed candidate builds/);
+  assert.match(nodeJob, /mv -- dist\/hostinger-candidate "\$first"\s+npm run build:hostinger:candidate\s+node scripts\/hostinger-candidate-build-equivalence\.mjs "\$first" dist\/hostinger-candidate/);
+});
+
 test('remote recovery changes are eligible for the explicit QA trigger and never run incidentally', async () => {
   const edge=await readFile(new URL('../.github/workflows/r4-edge-qa.yml', import.meta.url),'utf8');
   for(const path of ['scripts/r4-recovery-execute.mjs','scripts/lib/r4-recovery-qa.mjs','scripts/r4-recovery-qa.test.mjs']) assert.ok(edge.includes('"'+path+'"'),'Missing QA path: '+path);
