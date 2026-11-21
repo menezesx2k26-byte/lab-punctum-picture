@@ -6210,5 +6210,93 @@
       "gates": "AY G01–G24 values are preserved. This checkpoint does not promote any release gate."
     },
     "nextSafeAction": "Qualify the durable key-only QA entry point with the verified Linux Node/Sharp, storage and process limits, then exercise the bounded R4 runtime proof. Keep full builds in GitHub Actions. Do not repeat ownership verification until the provider state changes."
+  },
+  "currentCycle20261121AZ": {
+    "goal": "PUNCTUM-CLOSEOUT-2026-11-18",
+    "result": "PARTIAL_VERIFIED",
+    "production": "NO_GO",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "productSha": "a25f8ddfa2acdfeead611d07ceb4ba4976799859",
+    "pullRequest": 45,
+    "tasks": {
+      "T00": "PASS_BASELINE_WITH_BLOCKED_PROVIDER",
+      "T01": "PASS_BOUNDED_AUXILIARY_RUNNER",
+      "T02": "PASS_FOCUSED_PARITY_CORRECTIONS; FORMAL_SECURITY_REVIEW_PENDING",
+      "T03": "PARTIAL_VERIFIED_SYNTHETIC; UNLIMITED_REAL_CLERK_RESTORE_AND_ROLLBACK_PENDING",
+      "T04": "PARTIAL_VERIFIED_SYNTHETIC_CHROMIUM; PHYSICAL_ACCESSIBILITY_AND_FORMAL_SECURITY_REVIEW_PENDING",
+      "T05": "PARTIAL_VERIFIED_CI_AND_VPS; MANAGED_TARGET_QUALIFICATION_PENDING",
+      "T06": "VERSIONED_CHECKPOINT_AND_DRIVE_READBACK"
+    },
+    "readOnlyParity": {
+      "checkedAt": "2026-11-21T05:26:17.897Z",
+      "command": "node scripts/live-parity-audit.mjs with the canonical public and temporary Unlimited HTTPS origins",
+      "exitCode": 0,
+      "reportSha256": "88c81db8db5248d0f930a14d54d517f3feabfb302a2f2c6d150319cf26888746",
+      "releaseParity": "FAIL",
+      "publicApiDiffCounts": { "site": 10, "stats": 3, "albums": 45, "archiveLowerBound": 300 },
+      "notes": "Home and portfolio canonical paths matched and their bodies differed. Both SEO routes returned HTTP 200 and valid distinct bodies. Anonymous admin and Studio redirects matched. Authenticated Studio was not compared over live origins."
+    },
+    "local": {
+      "command": "node --test scripts/live-parity-audit.test.mjs scripts/ci-evidence.test.mjs",
+      "exitCode": 0,
+      "pass": 12,
+      "fail": 0,
+      "other": "Git Bash bash -n, git diff --check and staged diff check passed. Python 3 is required by the comparator for structural sitemap checks."
+    },
+    "vps": {
+      "id": 2135319,
+      "observedAt": "2026-11-21T05:28:49Z",
+      "hostKey": "SHA256:YDU8L01elnOngxVzl+B9HQyyuC09DWWdsJGvMZ3F6zg",
+      "serviceInvocationId": "15875224f4504d4da9800f5c28549a9d",
+      "bootstrap": "scripts/punctum-vps-qa-bootstrap.sh",
+      "command": "SSH as codex-qa using the dedicated key and strict pinned host key, then request smoke",
+      "exitCode": 0,
+      "accountChecks": "Locked password, only its own group, forced smoke command, id rejected with exit 64. Dynamic workload UID, private loopback, restricted mounts, Docker socket absent. Smoke without the staged runtime exited 1.",
+      "jobLimits": { "cpuVcpu": 1, "memoryBytes": 402653184, "swapBytes": 0, "tasks": 64, "seconds": 30, "tmpfsBytes": 33554432, "concurrentConnections": 1 },
+      "preflight": { "availableRamKiB": 2020424, "load": [1.28, 0.76, 0.42], "availableDiskKiB": 54638232, "processes": 347, "containers": 29 },
+      "measurements": { "sshElapsedMs": 9266, "cpuSeconds": 4.214, "sampledCgroupPeakBytes": 95973376, "sampledWorkUsedKiB": 76, "containersAfter": 29, "wslProcessesBefore": 0, "wslProcessesAfter": 0 },
+      "node": "24.19.0",
+      "npmInNodeDistribution": "11.17.0 (archive metadata; npm was not installed in the jail)",
+      "sharp": "0.35.5",
+      "runtimeEvidence": "Node archive SHA-256 and six Linux Sharp tarballs verified against the lockfile SRI. Original 13-file archive SHA-256 89871527d5ee4626a812b93e41f979bc451825ec7bda7d54e30798032e2b1aab. The two changed parity files were replaced from exact git archive with SHA-256 6aef1ef02d319ab1183c7b756b1f8a7df11e5e1d94448f14e54c89e7f070945e. All remaining staged source paths and lockfile matched the prior tree.",
+      "tests": { "parityPassed": 7, "sqliteRestorePassed": 1, "sharpPassed": 3, "failed": 0, "fixtureBytes": 26214400, "fixtureSha256": "c16e100efa8b3233461abdf30df0be13c291ed17c5cd4f6c4dbc40c562aab4ce" },
+      "limitsOfProof": "The 25 MiB VPS check constructs and decodes the fixture. The HTTP upload and +1 byte case use the real candidate binding in CI. The per-job tmpfs returned inactive. VPS evidence cannot qualify the managed environment."
+    },
+    "ci": {
+      "runId": 44870953655,
+      "exactProductSha": "a25f8ddfa2acdfeead611d07ceb4ba4976799859",
+      "hostingerNodeQa": "success",
+      "twoBuildEquivalence": "success",
+      "verify": "success",
+      "candidateFilesCompared": 555,
+      "candidateFilesByteIdentical": 552,
+      "normalizedVinextFiles": 3,
+      "npmAuditFindings": 0,
+      "changedLinesSecretMarkerScan": { "lines": 298, "matches": 0, "scope": "Common markers in the code diff. Gitleaks was unavailable." },
+      "browser": {
+        "workerArtifactId": 14693429539,
+        "workerArchiveSha256": "a44edeed7b2cb65bc5e2dc7b21d75a8d9dab9cb8ef2bfbf8f5f57ad1f10c384a",
+        "nodeArtifactId": 14694200876,
+        "nodeArchiveSha256": "a582f4b319ae6ef7763d29ee21c219868c8c99be4a7426996a63df297f32aa84",
+        "workerChecks": 23,
+        "axeAudits": 7,
+        "pageErrors": 0,
+        "serverErrors": 0,
+        "physicalDevices": "NOT_RUN",
+        "screenReader": "NOT_RUN",
+        "homeNavigationMsLocalSingleSample": 1298.3,
+        "provenance": "Downloaded and inspected synthetic Chromium evidence. CI recorded the generated managed Node BUILD_ID as the only tracked change before Node browser QA. The Worker job had no tracked changes before browser QA."
+      }
+    },
+    "review": {
+      "scope": "CoS worker-1 reports 4d0c7aa6 and 8077f68e on 3f9a868d and 1d95c0d0. Follow-up requires a staged runtime, captures child output until all checks succeed and tightens the public payload and HTML contracts. Local and VPS regression checks verified those follow-ups. Antigravity returned exit 3.",
+      "formalG19": "HOLD"
+    },
+    "continuity": {
+      "drive": { "fileId": "1x7-qc48BbWYdCvVuuXZKD4UOazuIMtWe", "readback": true, "sha256": "8e85c1fce928c2b198748843c82513d29127799d9b1a7460ac1486286d8d0988" },
+      "persistFlow": "NOT_VERIFIED (inspect returned MCP internal error)",
+      "gateRecords": "Preserve the release decisions in currentCycle20261121AY. New synthetic runner and CI evidence do not qualify G05, G17, G18 or G19 on the required release environments."
+    },
+    "nextSafeAction": "Obtain the provider protocol or confirmation of association to the existing Unlimited managed Node. After a provider change, perform one exact account readback. Qualify isolated Unlimited TLS, parity, real Clerk, retained restore and rollback, capacity, physical accessibility, independent security and controller approvals before either release."
   }
 }

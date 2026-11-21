@@ -16,7 +16,7 @@
 - Preservar o Worker atual punctum-picture-migration, Studio, Colagem, originais D1/R2, cookies/sessões e o contrato de acesso público; não sacrificar comportamento existente para obter CI verde.
 - Credenciais, ordens e identidade da conta devem coincidir: Unlimited = pedido 1008583103, usuário u775492464, site magic-lime-guanaco-79.hostingersite.com; Premium antigo = 1008628483, usuário u571409090. A sessão Hostinger genérica/Conthabil não comprova o estado da Unlimited.
 - Registro na Unlimited já foi confirmado por preflight da credencial apropriada. NÃO solicitar nova transferência. O último resultado de associação é HTTP 200, is_accessible=false, TXT vazio; o 422 de move/incoming não qualifica status de transferência.
-- Não usar login do Miranda, credenciais de outros projetos, nem a VPS Conthabil 2135319. Custo incremental permitido: R$ 0,00.
+- Não usar login do Miranda nem credenciais de outros projetos. A diretriz de takeover de 21/11 autorizou a VPS 2135319 para QA Linux isolado com dados sintéticos. O destino dos releases permanece o Node gerenciado da Unlimited. Custo incremental permitido de R$ 0,00.
 - Para código novo/correção: teste independente RED -> mudança mínima GREEN -> testes focados -> CI exato -> revisão de diff -> commit pequeno. Nunca afrouxar/reescrever assertivas somente para passar testes.
 - Testes locais/sintéticos, retorno HTTP 200, portfólio de domínio Active e CI success não são sinônimos de homologação remota ou autorização de release. Preservar evidências vinculadas ao ambiente, hora UTC, SHA completo, responsável e limites da prova.
 - Álbuns privados OFF por padrão no release público: PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED=false. Apenas o opt-in exato "true" habilita R4 em cenários isolados. Negar GET/HEAD anônimo ou de outro cliente, sem bytes privados e sem cache compartilhado.
@@ -173,3 +173,13 @@ O executor verifica a existência e a assinatura de qualquer helper adicional an
 **Immediate next safe action:** na credencial Unlimited já confirmada pelo workflow, distinguir registro Active de vínculo ao site Node. Como a última associação foi recusada sem desafio TXT, concentrar a ação externa na issue #44 e na reconciliação pela Hostinger, sem duplicar portfólio, não usar a credencial Premium e sem mutar Cloudflare.
 
 **Verdict at plan authoring:** PARTIAL_VERIFIED / BLOCKED_PROVIDER / PRODUCTION_NO_GO. Um arquivo de plano não satisfaz nenhum gate de release.
+
+## Handoff de QA auxiliar de 21/11/2026
+
+O runner `codex-qa` da VPS está provisionado. A chave SSH dedicada só aceita `smoke` e a senha da conta está bloqueada. O instalador versionado é `scripts/punctum-vps-qa-bootstrap.sh`. Em uma retomada, verifique os recursos e o serviço existente antes de usar o instalador. Ele recusa a substituição de identidades ou arquivos existentes.
+
+Para uma execução de rotina, use a chave dedicada e o arquivo que contém a chave ED25519 do host verificada. Defina `UserKnownHostsFile`, `StrictHostKeyChecking=yes`, `IdentitiesOnly=yes` e `BatchMode=yes` na chamada `ssh`. Passe `smoke` como único comando da conta `codex-qa`. O campo `source_sha` liga o resultado à árvore carregada. O código de saída 0 exige os testes de paridade, restore SQLite, Sharp e a decodificação do fixture. O ledger registra o SHA, os hashes e os limites medidos.
+
+Para atualizar a árvore, o operador de provisionamento prepara um `git archive` de fontes e fixtures sintéticas do SHA aprovado e confere seu SHA-256 na VPS. Alterações no lockfile exigem revisar os artefatos Linux e verificar sua integridade antes de carregá-los. A configuração root-owned usa `/opt/punctum-vps-qa/root/qa/release`. Atualize somente com o socket de QA ocioso e publique o `source-sha` após instalar os arquivos. Execute o smoke com a conta dedicada. Builds, Chromium e a prova HTTP completa de upload seguem na CI.
+
+As duas fases seguem `NO_GO`. O próximo passo externo continua na issue #44. Aguarde confirmação de associação ao Node existente antes de novo preflight da Unlimited.
