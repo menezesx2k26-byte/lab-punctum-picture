@@ -331,12 +331,19 @@ try {
   assert.ok(await publicHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
   const publishedHeroRow = await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first();
   await originals.delete(heroKey);
-  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
-  assert.equal(await publicHeroImage.getAttribute("src"), "/photos/p002.jpg");
-  assert.ok(await publicHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  const recoveredHeroContext = await newContext();
+  const recoveredHeroPage = await recoveredHeroContext.newPage();
+  await recoveredHeroPage.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 90_000 });
+  const recoveredHeroImage = recoveredHeroPage.locator(".lens-photograph img");
+  assert.equal(await recoveredHeroImage.getAttribute("src"), "/photos/p002.jpg");
+  assert.ok(await recoveredHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  // Existing HTML may still reference this URL after storage loss.
+  await recoveredHeroPage.setContent(`<img src="${origin + publicHeroPath}" alt="Synthetic recovery check">`);
+  assert.ok(await recoveredHeroPage.locator("img").evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  await recoveredHeroContext.close();
   assert.deepEqual(await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first(), publishedHeroRow);
   assert.equal((await db.prepare("SELECT status FROM site_media WHERE id=?").bind(heroId).first()).status, "ready");
-  record("ready draft Hero decodes in authenticated Studio iframe; anonymous draft denied; published Hero decodes; missing R2 original falls back without snapshot mutation");
+  record("ready draft Hero decodes in authenticated Studio iframe; anonymous draft denied; published Hero decodes; fresh browser and old media URL recover missing R2 original without snapshot mutation");
 
   const privateOriginalKey = `client-galleries/${clients[0].gallery}/${clients[0].images[0]}.png`;
   await db.prepare("UPDATE site_media SET storage_key=? WHERE id=?").bind(privateOriginalKey, heroId).run();
