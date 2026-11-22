@@ -66,6 +66,13 @@ describe("identidade visual pública", () => {
     expect(getHeroObjectPosition("mobile")).toBe("50% 50%");
   });
 
+  it("usa a rota autenticada para visualizar o Hero ainda no rascunho do Studio", () => {
+    expect(resolveConfiguredHeroVisual({ kind: "site-media", id: "hero-draft" }, null, [], "admin").src)
+      .toBe("/admin/media/hero-draft/display");
+    expect(resolveConfiguredHeroVisual({ kind: "site-media", id: "hero-draft" }, null, []).src)
+      .toBe("/media/hero-draft/display");
+  });
+
   it("mantém o hero mobile full-bleed por pelo menos uma viewport", () => {
     expect(getHeroMobileMinHeight()).toBe("100svh");
   });

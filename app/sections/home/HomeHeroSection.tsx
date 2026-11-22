@@ -11,15 +11,18 @@ export function HomeHeroSection({
   copy,
   section,
   images = [],
+  mediaAudience,
 }: {
   copy: EditorialConfig["home"]["hero"];
   section: HomeSectionConfig;
   images?: readonly CarouselImage[];
+  mediaAudience?: "public" | "admin";
 }) {
   const hero = resolveConfiguredHeroVisual(
     section.type === "hero" ? section.heroMedia : null,
     section.appearance.backgroundImageId,
     images,
+    mediaAudience,
   );
   const counterpoint = images.find(
     (image) => image.albumSlug && image.src !== hero.src,

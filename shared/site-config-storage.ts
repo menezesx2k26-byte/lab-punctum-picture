@@ -361,6 +361,20 @@ export function serializeSiteConfig(config: SiteConfig): string {
   return serialized;
 }
 
+async function readyHeroMediaIds(db: D1Database, ids: readonly string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  try {
+    const result = await db.prepare(
+      `SELECT id FROM site_media WHERE role = 'hero' AND status = 'ready'
+       AND id IN (${ids.map(() => "?").join(",")})`,
+    ).bind(...ids).all<{ id: string }>();
+    return new Set(result.results.map((row) => row.id));
+  } catch (error) {
+    if (String(error).includes("no such table: site_media")) return new Set();
+    throw error;
+  }
+}
+
 export async function assertSiteConfigReferences(
   db: D1Database,
   config: SiteConfig,
@@ -372,14 +386,22 @@ export async function assertSiteConfigReferences(
     );
   }
   const imageIds = new Set<string>();
+  const siteMediaIds = new Set<string>();
   if (config.theme.background.imageId) imageIds.add(config.theme.background.imageId);
   for (const section of config.pages.home.sections) {
+    if (section.type === "hero" && section.heroMedia) {
+      if (section.heroMedia.kind === "site-media") siteMediaIds.add(section.heroMedia.id);
+      else imageIds.add(section.heroMedia.id);
+    }
     if (section.appearance.backgroundImageId) {
       imageIds.add(section.appearance.backgroundImageId);
     }
     if (section.type === "photo-reel") {
       section.photoIds.forEach((imageId) => imageIds.add(imageId));
     }
+  }
+  if (siteMediaIds.size && (await readyHeroMediaIds(db, [...siteMediaIds])).size !== siteMediaIds.size) {
+    throw new InvalidStoredSiteConfigError("A fotografia escolhida para o Hero não está pronta.");
   }
   if (!imageIds.size) return;
   const available = await readPublishedImagesById(db, [...imageIds]);
@@ -419,6 +441,26 @@ export async function readPublicSiteConfigState(
     };
   }
   const parsed = parseStoredConfig(row.configJson, publicSettings);
+  const siteMediaIds = parsed.config.pages.home.sections.flatMap((section) =>
+    section.type === "hero" && section.heroMedia?.kind === "site-media" ? [section.heroMedia.id] : [],
+  );
+  if (siteMediaIds.length) {
+    const readyIds = await readyHeroMediaIds(db, siteMediaIds);
+    parsed.config = {
+      ...parsed.config,
+      pages: {
+        ...parsed.config.pages,
+        home: {
+          ...parsed.config.pages.home,
+          sections: parsed.config.pages.home.sections.map((section) =>
+            section.type === "hero" && section.heroMedia?.kind === "site-media" && !readyIds.has(section.heroMedia.id)
+              ? { ...section, heroMedia: null }
+              : section,
+          ),
+        },
+      },
+    };
+  }
   return {
     ...parsed,
     versionId: row.id,

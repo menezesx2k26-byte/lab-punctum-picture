@@ -46,7 +46,7 @@ function serializeMedia(media: SiteMediaRow) {
     mimeType: media.mimeType,
     sizeBytes: media.sizeBytes,
     originalFilename: media.originalFilename,
-    url: media.status === "ready" ? `/media/${media.id}/display` : null,
+    url: media.status === "ready" ? `/admin/media/${media.id}/display` : null,
   };
 }
 

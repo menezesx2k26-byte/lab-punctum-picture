@@ -1,5 +1,6 @@
 import { envString, requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
+import { readPublicSiteConfig } from "../../shared/site-config-storage";
 import {
   IMAGE_PRESETS,
   isImagePreset,
@@ -52,6 +53,7 @@ export async function serveMedia(
   }
 
   const db = requireDb(env);
+  const publicRequest = options.audience !== "admin";
   let image = await db
     .prepare(
       `SELECT
@@ -73,6 +75,13 @@ export async function serveMedia(
   if (!image) {
     const siteMedia = await readSiteMediaFallback(db, imageId);
     if (siteMedia) {
+      if (publicRequest && siteMedia.status === "ready") {
+        const config = await readPublicSiteConfig(db);
+        const published = config.pages.home.sections.some((section) =>
+          section.type === "hero" && section.heroMedia?.kind === "site-media" && section.heroMedia.id === imageId,
+        );
+        if (!published) throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
+      }
       image = {
         ...siteMedia,
         focalX: null,
@@ -84,7 +93,6 @@ export async function serveMedia(
     }
   }
 
-  const publicRequest = options.audience !== "admin";
   if (
     !image ||
     image.deletedAt ||

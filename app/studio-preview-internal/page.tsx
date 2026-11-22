@@ -25,6 +25,7 @@ export default async function StudioPreview() {
       config={experience.config}
       featuredAlbums={featuredAlbums}
       carouselImages={carouselImages}
+      mediaAudience="admin"
     />
   );
 }

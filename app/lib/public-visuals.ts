@@ -33,10 +33,11 @@ export function resolveConfiguredHeroVisual(
   heroMedia: HeroMediaRef | null | undefined,
   legacyImageId: string | null,
   images: readonly HeroCandidate[],
+  audience: "public" | "admin" = "public",
 ) {
   if (heroMedia?.kind === "site-media") {
     return {
-      src: `/media/${heroMedia.id}/display`,
+      src: `${audience === "admin" ? "/admin" : ""}/media/${heroMedia.id}/display`,
       alt: "Fotografia principal da Punctum Picture",
       width: 3840,
       height: 2160,

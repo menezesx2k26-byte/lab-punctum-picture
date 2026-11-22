@@ -10,11 +10,11 @@ import { HomePhotoReelSection } from "./HomePhotoReelSection";
 import { HomeStatementSection } from "./HomeStatementSection";
 import { buildHomeSectionRenderPlan, type HomeSectionRenderPlanEntry } from "./render-plan";
 
-export type HomeRendererProps = { config: SiteConfig; site: PublicSiteSettings; featuredAlbums: PublicAlbumSummary[]; carouselImages: CarouselImage[] };
+export type HomeRendererProps = { config: SiteConfig; site: PublicSiteSettings; featuredAlbums: PublicAlbumSummary[]; carouselImages: CarouselImage[]; mediaAudience?: "public" | "admin" };
 type HomeSectionRenderer = (context: HomeRendererProps, section: HomeSectionConfig) => ReactNode;
 type HomeSectionRendererRegistry = { [Type in SectionType]: Record<SectionVariantByType[Type], HomeSectionRenderer> };
 
-const heroRenderer: HomeSectionRenderer = (context, section) => <HomeHeroSection copy={context.config.editorial.home.hero} section={section} images={context.carouselImages} />;
+const heroRenderer: HomeSectionRenderer = (context, section) => <HomeHeroSection copy={context.config.editorial.home.hero} section={section} images={context.carouselImages} mediaAudience={context.mediaAudience} />;
 const statementRenderer: HomeSectionRenderer = (context, section) => <HomeStatementSection copy={context.config.editorial.home.statement} section={section} />;
 const reelRenderer: HomeSectionRenderer = (context, section) => <HomePhotoReelSection copy={context.config.editorial.home.carousel} images={context.carouselImages} section={section} />;
 const featuredRenderer: HomeSectionRenderer = (context, section) => <HomeFeaturedWorkSection albums={context.featuredAlbums} copy={context.config.editorial.home.featured} section={section} />;
