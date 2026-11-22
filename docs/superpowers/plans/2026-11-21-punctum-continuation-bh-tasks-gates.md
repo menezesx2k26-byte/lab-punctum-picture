@@ -12,6 +12,11 @@
 
 **Spec e fontes:** os documentos abaixo compõem o escopo. O plano do Hero é histórico e contém divergências documentadas; o código atual não pode ser substituído cegamente por suas instruções antigas.
 
+**Contrato adicional para LUNA (22/11/2026):** antes de T00, ler integralmente [o plano de fechamento LC0–LC6](2026-11-22-punctum-luna-gate-closure.md). Ele torna obrigatórios: precedência entre documentos/SHAs, reconciliação sem sobrescrever o WIP Clerk, critério mensurável de G16/G17, recuperação D1/R2 com escritas posteriores, revisão humana separada e proveniência de CI. Este contrato complementa T00–T06 e **não altera** o significado nem o estado de G01–G24. Se houver conflito de HEAD, revalidar Git, ledger e decisões aprovadas; não seguir baselines históricas cegamente.
+
+**Regra de execução:** somente branches/commits pequenos e testes no escopo autorizado; nenhuma mudança de produção, Clerk Production, DNS, release ou billing decorre desta atualização documental.
+
+
 ## 1. Fontes obrigatórias e ordem de leitura
 
 Use arquivos da revisão obtida por Git; links imutáveis de evidência são fornecidos quando o SHA importa.
@@ -34,6 +39,7 @@ Use arquivos da revisão obtida por Git; links imutáveis de evidência são for
 | R14 | [Decisões LGPD](../../operations/private-albums-r4/11-lgpd-decisions.md) | Decisões da controladora ainda necessárias |
 | R15 | [Checklist de sessão Clerk](../../operations/private-albums-r4/r1-clerk-session-lifetime-ops-checklist-2026-11-20.md) | Distinguir duração da sessão e expiração do JWT |
 | R16 | [Rollback](../../operations/PUNCTUM-ROLLBACK.md) e [Studio/Colagem](../../operations/private-albums-r4/33-rollback-studio-colagem-2026-11-08.md) | Baselines históricas: não executar restore nem promover G23 pelo título do runbook |
+| R17 | [Plano de fechamento LUNA LC0–LC6](2026-11-22-punctum-luna-gate-closure.md) | Obrigatório antes de T00; precedência, proteção WIP Clerk, thresholds propostos versus aprovados, G18/G23 independentes e DoD separados |
 
 Se uma referência não existir no checkout, confira a revisão/branch antes de inferir ausência. Não dependa exclusivamente de outputs ignorados ou do histórico do chat. Publique referência sanitizada em documentação existente quando ela for necessária para continuidade.
 
@@ -325,6 +331,8 @@ Estados de referência preservados do ledger AY, reconciliados no fechamento BH.
 | H06 Ambiente/release | NOT_VERIFIED | Candidato gerenciado exato e autorização aplicável; nenhuma etapa antiga autoriza produção |
 
 ## 12. Encerramento obrigatório
+
+**Conferência adicional LUNA:** completar LC0–LC6 no plano R17, registrando explicitamente WIP Clerk preservado, eventual auditor D1 histórico reconciliado, medições com critérios aprovados versus propostos, G18/G23 distintos e Release A/B em estados separados. Um plano concluído não significa projeto concluído.
 
 Entregar os 12 campos:
 1. RESULT: VERIFIED no escopo comprovado; manter PARTIAL_VERIFIED / PRODUCTION_NO_GO quando o produto não estiver homologado.
