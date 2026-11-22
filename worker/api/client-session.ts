@@ -203,8 +203,9 @@ export async function handleClientSessionApi(
         "Escolha uma senha diferente da senha atual.",
       );
     const c = await hashClientPasswordWithProvider(input.password, env);
-    const updated = await db
-      .prepare(
+    const now = new Date().toISOString();
+    const results = await db.batch<{ sessionVersion: number }>([
+      db.prepare(
         `UPDATE client_accounts SET password_hash=?,password_salt=?,password_iterations=?,
       must_change_password=0,session_version=session_version+1,updated_at=? WHERE id=? AND session_version=? AND disabled_at IS NULL
       RETURNING session_version AS sessionVersion`,
@@ -213,23 +214,21 @@ export async function handleClientSessionApi(
         c.passwordHash,
         c.passwordSalt,
         c.passwordIterations,
-        new Date().toISOString(),
+        now,
         identity.id,
         identity.sessionVersion,
-      )
-      .first<{ sessionVersion: number }>();
+      ),
+      db.prepare(
+        `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+         SELECT ?,?,'client.password_changed','client_account',?,NULL,? WHERE changes()=1`,
+      ).bind(crypto.randomUUID(), "client:" + identity.id, identity.id, now),
+    ]);
+    const updated = results[0].results[0];
     if (!updated)
       throw new AppError(401, "CLIENT_UNAUTHORIZED", "Entre novamente.");
     const token = await createClientSession(
       { id: identity.id, sessionVersion: updated.sessionVersion },
       env,
-    );
-    await writeAudit(
-      db,
-      "client:" + identity.id,
-      "client.password_changed",
-      "client_account",
-      identity.id,
     );
     return privateJson(
       { ok: true },

@@ -337,15 +337,15 @@ async function storedCredential(db: D1Database): Promise<StoredAdminCredential |
     .first<StoredAdminCredential>();
 }
 
-export async function setAdminPassword(
+export async function prepareAdminPassword(
   password: string,
   db: D1Database,
   updatedBy: string,
-): Promise<void> {
+): Promise<D1PreparedStatement> {
   const iterations = 60_000;
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await derivePassword(password, salt, iterations);
-  await db
+  return db
     .prepare(
       `INSERT INTO admin_credentials (
         id, password_hash, password_salt, password_iterations, updated_at, updated_by
@@ -363,8 +363,7 @@ export async function setAdminPassword(
       iterations,
       new Date().toISOString(),
       updatedBy,
-    )
-    .run();
+    );
 }
 
 export async function verifyAdminPassword(

@@ -7,7 +7,7 @@ import {
   createClerkAdminSession,
   auditPrincipal,
   requireAdmin,
-  setAdminPassword,
+  prepareAdminPassword,
   verifyAdminPassword,
 } from "../utils/auth";
 import {
@@ -15,7 +15,7 @@ import {
   resolveLinkedClerkAdmin,
   revokeClerkSessionKeys,
 } from "../auth/clerk-auth";
-import { writeAudit } from "../utils/audit";
+import { prepareAudit, writeAudit } from "../utils/audit";
 import { envNumber, requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { assertRateLimit } from "../utils/rate-limit";
@@ -146,8 +146,10 @@ export async function handleAdminAuth(
     if (!(await verifyAdminPassword(input.currentPassword, env, db))) {
       throw new AppError(401, "ADMIN_LOGIN_FAILED", "A senha atual está incorreta.");
     }
-    await setAdminPassword(input.newPassword, db, auditPrincipal(identity));
-    await writeAudit(db, auditPrincipal(identity), "admin.password_changed", "admin", null);
+    await db.batch([
+      await prepareAdminPassword(input.newPassword, db, auditPrincipal(identity)),
+      prepareAudit(db, auditPrincipal(identity), "admin.password_changed", "admin", null),
+    ]);
     return json(
       { ok: true },
       {
