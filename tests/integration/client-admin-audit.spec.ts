@@ -1,5 +1,6 @@
 import { env, exports } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
+import { unlinkClerkClientAccount } from "../../worker/auth/clerk-auth";
 import { handlePrivateGalleryRoutes } from "../../worker/client/router";
 import { bootstrapPrivateDb, privateRequest, seedClient, seedGallery, seedReadyImage } from "./client-fixture";
 
@@ -254,6 +255,128 @@ describe("private administrative state changes have an attributed audit event", 
       .toEqual({ session_version: (beforeUnlinkAccount?.session_version as number) + 1 });
     expect(await env.DB.prepare("SELECT actor_email,action,data_json FROM audit_log WHERE entity_id=? AND action='client.clerk_unlinked'").bind(client).first())
       .toEqual({ actor_email: "maria.helena@local.dev", action: "client.clerk_unlinked", data_json: '{"unlinked":true}' });
+  }, 60_000);
+  it("does not unlink a newer Clerk identity after a stale unlink preflight", async () => {
+    const client = await seedClient();
+    const oldClerkUserId = `user_old_${crypto.randomUUID().replaceAll("-", "")}`;
+    const newClerkUserId = `user_new_${crypto.randomUUID().replaceAll("-", "")}`;
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO clerk_pilot_identity_links (clerk_user_id,client_id,session_version_at_link,created_at)
+       VALUES (?,?,1,?)`,
+    ).bind(oldClerkUserId, client, now).run();
+    const beforeVersion = await env.DB.prepare(
+      "SELECT session_version AS version FROM client_accounts WHERE id=?",
+    ).bind(client).first<{ version: number }>();
+
+    let replaced = false;
+    const racedDb = new Proxy(env.DB, {
+      get(target, property) {
+        if (property === "batch") {
+          return async (statements: D1PreparedStatement[]) => {
+            if (!replaced) {
+              replaced = true;
+              await env.DB.prepare(
+                "UPDATE clerk_pilot_identity_links SET clerk_user_id=? WHERE client_id=?",
+              ).bind(newClerkUserId, client).run();
+            }
+            return target.batch(statements);
+          };
+        }
+        const value = Reflect.get(target, property, target) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    }) as D1Database;
+
+    const unlinkResult = await unlinkClerkClientAccount(racedDb, client, "maria.helena@local.dev");
+    expect(replaced).toBe(true);
+    expect(unlinkResult).toEqual({ clientId: client, unlinked: false });
+    expect(await env.DB.prepare(
+      "SELECT clerk_user_id FROM clerk_pilot_identity_links WHERE client_id=?",
+    ).bind(client).first()).toEqual({ clerk_user_id: newClerkUserId });
+    expect(await env.DB.prepare(
+      "SELECT session_version AS version FROM client_accounts WHERE id=?",
+    ).bind(client).first()).toEqual(beforeVersion);
+    expect(await env.DB.prepare(
+      "SELECT data_json FROM audit_log WHERE entity_id=? AND action='client.clerk_unlinked' ORDER BY created_at DESC LIMIT 1",
+    ).bind(client).first()).toEqual({ data_json: '{"unlinked":false}' });
+  }, 60_000);
+  it("makes overlapping Clerk unlink requests revoke the account only once", async () => {
+    const client = await seedClient();
+    const clerkUserId = `user_overlap_${crypto.randomUUID().replaceAll("-", "")}`;
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO clerk_pilot_identity_links (clerk_user_id,client_id,session_version_at_link,created_at)
+       VALUES (?,?,1,?)`,
+    ).bind(clerkUserId, client, now).run();
+    const before = await env.DB.prepare(
+      "SELECT session_version AS version FROM client_accounts WHERE id=?",
+    ).bind(client).first<{ version: number }>();
+
+    let preflightReads = 0;
+    let releasePreflights: () => void = () => {};
+    const preflightBarrier = new Promise<void>(resolve => { releasePreflights = resolve; });
+    const concurrentDb = new Proxy(env.DB, {
+      get(target, property) {
+        if (property === "prepare") {
+          return (sql: string) => {
+            const statement = target.prepare(sql);
+            const normalizedSql = sql.toLowerCase();
+            if (normalizedSql.includes("from clerk_pilot_identity_links") && normalizedSql.includes("session_version")) {
+              return new Proxy(statement, {
+                get(inner, method) {
+                  if (method === "bind") {
+                    return (...values: unknown[]) => {
+                      const bound = inner.bind(...values);
+                      return new Proxy(bound, {
+                        get(boundStatement, boundMethod) {
+                          if (boundMethod === "first") {
+                            return async () => {
+                              const row = await bound.first<{ clerkUserId: string; sessionVersion: number }>();
+                              preflightReads++;
+                              if (preflightReads === 2) releasePreflights();
+                              await preflightBarrier;
+                              return row;
+                            };
+                          }
+                          const value = Reflect.get(boundStatement, boundMethod, boundStatement) as unknown;
+                          return typeof value === "function" ? value.bind(boundStatement) : value;
+                        },
+                      });
+                    };
+                  }
+                  const value = Reflect.get(inner, method, inner) as unknown;
+                  return typeof value === "function" ? value.bind(inner) : value;
+                },
+              });
+            }
+            return statement;
+          };
+        }
+        const value = Reflect.get(target, property, target) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    }) as D1Database;
+
+    const results = await Promise.all([
+      unlinkClerkClientAccount(concurrentDb, client, "maria.helena@local.dev"),
+      unlinkClerkClientAccount(concurrentDb, client, "maria.helena@local.dev"),
+    ]);
+
+    expect(preflightReads).toBe(2);
+    expect(results.map(result => result.unlinked).sort()).toEqual([false, true]);
+    expect(await env.DB.prepare(
+      "SELECT clerk_user_id FROM clerk_pilot_identity_links WHERE client_id=?",
+    ).bind(client).first()).toBeNull();
+    expect(await env.DB.prepare(
+      "SELECT session_version AS version FROM client_accounts WHERE id=?",
+    ).bind(client).first()).toEqual({ version: (before?.version as number) + 1 });
+    expect((await env.DB.prepare(
+      "SELECT data_json FROM audit_log WHERE entity_id=? AND action='client.clerk_unlinked' ORDER BY data_json",
+    ).bind(client).all()).results).toEqual([
+      { data_json: '{"unlinked":false}' },
+      { data_json: '{"unlinked":true}' },
+    ]);
   }, 60_000);
   it.each([true, false])("rolls back client disable=%s when its audit insert fails and retries exactly once", async (disabled) => {
     const client = await seedClient();

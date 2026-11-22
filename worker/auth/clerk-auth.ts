@@ -541,10 +541,13 @@ export async function unlinkClerkClientAccount(
 ): Promise<{ clientId: string; unlinked: boolean }> {
   const existing = await db
     .prepare(
-      "SELECT clerk_user_id AS clerkUserId FROM clerk_pilot_identity_links WHERE client_id = ?",
+      `SELECT l.clerk_user_id AS clerkUserId, c.session_version AS sessionVersion
+       FROM clerk_pilot_identity_links l
+       JOIN client_accounts c ON c.id = l.client_id
+       WHERE l.client_id = ?`,
     )
     .bind(clientId)
-    .first<{ clerkUserId: string }>();
+    .first<{ clerkUserId: string; sessionVersion: number }>();
   if (!existing) {
     await db.batch([
       prepareAudit(db, actorEmail, "client.clerk_unlinked", "client_account", clientId, { unlinked: false }),
@@ -553,13 +556,47 @@ export async function unlinkClerkClientAccount(
   }
 
   const now = new Date().toISOString();
-  await db.batch([
-    db.prepare("DELETE FROM clerk_pilot_identity_links WHERE client_id = ?").bind(clientId),
+  const auditId = crypto.randomUUID();
+  const results = await db.batch([
     db.prepare(
-      "UPDATE client_accounts SET session_version = session_version + 1, updated_at = ? WHERE id = ?",
-    ).bind(now, clientId),
-    prepareAudit(db, actorEmail, "client.clerk_unlinked", "client_account", clientId, { unlinked: true }),
+      `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+       SELECT ?,?,'client.clerk_unlinked','client_account',?,'{"unlinked":true}',?
+       WHERE EXISTS (
+         SELECT 1 FROM clerk_pilot_identity_links l
+         JOIN client_accounts c ON c.id = l.client_id
+         WHERE l.client_id = ? AND l.clerk_user_id = ? AND c.session_version = ?
+       )`,
+    ).bind(auditId, actorEmail, clientId, now, clientId, existing.clerkUserId, existing.sessionVersion),
+    db.prepare(
+      `DELETE FROM clerk_pilot_identity_links
+       WHERE client_id = ? AND clerk_user_id = ?
+       AND EXISTS (
+         SELECT 1 FROM client_accounts c
+         JOIN audit_log a ON a.id = ?
+         WHERE c.id = ? AND c.session_version = ?
+       )`,
+    ).bind(clientId, existing.clerkUserId, auditId, clientId, existing.sessionVersion),
+    db.prepare(
+      `UPDATE client_accounts
+       SET session_version = session_version + 1, updated_at = ?
+       WHERE id = ? AND session_version = ?
+       AND NOT EXISTS (SELECT 1 FROM clerk_pilot_identity_links WHERE client_id = ?)
+       AND EXISTS (SELECT 1 FROM audit_log WHERE id = ?)`,
+    ).bind(now, clientId, existing.sessionVersion, clientId, auditId),
+    db.prepare(
+      `UPDATE audit_log
+       SET data_json = CASE
+         WHEN EXISTS (SELECT 1 FROM client_accounts WHERE id = ? AND session_version = ?) THEN '{"unlinked":true}'
+         ELSE '{"unlinked":false}'
+       END
+       WHERE id = ?`,
+    ).bind(clientId, existing.sessionVersion + 1, auditId),
+    db.prepare(
+      `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+       SELECT ?,?,'client.clerk_unlinked','client_account',?,'{"unlinked":false}',?
+       WHERE NOT EXISTS (SELECT 1 FROM audit_log WHERE id = ?)`,
+    ).bind(auditId, actorEmail, clientId, now, auditId),
   ]);
 
-  return { clientId, unlinked: true };
+  return { clientId, unlinked: (results[2]?.meta.changes ?? 0) === 1 };
 }
