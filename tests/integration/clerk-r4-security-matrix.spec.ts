@@ -926,6 +926,21 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
     );
   });
 
+  it.each(["/admin/api/clerk-session", "/api/client/clerk-session"])(
+    "reports missing SDK secret as service unavailable at %s", async (path) => {
+      const activeEnv = makeEnv(primaryPem, { CLERK_SECRET_KEY: undefined });
+      const jwt = await signClerkJwt(primaryPriv, {
+        sub: "user_missingsecret", sid: "sess_missingsecret",
+      });
+      const response = await dispatch(activeEnv, path, {
+        method: "POST", headers: { Authorization: `Bearer ${jwt}` },
+      });
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ error: { code: "CLERK_NOT_CONFIGURED" } });
+      expect(response.headers.get("Set-Cookie")).toBeNull();
+    },
+  );
+
   it("fails closed if the Clerk token-revocation migration is missing", async () => {
     const missingTable = new Error("D1_ERROR: no such table: revoked_clerk_tokens");
     const missingDb = {
