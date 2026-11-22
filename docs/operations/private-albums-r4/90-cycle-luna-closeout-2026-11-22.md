@@ -3,17 +3,17 @@
 **Resultado:** PARTIAL_VERIFIED / PRODUCTION_NO_GO.
 **Branch:** codex/punctum-unlimited-release-20261120 · **PR:** [#45](https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/45), continua aberto e draft.
 **Plano obrigatório:** LUNA em 5ebf35d4f50ce18f27377413e440e3a227da16d9; handoff BH lido integralmente.
-**Base de edição:** worktree existente do PR, limpo em 5ebf35d4f50ce18f27377413e440e3a227da16d9.
-**Alteração de código:** 51b329bd462ad034afe33ad474244dfc72afaca3 — auditoria atômica para disable/enable de cliente. main não foi alterada.
+**Base de edição:** worktree existente do PR; baseline de execução `5ebf35d4f50ce18f27377413e440e3a227da16d9`, base do PR `a44397d79dcc0b9835f7253dfc8cb20c0681f4ea`.
+**HEAD de produto:** `1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146`. Commits de código: `51b329b` (disable/enable), `3cecc27` (mutadores privados e upload), `44d2771` (assert de auditoria concorrente do upload) e `1c4edd5` (unlink Clerk compare-and-set). main não foi alterada.
 
 ## Decisões e alterações
 
 - LC0 reconciliou HEAD, base a44397d79dcc0b9835f7253dfc8cb20c0681f4ea, PR, CI anterior, planos, fontes exigidas e ledger.
 - LC1 examinou os 31 caminhos modificados no WIP Clerk de HEAD b417405c0406daf286b192a8151cf45c4a50f89c contra os blobs do PR em 5ebf35d. Nenhum arquivo do WIP foi copiado, mesclado ou descartado. A comparação por arquivo consta abaixo.
-- LC2 corrigiu o PATCH de disable/enable: alteração de disabled_at e revogação por session_version agora são executadas no mesmo db.batch da entrada audit_log. Se a auditoria falhar, o estado do cliente permanece intacto.
+- LC2 fechou os caminhos residuais no escopo: criar cliente, resets Access/password, disable/enable, link/unlink Clerk, criar/editar/cobrir/ordenar/publicar/arquivar/despublicar galerias e criar/concluir upload juntam mutação e auditoria no mesmo D1 batch. Falha de auditoria reverte o batch. Unlink compara o Clerk ID e session_version observados; requests stale não removem um vínculo novo nem fazem rotação extra.
 - LC3 parou em BLOCKED_PROVIDER. Leitura Hostinger read-only do pedido 1008583103 listou três sites, dois do tipo Node, incluindo magic-lime-guanaco-79.hostingersite.com; não listou o domínio Punctum associado ao Node. Issue #44 mantém is_accessible=false e desafio TXT vazio. Registro ativo não prova associação, TLS ou autorização.
 - LC4 não fez restauração: falta alvo remoto isolado e aprovado. As provas locais sintéticas existentes não satisfazem G18/G23.
-- LC5 revisão independente final do branch está pendente nesta revisão do relatório. Ela não substituirá a aprovação formal G19, que permanece HOLD.
+- LC5 revisão técnica independente delimitada: o diff PR até `3cecc27` foi revisado; a sequência SQL do unlink compare-and-set e a barreira determinística de concorrência de `1c4edd5` foram revisadas separadamente antes do push, sem finding funcional no escopo. A revisão não substitui a aprovação formal G19, que permanece HOLD.
 - LC6 preserva os 24 registros G da AY e H01–H06 como suplementares. Não houve merge, deploy, cutover, escrita DNS, contato com suporte, mudança no Clerk Production, ativação R4, restauração destrutiva ou contratação.
 
 ## Reconciliação WIP Clerk — arquivo por arquivo
@@ -64,32 +64,32 @@ Foram lidos os commits 8a7042c (auditoria local de ZIP) e a713c94 (testes de che
 
 ## TDD e validação
 
-- **RED:** o novo teste falhou para disable e enable. A falha de auditoria devolvia HTTP 500 depois de persistir a alteração da conta e aumentar session_version; o snapshot integral da linha mudou.
-- **GREEN + regressão:** após agrupar mutação e auditoria no batch, npm test -- tests/integration/client-admin-audit.spec.ts passou: 7 testes, inclusive rollback/retry nos dois sentidos e os cinco casos anteriores.
-- npm run typecheck: PASS.
-- npm run lint: PASS, zero erros e 22 warnings em arquivos não alterados.
-- git diff --check: PASS.
-- CI exato de 51b329bd462ad034afe33ad474244dfc72afaca3: run [44985881847](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44985881847), verify (137096204216) e hostinger-node-qa (137096204057), ambos success. Incluiu npm audit, typecheck, lint, suite npm test, build, E2E, builds Candidate/Scheduled e prova Node local.
-- Artefatos ligados pelo GitHub ao SHA exato: punctum-hostinger-node-browser id 14740145458, digest sha256:2ae8b3072d6645774bec49f6407aee66c87224990009e1d580e96fff037be8fc; r4-browser-evidence id 14739034485, digest sha256:080a7412ef015320ccd576f06e113bfd5cb0399950654d724ba5f74f1468d6a5. Os metadados vinculam ambos a 51b329bd462ad034afe33ad474244dfc72afaca3. O conector forneceu referências de arquivo, não o conteúdo ZIP; dirtyCheckout e o conteúdo interno não foram confirmados. Nenhum gate depende desses artefatos.
+- **RED:** o teste inicial falhou em disable/enable porque a mutação persistia apesar da auditoria 500; a linha inteira do cliente mudava. O novo teste de corrida também reproduziu `unlinked:true` e rotação indevida ao substituir o vínculo entre preflight e batch.
+- **GREEN + regressão:** `npm test -- tests/integration/client-admin-audit.spec.ts` passou com 18 testes; o teste força dois preflights antes dos batches e outro força rebind stale. `npm test -- tests/integration/client-media.spec.ts tests/integration/client-upload-config.spec.ts`: 42 testes. `npm test -- tests/integration/clerk-r4-security-matrix.spec.ts`: 5 testes. Typecheck e lint passaram; lint sem erros, 22 warnings preexistentes fora dos arquivos alterados. `git diff --check`: PASS.
+- CI de `51b329b`: run [44985881847](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44985881847), `verify` e `hostinger-node-qa` success. CI de `3cecc27` (44989147341) falhou na asserção do número de resultados D1: o teste esperava dois, mas o batch retorna três; `npm audit`, typecheck, lint e `hostinger-node-qa` passaram. A expectativa foi corrigida em `44d2771`; CI integral exata [44989547720](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44989547720) passou nos dois jobs.
+- CI do HEAD de produto `1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146`: [run 44990786862](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44990786862), `verify` (137111158211) e `hostinger-node-qa` (137111158478), ambos success. Incluiu npm audit, typecheck, lint, suíte completa, builds, E2E e QA Node Candidate/Scheduled.
+- Artefatos de `44d2771`, vinculados ao SHA exato pelo GitHub: `punctum-hostinger-node-browser` id 14741058002, digest `sha256:8ec32b63a7b2c6bb19b456c72b5d02a078d6616ce61c78d6c55025e04b29cf78`; `r4-browser-evidence` id 14740938843, digest `sha256:deb0e66dc3f882ca36e8f86d983ef34ca31a776cc8d517a4001c4b8fafe9b27a`. Metadados confirmam `sourceSha=44d2771`; conteúdo ZIP não foi decodificado. Nenhum gate depende desses artefatos.
+- Artefatos de `1c4edd5`, vinculados ao SHA exato pelo GitHub: `r4-browser-evidence` id 14741593802, digest `sha256:82d38316ac1a25edbda4acb22d3a778f788cd63eb13e162035f6593841ef67a`; `punctum-hostinger-node-browser` id 14741114996, digest `sha256:697525185803faa8e014539fab5d1f34f672e75889cbb5e4576a7c33ed463ea6`. O conteúdo ZIP não foi decodificado e nenhum gate depende desses artefatos.
+- Checkpoint existente do Drive foi preservado e recebeu uma seção Markdown via atualização de arquivo; revisão `0B2-VdsW3oqaucXQzcU9aMmptcHZZK1l3OFIwbUtXSFpGOVVRPQ`, modificado em `2026-11-22T05:54:58.194Z`, 20.613 bytes. Leitura de volta confirmou o cabeçalho LC, SHA de produto, matriz de gates e conteúdo integral anterior.
 
 ## T00–T06 e LC0–LC6
 
 | Item | Resultado |
 | --- | --- |
 | T00 | PASS — fonte, HEAD, ledger, PR e worktrees reconciliados. |
-| T01 | REUTILIZADO — CI anterior e provas VPS auxiliares existentes; nenhuma nova carga cara ou uso do VPS como destino público. |
-| T02 | PASS — RED/GREEN, teste de rollback e retry, typecheck/lint e CI exato para disable/enable. |
+| T01 | REUTILIZADO — provas VPS anteriores preservadas; só CI disparado pelos commits do código, VPS não usado como destino público. |
+| T02 | PASS — RED/GREEN, atomicidade de mutação/auditoria, rollback/retry, corridas de unlink, typecheck/lint e testes relevantes. |
 | T03 | BLOCKED — associação/TLS Hostinger; Clerk QA isolado/decisão de identidade pendentes. |
 | T04 | PARCIAL — Hero/Studio/a11y reconciliados em documentação anterior; nenhum defeito reproduzido que autorize mudança visual; H01–H06 continuam não verificados. |
-| T05 | CI exato verde; paridade pública, backup remoto independente e rollback integral continuam sem prova. |
-| T06 | Registro versionado em relatório/ledger; checkpoint Sgtmenezes será atualizado e lido de volta após esta publicação. |
+| T05 | CI exato de código `1c4edd5` verde nos dois jobs; paridade pública, backup remoto independente e rollback integral continuam sem prova. |
+| T06 | Checkpoint Sgtmenezes versionado e lido de volta; relatório/ledger desta execução seguem para commit e CI exato. |
 | LC0 | CONCLUÍDO — baseline e fontes obrigatórias lidos. |
 | LC1 | CONCLUÍDO — 31 caminhos comparados individualmente; zero integração cega. |
-| LC2 | CONCLUÍDO — um endpoint DB-only corrigido; outras mutações não foram certificadas por este incremento. |
+| LC2 | CONCLUÍDO — caminhos privados residuais e upload agrupados com auditoria; unlink stale/concorrente é compare-and-set. |
 | LC3 | BLOCKED_PROVIDER — G16 FAIL e G17 NOT_VERIFIED. |
 | LC4 | BLOCKED_TARGET — G18/G23 seguem bloqueados; sem restore destrutivo. |
-| LC5 | REVIEW PENDENTE — G19 formal segue HOLD; sem liberação. |
-| LC6 | EM PUBLICAÇÃO — relatório/ledger, CI e checkpoint com readback são necessários para fechar o ciclo documental. |
+| LC5 | REVISÃO TÉCNICA DELIMITADA CONCLUÍDA — sem finding funcional no escopo; G19 formal segue HOLD. |
+| LC6 | CHECKPOINT VERIFICADO; relatório/ledger reconciliados e seguem para publicação no PR; CI documental será registrado após o push. |
 
 ## Matriz canônica G01–G24 e suplementar H01–H06
 
@@ -98,7 +98,7 @@ Os estados G reproduzem, sem alteração, currentCycle20261121AY.gateRecords. Um
 | Gate | Estado | Evidência/pendência |
 | --- | --- | --- |
 | G01 | PASS | Fontes, branch/base, planos, PR e baseline reconciliados. |
-| G02 | HOLD | CI exato verde; aprovação integrada e revisão final pendentes. |
+| G02 | HOLD | CI exato de produto verde; aprovação integrada e aceite de release pendentes. |
 | G03 | NOT_VERIFIED | Cadastro sintético; jornada isolada pendente. |
 | G04 | NOT_VERIFIED | Álbum sintético; jornada real no alvo pendente. |
 | G05 | BLOCKED | Limite/retentativa local; falta alvo remoto isolado autorizado. |
@@ -112,15 +112,15 @@ Os estados G reproduzem, sem alteração, currentCycle20261121AY.gateRecords. Um
 | G13 | NOT_VERIFIED | Sem sessão/navegador de cliente no alvo Unlimited. |
 | G14 | NOT_VERIFIED | Admin anônimo comparado; Studio/Colagem autenticados pendentes. |
 | G15 | BLOCKED | Aceite físico TalkBack/VoiceOver e evidência humana pendentes. |
-| G16 | FAIL | Home/Portfólio diferem; domínio não associado e paridade pública real ausente; R4 deve ficar desligado. |
+| G16 | FAIL | Home, Hero, Portfólio, Studio, Colagem, SEO e rotas não têm paridade pública real comprovada; domínio não associado. R4 permanece desligado. |
 | G17 | NOT_VERIFIED | Capacidade, latência, limites e custo não medidos no destino gerenciado. |
-| G18 | BLOCKED | Restauração isolada Unlimited, mídia, backup retido e delta final sem prova. |
-| G19 | HOLD | Revisão final deste SHA ainda pendente; aprovação formal de segurança independente não existe. |
+| G18 | BLOCKED | Restore independente no Unlimited, integridade de banco e mídia, retenção de backup e delta final sem prova. |
+| G19 | HOLD | Revisão técnica delimitada sem finding funcional no escopo; aprovação formal de segurança independente não existe. |
 | G20 | HOLD | Aprovação do controlador LGPD e retenção pendentes. |
-| G21 | HOLD | CI verde no commit de código; fechamento/documentação final ainda em andamento. |
+| G21 | HOLD | CI verde no commit de código; documentação final e critérios de liberação ainda não concluídos. |
 | G22 | HOLD | Nenhuma autorização específica de release/cutover. |
 | G23 | BLOCKED | Rollback de app, sessões, permissões, configuração e dados pós-migração não ensaiado no destino. |
-| G24 | PASS | Ledger versionado; confirmação adicional via checkpoint Sgtmenezes pendente neste commit. |
+| G24 | PASS | Ledger versionado; checkpoint Sgtmenezes atualizado e lido de volta, com prefixo histórico idêntico à revisão anterior. |
 
 | Gate | Estado | Evidência/pendência |
 | --- | --- | --- |
@@ -133,7 +133,7 @@ Os estados G reproduzem, sem alteração, currentCycle20261121AY.gateRecords. Um
 
 ## Segurança, custo, releases e próxima ação
 
-O aviso do GitHub ao publicar o commit informa 31 alertas Dependabot no branch default: 2 critical, 7 high, 19 moderate e 3 low. A lista autenticada por pacote não pôde ser obtida nesta sessão (gh api retornou 401; o conector GitHub restringe a rota de alertas). O npm audit --audit-level=low passou no candidato SHA 51b. Isso qualifica somente o lockfile do candidato pelo audit do npm; não identifica nem atribui cada alerta do default branch.
+O aviso do GitHub ao publicar o commit informa 31 alertas Dependabot no branch default: 2 critical, 7 high, 19 moderate e 3 low. A lista autenticada por pacote não pôde ser obtida nesta sessão (gh api retornou 401; o conector GitHub restringe a rota de alertas). `npm audit --audit-level=low` passou no candidato SHA `1c4edd5`. Isso qualifica somente o lockfile do candidato pelo audit do npm; não identifica nem atribui cada alerta do default branch.
 
 **Release A — site público:** NO_GO. Cloudflare continua preservado; Hostinger não lista o domínio Punctum associado ao Node, TLS canônico não foi provado e G16 falha.
 **Release B — álbuns privados R4:** NO_GO. R4 permanece desligado; identidade Clerk real, isolamento, backup/restore, rollback, revisão formal, LGPD e autorização seguem pendentes.
