@@ -231,23 +231,21 @@ export async function handleClientAdminApi(
       request,
       z.object({ disabled: z.boolean() }).strict(),
     );
-    await db
-      .prepare(
-        "UPDATE client_accounts SET disabled_at=?,session_version=session_version+1,updated_at=? WHERE id=?",
-      )
-      .bind(
-        input.disabled ? new Date().toISOString() : null,
-        new Date().toISOString(),
+    const now = new Date().toISOString();
+    await db.batch([
+      db
+        .prepare(
+          "UPDATE client_accounts SET disabled_at=?,session_version=session_version+1,updated_at=? WHERE id=?",
+        )
+        .bind(input.disabled ? now : null, now, id),
+      prepareAudit(
+        db,
+        auditPrincipal(actor),
+        input.disabled ? "client.disabled" : "client.enabled",
+        "client_account",
         id,
-      )
-      .run();
-    await writeAudit(
-      db,
-      auditPrincipal(actor),
-      input.disabled ? "client.disabled" : "client.enabled",
-      "client_account",
-      id,
-    );
+      ),
+    ]);
     return privateJson({ ok: true });
   }
   throw new AppError(405, "METHOD_NOT_ALLOWED", "Operação não permitida.");

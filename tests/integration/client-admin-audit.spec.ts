@@ -47,6 +47,42 @@ describe("private administrative state changes have an attributed audit event", 
       created_at: expect.any(String),
     }]);
   }, 60_000);
+  it.each([true, false])("rolls back client disable=%s when its audit insert fails and retries exactly once", async (disabled) => {
+    const client = await seedClient();
+    if (!disabled)
+      await env.DB.prepare("UPDATE client_accounts SET disabled_at='2026-11-21T00:00:00.000Z',session_version=7 WHERE id=?").bind(client).run();
+    const before = await env.DB.prepare("SELECT * FROM client_accounts WHERE id=?").bind(client).first();
+    const action = disabled ? "client.disabled" : "client.enabled";
+    const toggle = () => exports.default.fetch(privateRequest(`/admin/api/clientes/${client}`, "PATCH", { disabled }));
+    try {
+      await env.DB.prepare(`CREATE TRIGGER synthetic_client_toggle_audit_failure BEFORE INSERT ON audit_log
+        WHEN NEW.entity_id='${client}' AND NEW.action='${action}' BEGIN SELECT RAISE(ABORT,'synthetic audit failure'); END;`).run();
+      expect((await toggle()).status).toBe(500);
+      expect(await env.DB.prepare("SELECT * FROM client_accounts WHERE id=?").bind(client).first()).toEqual(before);
+      expect(await env.DB.prepare("SELECT id FROM audit_log WHERE entity_id=? AND action=?").bind(client, action).first()).toBeNull();
+    } finally {
+      await env.DB.prepare("DROP TRIGGER IF EXISTS synthetic_client_toggle_audit_failure").run();
+    }
+    const retry = await toggle();
+    expect(retry.status).toBe(200);
+    expect(await retry.json()).toEqual({ ok: true });
+    const after = await env.DB.prepare("SELECT * FROM client_accounts WHERE id=?").bind(client).first();
+    expect(after).toEqual({
+      ...before,
+      disabled_at: disabled ? expect.any(String) : null,
+      session_version: (before?.session_version as number) + 1,
+      updated_at: expect.any(String),
+    });
+    const events = await env.DB.prepare("SELECT actor_email,action,entity_type,entity_id,data_json,created_at FROM audit_log WHERE entity_id=? AND action=?").bind(client, action).all();
+    expect(events.results).toEqual([{
+      actor_email: "maria.helena@local.dev",
+      action,
+      entity_type: "client_account",
+      entity_id: client,
+      data_json: null,
+      created_at: expect.any(String),
+    }]);
+  }, 60_000);
   it.each(["archive", "unpublish"] as const)("rolls back %s when its audit insert fails", async (action) => {
     const gallery = await seedGallery(await seedClient(), "published");
     const before = await env.DB.prepare("SELECT status,updated_at FROM client_galleries WHERE id=?").bind(gallery).first();
