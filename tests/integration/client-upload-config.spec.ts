@@ -845,7 +845,7 @@ it.each(["identical", "revoked", "digest", "dimensions", "expiry"])("reconciles 
         // Another request commits the exact same completion before this CAS.
         races++;
         const won = await target.batch(statements);
-        expect(won.map(row => row.meta.changes)).toEqual([1,1]);
+        expect(won.map(row => row.meta.changes)).toEqual([1,1,1]);
         if (scenario === "revoked") await env.DB.prepare("UPDATE client_gallery_images SET deleted_at=datetime('now') WHERE id=?").bind(issued.imageId).run();
         if (scenario === "digest") await env.DB.prepare("UPDATE client_gallery_images SET original_sha256=? WHERE id=?").bind("0".repeat(64),issued.imageId).run();
         if (scenario === "dimensions") await env.DB.prepare("UPDATE client_gallery_images SET width=3 WHERE id=?").bind(issued.imageId).run();
@@ -870,6 +870,8 @@ it.each(["identical", "revoked", "digest", "dimensions", "expiry"])("reconciles 
   expect(payload.image.id).toBe(issued.imageId);
   expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
     .bind(issued.intentId).first()).toEqual({status:"completed"});
+  expect(await env.DB.prepare("SELECT COUNT(*) AS count FROM audit_log WHERE entity_id=? AND action='client_gallery.image_ready' AND data_json=?")
+    .bind(gallery, JSON.stringify({ imageId: issued.imageId })).first()).toEqual({ count: 1 });
   const key = `client-galleries/${gallery}/${issued.imageId}.png`;
   expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
 });
