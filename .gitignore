@@ -47,3 +47,7 @@ next-env.d.ts
 /backups/
 /.drizzle-generated/
 /.dev.vars
+
+# Python QA cache artifacts
+__pycache__/
+*.py[cod]
