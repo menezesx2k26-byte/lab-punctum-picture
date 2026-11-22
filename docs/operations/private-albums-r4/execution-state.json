@@ -6,7 +6,7 @@
   "decision": "PRODUCTION_NO_GO",
   "releasePackageVerdict": "NO_GO_BOTH_RELEASES",
   "completionVerdict": "NOT_COMPLETED_VERIFIED",
-  "statusScope": "Cycle LC 2026-11-22: atomic mutation/audit and Clerk unlink compare-and-set corrections verified at product SHA 1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146 with exact CI run 44990786862 SUCCESS_BOTH_JOBS; report/ledger CI on SHA 14b3bdcab41a42e766e27b6292cd8acd25e18e33 also SUCCESS_BOTH_JOBS (44991750336). Hostinger association remains BLOCKED_PROVIDER; canonical G01-G24 preserved from AY; H01-H06 NOT_VERIFIED. No merge, deploy, DNS, Clerk Production, R4 activation or destructive restore. Both releases remain PARTIAL_VERIFIED / PRODUCTION_NO_GO.",
+  "statusScope": "Cycle LC 2026-11-22: atomic mutation/audit and Clerk unlink compare-and-set corrections verified at product SHA 1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146 with exact CI run 44990786862 SUCCESS_BOTH_JOBS; report/ledger CI on SHA 14b3bdcab41a42e766e27b6292cd8acd25e18e33 also SUCCESS_BOTH_JOBS (44991750336). Hostinger website binding confirmed in Unlimited by R5 readback, but origin SSL waiting_for_retry and managed build-to-SHA equivalence unproven; canonical G01-G24 preserved from AY; H01-H06 NOT_VERIFIED. No merge, deploy, DNS, Clerk Production, R4 activation or destructive restore. Both releases remain PARTIAL_VERIFIED / PRODUCTION_NO_GO.",
   "updatedAt": "2026-11-22",
   "branch": "codex/punctum-unlimited-release-20261120",
   "baseBranch": "plan/punctum-unlimited-domain-recovery-20261120",
@@ -6988,5 +6988,49 @@
       "green": "27 tests/4 files; typecheck/scoped lint/diff0",
       "formalG19": "HOLD"
     }
+  },
+  "currentCycle20261122R5": {
+    "report": "docs/operations/private-albums-r4/92-r5-managed-origin-readback-2026-11-22.md",
+    "readbackDate": "2026-11-22",
+    "baselinePrHead": "2999ecf80c7f156ddbf5b765fb7e289269a0a987",
+    "readOnlyObservations": {
+      "domainBinding": "VERIFIED_IN_UNLIMITED_ORDER_1008583103",
+      "originTls": "WAITING_FOR_RETRY_DOMAIN_CHALLENGE_FAILED",
+      "hostingerHttpsRedirect": false,
+      "cloudflarePublicHttps": "HTTP_200_EDGE_ONLY",
+      "managedBuildUuid": "01a1faf6-edef-7175-9761-aa69a3125f40",
+      "managedSourceArchive": "punctum-r4-synthetic-a136f721.zip",
+      "equivalenceToPrHead": "NOT_PROVEN",
+      "managedRuntime": "VINEXT_PORT_3000_STARTED",
+      "managedEnvironmentVariableKeys": "EMPTY",
+      "qaAliases": "NONE_LISTED",
+      "linkedGitRepositories": "NONE_LISTED",
+      "differentTemporaryHostname": "NOT_PUNCTUM_QA_ENDPOINT"
+    },
+    "exactHeadCiBeforeDocumentation": {
+      "sha": "2999ecf80c7f156ddbf5b765fb7e289269a0a987",
+      "runId": 45056980309,
+      "conclusion": "success",
+      "jobs": {
+        "verify": "success",
+        "hostinger-node-qa": "success"
+      },
+      "scope": "CI_CANDIDATE_ONLY"
+    },
+    "gateChanges": "NONE",
+    "originalG05": "FAIL",
+    "originalG17": "FAIL",
+    "originalBlocked": [
+      "G15",
+      "G19",
+      "G20",
+      "G22",
+      "G23"
+    ],
+    "h01ToH06": "NOT_VERIFIED",
+    "releaseA": "PRODUCTION_NO_GO",
+    "releaseB": "PRODUCTION_NO_GO",
+    "productionOrInfrastructureMutations": 0,
+    "nextSafeAction": "Obtain approved origin TLS/DCV solution and isolated Punctum QA hostname; demonstrate deployed artifact provenance before remote G05/G17/Clerk/rollback tests."
   }
 }
