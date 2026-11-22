@@ -6,7 +6,7 @@
   "decision": "PRODUCTION_NO_GO",
   "releasePackageVerdict": "NO_GO_BOTH_RELEASES",
   "completionVerdict": "NOT_COMPLETED_VERIFIED",
-  "statusScope": "Cycle LC 2026-11-22: atomic mutation/audit and Clerk unlink compare-and-set corrections verified at product SHA 1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146 with exact CI run 44990786862 SUCCESS_BOTH_JOBS. Hostinger association remains BLOCKED_PROVIDER; canonical G01-G24 preserved from AY; H01-H06 NOT_VERIFIED. No merge, deploy, DNS, Clerk Production, R4 activation or destructive restore. Both releases remain PARTIAL_VERIFIED / PRODUCTION_NO_GO.",
+  "statusScope": "Cycle LC 2026-11-22: atomic mutation/audit and Clerk unlink compare-and-set corrections verified at product SHA 1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146 with exact CI run 44990786862 SUCCESS_BOTH_JOBS; report/ledger CI on SHA 14b3bdcab41a42e766e27b6292cd8acd25e18e33 also SUCCESS_BOTH_JOBS (44991750336). Hostinger association remains BLOCKED_PROVIDER; canonical G01-G24 preserved from AY; H01-H06 NOT_VERIFIED. No merge, deploy, DNS, Clerk Production, R4 activation or destructive restore. Both releases remain PARTIAL_VERIFIED / PRODUCTION_NO_GO.",
   "updatedAt": "2026-11-22",
   "branch": "codex/punctum-unlimited-release-20261120",
   "baseBranch": "plan/punctum-unlimited-domain-recovery-20261120",
@@ -6605,7 +6605,7 @@
   },
   "currentCycle20261122LC": {
     "goal": "PUNCTUM-LUNA-CLOSEOUT-20261122",
-    "observedAt": "2026-11-22T05:55:49Z",
+    "observedAt": "2026-11-22T06:04:22Z",
     "branch": "codex/punctum-unlimited-release-20261120",
     "baseline": {
       "planSha": "5ebf35d4f50ce18f27377413e440e3a227da16d9",
@@ -6702,6 +6702,28 @@
         }
       ]
     },
+    "documentCi": {
+      "headSha": "14b3bdcab41a42e766e27b6292cd8acd25e18e33",
+      "runId": 44991750336,
+      "status": "SUCCESS_BOTH_JOBS",
+      "verifyJobId": 137114128892,
+      "hostingerNodeQaJobId": 137114129208,
+      "artifacts": [
+        {
+          "id": 14741558470,
+          "name": "punctum-hostinger-node-browser",
+          "sha256": "f4971ad2e3006ab1a53360226faa85d8381b3eea8b4300b13498f01adff4dc7a",
+          "sourceSha": "14b3bdcab41a42e766e27b6292cd8acd25e18e33"
+        },
+        {
+          "id": 14741489094,
+          "name": "r4-browser-evidence",
+          "sha256": "c4c2780d8e7904ac74dc7e25febdb2a8e01d327cd780169e923bcdac76c9b3cb",
+          "sourceSha": "14b3bdcab41a42e766e27b6292cd8acd25e18e33"
+        }
+      ],
+      "artifactBodies": "Not decoded; digests and source SHA verified. No gate depends on these artifact bodies."
+    },
     "dependabot": {
       "defaultBranchAlerts": {
         "total": 31,
@@ -6742,7 +6764,7 @@
       "T03": "BLOCKED_PROVIDER; Hostinger association/TLS and isolated Clerk QA unresolved.",
       "T04": "PARTIAL; prior Hero/Studio/a11y documentation reconciled; no new real acceptance.",
       "T05": "CI PASS; public parity, managed independent restore and complete rollback remain unproven.",
-      "T06": "Checkpoint update versioned/read back; report and ledger reconciled for publication; exact document-SHA CI follows push."
+      "T06": "Checkpoint update versioned/read back; report/ledger published and remote SHA 14b3bdc verified; exact document-SHA CI run 44991750336 passed both jobs."
     },
     "lc": {
       "LC0": "DONE",
@@ -6751,7 +6773,7 @@
       "LC3": "BLOCKED_PROVIDER; G16 FAIL, G17 NOT_VERIFIED.",
       "LC4": "BLOCKED_TARGET; G18/G23 remain blocked.",
       "LC5": "Limited independent review of audit transactions and unlink compare-and-set/test synchronization; formal final-SHA security review G19 remains HOLD.",
-      "LC6": "Drive checkpoint versioned and readback-verified; report/ledger publication and exact document-SHA CI pending."
+      "LC6": "DONE; Drive checkpoint versioned/readback-verified; report/ledger SHA 14b3bdc pushed, remote-verified, exact CI run 44991750336 success on both jobs."
     },
     "gateRecords": "Preserve all 24 statuses from currentCycle20261121AY unchanged.",
     "supplementaryGates": {

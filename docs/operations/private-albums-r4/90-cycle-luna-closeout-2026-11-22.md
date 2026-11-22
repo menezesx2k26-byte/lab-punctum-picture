@@ -68,6 +68,7 @@ Foram lidos os commits 8a7042c (auditoria local de ZIP) e a713c94 (testes de che
 - **GREEN + regressão:** `npm test -- tests/integration/client-admin-audit.spec.ts` passou com 18 testes; o teste força dois preflights antes dos batches e outro força rebind stale. `npm test -- tests/integration/client-media.spec.ts tests/integration/client-upload-config.spec.ts`: 42 testes. `npm test -- tests/integration/clerk-r4-security-matrix.spec.ts`: 5 testes. Typecheck e lint passaram; lint sem erros, 22 warnings preexistentes fora dos arquivos alterados. `git diff --check`: PASS.
 - CI de `51b329b`: run [44985881847](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44985881847), `verify` e `hostinger-node-qa` success. CI de `3cecc27` (44989147341) falhou na asserção do número de resultados D1: o teste esperava dois, mas o batch retorna três; `npm audit`, typecheck, lint e `hostinger-node-qa` passaram. A expectativa foi corrigida em `44d2771`; CI integral exata [44989547720](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44989547720) passou nos dois jobs.
 - CI do HEAD de produto `1c4edd51eb0a1a5ebba8012c0dd6480acd1e7146`: [run 44990786862](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44990786862), `verify` (137111158211) e `hostinger-node-qa` (137111158478), ambos success. Incluiu npm audit, typecheck, lint, suíte completa, builds, E2E e QA Node Candidate/Scheduled.
+- CI documental do relatório/ledger no SHA `14b3bdcab41a42e766e27b6292cd8acd25e18e33`: [run 44991750336](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44991750336), `verify` (137114128892) e `hostinger-node-qa` (137114129208), ambos success; pacote de testes/build/E2E completo executado. Artefatos nesse SHA: Node browser id 14741558470 digest `sha256:f4971ad2e3006ab1a53360226faa85d8381b3eea8b4300b13498f01adff4dc7a`; R4 browser id 14741489094 digest `sha256:c4c2780d8e7904ac74dc7e25febdb2a8e01d327cd780169e923bcdac76c9b3cb`.
 - Artefatos de `44d2771`, vinculados ao SHA exato pelo GitHub: `punctum-hostinger-node-browser` id 14741058002, digest `sha256:8ec32b63a7b2c6bb19b456c72b5d02a078d6616ce61c78d6c55025e04b29cf78`; `r4-browser-evidence` id 14740938843, digest `sha256:deb0e66dc3f882ca36e8f86d983ef34ca31a776cc8d517a4001c4b8fafe9b27a`. Metadados confirmam `sourceSha=44d2771`; conteúdo ZIP não foi decodificado. Nenhum gate depende desses artefatos.
 - Artefatos de `1c4edd5`, vinculados ao SHA exato pelo GitHub: `r4-browser-evidence` id 14741593802, digest `sha256:82d38316ac1a25edbda4acb22d3a778f788cd63eb13e162035f6593841ef67a`; `punctum-hostinger-node-browser` id 14741114996, digest `sha256:697525185803faa8e014539fab5d1f34f672e75889cbb5e4576a7c33ed463ea6`. O conteúdo ZIP não foi decodificado e nenhum gate depende desses artefatos.
 - Checkpoint existente do Drive foi preservado e recebeu uma seção Markdown via atualização de arquivo; revisão `0B2-VdsW3oqaucXQzcU9aMmptcHZZK1l3OFIwbUtXSFpGOVVRPQ`, modificado em `2026-11-22T05:54:58.194Z`, 20.613 bytes. Leitura de volta confirmou o cabeçalho LC, SHA de produto, matriz de gates e conteúdo integral anterior.
@@ -82,14 +83,14 @@ Foram lidos os commits 8a7042c (auditoria local de ZIP) e a713c94 (testes de che
 | T03 | BLOCKED — associação/TLS Hostinger; Clerk QA isolado/decisão de identidade pendentes. |
 | T04 | PARCIAL — Hero/Studio/a11y reconciliados em documentação anterior; nenhum defeito reproduzido que autorize mudança visual; H01–H06 continuam não verificados. |
 | T05 | CI exato de código `1c4edd5` verde nos dois jobs; paridade pública, backup remoto independente e rollback integral continuam sem prova. |
-| T06 | Checkpoint Sgtmenezes versionado e lido de volta; relatório/ledger desta execução seguem para commit e CI exato. |
+| T06 | Checkpoint Sgtmenezes versionado/readback; relatório e ledger publicados no SHA `14b3bdc` com CI exata verde nos dois jobs. |
 | LC0 | CONCLUÍDO — baseline e fontes obrigatórias lidos. |
 | LC1 | CONCLUÍDO — 31 caminhos comparados individualmente; zero integração cega. |
 | LC2 | CONCLUÍDO — caminhos privados residuais e upload agrupados com auditoria; unlink stale/concorrente é compare-and-set. |
 | LC3 | BLOCKED_PROVIDER — G16 FAIL e G17 NOT_VERIFIED. |
 | LC4 | BLOCKED_TARGET — G18/G23 seguem bloqueados; sem restore destrutivo. |
 | LC5 | REVISÃO TÉCNICA DELIMITADA CONCLUÍDA — sem finding funcional no escopo; G19 formal segue HOLD. |
-| LC6 | CHECKPOINT VERIFICADO; relatório/ledger reconciliados e seguem para publicação no PR; CI documental será registrado após o push. |
+| LC6 | CONCLUÍDO — checkpoint versionado e readback; relatório/ledger publicados, remoto confirmado e CI exata do SHA `14b3bdc` verde. |
 
 ## Matriz canônica G01–G24 e suplementar H01–H06
 
@@ -117,7 +118,7 @@ Os estados G reproduzem, sem alteração, currentCycle20261121AY.gateRecords. Um
 | G18 | BLOCKED | Restore independente no Unlimited, integridade de banco e mídia, retenção de backup e delta final sem prova. |
 | G19 | HOLD | Revisão técnica delimitada sem finding funcional no escopo; aprovação formal de segurança independente não existe. |
 | G20 | HOLD | Aprovação do controlador LGPD e retenção pendentes. |
-| G21 | HOLD | CI verde no commit de código; documentação final e critérios de liberação ainda não concluídos. |
+| G21 | HOLD | CI de código e documentação verde; critérios integrados de liberação ainda não concluídos. |
 | G22 | HOLD | Nenhuma autorização específica de release/cutover. |
 | G23 | BLOCKED | Rollback de app, sessões, permissões, configuração e dados pós-migração não ensaiado no destino. |
 | G24 | PASS | Ledger versionado; checkpoint Sgtmenezes atualizado e lido de volta, com prefixo histórico idêntico à revisão anterior. |
