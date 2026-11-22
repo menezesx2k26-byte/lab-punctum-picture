@@ -1,4 +1,5 @@
 import { createClerkClient } from "@clerk/backend";
+import { prepareAudit } from "../utils/audit";
 import { envString } from "../utils/env";
 import { AppError } from "../utils/errors";
 
@@ -445,6 +446,7 @@ export async function linkClerkClientAccount(
   db: D1Database,
   clientId: string,
   clerkUserId: string,
+  actorEmail: string,
 ): Promise<{ clientId: string; clerkUserId: string; sessionVersion: number }> {
   if (!isValidClerkUserId(clerkUserId)) {
     throw new AppError(
@@ -513,6 +515,11 @@ export async function linkClerkClientAccount(
          session_version_at_link = excluded.session_version_at_link,
          created_at = excluded.created_at`,
     ).bind(clerkUserId, now, clientId),
+    db.prepare(
+      `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+       SELECT ?,?,'client.clerk_linked','client_account',?,json_object('clerkUserId',?,'sessionVersion',c.session_version),?
+       FROM client_accounts c WHERE c.id=?`,
+    ).bind(crypto.randomUUID(), actorEmail, clientId, clerkUserId, now, clientId),
   ]);
 
   const updatedClient = await db.prepare(
@@ -530,6 +537,7 @@ export async function linkClerkClientAccount(
 export async function unlinkClerkClientAccount(
   db: D1Database,
   clientId: string,
+  actorEmail: string,
 ): Promise<{ clientId: string; unlinked: boolean }> {
   const existing = await db
     .prepare(
@@ -538,19 +546,20 @@ export async function unlinkClerkClientAccount(
     .bind(clientId)
     .first<{ clerkUserId: string }>();
   if (!existing) {
+    await db.batch([
+      prepareAudit(db, actorEmail, "client.clerk_unlinked", "client_account", clientId, { unlinked: false }),
+    ]);
     return { clientId, unlinked: false };
   }
 
-  await db
-    .prepare("DELETE FROM clerk_pilot_identity_links WHERE client_id = ?")
-    .bind(clientId)
-    .run();
-  await db
-    .prepare(
+  const now = new Date().toISOString();
+  await db.batch([
+    db.prepare("DELETE FROM clerk_pilot_identity_links WHERE client_id = ?").bind(clientId),
+    db.prepare(
       "UPDATE client_accounts SET session_version = session_version + 1, updated_at = ? WHERE id = ?",
-    )
-    .bind(new Date().toISOString(), clientId)
-    .run();
+    ).bind(now, clientId),
+    prepareAudit(db, actorEmail, "client.clerk_unlinked", "client_account", clientId, { unlinked: true }),
+  ]);
 
   return { clientId, unlinked: true };
 }

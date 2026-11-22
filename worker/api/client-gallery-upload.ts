@@ -26,7 +26,7 @@ import { requireDb, requireOriginals } from "../utils/env";
 import { providerImageInputLimit } from "../media/provider-input-limit";
 import { AppError } from "../utils/errors";
 import { parseJson } from "../client/validation";
-import { writeAudit } from "../utils/audit";
+import { prepareAudit } from "../utils/audit";
 import { assertRateLimit } from "../utils/rate-limit";
 
 type IntentRow = {
@@ -338,8 +338,8 @@ export async function handleClientGalleryUploadApi(
           now,
           input.sha256,
         ),
+      prepareAudit(db, auditPrincipal(actor), "client_gallery.upload_intent_created", "client_gallery", galleryId, { imageId }),
     ]);
-    await writeAudit(db, auditPrincipal(actor), "client_gallery.upload_intent_created", "client_gallery", galleryId, { imageId });
     return privateJson(
       {
         intentId: id,
@@ -742,15 +742,27 @@ export async function handleClientGalleryUploadApi(
           intent.expectedMime, intent.expectedSize, now, digest,
           galleryId, intent.imageId, intent.storageKey, intent.expectedMime,
           intent.expectedSize, digest),
+      db.prepare(
+        `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+         SELECT ?,?,'client_gallery.image_ready','client_gallery',?,?,?
+         WHERE EXISTS (SELECT 1 FROM client_gallery_upload_intents i
+           JOIN client_gallery_images m ON m.gallery_id=i.gallery_id AND m.id=i.image_id
+           WHERE i.id=? AND i.gallery_id=? AND i.image_id=? AND i.status='completed'
+             AND i.completed_at IS NOT NULL AND m.status='ready' AND m.deleted_at IS NULL)
+           AND NOT EXISTS (SELECT 1 FROM audit_log
+             WHERE entity_id=? AND action='client_gallery.image_ready' AND data_json=?)`,
+      ).bind(crypto.randomUUID(), auditPrincipal(actor), galleryId, JSON.stringify({ imageId: intent.imageId }), now,
+        intent.id, galleryId, intent.imageId, galleryId, JSON.stringify({ imageId: intent.imageId })),
     ]);
-    if (completed.length !== 2 ||
-        completed.some(result => result.meta.changes !== 1)) {
+    const stateTransitions = completed.slice(0, 2);
+    if (completed.length !== 3 ||
+        stateTransitions.some(result => result.meta.changes !== 1)) {
       // Two requests can decode the same immutable original concurrently.
       // A zero/zero CAS is idempotent only if the winner completed this exact
       // signed tuple, digest and decoded dimensions. A rebind, revocation or
       // partial transition remains a conflict; never retry writes blindly.
-      const converged = completed.length === 2 &&
-        completed.every(result => result.meta.changes === 0) &&
+      const converged = completed.length === 3 &&
+        stateTransitions.every(result => result.meta.changes === 0) &&
         await db.prepare(`SELECT i.id FROM client_gallery_upload_intents i
           JOIN client_gallery_images m ON m.gallery_id=i.gallery_id AND m.id=i.image_id
           WHERE i.id=? AND i.gallery_id=? AND i.image_id=? AND i.storage_key=?
@@ -772,14 +784,6 @@ export async function handleClientGalleryUploadApi(
     }
     const image = await getReadyGalleryImage(db, galleryId, intent.imageId);
     if (!image) throw new AppError(409, "UPLOAD_CLOSED", "Este envio expirou.");
-    await writeAudit(
-      db,
-      auditPrincipal(actor),
-      "client_gallery.image_ready",
-      "client_gallery",
-      galleryId,
-      { imageId: intent.imageId },
-    );
     return privateJson({ image: serializeImage(image) });
   }
   throw new AppError(405, "METHOD_NOT_ALLOWED", "Operação não permitida.");

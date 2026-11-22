@@ -196,6 +196,45 @@ describe("isolated private uploads", () => {
       ).status,
     ).toBe(404);
   });
+  it("rolls back completion if its audit insert fails and retries without duplicating the event", async () => {
+    const gallery = await seedGallery(await seedClient(), "draft");
+    const value = (await (await intent(gallery)).json()) as Intent;
+    expect((await upload(value)).status).toBe(200);
+    const complete = () => exports.default.fetch(privateRequest(
+      `/admin/api/albuns-privados/${gallery}/uploads/${value.intentId}/complete`, "POST"));
+    const imageBefore = await env.DB.prepare("SELECT status,updated_at FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first();
+    const intentBefore = await env.DB.prepare("SELECT status,completed_at FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first();
+    try {
+      await env.DB.prepare(`CREATE TRIGGER synthetic_image_ready_audit_failure BEFORE INSERT ON audit_log
+        WHEN NEW.entity_id='${gallery}' AND NEW.action='client_gallery.image_ready' BEGIN SELECT RAISE(ABORT,'synthetic audit failure'); END;`).run();
+      expect((await complete()).status).toBe(500);
+      expect(await env.DB.prepare("SELECT status,updated_at FROM client_gallery_images WHERE id=?")
+        .bind(value.imageId).first()).toEqual(imageBefore);
+      expect(await env.DB.prepare("SELECT status,completed_at FROM client_gallery_upload_intents WHERE id=?")
+        .bind(value.intentId).first()).toEqual(intentBefore);
+      expect(await env.DB.prepare("SELECT id FROM audit_log WHERE entity_id=? AND action='client_gallery.image_ready'")
+        .bind(gallery).first()).toBeNull();
+    } finally {
+      await env.DB.prepare("DROP TRIGGER IF EXISTS synthetic_image_ready_audit_failure").run();
+    }
+    expect((await complete()).status).toBe(200);
+    expect(await env.DB.prepare("SELECT status FROM client_gallery_images WHERE id=?")
+      .bind(value.imageId).first()).toEqual({ status: "ready" });
+    expect(await env.DB.prepare("SELECT status FROM client_gallery_upload_intents WHERE id=?")
+      .bind(value.intentId).first()).toEqual({ status: "completed" });
+    expect(await env.DB.prepare("SELECT actor_email,action,data_json FROM audit_log WHERE entity_id=? AND action='client_gallery.image_ready'")
+      .bind(gallery).first()).toEqual({
+        actor_email: "maria.helena@local.dev",
+        action: "client_gallery.image_ready",
+        data_json: JSON.stringify({ imageId: value.imageId }),
+      });
+    await complete();
+    expect(await env.DB.prepare("SELECT COUNT(*) AS count FROM audit_log WHERE entity_id=? AND action='client_gallery.image_ready'")
+      .bind(gallery).first()).toEqual({ count: 1 });
+  }, 60_000);
+
   it("recovers an upload when R2 succeeded but the intent is still pending", async () => {
     const gallery = await seedGallery(await seedClient(), "draft");
     const value = (await (await intent(gallery)).json()) as Intent;
