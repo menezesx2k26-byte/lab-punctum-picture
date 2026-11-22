@@ -2,22 +2,22 @@
   "schemaVersion": 3,
   "feature": "private-client-galleries",
   "round": "R4",
-  "status": "TECHNICAL_DOD_PARTIAL_READY_FOR_AUTHORIZATION",
-  "decision": "NO_GO_PRODUCTION",
-  "releasePackageVerdict": "READY_FOR_AUTHORIZATION",
+  "status": "PARTIAL_VERIFIED",
+  "decision": "PRODUCTION_NO_GO",
+  "releasePackageVerdict": "NO_GO_BOTH_RELEASES",
   "completionVerdict": "NOT_COMPLETED_VERIFIED",
-  "statusScope": "Cycle AO 2026-11-20: READY_FOR_AUTHORIZATION package published (80-cycle-ao). Human checklist A1–A7 required (R1 Clerk≤14d, R3 Hostinger QA, G20 LGPD, G15 a11y, G19 signoff, G22 merge/cutover, G23 rollback rehearsal). No merge/DNS/production writes. G19 still BLOCKED_SECURITY. NO_GO_PRODUCTION / not COMPLETED_VERIFIED.",
-  "updatedAt": "2026-11-20",
-  "branch": "cursor/r4-aj-security-phase-b-ae72",
-  "baseBranch": "codex/punctum-r4-goal-20261115",
-  "baseSha": "f0f951d9f30225d717c1f82df7661889e287ec34",
-  "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+  "statusScope": "Cycle LC 2026-11-22: code-only audit atomicity correction verified on exact SHA 51b329bd462ad034afe33ad474244dfc72afaca3 and CI run 44985881847. Hostinger association remains BLOCKED_PROVIDER; G01-G24 preserved from AY; H01-H06 NOT_VERIFIED. No merge, deploy, DNS, Clerk Production, R4 activation or destructive restore. Both Release A and Release B remain PRODUCTION_NO_GO.",
+  "updatedAt": "2026-11-22",
+  "branch": "codex/punctum-unlimited-release-20261120",
+  "baseBranch": "plan/punctum-unlimited-domain-recovery-20261120",
+  "baseSha": "a44397d79dcc0b9835f7253dfc8cb20c0681f4ea",
+  "productSha": "51b329bd462ad034afe33ad474244dfc72afaca3",
   "anHead": "88970b37227e708d4ac56e26da0c851f38527513",
   "aoPackageSha": "c94f541e535f9a2fff0cd59302a19fe75a5a51b1",
   "aoHead": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
-  "headBeforeStateUpdate": "a14776acfbdcc77f86c3565a6aaaa8e2547dc159",
-  "pullRequest": 42,
-  "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/42",
+  "headBeforeStateUpdate": "51b329bd462ad034afe33ad474244dfc72afaca3",
+  "pullRequest": 45,
+  "pullRequestUrl": "https://github.com/menezesx2k26-byte/lab-punctum-picture/pull/45",
   "ciOnAnHead": {
     "sha": "88970b37227e708d4ac56e26da0c851f38527513",
     "runId": 44661780547,
@@ -6602,5 +6602,138 @@
       "production": "NO_GO_BOTH_RELEASES",
       "precedence": "This verified closeout supersedes the pending CI/review/Drive statements captured earlier in the same BH cycle. Canonical24AY gate records unchanged."
     }
+  },
+  "currentCycle20261122LC": {
+    "goal": "PUNCTUM-LUNA-CLOSEOUT-20261122",
+    "observedAt": "2026-11-22T04:41:04Z",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baseline": {
+      "planSha": "5ebf35d4f50ce18f27377413e440e3a227da16d9",
+      "worktreeHead": "5ebf35d4f50ce18f27377413e440e3a227da16d9",
+      "baseBranch": "plan/punctum-unlimited-domain-recovery-20261120",
+      "baseSha": "a44397d79dcc0b9835f7253dfc8cb20c0681f4ea",
+      "mainSha": "f0c82f2c7200417e41c1fd3a21414607c2c5a973",
+      "ledgerBlobBefore": "b540bce6ef9df627e68ea8dad72f5efdcaaed8f3",
+      "ledgerRawSha256Before": "1718cb2443276b291597fe575a79eb87a2c6c708272b2b330064e88eb4d5338c"
+    },
+    "result": "PARTIAL_VERIFIED",
+    "production": "PRODUCTION_NO_GO",
+    "report": "docs/operations/private-albums-r4/90-cycle-luna-closeout-2026-11-22.md",
+    "code": {
+      "sha": "51b329bd462ad034afe33ad474244dfc72afaca3",
+      "commit": "fix(r4): atomically audit client disable and enable",
+      "files": [
+        "worker/api/client-admin.ts",
+        "tests/integration/client-admin-audit.spec.ts"
+      ],
+      "effect": "Client disable/enable update, session_version increment and audit event execute in one D1 batch."
+    },
+    "wipClerk": {
+      "branch": "agent/punctum-clerk-auth/20261121-045514",
+      "head": "b417405c0406daf286b192a8151cf45c4a50f89c",
+      "paths": 31,
+      "sameAsPriorBlobInventory": true,
+      "baselineFingerprint": "11abfbd46b61ee57dd8800472c16ba4017e6d09b9c4dff0db28da02b0ba9c808",
+      "dispositionFingerprint": "494ca4cccbae72bb0c9c5404af8bee5ff5d9f767c9b00c75f2cc00e568cd1e5d",
+      "identicalToPrBaseline": 12,
+      "divergent": 18,
+      "wipOnly": 1,
+      "integratedFiles": 0,
+      "disposition": "Per-file blob comparison saved in ignored SDD workspace. Preserve all WIP; identity/environment decision unresolved."
+    },
+    "historicalD1Branch": {
+      "branch": "chore/punctum-d1-audit-recovery-20261122",
+      "commitsReviewed": [
+        "8a7042c560defc6ad2af4d415bc6877943d4449b",
+        "a713c9447170602218f5734035888ff2d03cc4e9"
+      ],
+      "decision": "No cherry-pick: ZIP manifest utility is incompatible with current managed SQLite/TAR recovery path and its tests are synthetic."
+    },
+    "localValidation": {
+      "red": "New disable/enable rollback assertions failed before code correction: D1 mutation persisted when audit insert failed.",
+      "greenRegression": "npm test -- tests/integration/client-admin-audit.spec.ts; 7 tests passed.",
+      "typecheck": "PASS",
+      "lint": "PASS; 0 errors, 22 warnings in untouched files.",
+      "diffCheck": "PASS"
+    },
+    "ci": {
+      "runId": 44985881847,
+      "headSha": "51b329bd462ad034afe33ad474244dfc72afaca3",
+      "status": "SUCCESS_BOTH_JOBS",
+      "verifyJobId": 137096204216,
+      "hostingerNodeQaJobId": 137096204057,
+      "npmAudit": "PASS",
+      "fullTestBuildE2E": "PASS",
+      "hostingerCandidateScheduledBuilds": "PASS",
+      "artifacts": [
+        {
+          "id": 14740145458,
+          "name": "punctum-hostinger-node-browser",
+          "sha256": "2ae8b3072d6645774bec49f6407aee66c87224990009e1d580e96fff037be8fc",
+          "sourceSha": "51b329bd462ad034afe33ad474244dfc72afaca3"
+        },
+        {
+          "id": 14739034485,
+          "name": "r4-browser-evidence",
+          "sha256": "080a7412ef015320ccd576f06e113bfd5cb0399950654d724ba5f74f1468d6a5",
+          "sourceSha": "51b329bd462ad034afe33ad474244dfc72afaca3"
+        }
+      ],
+      "artifactBody": "Not decoded through the enabled artifact connector; dirtyCheckout and environment fields are not asserted."
+    },
+    "dependabot": {
+      "defaultBranchAlerts": {
+        "total": 31,
+        "critical": 2,
+        "high": 7,
+        "moderate": 19,
+        "low": 3
+      },
+      "packageList": "Unavailable: gh api returned HTTP 401 and the GitHub connector rejected the alerts endpoint.",
+      "candidateAudit": "npm audit --audit-level=low passed on code SHA 51b329bd462ad034afe33ad474244dfc72afaca3; no alert attributed without package-level evidence."
+    },
+    "hostinger": {
+      "orderId": 1008583103,
+      "apiOperation": "hosting_websites_list (read-only)",
+      "websiteCount": 3,
+      "nodeWebsiteCount": 2,
+      "targetNode": "magic-lime-guanaco-79.hostingersite.com",
+      "punctumDomainAssociated": false,
+      "issue44": "BLOCKED_PROVIDER; is_accessible=false; TXT challenge length 0",
+      "dnsWrites": 0,
+      "supportContact": false
+    },
+    "tasks": {
+      "T00": "PASS; sources, exact head, ledger and worktrees reconciled.",
+      "T01": "REUSED; prior CI and auxiliary VPS evidence, no expensive rerun.",
+      "T02": "PASS; one residual disable/enable mutation-audit path fixed and exact CI green.",
+      "T03": "BLOCKED_PROVIDER; Hostinger association/TLS and isolated Clerk QA unresolved.",
+      "T04": "PARTIAL; prior Hero/Studio/a11y documentation reconciled; no new real acceptance.",
+      "T05": "CI PASS; public parity, managed independent restore and complete rollback remain unproven.",
+      "T06": "Versioned report/ledger committed; exact final doc CI and Drive readback to follow."
+    },
+    "lc": {
+      "LC0": "DONE",
+      "LC1": "DONE; 31 paths individually compared; no WIP integration.",
+      "LC2": "DONE; disable/enable transaction plus audit regression.",
+      "LC3": "BLOCKED_PROVIDER; G16 FAIL, G17 NOT_VERIFIED.",
+      "LC4": "BLOCKED_TARGET; G18/G23 remain blocked.",
+      "LC5": "Independent final code review pending; formal G19 remains HOLD.",
+      "LC6": "Report/ledger added; final doc CI and Drive readback pending."
+    },
+    "gateRecords": "Preserve all 24 statuses from currentCycle20261121AY unchanged.",
+    "supplementaryGates": {
+      "H01": "NOT_VERIFIED",
+      "H02": "NOT_VERIFIED",
+      "H03": "NOT_VERIFIED",
+      "H04": "NOT_VERIFIED",
+      "H05": "NOT_VERIFIED",
+      "H06": "NOT_VERIFIED"
+    },
+    "releaseA": "NO_GO; Cloudflare preserved; custom domain association, canonical TLS and public parity absent.",
+    "releaseB": "NO_GO; R4 disabled; Clerk G06-G10, G18/G23, G19, G20 and release authorization incomplete.",
+    "costIncrementBRL": 0,
+    "productionWrites": 0,
+    "nextSafeAction": "Account owner/provider must resolve the existing Hostinger Node association and verify TLS read-only; engineering then repeats public parity with R4 OFF. Identity owner must decide Clerk contract and provide isolated QA/OTP before any WIP integration."
   }
 }
