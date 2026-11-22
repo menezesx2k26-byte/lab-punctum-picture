@@ -20,6 +20,7 @@ export async function exportManagedRecovery(config, env = process.env, request =
   const saved = await createManagedBackup(config);
   const archive = join(dirname(saved.archiveFile), ".transfer-" + prefix.slice(-32) + ".tar");
   const encrypted = archive + ".bin";
+  let ownsArchive = false, ownsEncrypted = false;
   const owned = [];
   const call = async (name, method, body) => {
     const response = await request(endpoint + encodeURIComponent(prefix + "/" + name), {
@@ -38,12 +39,14 @@ export async function exportManagedRecovery(config, env = process.env, request =
       objects: saved.objects, bytes: saved.bytes, backupSha256: saved.archiveSha256 };
     writeFileSync(join(saved.restoredRoot, "recovery-manifest.json"), JSON.stringify(manifest), { mode: 0o600, flag: "wx" });
     const fd = openSync(archive, "wx", 0o600);
+    ownsArchive = true;
     try {
       execFileSync("tar", ["-cf", "-", "-C", saved.restoredRoot, "application.sqlite", "originals", "managed-d1.sql", "recovery-manifest.json"],
         { stdio: ["ignore", fd, "ignore"], timeout: 120_000 });
     } finally { closeSync(fd); }
     const iv = randomBytes(12), cipher = createCipheriv("aes-256-gcm", key, iv);
     writeFileSync(encrypted, iv, { mode: 0o600, flag: "wx" });
+    ownsEncrypted = true;
     await pipeline(createReadStream(archive), cipher, createWriteStream(encrypted, { flags: "a" }));
     appendFileSync(encrypted, cipher.getAuthTag());
     const chunks = [], hash = createHash("sha256");
@@ -75,9 +78,15 @@ export async function exportManagedRecovery(config, env = process.env, request =
     if (failed) throw Error("MANAGED_RECOVERY_PARTIAL_CLEANUP_FAILED", { cause: error });
     throw error;
   } finally {
-    rmSync(archive, { force: true });
-    rmSync(encrypted, { force: true });
-    saved.cleanup();
-    key.fill(0);
+    try {
+      if (ownsArchive) rmSync(archive, { force: true });
+      if (ownsEncrypted) rmSync(encrypted, { force: true });
+    } finally {
+      try { saved.cleanup(); }
+      finally {
+        try { rmSync(saved.archiveFile, { force: true }); }
+        finally { key.fill(0); }
+      }
+    }
   }
 }

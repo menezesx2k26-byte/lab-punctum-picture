@@ -64,10 +64,39 @@ test("encrypted managed export restores all current rows and files, detects corr
   } finally { target.close(); }
   assert.equal(receipt.manifest.objects, 1);
   assert.equal(receipt.manifest.bytes, blob.length);
-  assert(readdirSync(join(root, "managed-recovery")).some((name) => name.endsWith(".tar") && !name.startsWith(".transfer-")));
+  assert.deepEqual(readdirSync(join(root, "managed-recovery")), []);
   env.PUNCTUM_MANAGED_RECOVERY_PREFIX = "managed-recovery/snapshot-" + "c".repeat(32);
   corrupt = true;
   await assert.rejects(exportManagedRecovery({ managed: true, environment: "staging", dbFile, originals }, env, request), /TRANSPORT_MISMATCH/);
   assert(![...remote.keys()].some((key) => key.startsWith(env.PUNCTUM_MANAGED_RECOVERY_PREFIX)));
   assert(remote.has("preserved-unrelated-object"));
+});
+
+for (const failure of [false, true]) test(`export removes owned plaintext archives on ${failure ? "transport failure" : "success"} and preserves retained files`, { skip: process.platform !== "linux" }, async (t) => {
+  const root = mkdtempSync(join(tmpdir(), "punctum-export-cleanup-"));
+  chmodSync(root, 0o700);
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const originals = join(root, "originals"), dbFile = join(root, "application.sqlite"), recovery = join(root, "managed-recovery");
+  mkdirSync(originals, { mode: 0o700 });
+  mkdirSync(recovery, { mode: 0o700 });
+  const retained = ["daily-2026-11-21-11111111-1111-1111-1111-111111111111.tar", "retained-proof.tar", "unrelated.txt"];
+  for (const name of retained) writeFileSync(join(recovery, name), "preserve", { mode: 0o600 });
+  const db = new DatabaseSync(dbFile);
+  db.exec(`PRAGMA application_id=${productionStageApplicationId}; CREATE TABLE synthetic(value TEXT); INSERT INTO synthetic VALUES('keep')`);
+  db.close(); chmodSync(dbFile, 0o600);
+  const env = { PUNCTUM_MANAGED_RECOVERY_PREFIX: "managed-recovery/snapshot-" + "d".repeat(32),
+    PUNCTUM_MANAGED_RECOVERY_KEY: "e".repeat(64), CLOUDFLARE_API_TOKEN: "offline-test-only" };
+  const remote = new Map();
+  const request = async (url, options) => {
+    if (failure && options.method === "PUT") throw Error("SYNTHETIC_TRANSPORT_FAILURE");
+    if (options.method === "PUT") remote.set(url, Buffer.from(options.body));
+    if (options.method === "DELETE") remote.delete(url);
+    return new Response(options.method === "GET" ? remote.get(url) : "{}");
+  };
+  const exporting = exportManagedRecovery({ managed: true, environment: "staging", dbFile, originals }, env, request);
+  if (failure) await assert.rejects(exporting, /SYNTHETIC_TRANSPORT_FAILURE/);
+  else assert.equal((await exporting).status, "MANAGED_ENCRYPTED_RECOVERY_EXPORTED");
+  assert.deepEqual(readdirSync(recovery).sort(), retained.sort());
+  for (const name of retained) assert.equal(readFileSync(join(recovery, name), "utf8"), "preserve");
+  assert.equal(readFileSync(dbFile).subarray(0, 15).toString(), "SQLite format 3");
 });
