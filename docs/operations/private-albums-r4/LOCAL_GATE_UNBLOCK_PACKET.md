@@ -1,6 +1,6 @@
 # LOCAL_GATE_UNBLOCK_PACKET — 22/11/2026
 
-**Estado deste recibo:** LOCAL_INCREMENT_VERIFIED / RELEASE_GATES_BLOCKED. Candidato técnico `469c76e011d63df74e9a2f47cf66e4540884cedc` publicado na branch existente e remoto confirmado, incluindo mídia, recuperação, logout e auditoria de senhas. [CI exata 45048482582](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/45048482582) passou nos dois jobs; artefatos verificados por SHA-256, CRC e sourceSha. A [CI anterior 45047797507](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/45047797507) passou no job Node, mas falhou no novo E2E; a correção do teste está no candidato atual. **PARTIAL_VERIFIED / PRODUCTION_NO_GO** nos Releases A e B.
+**Estado deste recibo:** LOCAL_INCREMENT_VERIFIED / RELEASE_GATES_BLOCKED. Mídia, recuperação, logout e auditoria de senhas foram publicados em `469c76e011d63df74e9a2f47cf66e4540884cedc`, com [CI 45048482582](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/45048482582) e artefatos exatos verificados. O incremento posterior [91](91-cycle-local-clerk-development-api-2026-11-22.md) registra OTP real Development e a correção de configuração SDK, fonte `524e4eafeff44e25acc3dc7716a47996f5f71b4a`, revisada e integrada somente ao PR #45. A CI do HEAD integrado e o readback final são registrados no checkpoint operacional/Drive após o commit. **PARTIAL_VERIFIED / PRODUCTION_NO_GO** nos Releases A e B.
 
 ## Baseline, fontes e preservação
 
@@ -112,7 +112,7 @@ A VPS 2135319 permanece QA auxiliar; sua conta de comando `smoke` e provas sint�
 | T00 / LC0 | Baseline, PR/CI, executores, WIP, Drive e fontes reconciliados |
 | T01 | Provas anteriores reutilizadas; zero build/QA VPS repetido |
 | T02 / LC2 | Auditoria atômica e unlink anteriores preservados; novos testes de rollback/retry para as duas trocas de senha e correções transacionais integradas |
-| T03 / LC1 | Development e contrato histórico identificados; nenhum WIP integrado ou OTP executado; autorização/configuração QA ainda incompletas |
+| T03 / LC1 | Development e contrato histórico identificados; OTP real do operador verificado por FAPI nativa; login web e configuração SDK ainda incompletos; WIP preservado |
 | T04 | Publicação, prévia privada, namespace e perda de original reproduzidos/corrigidos localmente; caso compilado na CI atual; uso/visual/físico no alvo pendentes |
 | T05 / LC3 | Patches revisados e publicados; CI exata `45048482582` PASS nos dois jobs e artefatos verificados. G16/G17 do gerenciado continuam sem prova |
 | LC4 | Dois recibos BLOCKED_TARGET, zero escrita |
@@ -131,7 +131,7 @@ Os 24 registros `currentCycle20261121AY.gateRecords` e todo o histórico permane
 | G04 | NOT_VERIFIED | Jornada de galeria/publicação no alvo |
 | G05 | BLOCKED | Upload/retentativa/hash no gerenciado |
 | G06 | BLOCKED | Issuer/audience/JWKS/azp/sid QA reais |
-| G07 | BLOCKED | Identidades e OTP QA autorizados |
+| G07 | BLOCKED | Identidades A/B e OTP no fluxo web do alvo correto; operador nativo já verificado |
 | G08 | BLOCKED | Logout/expiração/revogação/replay reais |
 | G09 | BLOCKED | Matriz A/B/anônimo no alvo |
 | G10 | BLOCKED | GET/HEAD privados e cache no alvo |
@@ -167,7 +167,7 @@ Próximas ações: engenharia verifica a CI exata e seus artefatos, publica o pa
 
 ### RELEASE_A_PACKET
 
-Candidato de código `469c76e011d63df74e9a2f47cf66e4540884cedc`; destino proposto: Node gerenciado Unlimited, R4 OFF. Produção Cloudflare preservada. Situação **PARTIAL_VERIFIED / PRODUCTION_NO_GO**. Faltam associação/TLS corretos, paridade G16, critérios aceitos e medição G17, recuperação/rollback segregados, revisão formal e autorização específica. Janela, freeze/delta, DNS/cutover e pós-cutover precisam de autorização própria; nenhum deles é autorizado pela correção técnica.
+Código-fonte revisado do último incremento `524e4eafeff44e25acc3dc7716a47996f5f71b4a`; HEAD integrado e CI exata no PR #45/checkpoint. Destino proposto: Node gerenciado Unlimited, R4 OFF. Produção Cloudflare preservada. Situação **PARTIAL_VERIFIED / PRODUCTION_NO_GO**. Faltam associação/TLS corretos, paridade G16, critérios aceitos e medição G17, recuperação/rollback segregados, revisão formal e autorização específica. Janela, freeze/delta, DNS/cutover e pós-cutover precisam de autorização própria; nenhum deles é autorizado pela correção técnica.
 
 ### RELEASE_B_PACKET
 
@@ -212,6 +212,6 @@ Arquivos de código/testes alterados desde o baseline (26):
 
 Em 22/11, o usuário reafirmou que **Maria cadastra os clientes pelo caminho simples já definido**. A SPEC original, seção de administração, já descreve cadastrar cliente → senha temporária → criar álbum associado → adicionar imagens → publicar. O produto mantém o cadastro pelo painel existente em `/admin/clientes`; o E2E compilado percorre esse formulário com dados fictícios. Esta orientação não autoriza substituir globalmente o contrato de senha/troca obrigatória por OTP.
 
-O usuário informou que não tem acesso ao e-mail dela e orientou usar um e-mail dele caso o teste exija código. O perfil Gmail conectado forneceu um endereço do usuário; ele não foi colocado no Git/Drive nem usado para alterar contas reais. O endereço, por si só, ainda não prova vínculo administrativo, origem QA ou entrega de OTP. Não foi solicitado/lido OTP nem criado vínculo no Clerk. A próxima prova de identidade deve manter Maria como operadora do cadastro e usar identidades fictícias A/B no QA segregado, com autorização e vínculo explícitos.
+O usuário informou que não tem acesso ao e-mail dela e orientou usar um e-mail dele caso o teste exija código. O perfil Gmail conectado forneceu um endereço do usuário, excluído dos artefatos públicos. No incremento 91 foi criado e verificado por OTP um operador Development do próprio usuário e emitida sessão/JWT por FAPI nativa. O aplicativo local continuou negando a troca, mesmo com vínculo D1 local explícito: faltava o segredo exigido pelo SDK e o token nativo não contém `azp` de web. A correção sinaliza a configuração ausente como 503 e preserva todas as validações. Não houve login web homologado, vínculo administrativo remoto, membro de organização ou alteração Production. Maria continua operadora do cadastro dos clientes; identidades A/B e jornadas reais no alvo permanecem pendentes.
 
 O fechamento documental será publicado na mesma branch; sua CI de HEAD e o readback final do mesmo Drive serão registrados no recibo operacional local e no checkpoint remoto, sem alterar retrospectivamente os 24 gates canônicos.

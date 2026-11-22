@@ -260,6 +260,9 @@ export async function verifyClerkRequestWithSdk(
   request: Request,
   config: ClerkRuntimeConfig,
 ): Promise<VerifiedClerkSession | null> {
+  if (!config.secretKey) {
+    throw new AppError(503, "CLERK_NOT_CONFIGURED", "Autenticação Clerk indisponível.");
+  }
   try {
     const client = createClerkClient({
       publishableKey: config.publishableKey,

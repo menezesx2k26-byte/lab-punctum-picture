@@ -1,0 +1,75 @@
+{
+  "scope": "Real Clerk Development FAPI plus isolated local application; not browser or managed QA",
+  "sourceSha": "1f3a58a9af9e5aa0e3115cbe49c55a01cda7328a",
+  "instance": "ins_3M14L5pOMO7DQ8ZX4CW5bZ3w3eB",
+  "issuer": "https://causal-leopard-4871.clerk.accounts.dev",
+  "nativeApiAlreadyEnabled": true,
+  "remoteConfigurationWrites": 0,
+  "productionWrites": 0,
+  "organizationMembershipWrites": 0,
+  "developmentQaOperatorsCreated": 1,
+  "customersCreated": 0,
+  "otp": {
+    "requestedAtUtc": "2026-11-22T18:05:41.875Z",
+    "requests": 1,
+    "mailDeliveryConfirmed": true,
+    "mailAuthentication": "SPF/DKIM/DMARC pass",
+    "connectorCodeRedacted": true,
+    "factorProvidedByUser": true,
+    "incorrectAttemptDenied": true,
+    "correctedAttemptStatus": "complete"
+  },
+  "providerSessionCreated": true,
+  "providerJwtIssued": true,
+  "observedTokenClaims": {
+    "issuerMatches": true,
+    "sidPresent": true,
+    "azp": null
+  },
+  "application": {
+    "isolatedD1R2": true,
+    "beforeLocalLink": {
+      "status": 403,
+      "cookieIssued": false
+    },
+    "explicitLocalAdminLinkCreated": true,
+    "afterLocalLink": {
+      "status": 403,
+      "cookieIssued": false
+    },
+    "webLoginAccepted": false,
+    "missingSdkSecret": true
+  },
+  "candidate": {
+    "branch": "codex/punctum-clerk-config-contract-20261122",
+    "baseSha": "1f3a58a9af9e5aa0e3115cbe49c55a01cda7328a",
+    "behavior": "503 CLERK_NOT_CONFIGURED for missing default-SDK secret; preserve all token and identity checks",
+    "red": "admin403/client401 instead of503; two behavioral failures",
+    "green": "2 passed /5 outside-filter skipped",
+    "regression": "27 passed /4 files",
+    "independentReview": "SCOPED_SAFE_TO_INTEGRATE_NO_CRITICAL_IMPORTANT_OR_MINOR",
+    "typecheck": "PASS",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS",
+    "sourceCommit": "524e4eafeff44e25acc3dc7716a47996f5f71b4a",
+    "reviewer": "Gemini3.8Flash; conversation1927ce03-0942-4df5-9dd6-42e32b828969",
+    "reviewLimitation": "SDK chunk not directly read by reviewer due permissions; root verified pinned3.27 source",
+    "integration": "PR45 branch only; no main or production",
+    "sourceCi": {
+      "run": 45055375132,
+      "verify": "SUCCESS",
+      "hostingerNodeQa": "SKIPPED_BRANCH_RULE"
+    }
+  },
+  "gatesPromoted": [],
+  "releaseA": "PRODUCTION_NO_GO",
+  "releaseB": "PRODUCTION_NO_GO",
+  "privateDataExcluded": [
+    "operator email",
+    "OTP values",
+    "password",
+    "JWTs",
+    "cookies",
+    "user and session identifiers"
+  ]
+}
