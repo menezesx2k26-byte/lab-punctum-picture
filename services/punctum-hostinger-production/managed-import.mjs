@@ -107,6 +107,9 @@ export async function importManagedSeed({ bundle, key, digest, destination }) {
         const exists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table);
         if (!exists) continue;
         for (const row of db.prepare(`SELECT ${column} AS key FROM ${table} WHERE status='ready'`).all()) {
+          if (table !== "client_gallery_images" && row.key?.startsWith("client-galleries/")) {
+            throw Error("MANAGED_IMPORT_PUBLIC_PRIVATE_NAMESPACE");
+          }
           if (!row.key?.startsWith("static:") && !keys.has(row.key)) missing++;
         }
       }

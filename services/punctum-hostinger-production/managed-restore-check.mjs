@@ -96,6 +96,7 @@ function inventory(dbFile, objects) {
       }
       for (const row of db.prepare(`SELECT ${column} AS key${metadata} FROM ${table} WHERE status='ready'`).iterate()) {
         if (typeof row.key !== "string") throw Error("MANAGED_RESTORE_REFERENCE_MISSING");
+        if (!isPrivate && row.key.startsWith("client-galleries/")) throw Error("MANAGED_RESTORE_PUBLIC_PRIVATE_NAMESPACE");
         if (row.key.startsWith("static:")) continue;
         const original = originals.get(row.key);
         if (!original) throw Error("MANAGED_RESTORE_REFERENCE_MISSING");

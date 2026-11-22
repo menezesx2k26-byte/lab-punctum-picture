@@ -76,3 +76,30 @@ test("managed import rejects a public destination", async (t) => {
     destination: join(root, "public_html", "db"),
   }), /CONFIGURATION_INVALID/);
 });
+
+for (const table of ["images", "site_media"]) test(`managed import rejects ${table} referencing a private namespace`, { skip: process.platform !== "linux" }, async (t) => {
+  const root = mkdtempSync(join(tmpdir(), "punctum-managed-namespace-"));
+  chmodSync(root, 0o700);
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const input = join(root, "input"), originals = join(input, "originals");
+  mkdirSync(originals, { recursive: true, mode: 0o700 });
+  const privateKey = "client-galleries/synthetic/private.png", image = Buffer.from("synthetic private original");
+  const sha256 = createHash("sha256").update(image).digest("hex");
+  stageOriginal(originals, privateKey, image, "image/png", sha256);
+  const column = table === "images" ? "original_key" : "storage_key";
+  const db = new DatabaseSync(join(input, "application.sqlite"));
+  db.exec(`PRAGMA application_id=1347767888; CREATE TABLE ${table}(${column} TEXT,status TEXT)`);
+  db.prepare(`INSERT INTO ${table} VALUES(?,'ready')`).run(privateKey);
+  db.close();
+  writeFileSync(join(input, "seed-manifest.json"), JSON.stringify({ schema: "punctum-managed-seed-v1",
+    objects: [{ key: privateKey, size: image.length, sha256 }] }));
+  const tar = join(root, "seed.tar.gz");
+  execFileSync("tar", ["-czf", tar, "-C", input, "application.sqlite", "originals", "seed-manifest.json"]);
+  const key = randomBytes(32), iv = randomBytes(12), cipher = createCipheriv("aes-256-gcm", key, iv);
+  const bytes = Buffer.concat([iv, cipher.update(readFileSync(tar)), cipher.final(), cipher.getAuthTag()]);
+  const bundle = join(root, "seed.bin"), destination = join(root, "imported");
+  writeFileSync(bundle, bytes);
+  await assert.rejects(importManagedSeed({ bundle, key: key.toString("hex"),
+    digest: createHash("sha256").update(bytes).digest("hex"), destination }), /MANAGED_IMPORT_PUBLIC_PRIVATE_NAMESPACE/);
+  assert.equal(existsSync(destination), false);
+});

@@ -177,6 +177,21 @@ test("original enumeration crosses the 1000-object page without omissions", linu
   finally { saved.cleanup(); }
 });
 
+for (const table of ["images", "site_media"]) test(`backup rejects ${table} referencing private original bytes`, linuxOnly, async (t) => {
+  const f = fixture(t), privateKey = "client-galleries/synthetic/private.png";
+  stageOriginal(f.originals, privateKey, png, "image/png", sha(png));
+  const db = new DatabaseSync(f.dbFile);
+  try {
+    if (table === "images") db.prepare("UPDATE images SET original_key=?").run(privateKey);
+    else {
+      db.exec("CREATE TABLE site_media(storage_key TEXT,status TEXT)");
+      db.prepare("INSERT INTO site_media VALUES(?,'ready')").run(privateKey);
+    }
+  } finally { db.close(); }
+  await assert.rejects(createManagedBackup(f), (error) => error.cause?.message === "MANAGED_RESTORE_PUBLIC_PRIVATE_NAMESPACE");
+  assert.equal(existsSync(f.dbFile), true);
+});
+
 test("rejects public paths, links, hardlinks and unsafe storage modes", linuxOnly, async (t) => {
   const cases = ["public path", "DB symlink", "ancestor symlink", "root symlink", "partition symlink", "blob symlink", "metadata symlink",
     "WAL dangling symlink", "DB hardlink", "blob hardlink", "metadata hardlink", "DB permissions", "parent permissions", "root permissions", "partition permissions", "blob permissions", "metadata permissions"];
