@@ -277,7 +277,7 @@ try {
   await screenshot(publicPage, "public-home.png");
   assert.equal((await anonymous.request.get(origin + "/admin/studio", { maxRedirects: 0 })).status(), 303);
   const admin = await newContext();
-  await admin.addCookies([{ name: "punctum_admin_session", value: sign({ email: "qa@punctum.invalid", exp: Math.floor(Date.now() / 1000) + 3600 }, adminSecret + "\0env:" + adminHash), url: origin + "/admin", httpOnly: true, sameSite: "Strict" }]);
+  await admin.addCookies([{ name: "punctum_admin_session", value: sign({ email: "qa@punctum.invalid", exp: Math.floor(Date.now() / 1000) + 3600 }, adminSecret + "\0env:" + adminHash), domain: new URL(origin).hostname, path: "/admin", httpOnly: true, sameSite: "Strict" }]);
   const studio = await admin.newPage();
   assert.equal((await studio.goto(origin + "/admin/studio")).status(), 200);
   await studio.getByRole("heading", { name: "Studio", exact: true }).waitFor();
@@ -286,6 +286,85 @@ try {
   await studio.getByRole("heading", { name: "Textos do site", exact: true }).waitFor();
   await screenshot(studio, "studio.png");
   record("public home and authenticated Studio render; anonymous Studio denied");
+
+  const initialHeroStudio = await (await admin.request.get(origin + "/admin/api/studio")).json();
+  const heroId = randomUUID(), heroKey = `site-media/hero/${heroId}.png`;
+  const { default: sharp } = await import("sharp");
+  const heroPng = await sharp({ create: { width: 1280, height: 720, channels: 3, background: "#516873" } }).png().toBuffer();
+  await originals.put(heroKey, heroPng, { httpMetadata: { contentType: "image/png" } });
+  await db.prepare(`INSERT INTO site_media (id,role,storage_key,original_filename,mime_type,size_bytes,status,width,height,created_at,updated_at)
+    VALUES (?,'hero',?,'synthetic-hero.png','image/png',?,'ready',1280,720,datetime('now'),datetime('now'))`)
+    .bind(heroId, heroKey, heroPng.length).run();
+  const heroDraft = structuredClone(initialHeroStudio.siteConfig);
+  const draftHero = heroDraft.pages.home.sections.find(section => section.type === "hero");
+  draftHero.heroMedia = { kind: "site-media", id: heroId };
+  draftHero.appearance.surface = "default";
+  draftHero.appearance.backgroundImageId = null;
+  const saveHero = await admin.request.patch(origin + "/admin/api/studio", {
+    headers: { Origin: origin }, data: { siteConfig: heroDraft, revision: initialHeroStudio.revision },
+  });
+  assert.equal(saveHero.status(), 200);
+  const savedHero = await saveHero.json();
+  const publicHeroPath = `/media/${heroId}/display`, adminHeroPath = `/admin/media/${heroId}/display`;
+  assert.equal((await anonymous.request.get(origin + publicHeroPath)).status(), 404);
+  assert.ok([401, 403].includes((await anonymous.request.get(origin + adminHeroPath)).status()));
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  assert.notEqual(await publicPage.locator(".lens-photograph img").getAttribute("src"), publicHeroPath);
+  await studio.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  await studio.setViewportSize({ width: 390, height: 844 });
+  await studio.getByRole("button", { name: "Ver como ficou", exact: true }).click();
+  const heroPreview = studio.frameLocator('iframe[title="Prévia do site com as alterações ainda não publicadas"]');
+  const previewImage = heroPreview.locator(".lens-photograph img");
+  assert.equal(await previewImage.getAttribute("src"), adminHeroPath);
+  assert.ok(await previewImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  const previewBytes = await admin.request.get(origin + adminHeroPath);
+  assert.equal(previewBytes.status(), 200);
+  assert.equal(previewBytes.headers()["cache-control"], "private, no-store");
+  const publishHero = await admin.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: savedHero.revision },
+  });
+  assert.equal(publishHero.status(), 200);
+  const publishedHero = await publishHero.json();
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  const publicHeroImage = publicPage.locator(".lens-photograph img");
+  assert.equal(await publicHeroImage.getAttribute("src"), publicHeroPath);
+  assert.ok(await publicHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  const publishedHeroRow = await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first();
+  await originals.delete(heroKey);
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  assert.equal(await publicHeroImage.getAttribute("src"), "/photos/p002.jpg");
+  assert.ok(await publicHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  assert.deepEqual(await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first(), publishedHeroRow);
+  assert.equal((await db.prepare("SELECT status FROM site_media WHERE id=?").bind(heroId).first()).status, "ready");
+  record("ready draft Hero decodes in authenticated Studio iframe; anonymous draft denied; published Hero decodes; missing R2 original falls back without snapshot mutation");
+
+  const privateOriginalKey = `client-galleries/${clients[0].gallery}/${clients[0].images[0]}.png`;
+  await db.prepare("UPDATE site_media SET storage_key=? WHERE id=?").bind(privateOriginalKey, heroId).run();
+  const publicAlias = randomUUID();
+  await db.prepare("INSERT INTO albums(id,title,slug,status,created_at,updated_at) VALUES (?,'Synthetic alias',?,'published',datetime('now'),datetime('now'))")
+    .bind(publicAlias, publicAlias).run();
+  await db.prepare(`INSERT INTO images(id,album_id,original_key,mime_type,size_bytes,position,status,created_at,updated_at)
+    VALUES (?,?,?,'image/png',?,0,'ready',datetime('now'),datetime('now'))`).bind(publicAlias, publicAlias, privateOriginalKey, png.length).run();
+  for (const id of [heroId, publicAlias]) for (const method of ["GET", "HEAD"]) {
+    const denial = await anonymous.request.fetch(origin + `/media/${id}/display`, { method });
+    assert.equal(denial.status(), 404);
+    assert.ok(!(await denial.body()).includes(png));
+    assert.ok(!denial.headers()["content-type"]?.startsWith("image/"));
+  }
+  assert.deepEqual(Buffer.from(await (await originals.get(privateOriginalKey)).arrayBuffer()), png);
+  record("compiled public GET/HEAD deny inconsistent album and published Hero references to private originals, with zero original bytes");
+  await db.prepare("DELETE FROM images WHERE id=?").bind(publicAlias).run();
+  await db.prepare("DELETE FROM albums WHERE id=?").bind(publicAlias).run();
+  const resetHero = await admin.request.patch(origin + "/admin/api/studio", {
+    headers: { Origin: origin }, data: { siteConfig: initialHeroStudio.siteConfig, revision: publishedHero.revision },
+  });
+  assert.equal(resetHero.status(), 200);
+  const resetHeroState = await resetHero.json();
+  assert.equal((await admin.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: resetHeroState.revision },
+  })).status(), 200);
+  await studio.setViewportSize({ width: 1280, height: 900 });
+  await studio.goto(origin + "/admin/studio", { waitUntil: "domcontentloaded", timeout: 90_000 });
   const epochBeforePublish = await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first();
   const deniedPublish = await anonymous.request.post(origin + "/admin/api/studio/publish", {
     headers: { Origin: origin }, data: { revision: 2147483647 },
