@@ -2,6 +2,7 @@ import { AppError } from "../utils/errors";
 import { envString } from "../utils/env";
 import {
   hasClerkCredential,
+  isClerkTokenRevoked,
   resolveLinkedClerkClient,
 } from "../auth/clerk-auth";
 import { requireClientSessionSecret } from "./secret";
@@ -164,6 +165,8 @@ export async function requireClient(
     if (!activeLink || activeLink.versionAtLink !== account.sessionVersion) {
       throw denied();
     }
+    if (await isClerkTokenRevoked(db, Array.isArray(payload.rk)
+      ? payload.rk.filter((item): item is string => typeof item === "string") : [])) throw denied();
   }
   if (
     account.mustChangePassword &&

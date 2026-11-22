@@ -2,6 +2,7 @@ import { assertSeparateAccessAudiences } from "../client/audience";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import {
   hasClerkCredential,
+  isClerkTokenRevoked,
   resolveLinkedClerkAdmin,
   type ClerkRequestVerifier,
   type LinkedClerkAdmin,
@@ -197,6 +198,8 @@ async function verifyPasswordSession(
       ) {
         return null;
       }
+      if (await isClerkTokenRevoked(env.DB, Array.isArray(payload.rk)
+        ? payload.rk.filter((item): item is string => typeof item === "string") : [])) return null;
       return {
         email,
         roles: ["admin"],

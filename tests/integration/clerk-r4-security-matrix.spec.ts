@@ -940,11 +940,10 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
       /Revogação da sessão indisponível/,
     );
     const clerkEnv = makeEnv(primaryPem, { DB: missingDb });
-    const session = await verifyClerkSessionFromRequest(
+    await expect(verifyClerkSessionFromRequest(
       new Request(`${SITE_ORIGIN}/api/client/me`), clerkEnv,
       { verifier: async () => ({ clerkUserId: "user_missing_migration", sessionId: "sess_fixture" }) },
-    );
-    expect(session).toBeNull();
+    )).rejects.toMatchObject({ status: 503, code: "CLERK_REVOCATION_UNAVAILABLE" });
   });
 
   it("never reports successful admin logout when Clerk revocation storage fails", async () => {

@@ -223,12 +223,8 @@ export async function revokeClerkSessionKeys(
         .bind(key, expiresIso)
         .run();
     }
-  } catch (error) {
-    // A missing migration must never turn a Clerk logout into a false success.
-    if (String(error).includes("no such table")) {
-      throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
-    }
-    throw error;
+  } catch {
+    throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
   }
 }
 
@@ -251,11 +247,8 @@ export async function isClerkTokenRevoked(
       .bind(...keys, nowIso)
       .first<{ revoked: number }>();
     return Boolean(row);
-  } catch (error) {
-    if (String(error).includes("no such table")) {
-      throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
-    }
-    throw error;
+  } catch {
+    throw new AppError(503, "CLERK_REVOCATION_UNAVAILABLE", "Revogação da sessão indisponível.");
   }
 }
 
@@ -326,7 +319,8 @@ export async function verifyClerkSessionFromRequest(
       ...verified,
       revocationKeys,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError && error.status >= 500) throw error;
     return null;
   }
 }
