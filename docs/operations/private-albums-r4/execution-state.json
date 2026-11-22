@@ -6801,8 +6801,9 @@
     "wipPreserved": true,
     "wipPaths": 31,
     "wipRelations": {
-      "identical": 11,
-      "divergent": 19,
+      "againstCodeSha": "469c76e011d63df74e9a2f47cf66e4540884cedc",
+      "identical": 10,
+      "divergent": 20,
       "exclusive": 1
     },
     "code": "469c76e011d63df74e9a2f47cf66e4540884cedc",
@@ -6939,6 +6940,18 @@
       "clientCreation": "Maria uses existing simple admin panel workflow",
       "qaOtp": "Use user-owned accessible email if needed; Gmail profile found, address excluded from public artifacts",
       "clerkMappingsOriginAndOtpDelivery": "NOT_VERIFIED; no external identity/session changes"
+    },
+    "initialWipRelations": {
+      "againstSha": "855e91be001b271aa8eb98f16725754cae3a0dda",
+      "identical": 11,
+      "divergent": 19,
+      "exclusive": 1
+    },
+    "finalWipPreservation": {
+      "paths": 31,
+      "bytesBlobsStatusIndexDiffUnchanged": true,
+      "contentOnlySha256": "bc4a3521f1c206340a9984487f3d3333eba590857083a1f2226bf4c39ebd9071",
+      "relationChangeReason": "candidate admin-auth.ts atomic password-audit fix; WIP unchanged"
     }
   }
 }
