@@ -361,14 +361,23 @@ export function serializeSiteConfig(config: SiteConfig): string {
   return serialized;
 }
 
-async function readyHeroMediaIds(db: D1Database, ids: readonly string[]): Promise<Set<string>> {
+async function readyHeroMediaIds(
+  db: D1Database,
+  ids: readonly string[],
+  originals?: Pick<R2Bucket, "head">,
+): Promise<Set<string>> {
   if (!ids.length) return new Set();
   try {
     const result = await db.prepare(
-      `SELECT id FROM site_media WHERE role = 'hero' AND status = 'ready'
+      `SELECT id, storage_key AS storageKey FROM site_media WHERE role = 'hero' AND status = 'ready'
        AND id IN (${ids.map(() => "?").join(",")})`,
-    ).bind(...ids).all<{ id: string }>();
-    return new Set(result.results.map((row) => row.id));
+    ).bind(...ids).all<{ id: string; storageKey: string }>();
+    const available = await Promise.all(result.results.map(async (row) => {
+      if (row.storageKey.startsWith("client-galleries/")) return null;
+      if (originals && !row.storageKey.startsWith("static:") && !await originals.head(row.storageKey)) return null;
+      return row.id;
+    }));
+    return new Set(available.filter((id): id is string => id !== null));
   } catch (error) {
     if (String(error).includes("no such table: site_media")) return new Set();
     throw error;
@@ -415,6 +424,7 @@ export async function assertSiteConfigReferences(
 export async function readPublicSiteConfigState(
   db: D1Database,
   settings?: PublicSiteSettings,
+  originals?: Pick<R2Bucket, "head">,
 ): Promise<PublicSiteConfigState> {
   const publicSettings = settings ?? (await readPublicSiteSettings(db));
   const joined = await readPublishedPointerVersion(db);
@@ -445,7 +455,7 @@ export async function readPublicSiteConfigState(
     section.type === "hero" && section.heroMedia?.kind === "site-media" ? [section.heroMedia.id] : [],
   );
   if (siteMediaIds.length) {
-    const readyIds = await readyHeroMediaIds(db, siteMediaIds);
+    const readyIds = await readyHeroMediaIds(db, siteMediaIds, originals);
     parsed.config = {
       ...parsed.config,
       pages: {
@@ -476,8 +486,9 @@ export async function readPublicSiteConfigState(
 export async function readPublicSiteConfig(
   db: D1Database,
   settings?: PublicSiteSettings,
+  originals?: Pick<R2Bucket, "head">,
 ): Promise<SiteConfig> {
-  return (await readPublicSiteConfigState(db, settings)).config;
+  return (await readPublicSiteConfigState(db, settings, originals)).config;
 }
 
 export async function readDraftSiteConfigState(

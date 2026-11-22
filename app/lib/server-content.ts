@@ -28,7 +28,7 @@ function publicDb(): D1Database {
 export const loadPublicExperience = cache(async () => {
   const db = publicDb();
   const site = await readPublicSiteSettings(db);
-  const config = await readPublicSiteConfig(db, site);
+  const config = await readPublicSiteConfig(db, site, env.ORIGINALS);
   return { site, config };
 });
 

@@ -1,6 +1,7 @@
 import { envString, requireDb, requireOriginals } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { readPublicSiteConfig } from "../../shared/site-config-storage";
+import { getPublicVisualAsset } from "../../app/lib/public-visuals";
 import {
   IMAGE_PRESETS,
   isImagePreset,
@@ -54,6 +55,7 @@ export async function serveMedia(
 
   const db = requireDb(env);
   const publicRequest = options.audience !== "admin";
+  let heroFallbackImageId: string | null | undefined;
   let image = await db
     .prepare(
       `SELECT
@@ -77,10 +79,11 @@ export async function serveMedia(
     if (siteMedia) {
       if (publicRequest && siteMedia.status === "ready") {
         const config = await readPublicSiteConfig(db);
-        const published = config.pages.home.sections.some((section) =>
+        const published = config.pages.home.sections.find((section) =>
           section.type === "hero" && section.heroMedia?.kind === "site-media" && section.heroMedia.id === imageId,
         );
-        if (!published) throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
+        if (!published || published.type !== "hero") throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
+        heroFallbackImageId = published.appearance.backgroundImageId;
       }
       image = {
         ...siteMedia,
@@ -98,6 +101,7 @@ export async function serveMedia(
     image.deletedAt ||
     image.albumDeletedAt ||
     image.status !== "ready" ||
+    image.originalKey.startsWith("client-galleries/") ||
     (publicRequest && image.albumStatus !== "published")
   ) {
     throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
@@ -123,10 +127,21 @@ export async function serveMedia(
   } else {
     const object = await requireOriginals(env).get(image.originalKey);
     if (!object) {
-      throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
+      if (heroFallbackImageId === undefined) throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
+      if (heroFallbackImageId && heroFallbackImageId !== imageId) {
+        try { return await serveMedia(request, env, heroFallbackImageId, presetName); }
+        catch (error) { if (!(error instanceof AppError) || error.status !== 404) throw error; }
+      }
+      // Keep already-rendered or snapshotted Home URLs usable after storage loss.
+      const fallback = getPublicVisualAsset(heroFallbackImageId ? "hero" : "cinematicHero");
+      const asset = await env.ASSETS.fetch(new Request(new URL(fallback.src, request.url)));
+      if (!asset.ok || !asset.body) throw new AppError(404, "IMAGE_NOT_FOUND", "Imagem não encontrada.");
+      sourceBody = asset.body;
+      sourceContentType = asset.headers.get("content-type") ?? sourceContentType;
+    } else {
+      sourceBody = object.body;
+      sourceContentType = object.httpMetadata?.contentType ?? sourceContentType;
     }
-    sourceBody = object.body;
-    sourceContentType = object.httpMetadata?.contentType ?? sourceContentType;
   }
 
   if (!env.IMAGES) {

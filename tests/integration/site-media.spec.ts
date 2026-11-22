@@ -174,4 +174,65 @@ describe("mídia independente do Hero", () => {
     expect(await env.DB.prepare("SELECT config_json FROM site_config_versions WHERE id = ?")
       .bind(before.versionId).first()).toEqual(rawBefore);
   });
+
+  it.each(["images", "site_media"] as const)("nega bytes privados referenciados por %s público", async (table) => {
+    const id = crypto.randomUUID();
+    const key = `client-galleries/${crypto.randomUUID()}/${id}.png`;
+    const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+    await env.ORIGINALS.put(key, bytes, { httpMetadata: { contentType: "image/png" } });
+    if (table === "images") {
+      await env.DB.prepare(`INSERT INTO albums (id, title, slug, status, created_at, updated_at)
+        VALUES (?, 'Synthetic', ?, 'published', '2026-11-22', '2026-11-22')`).bind(id, id).run();
+      await env.DB.prepare(`INSERT INTO images (id, album_id, original_key, mime_type, size_bytes,
+        position, status, created_at, updated_at)
+        VALUES (?, ?, ?, 'image/png', 8, 0, 'ready', '2026-11-22', '2026-11-22')`).bind(id, id, key).run();
+    } else {
+      const draft = await readDraftSiteConfigState(env.DB);
+      await env.DB.prepare(`INSERT INTO site_media (id, role, storage_key, original_filename, mime_type,
+        size_bytes, status, created_at, updated_at)
+        VALUES (?, 'hero', ?, 'synthetic.png', 'image/png', 8, 'ready', '2026-11-22', '2026-11-22')`)
+        .bind(id, key).run();
+      // A restored inconsistent snapshot bypasses the normal Studio input guards.
+      await env.DB.prepare("UPDATE site_config_versions SET config_json = ? WHERE id = ?")
+        .bind(JSON.stringify(selectSiteMediaHero(draft.config, id)), draft.publishedVersionId).run();
+    }
+    const qaEnv = { ...env, ENVIRONMENT: "qa", IMAGES: undefined } as unknown as Env;
+    await expect(serveMedia(new Request(`https://qa.example/media/${id}/display`), qaEnv, id, "display"))
+      .rejects.toMatchObject({ status: 404, code: "IMAGE_NOT_FOUND" });
+    for (const method of ["GET", "HEAD"]) {
+      const response = await exports.default.fetch(new Request(`http://localhost:8787/media/${id}/display`, { method }));
+      expect(response.status).toBe(404);
+      expect(response.headers.get("Content-Type")).not.toContain("image/");
+      expect(new Uint8Array(await response.arrayBuffer())).not.toEqual(bytes);
+    }
+    expect(new Uint8Array(await (await env.ORIGINALS.get(key))!.arrayBuffer())).toEqual(bytes);
+  });
+
+  it("usa o fallback para original R2 removido mesmo com Hero D1 pronto, sem alterar o snapshot", async () => {
+    const id = crypto.randomUUID(), key = `site-media/hero/${id}.png`;
+    await env.DB.prepare(`INSERT INTO site_media (id, role, storage_key, original_filename, mime_type,
+      size_bytes, status, created_at, updated_at)
+      VALUES (?, 'hero', ?, 'synthetic.png', 'image/png', 8, 'ready', '2026-11-22', '2026-11-22')`)
+      .bind(id, key).run();
+    await env.ORIGINALS.put(key, new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]));
+    const draft = await readDraftSiteConfigState(env.DB);
+    const saved = await saveDraftSiteConfig(env.DB, selectSiteMediaHero(draft.config, id), draft.revision, "test-admin");
+    const published = await publishDraftSiteConfig(env.DB, saved.revision, "test-admin");
+    const raw = await env.DB.prepare("SELECT config_json FROM site_config_versions WHERE id = ?")
+      .bind(published.publishedVersionId).first();
+    const before = await readPublicSiteConfigState(env.DB, undefined, env.ORIGINALS);
+    expect(before.config.pages.home.sections.find(s => s.type === "hero")).toMatchObject({ heroMedia: { id } });
+    await env.ORIGINALS.delete(key);
+    const after = await readPublicSiteConfigState(env.DB, undefined, env.ORIGINALS);
+    expect(after.config.pages.home.sections.find(s => s.type === "hero")).toMatchObject({ heroMedia: null });
+    expect(await env.DB.prepare("SELECT status FROM site_media WHERE id = ?").bind(id).first()).toEqual({ status: "ready" });
+    expect(await env.DB.prepare("SELECT config_json FROM site_config_versions WHERE id = ?")
+      .bind(published.publishedVersionId).first()).toEqual(raw);
+    // An already-rendered Home can still request the old URL after storage loss.
+    const request = new Request(`https://qa.example/media/${id}/display`);
+    const response = await serveMedia(request, { ...env, IMAGES: undefined } as unknown as Env, id, "display");
+    const fallback = await env.ASSETS.fetch(new Request("https://qa.example/photos/p002.jpg"));
+    expect(response.status).toBe(200);
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(await fallback.arrayBuffer()));
+  });
 });

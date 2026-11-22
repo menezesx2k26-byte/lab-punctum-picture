@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import type { EditorialConfig, HomeSectionConfig } from "../../../shared/config";
 import type { CarouselImage } from "../../lib/portfolio";
-import { resolveConfiguredHeroVisual } from "../../lib/public-visuals";
+import { getPublicVisualAsset, resolveConfiguredHeroVisual } from "../../lib/public-visuals";
 import { homeSectionAttributes } from "./section-attributes";
 
 export function HomeHeroSection({
@@ -33,7 +33,7 @@ export function HomeHeroSection({
     // The lens has an approved opening photograph; the legacy portrait fallback
     // belongs to other hero variants. Explicit Studio selections still win.
     const lensHero = !section.heroMedia && !section.appearance.backgroundImageId
-      ? {src:"/photos/p002.jpg", alt:"Vela acesa iluminando uma mão em uma cena escura", width:1080, height:1440}
+      ? getPublicVisualAsset("cinematicHero")
       : hero;
     return <LensHero hero={lensHero} copy={copy} section={section} />;
   }
