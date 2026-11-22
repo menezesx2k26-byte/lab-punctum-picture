@@ -338,8 +338,11 @@ try {
   assert.equal(await recoveredHeroImage.getAttribute("src"), "/photos/p002.jpg");
   assert.ok(await recoveredHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
   // Existing HTML may still reference this URL after storage loss.
-  await recoveredHeroPage.setContent(`<img src="${origin + publicHeroPath}" alt="Synthetic recovery check">`);
-  assert.ok(await recoveredHeroPage.locator("img").evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  const recoveredUrlPage = await recoveredHeroContext.newPage();
+  const recoveredUrlResponse = await recoveredUrlPage.goto(origin + publicHeroPath, { waitUntil: "load", timeout: 90_000 });
+  assert.equal(recoveredUrlResponse.status(), 200);
+  assert.match(recoveredUrlResponse.headers()["content-type"], /^image\//);
+  assert.ok(await recoveredUrlPage.locator("img").evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
   await recoveredHeroContext.close();
   assert.deepEqual(await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first(), publishedHeroRow);
   assert.equal((await db.prepare("SELECT status FROM site_media WHERE id=?").bind(heroId).first()).status, "ready");
