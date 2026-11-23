@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { startProdServer } from "vinext/server/prod-server";
+import { ensureUnlimitedCandidateStorage } from "./unlimited-bootstrap.mjs";
 import { candidateConfig } from "./candidate-runtime.mjs";
 import { openCandidateWritableDatabase } from "./candidate-sqlite.mjs";
 import { candidateOriginals } from "./candidate-originals.mjs";
@@ -7,6 +8,10 @@ import { candidateLocalBackups } from "./candidate-backups.mjs";
 import { installNodeR4StreamCompatibility } from "../punctum-hostinger-node/node-r4-stream-compat.mjs";
 
 process.umask(0o077);
+if (process.env.PUNCTUM_CANDIDATE_AUTO_BOOTSTRAP === "true") {
+  const bootstrapReceipt = ensureUnlimitedCandidateStorage(process.env);
+  console.log(JSON.stringify(bootstrapReceipt));
+}
 const config = candidateConfig();
 const port = Number(process.env.PORT || config.origin.port);
 if (!Number.isInteger(port) || port !== Number(config.origin.port)) {
