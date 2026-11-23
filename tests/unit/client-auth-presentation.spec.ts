@@ -1,9 +1,30 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { PUNCTUM_DEFAULT_SITE_CONFIG } from "../../shared/config";
 import { ClientAuthShell } from "../../app/albuns/components/ClientAuthShell";
 import { ClientLogin } from "../../app/albuns/components/ClientLogin";
+
+/* Next's browser-facing Image/Link modules are not runnable inside workerd
+ * Vitest. Only these presentation boundaries are mocked; ClientLogin
+ * itself and the real published theme resolver still render. */
+vi.mock("next/image", async () => {
+  const { createElement } = await import("react");
+  return {
+    default: ({ src, alt }: { src: string; alt: string }) =>
+      createElement("img", { src, alt }),
+  };
+});
+
+vi.mock("next/link", async () => {
+  const { createElement } = await import("react");
+  return {
+    default: ({ href, children }: { href: string; children: ReactNode }) =>
+      createElement("a", { href }, children),
+  };
+});
+
 
 function renderEntry(
   props: Parameters<typeof ClientLogin>[0] = {},
