@@ -100,7 +100,23 @@ function ClerkClientSessionExchange() {
 
 export function ClerkClientLogin({ publishableKey }: { publishableKey: string }) {
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider
+      publishableKey={publishableKey}
+      appearance={{
+        variables: {
+          colorPrimary: "#422079",
+          colorPrimaryForeground: "#ffffff",
+          colorBackground: "#f7f4ef",
+          colorForeground: "#18131e",
+          colorMutedForeground: "#46394d",
+          colorInput: "#ffffff",
+          colorInputForeground: "#18131e",
+          colorBorder: "#a89ab2",
+          borderRadius: "0px",
+          fontFamily: "Figtree, Manrope, sans-serif",
+        },
+      }}
+    >
       <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>
         <ClerkClientSessionExchange />
       </div>
