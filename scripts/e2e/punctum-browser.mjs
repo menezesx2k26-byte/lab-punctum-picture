@@ -14,6 +14,7 @@ import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
 import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
+import { runClientAuthVisualQa } from "./client-auth-visual-qa.mjs";
 import { createZoomBrowser, readBrowserZoom, captureZoomViewport } from "./browser-zoom-evidence.mjs";
 import { measureConservativeContrast } from "./contrast-pixel-evidence.mjs";
 
@@ -172,6 +173,7 @@ try {
   record("fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals");
   browser = await playwright.chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
   report.browser = browser.version();
+  await runClientAuthVisualQa({ browser, origin, record, screenshot, auditAccessibility });
   const anonymous = await newContext();
   const unauthorized = await anonymous.request.get(origin + "/albuns", { maxRedirects: 0 });
   assert.equal(unauthorized.status(), 303, await unauthorized.text()); privateHeaders(unauthorized);
