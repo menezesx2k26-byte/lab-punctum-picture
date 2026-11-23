@@ -1,10 +1,13 @@
 import { env } from "cloudflare:workers";
 import { ClientLogin } from "../components/ClientLogin";
+import { SiteThemeRoot } from "../../components/SiteThemeRoot";
+import { loadPublicExperience } from "../../lib/server-content";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Entrar nos seus álbuns" };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { config } = await loadPublicExperience();
   const clientAuthMode = Reflect.get(env, "CLIENT_AUTH_MODE");
   const clerkOnly = clientAuthMode === "clerk";
   const clerkFlag = Reflect.get(env, "CLERK_AUTH_ENABLED") === "true";
@@ -20,10 +23,12 @@ export default function LoginPage() {
     (clerkOnly || (clerkFlag && clientAuthMode !== "access"));
 
   return (
-    <ClientLogin
+    <SiteThemeRoot config={config} className="punctum-access" ambientCursor={false}>
+      <ClientLogin
       clerkEnabled={clerkEnabled}
       clerkOnly={clerkOnly}
       publishableKey={clerkEnabled ? publishableKey : undefined}
-    />
+      />
+    </SiteThemeRoot>
   );
 }
