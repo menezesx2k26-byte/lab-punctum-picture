@@ -1,0 +1,260 @@
+/* Client auth only. The Studio's published CSS tokens remain the source of truth. */
+.private-albums .pa-auth-shell.site-shell {
+  min-height: 100svh;
+  overflow: visible;
+  color: var(--color-foreground);
+  background: var(--background-page, var(--color-background));
+  font-family: var(--font-body);
+}
+
+.private-albums .pa-auth-main {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  min-height: 100svh;
+}
+
+.private-albums .pa-auth-panel {
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 100svh;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    clamp(24px, 5vw, 82px)
+    max(24px, env(safe-area-inset-bottom));
+  background: var(--color-background);
+}
+
+.private-albums .pa-auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.015em;
+}
+
+.private-albums .pa-auth-logo {
+  display: inline-flex;
+  width: 66px;
+  height: 66px;
+  min-width: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+.private-albums .pa-auth-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: none;
+}
+
+.private-albums .pa-auth-body {
+  width: 100%;
+  max-width: 490px;
+  margin-block: auto;
+  padding-block: clamp(32px, 6svh, 92px);
+}
+
+.private-albums .pa-auth-body .pa-eyebrow {
+  margin-bottom: 18px;
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+}
+
+.private-albums .pa-auth-body h1 {
+  max-width: 12ch;
+  color: var(--color-foreground);
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 5.5vw, 5.5rem);
+  font-weight: var(--font-heading-weight, 400);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.private-albums .pa-auth-body h1 em {
+  color: var(--color-primary);
+  font-style: italic;
+}
+
+.private-albums .pa-auth-description {
+  max-width: 35ch;
+  margin: 20px 0 32px;
+  color: var(--color-muted);
+  font-size: clamp(1rem, 1.25vw, 1.08rem);
+  line-height: 1.65;
+}
+
+.private-albums .pa-auth-form {
+  max-width: 430px;
+}
+
+.private-albums .pa-auth-form h2 {
+  margin: 0 0 18px;
+  font-family: var(--font-heading);
+  font-size: clamp(1.55rem, 2.6vw, 2.1rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+
+.private-albums .pa-auth-form form {
+  gap: 16px;
+}
+
+.private-albums .pa-auth-form label {
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+}
+
+.private-albums .pa-auth-form input {
+  min-height: 50px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control, 0);
+  background: var(--color-surface);
+  color: var(--color-foreground);
+}
+
+.private-albums .pa-auth-form input:focus-visible {
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.private-albums .pa-auth-form .pa-primary {
+  width: 100%;
+  min-height: 54px;
+  padding: 14px 20px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control, 0);
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.private-albums .pa-auth-form .pa-primary:hover:not(:disabled) {
+  background: var(--color-foreground);
+  border-color: var(--color-foreground);
+}
+
+.private-albums .pa-auth-form .pa-caption {
+  max-width: 43ch;
+  margin-top: 18px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.private-albums .pa-auth-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+}
+
+.private-albums .pa-auth-footer a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+.private-albums .pa-auth-photo {
+  position: relative;
+  z-index: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.private-albums .pa-auth-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 52%;
+  filter: none;
+}
+
+.private-albums .pa-auth-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--color-background) 0%, transparent 28%),
+    linear-gradient(0deg, rgba(11, 5, 15, 0.48), transparent 60%);
+}
+
+@media (max-width: 800px) {
+  .private-albums .pa-auth-main {
+    display: block;
+  }
+
+  .private-albums .pa-auth-panel {
+    padding:
+      max(20px, env(safe-area-inset-top))
+      clamp(20px, 6vw, 36px)
+      max(20px, env(safe-area-inset-bottom));
+    background: transparent;
+  }
+
+  .private-albums .pa-auth-body {
+    margin-block: auto;
+    padding-block: clamp(28px, 5svh, 54px);
+  }
+
+  .private-albums .pa-auth-body h1 {
+    font-size: clamp(2.8rem, 11vw, 4.25rem);
+  }
+
+  .private-albums .pa-auth-description {
+    margin: 18px 0 26px;
+  }
+
+  .private-albums .pa-auth-photo {
+    position: absolute;
+    inset: 0;
+    opacity: 0.14;
+    pointer-events: none;
+  }
+
+  .private-albums .pa-auth-photo::after {
+    background: linear-gradient(180deg, var(--color-background) 0%, transparent 35%, var(--color-background) 90%);
+  }
+}
+
+@media (max-width: 360px) {
+  .private-albums .pa-auth-brand > span {
+    max-width: 16ch;
+    line-height: 1.4;
+  }
+  .private-albums .pa-auth-body h1 {
+    font-size: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .private-albums .pa-auth-shell *,
+  .private-albums .pa-auth-shell *::before,
+  .private-albums .pa-auth-shell *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
