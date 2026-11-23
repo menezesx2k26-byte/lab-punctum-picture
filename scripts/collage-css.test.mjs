@@ -94,5 +94,7 @@ describe("Punctum client sign-in brand contract", () => {
     assert.match(privateCss, /grid-template-areas:\s*"copy" "login" "photo"/);
     assert.doesNotMatch(clerk, /Entrar com Clerk|Conta Clerk conectada/);
     assert.match(clerk, /Continuar para meus álbuns/);
+    assert.match(clerk, /colorPrimary: "#422079"/);
+    assert.match(clerk, /colorBackground: "#f7f4ef"/);
   });
 });
