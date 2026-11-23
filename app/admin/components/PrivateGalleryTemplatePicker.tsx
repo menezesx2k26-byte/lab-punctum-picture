@@ -27,7 +27,10 @@ export function PrivateGalleryTemplatePicker({ value, onChange }: Props) {
             <span className={`pga-template-preview pga-template-preview--${id}`} aria-hidden="true">
               <i /><i /><i /><i />
             </span>
-            <strong>{label}</strong>
+            <span className="pga-template-card-head">
+              <strong>{label}</strong>
+              {value === id && <span className="pga-template-selected-tag" aria-hidden="true">Ativo</span>}
+            </span>
             <small>{description}</small>
           </button>
         ))}

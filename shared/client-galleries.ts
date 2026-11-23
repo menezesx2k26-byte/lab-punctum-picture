@@ -8,7 +8,7 @@ export const CLIENT_GALLERY_TEMPLATE_OPTIONS: ReadonlyArray<{
 }> = [
   { id: "classico", label: "Clássico", description: "Fotografias em colunas, no ritmo original." },
   { id: "editorial", label: "Editorial", description: "Uma abertura ampla e páginas com respiro." },
-  { id: "colagem", label: "Colagem", description: "Recortes e alternância de proporções." },
+  { id: "colagem", label: "Colagem", description: "Composição de fotografias em proporções variadas." },
   { id: "mosaico", label: "Mosaico", description: "Conjunto de quadros em composições variadas." },
   { id: "cinema", label: "Cinema", description: "Um fotograma de cada vez, em tela generosa." },
 ];

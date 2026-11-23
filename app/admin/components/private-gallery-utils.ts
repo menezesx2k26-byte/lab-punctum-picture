@@ -38,6 +38,7 @@ export type ClientAccountSummary = {
   email: string;
   disabledAt: string | null;
   mustChangePassword: number;
+  clerkUserId?: string | null;
 };
 export const PRIVATE_GALLERY_STATUS = {
   draft: "Rascunho",

@@ -18,9 +18,8 @@ import { serveMedia } from "./media/serve";
 import { handleScheduled } from "./scheduled";
 import { robots, sitemap } from "./seo";
 import { handleSiteMediaApi } from "./site-media";
-import { adminAuthMode, assertAllowedOrigin, requireAdmin } from "./utils/auth";
-import { clientAuthMode } from "./client/auth-mode";
-import { isClerkAuthEnabled, resolveClerkRuntimeConfig } from "./auth/clerk-auth";
+import { assertAllowedOrigin, requireAdmin } from "./utils/auth";
+import { resolveClerkRuntimeConfig, shouldAllowClerkCsp } from "./auth/clerk-auth";
 import { AppError } from "./utils/errors";
 import { apiError, withSecurityHeaders } from "./utils/response";
 
@@ -183,9 +182,9 @@ async function routeRequest(
   mark?.("render-start");
   const response = await handler.fetch(request, env, ctx);
   mark?.("render-end");
-  const clerkLogin = (url.pathname === "/acesso" && adminAuthMode(env) !== "legacy") ||
-    (url.pathname === "/albuns/entrar" && clientAuthMode(env) !== "access" && isClerkAuthEnabled(env));
-  const clerkIssuer = clerkLogin ? resolveClerkRuntimeConfig(request, env)?.issuer : undefined;
+  const clerkIssuer = shouldAllowClerkCsp(url.pathname, env)
+    ? resolveClerkRuntimeConfig(request, env)?.issuer
+    : undefined;
   const options = { clerkIssuer };
   return isPrivateGalleryPath(url.pathname) ? privateResponse(response, options) : withSecurityHeaders(response, options);
 }

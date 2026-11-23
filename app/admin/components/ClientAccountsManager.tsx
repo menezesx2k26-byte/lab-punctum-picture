@@ -16,14 +16,19 @@ export function ClientAccountsManager() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [authMode, setAuthMode] = useState<"password" | "access">("password");
+  const [authMode, setAuthMode] = useState<"password" | "access" | "clerk">("password");
+  const [clerkEnabled, setClerkEnabled] = useState(false);
+  const [clerkInputs, setClerkInputs] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
   const load = useCallback(async () => {
-    const data = await privateApi<{ clients: ClientAccountSummary[]; authMode: "password" | "access" }>(
-      "/admin/api/clientes",
-    );
+    const data = await privateApi<{
+      clients: ClientAccountSummary[];
+      authMode: "password" | "access" | "clerk";
+      clerkEnabled?: boolean;
+    }>("/admin/api/clientes");
     setClients(data.clients);
     setAuthMode(data.authMode);
+    setClerkEnabled(Boolean(data.clerkEnabled) || data.authMode === "clerk");
     setLoading(false);
   }, []);
   useEffect(() => {
@@ -42,13 +47,18 @@ export function ClientAccountsManager() {
     setCopied(false);
     setNotice("");
     try {
-      const data = await privateApi<{ temporaryPassword?: string }>(
+      const data = await privateApi<{ temporaryPassword?: string; authMode?: "password" | "access" | "clerk" }>(
         "/admin/api/clientes",
         "POST",
         { name, email },
       );
+      const effectiveMode = data.authMode ?? authMode;
       if (data.temporaryPassword) setCredential({ email, password: data.temporaryPassword });
-      else setNotice("Cliente cadastrado. Envie o endereço /albuns/entrar para confirmar o e-mail pelo Cloudflare Access.");
+      else if (effectiveMode === "clerk") {
+        setNotice("Cliente cadastrado. Vincule o identificador Clerk abaixo para liberar o acesso em /albuns/entrar.");
+      } else {
+        setNotice("Cliente cadastrado. Envie o endereço /albuns/entrar para confirmar o e-mail pelo Cloudflare Access.");
+      }
       setName("");
       setEmail("");
       await load();
@@ -62,9 +72,11 @@ export function ClientAccountsManager() {
     if (
       reset &&
       !window.confirm(
-        authMode === "access"
-          ? "Revogar todas as sessões deste cliente e confirmar novamente o acesso pelo e-mail?"
-          : "Gerar uma nova senha temporária? Isso encerra todos os acessos atuais deste cliente.",
+        authMode === "clerk"
+          ? "Revogar todas as sessões deste cliente? Ele precisará entrar novamente com a conta Clerk vinculada."
+          : authMode === "access"
+            ? "Revogar todas as sessões deste cliente e confirmar novamente o acesso pelo e-mail?"
+            : "Gerar uma nova senha temporária? Isso encerra todos os acessos atuais deste cliente.",
       )
     )
       return;
@@ -87,6 +99,8 @@ export function ClientAccountsManager() {
         );
         if (data.temporaryPassword) {
           setCredential({ email: client.email, password: data.temporaryPassword });
+        } else if (authMode === "clerk") {
+          setNotice("Sessões revogadas. O próximo acesso exigirá nova validação no Clerk.");
         } else {
           setNotice("Sessões revogadas. O próximo acesso exigirá confirmação pelo e-mail.");
         }
@@ -94,6 +108,48 @@ export function ClientAccountsManager() {
         await privateApi("/admin/api/clientes/" + client.id, "PATCH", {
           disabled: !client.disabledAt,
         });
+      await load();
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function linkClerk(client: ClientAccountSummary) {
+    const clerkUserId = (clerkInputs[client.id] ?? "").trim();
+    if (!clerkUserId) {
+      setError("Informe o identificador Clerk do cliente (ex.: user_...).");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await privateApi("/admin/api/clientes/" + client.id + "/clerk-link", "PUT", {
+        clerkUserId,
+      });
+      setClerkInputs((current) => ({ ...current, [client.id]: "" }));
+      setNotice(`Identidade Clerk vinculada a ${client.name}.`);
+      await load();
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function unlinkClerk(client: ClientAccountSummary) {
+    if (
+      !window.confirm(
+        `Desvincular a conta Clerk de ${client.name} e revogar todas as sessões ativas?`,
+      )
+    )
+      return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await privateApi("/admin/api/clientes/" + client.id + "/clerk-link", "DELETE");
+      setNotice(`Vínculo Clerk removido de ${client.name}.`);
       await load();
     } catch (e) {
       setError(errorMessage(e));
@@ -120,6 +176,9 @@ export function ClientAccountsManager() {
       {notice && <p role="status" className="pga-note">{notice}</p>}
       {authMode === "access" && (
         <p className="pga-note">O acesso é por código de e-mail, validado pelo Cloudflare Access. Não serão emitidas senhas temporárias.</p>
+      )}
+      {authMode === "clerk" && (
+        <p className="pga-note">O acesso dos clientes é autenticado pelo Clerk com vínculo administrativo. Não serão emitidas senhas temporárias.</p>
       )}
       {credential && (
         <section
@@ -195,7 +254,7 @@ export function ClientAccountsManager() {
             />
           </label>
           <button className="button" disabled={busy} type="submit">
-            {busy ? "Aguarde…" : authMode === "access" ? "Cadastrar cliente" : "Cadastrar e gerar senha"}
+            {busy ? "Aguarde…" : authMode === "password" ? "Cadastrar e gerar senha" : "Cadastrar cliente"}
           </button>
         </form>
       </section>
@@ -206,16 +265,67 @@ export function ClientAccountsManager() {
         )}
         {clients.map((client) => (
           <article className="admin-card pga-client" key={client.id}>
-            <div>
+            <div className="pga-client-info">
               <h2>{client.name}</h2>
               <p>{client.email}</p>
-              <span className="pga-badge">
-                {client.disabledAt
-                  ? "Desativado"
-                  : authMode === "password" && client.mustChangePassword
-                    ? "Aguardando troca de senha"
-                    : "Ativo"}
-              </span>
+              <div className="pga-badges">
+                <span className="pga-badge">
+                  {client.disabledAt
+                    ? "Desativado"
+                    : authMode === "password" && client.mustChangePassword
+                      ? "Aguardando troca de senha"
+                      : "Ativo"}
+                </span>
+                {clerkEnabled && (
+                  <span className="pga-badge">
+                    {client.clerkUserId ? "Clerk vinculado" : "Sem vínculo Clerk"}
+                  </span>
+                )}
+              </div>
+              {clerkEnabled && (
+                <div className="pga-clerk-link">
+                  {client.clerkUserId ? (
+                    <>
+                      <code>{client.clerkUserId}</code>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={busy}
+                        onClick={() => void unlinkClerk(client)}
+                      >
+                        Desvincular Clerk
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <label>
+                        ID Clerk (user_…)
+                        <input
+                          className="admin-input"
+                          value={clerkInputs[client.id] ?? ""}
+                          onChange={(e) =>
+                            setClerkInputs((current) => ({
+                              ...current,
+                              [client.id]: e.target.value,
+                            }))
+                          }
+                          placeholder="user_..."
+                          maxLength={200}
+                          autoComplete="off"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={busy}
+                        onClick={() => void linkClerk(client)}
+                      >
+                        Vincular Clerk
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <div className="pga-actions">
               <button
@@ -223,7 +333,7 @@ export function ClientAccountsManager() {
                 disabled={busy}
                 onClick={() => manage(client, true)}
               >
-                {authMode === "access" ? "Revogar sessões" : "Nova senha"}
+                {authMode === "password" ? "Nova senha" : "Revogar sessões"}
               </button>
               <button
                 className="button secondary"

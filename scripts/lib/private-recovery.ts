@@ -1,5 +1,6 @@
 import { recoverySelection, recoveryInsert } from "./private-recovery-format.mjs";
 import { privateGalleryStorageKey } from "../../worker/client/gallery-storage-key";
+import { CLIENT_GALLERY_LAYOUTS } from "../../shared/client-galleries";
 /** Operator library only. No HTTP route or automatic production invocation. */
 type Row = Record<string, string | number | null>;
 const tables = ["client_accounts", "client_galleries", "client_gallery_images", "client_gallery_upload_intents", "client_gallery_favorites"] as const;
@@ -141,6 +142,7 @@ async function assertRestoreRowConstraints(snapshot: ClientRecovery, db: D1Datab
           (row.must_change_password === 0 || row.must_change_password === 1);
       } else if (table === "client_galleries") {
         valid = enumValue(row.theme, ["noir", "ivory", "warm"]) &&
+          (!("layout_preset" in row) || enumValue(row.layout_preset, CLIENT_GALLERY_LAYOUTS)) &&
           enumValue(row.status, ["draft", "published", "archived"]) &&
           (row.allow_downloads === 0 || row.allow_downloads === 1);
       } else if (table === "client_gallery_images") {

@@ -243,6 +243,11 @@ describe("scoped private recovery with real local D1/R2", () => {
         mutate: (s) => { delete s.tables.client_galleries[0].title; },
         error: "Recovery snapshot schema mismatch",
       },
+      {
+        name: "unsupported gallery layout_preset",
+        mutate: (s) => { s.tables.client_galleries[0].layout_preset = "<script>"; },
+        error: "Recovery snapshot row constraint mismatch",
+      },
     ];
     for (const scenario of cases) {
       const snapshot = structuredClone(baseline);
@@ -265,6 +270,32 @@ describe("scoped private recovery with real local D1/R2", () => {
       expect(await bindings.RESTORE_DB.prepare("SELECT id FROM client_accounts WHERE id=?")
         .bind(client).first()).toBeNull();
     }
+  });
+  it("preserves layout_preset across capture/restore and defaults pre-0016 legacy snapshots to classico", async () => {
+    const clientA = await seedClient();
+    const galleryA = await seedGallery(clientA);
+    await env.DB.prepare("UPDATE client_galleries SET layout_preset='cinema' WHERE id=?").bind(galleryA).run();
+    const imageA = await seedReadyImage(galleryA);
+    const keyA = `client-galleries/${galleryA}/${imageA}.png`;
+    await env.ORIGINALS.put(keyA, Uint8Array.of(51), { httpMetadata: { contentType: "image/png" } });
+    const snapshotA = await captureClientRecovery(env.DB, env.ORIGINALS, [clientA]);
+    expect(snapshotA.tables.client_galleries[0].layout_preset).toBe("cinema");
+    await restoreClientRecovery(snapshotA, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
+    const restoredA = await bindings.RESTORE_DB.prepare("SELECT layout_preset FROM client_galleries WHERE id=?")
+      .bind(galleryA).first<{ layout_preset: string }>();
+    expect(restoredA?.layout_preset).toBe("cinema");
+
+    const clientLegacy = await seedClient();
+    const galleryLegacy = await seedGallery(clientLegacy);
+    const imageLegacy = await seedReadyImage(galleryLegacy);
+    const keyLegacy = `client-galleries/${galleryLegacy}/${imageLegacy}.png`;
+    await env.ORIGINALS.put(keyLegacy, Uint8Array.of(52), { httpMetadata: { contentType: "image/png" } });
+    const snapshotLegacy = structuredClone(await captureClientRecovery(env.DB, env.ORIGINALS, [clientLegacy]));
+    delete snapshotLegacy.tables.client_galleries[0].layout_preset;
+    await restoreClientRecovery(snapshotLegacy, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
+    const restoredLegacy = await bindings.RESTORE_DB.prepare("SELECT layout_preset FROM client_galleries WHERE id=?")
+      .bind(galleryLegacy).first<{ layout_preset: string }>();
+    expect(restoredLegacy?.layout_preset).toBe("classico");
   });
   it("rejects a forged source digest and inconsistent backup attestations before restore writes", async () => {
     const id = await seedClient();

@@ -44,4 +44,35 @@ describe("headers de framing", () => {
     });
     expect(response.headers.get("content-security-policy")).not.toContain("clerk.punctumpicture.com");
   });
+
+  it("habilita CSP do Clerk nas rotas que montam ClerkProvider (/acesso, /admin/*, /albuns/entrar) sem relaxar páginas públicas", async () => {
+    const { shouldAllowClerkCsp } = await import("../../worker/auth/clerk-auth");
+    const clerkEnv = {
+      ADMIN_AUTH_MODE: "clerk",
+      CLIENT_AUTH_MODE: "clerk",
+      CLERK_AUTH_ENABLED: "true",
+    } as unknown as Env;
+    const legacyEnv = {
+      ADMIN_AUTH_MODE: "legacy",
+      CLIENT_AUTH_MODE: "password",
+      CLERK_AUTH_ENABLED: "false",
+    } as unknown as Env;
+
+    expect(shouldAllowClerkCsp("/acesso", clerkEnv)).toBe(true);
+    expect(shouldAllowClerkCsp("/admin", clerkEnv)).toBe(true);
+    expect(shouldAllowClerkCsp("/admin/clientes", clerkEnv)).toBe(true);
+    expect(shouldAllowClerkCsp("/admin/albuns-privados", clerkEnv)).toBe(true);
+    expect(shouldAllowClerkCsp("/albuns/entrar", clerkEnv)).toBe(true);
+
+    // Public routes and preview iframe never receive Clerk script-src
+    expect(shouldAllowClerkCsp("/", clerkEnv)).toBe(false);
+    expect(shouldAllowClerkCsp("/ensaios", clerkEnv)).toBe(false);
+    expect(shouldAllowClerkCsp("/admin/studio/preview", clerkEnv)).toBe(false);
+    expect(shouldAllowClerkCsp("/albuns", clerkEnv)).toBe(false);
+
+    // Legacy mode with Clerk off keeps strict CSP everywhere
+    expect(shouldAllowClerkCsp("/acesso", legacyEnv)).toBe(false);
+    expect(shouldAllowClerkCsp("/admin/clientes", legacyEnv)).toBe(false);
+    expect(shouldAllowClerkCsp("/albuns/entrar", legacyEnv)).toBe(false);
+  });
 });
