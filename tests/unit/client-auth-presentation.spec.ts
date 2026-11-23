@@ -10,11 +10,10 @@ function renderEntry(
   config: unknown = PUNCTUM_DEFAULT_SITE_CONFIG,
 ): string {
   return renderToStaticMarkup(
-    createElement(
-      ClientAuthShell,
-      { config },
-      createElement(ClientLogin, props),
-    ),
+    createElement(ClientAuthShell, {
+      config,
+      children: createElement(ClientLogin, props),
+    }),
   );
 }
 
@@ -41,7 +40,7 @@ describe("Punctum client authentication presentation", () => {
     const html = renderEntry();
     expect(html).toContain("/logo-punctum-transparent.png");
     expect(html).toContain("/photos/p002.jpg");
-    expect(html).toContain("Suas fotografias, só suas.");
+    expect(html.replace(/<[^>]*>/g, " ")).toMatch(/Suas fotografias,\s+só suas\./);
     expect(html).toContain("Entre para acessar seus álbuns privados.");
     expect(html).toContain("Abrir meus álbuns");
     expect(html).not.toContain("O que fica,");
