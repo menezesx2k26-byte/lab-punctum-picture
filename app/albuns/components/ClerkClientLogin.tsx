@@ -15,7 +15,7 @@ function ClerkClientSessionExchange() {
     try {
       const token = await getToken();
       if (!token) {
-        setError("Entre com sua conta Clerk para abrir os seus álbuns.");
+        setError("Entre com sua conta para abrir os seus álbuns.");
         setBusy(false);
         return;
       }
@@ -36,7 +36,7 @@ function ClerkClientSessionExchange() {
       setError(
         err instanceof Error
           ? err.message
-          : "Não foi possível entrar com a sessão Clerk.",
+          : "Não foi possível concluir o acesso.",
       );
       setBusy(false);
     }
@@ -64,13 +64,13 @@ function ClerkClientSessionExchange() {
       <Show when="signed-out">
         <SignInButton mode="modal">
           <button className="pa-primary" type="button" disabled={!isLoaded}>
-            Entrar com Clerk <span aria-hidden="true">↗</span>
+            Continuar para meus álbuns <span aria-hidden="true">↗</span>
           </button>
         </SignInButton>
       </Show>
       <Show when="signed-in">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <span>Conta Clerk conectada</span>
+          <span>Conta conectada</span>
           <button
             type="button"
             disabled={busy}
