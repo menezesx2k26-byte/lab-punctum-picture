@@ -66,3 +66,33 @@ describe("Collage mobile CSS contract", () => {
     );
   });
 });
+
+
+describe("Punctum client sign-in brand contract", () => {
+  const login = readFileSync(fileURLToPath(new URL("../app/albuns/components/ClientLogin.tsx", import.meta.url)), "utf8");
+  const clerk = readFileSync(fileURLToPath(new URL("../app/albuns/components/ClerkClientLogin.tsx", import.meta.url)), "utf8");
+  const entry = readFileSync(fileURLToPath(new URL("../app/albuns/entrar/page.tsx", import.meta.url)), "utf8");
+  const password = readFileSync(fileURLToPath(new URL("../app/albuns/trocar-senha/page.tsx", import.meta.url)), "utf8");
+  const privateCss = readFileSync(fileURLToPath(new URL("../app/albuns/albuns.css", import.meta.url)), "utf8");
+
+  it("reuses official public brand assets instead of a text-only login", () => {
+    assert.match(login, /getPublicVisualAsset\("logo"\)\.src/);
+    assert.match(login, /getPublicVisualAsset\("hero"\)\.src/);
+    assert.match(login, /pa-entry-art/);
+    assert.match(login, /Voltar ao portfólio/);
+  });
+
+  it("keeps both authentication routes aligned to the active public theme", () => {
+    assert.match(entry, /loadPublicExperience\(\)/);
+    assert.match(entry, /<SiteThemeRoot config=\{config\} className="punctum-access"/);
+    assert.match(password, /<SiteThemeRoot config=\{config\} className="punctum-access"/);
+  });
+
+  it("preserves client-facing wording and a mobile-first collage treatment", () => {
+    assert.match(privateCss, /--pa-entry-purple:\s*#422079/);
+    assert.match(privateCss, /--pa-entry-yellow:\s*#ffe43b/);
+    assert.match(privateCss, /grid-template-areas:\s*"copy" "login" "photo"/);
+    assert.doesNotMatch(clerk, /Entrar com Clerk|Conta Clerk conectada/);
+    assert.match(clerk, /Continuar para meus álbuns/);
+  });
+});
