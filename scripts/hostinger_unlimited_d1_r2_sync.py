@@ -294,6 +294,7 @@ def _fetch_clerk_admin_email_and_pem(secret_key: str, clerk_user_id: str) -> tup
     pem = subprocess.check_output(
         [
             "node",
+            "--input-type=module",
             "-e",
             "import { createPublicKey } from 'node:crypto'; "
             "const jwk = JSON.parse(process.argv[1]); "
