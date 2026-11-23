@@ -67,6 +67,7 @@ def build_unlimited_sync_env(
     source_sha: str,
     import_key: str | None = None,
     import_sha256: str | None = None,
+    admin_allowed_emails: str | None = None,
     admin_password_hash: str,
     admin_session_secret: str,
     client_session_secret: str,
@@ -101,6 +102,8 @@ def build_unlimited_sync_env(
         "PUNCTUM_CANDIDATE_CLIENT_SESSION_SECRET": client_session_secret,
         "PUNCTUM_QA_SOURCE_SHA": source_sha,
     }
+    if admin_allowed_emails and admin_allowed_emails.strip():
+        env_map["PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS"] = admin_allowed_emails.strip()
     if import_key and import_sha256:
         env_map["PUNCTUM_MANAGED_IMPORT_KEY"] = import_key
         env_map["PUNCTUM_MANAGED_IMPORT_SHA256"] = import_sha256

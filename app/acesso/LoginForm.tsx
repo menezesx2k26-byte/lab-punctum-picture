@@ -1,8 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useSyncExternalStore } from "react";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { ClerkAdminLogin } from "./ClerkAdminLogin";
+
+const emptySubscribe = () => () => {};
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 export type AdminLoginProps = {
   clerkEnabled?: boolean;
@@ -15,6 +24,7 @@ export function LoginForm({
   clerkOnly = false,
   publishableKey,
 }: AdminLoginProps) {
+  const hydrated = useHydrated();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -39,7 +49,10 @@ export function LoginForm({
       }
 
       const requested = new URLSearchParams(window.location.search).get("next");
-      window.location.href = requested?.startsWith("/admin") ? requested : "/admin";
+      window.location.href =
+        requested?.startsWith("/admin") && !requested.includes(".rsc")
+          ? requested
+          : "/admin";
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível entrar.");
       setBusy(false);
@@ -58,11 +71,13 @@ export function LoginForm({
         <h1>Entrar no painel</h1>
         <p className="access-description">Área de administração da Punctum Picture.</p>
       </div>
-      {showClerk && publishableKey && (
-        <ClerkAdminLogin publishableKey={publishableKey} />
-      )}
       {!clerkOnly && (
-        <form className="access-form" style={{ padding: 0, border: 0 }} onSubmit={submit}>
+        <form
+          className="access-form"
+          style={{ padding: 0, border: 0 }}
+          method="post"
+          onSubmit={submit}
+        >
           <label className="field">
             <span>E-mail</span>
             <input
@@ -82,7 +97,7 @@ export function LoginForm({
               required
             />
           </label>
-          <button className="button access-submit" type="submit" disabled={busy}>
+          <button className="button access-submit" type="submit" disabled={busy || !hydrated}>
             {busy ? "Entrando…" : "Entrar"}
             {!busy && <ArrowRight size={16} aria-hidden="true" />}
           </button>
@@ -90,6 +105,16 @@ export function LoginForm({
             {message}
           </p>
         </form>
+      )}
+      {showClerk && publishableKey && (
+        <>
+          {!clerkOnly && (
+            <div className="access-divider" role="separator">
+              <span>ou</span>
+            </div>
+          )}
+          <ClerkAdminLogin publishableKey={publishableKey} secondary={!clerkOnly} />
+        </>
       )}
     </div>
   );

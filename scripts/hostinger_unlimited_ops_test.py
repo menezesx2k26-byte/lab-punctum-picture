@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import json
 import unittest
 
@@ -8,7 +9,9 @@ from scripts.hostinger_unlimited_ops import (
     compute_temp_daily_schedule,
     cron_command,
     extract_cron_receipt,
+    merge_admin_allowed_emails,
     parse_bootstrap_receipt,
+    resolve_admin_password_hash,
     sanitize_build_logs,
     verify_cron_230_and_restore,
 )
@@ -31,8 +34,41 @@ class HostingerUnlimitedOpsTest(unittest.TestCase):
         self.assertRegex(updated["PUNCTUM_CANDIDATE_ADMIN_PASSWORD_HASH"], r"^[a-f0-9]{64}$")
         self.assertGreaterEqual(len(updated["PUNCTUM_CANDIDATE_ADMIN_SESSION_SECRET"]), 64)
         self.assertGreaterEqual(len(updated["PUNCTUM_CANDIDATE_CLIENT_SESSION_SECRET"]), 64)
+        self.assertNotIn("PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS", updated)
         self.assertNotIn("PUNCTUM_MANAGED_IMPORT_KEY", updated)
         self.assertNotIn("PUNCTUM_MANAGED_IMPORT_SHA256", updated)
+
+    def test_resolve_admin_password_hash_and_merge_allowlist(self):
+        expected_sha = hashlib.sha256(b"SecretPass123!").hexdigest()
+        self.assertEqual(resolve_admin_password_hash(raw_password="SecretPass123!"), expected_sha)
+        self.assertEqual(resolve_admin_password_hash(explicit_hash="A" * 64, raw_password="ignored"), "a" * 64)
+        with self.assertRaises(ValueError):
+            resolve_admin_password_hash(explicit_hash="not-hex")
+
+        merged = merge_admin_allowed_emails(
+            "Studio@Example.com",
+            "maria@example.com, studio@example.com",
+            "op@example.com",
+        )
+        self.assertEqual(merged, "studio@example.com,maria@example.com,op@example.com")
+        with self.assertRaises(ValueError):
+            merge_admin_allowed_emails("studio@example.com", "bad-email")
+
+        updated = build_clean_redeploy_env(
+            publishable_key="pk_live_123",
+            secret_key="sk_live_456",
+            jwt_key_pem_single_line="-----BEGIN PUBLIC KEY-----\\nABC\\n-----END PUBLIC KEY-----",
+            admin_email="studio@example.com",
+            clerk_admin_user_id="user_3M7epRZWjA3wg33n8xOk9ddeOzg",
+            source_sha="a" * 40,
+            admin_password_hash=expected_sha,
+            admin_allowed_emails=merged,
+        )
+        self.assertEqual(updated["PUNCTUM_CANDIDATE_ADMIN_PASSWORD_HASH"], expected_sha)
+        self.assertEqual(
+            updated["PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS"],
+            "studio@example.com,maria@example.com,op@example.com",
+        )
 
     def test_sanitize_build_logs_extracts_safe_errors_without_leaking_secrets(self):
         raw = {

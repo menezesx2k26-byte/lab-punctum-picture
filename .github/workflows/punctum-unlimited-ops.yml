@@ -47,6 +47,9 @@ jobs:
           CLERK_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
           PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
+          PUNCTUM_CLERK_ADMIN_EMAIL: ${{ secrets.PUNCTUM_CLERK_ADMIN_EMAIL }}
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
         run: |
           args=()
           if [ "${{ inputs.run_deploy }}" = "true" ]; then

@@ -59,6 +59,15 @@ test("candidateConfig validates isolated private candidate environment and rejec
   assert.equal(cfg.publicOrigin.origin, "https://127.0.0.1:8443");
   assert.equal(cfg.trustedProxy, "caddy");
   assert.equal(cfg.privateGalleriesEnabled, false, "public release defaults to R4 disabled");
+  assert.equal(cfg.adminAllowedEmails, "admin@punctumpicture.com");
+  process.env.PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS = " Maria@Example.com , admin@punctumpicture.com , outro@example.com ";
+  assert.equal(
+    candidateConfig().adminAllowedEmails,
+    "admin@punctumpicture.com,maria@example.com,outro@example.com",
+  );
+  process.env.PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS = "not-an-email";
+  assert.throws(() => candidateConfig(), /CANDIDATE_ADMIN_EMAIL_REQUIRED/);
+  delete process.env.PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS;
   process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED = "true";
   assert.equal(candidateConfig().privateGalleriesEnabled, true);
   process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED = "false";
