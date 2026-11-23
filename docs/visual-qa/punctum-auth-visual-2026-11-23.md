@@ -48,3 +48,22 @@ Evidência do código anterior:
 ## Handoff
 
 Atualizar este relatório com SHA, run ID, resultados de browser/axe-core, screenshots e status do CI final. Corrigir falhas reproduzidas por RED→GREEN em branch draft. Não abrir acesso real nem realizar cutover como consequência da alteração visual.
+
+
+## Verificação conclusiva de CI no candidato técnico
+
+**SHA verificado:** `b4a751a3a595f2929840d0051c313ae779a28222`.
+**GitHub Actions:** [CI #45255580432](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/45255580432), job `verify` #137976405038, **completed/success** em 23/11/2026.
+**Evidência visual:** [artifact `r4-browser-evidence` #14857452552](https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/45255580432/artifacts/14857452552), contendo 13 arquivos incluindo `client-auth-390.png`, `client-auth-1440.png` e `report.json`.
+
+- `npm ci`, `npm audit --audit-level=low`, `npm run typecheck`, `npm run lint`, `npm run build` e suite E2E: **PASS** no mesmo candidato.
+- Vitest principal **69 arquivos e 384 testes aprovados**; Vitest adicional da Colagem **7 testes aprovados**; testes Node/Python adicionais do workflow executados sem falha. Teste unitário específico do login com Clerk stub **6/6 PASS**.
+- Chromium real no CI, `/albuns/entrar` em fixture sintética `password`, larguras **320, 360, 390, 430, 768, 1024, 1440 px**: todos os checks passaram; sem overflow e CTA >=48px.
+- `axe-core` WCAG 2.1 A/AA para login: **390 px: 21 passes, 0 violations, 1 incomplete para revisão manual**; **1440 px: 22 passes, 0 violations, 0 incomplete**. Não equiparar o resultado automatizado ao aceite de leitor de tela físico.
+- A suite de segurança `access` da PR #48 continuou isolada e **PASS**: negação anônima, pertences A/B, mídia privada, favoritos, downloads, troca/logout de sessões, restore e Studio. **Zoom real 200% Chromium PASS** para biblioteca, galeria, lightbox, admin e home.
+- A execução local na Martha com Chrome instalado atingiu os checks de apresentação e segurança, mas falhou **depois** no verificador de zoom específico do navegador (`sample.cssWidth != 640`); não ocultar esse resultado. A execução canônica no Chromium versionado do GitHub Actions passou no mesmo verificador.
+- O 503 inicial do E2E foi rastreado ao fato de o fixture existente `CLIENT_AUTH_MODE=access` interceptar `/albuns/entrar`. **Correção de teste**, não do backend: `client-auth-visual-qa.mjs` cria um **segundo** Miniflare com D1/R2 sintéticos e modo `password`; o fixture Access original e seus controles permanecem intactos. `client-auth-visual-qa.test.mjs` verifica esse isolamento.
+
+### Gates ainda pendentes
+
+**PENDING / PRODUCTION_NO_GO:** aceite editorial de Maria Helena, revisão visual humana das capturas, teste físico TalkBack/VoiceOver, modal e sessão Clerk real em Development, revisão de segurança independente do SHA e demais autorizações originais R4 G01–G24/H01–H06 aplicáveis. Esta entrega não altera a decisão de release e não autoriza merge em `main`, ativação de flags ou publicação.
