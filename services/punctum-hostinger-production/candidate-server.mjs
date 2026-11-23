@@ -5,6 +5,7 @@ import { candidateConfig } from "./candidate-runtime.mjs";
 import { openCandidateWritableDatabase } from "./candidate-sqlite.mjs";
 import { candidateOriginals } from "./candidate-originals.mjs";
 import { candidateLocalBackups } from "./candidate-backups.mjs";
+import { installCandidateImageWidthCompatibility } from "./image-width-compat.mjs";
 import { installNodeR4StreamCompatibility } from "../punctum-hostinger-node/node-r4-stream-compat.mjs";
 
 process.umask(0o077);
@@ -33,9 +34,10 @@ process.env.PUNCTUM_HOSTINGER_SHARP_TIMEOUT_MS = process.env.PUNCTUM_HOSTINGER_S
 const output = new URL("../../dist/hostinger-candidate/", import.meta.url);
 process.env.PUNCTUM_QA_CLIENT_DIRECTORY = fileURLToPath(new URL("client/", output));
 
-await startProdServer({
+const { server } = await startProdServer({
   port,
   host: config.managed ? "0.0.0.0" : config.origin.hostname,
   outDir: fileURLToPath(output),
   noCompression: true,
 });
+installCandidateImageWidthCompatibility(server);

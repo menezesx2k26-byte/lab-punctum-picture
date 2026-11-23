@@ -82,7 +82,9 @@ describe("headers de framing", () => {
       buildAllowedImageWidths,
       maybeRedirectLegacyPublicRoute,
     } = await import("../../worker/utils/public-routing");
-    expect(buildAllowedImageWidths([640, 1200], [32, 64])).toEqual([640, 1200, 32, 64, 1254]);
+    expect(buildAllowedImageWidths([640, 1200], [32, 64])).toEqual([
+      640, 1200, 32, 64, 280, 300, 360, 600, 720, 800, 900, 1024, 1254, 1440, 1600, 1800,
+    ]);
     expect(INVALID_IMAGE_SOURCE_MESSAGE).toBe("A origem da imagem é inválida.");
     const redir = maybeRedirectLegacyPublicRoute(new URL("https://punctumpicture.com/sobre"));
     expect(redir?.status).toBe(308);
