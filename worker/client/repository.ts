@@ -1,6 +1,7 @@
 import type {
   ClientGalleryStatus,
   ClientTheme,
+  ClientGalleryLayout,
 } from "../../shared/client-galleries";
 
 export type ClientRow = {
@@ -20,6 +21,7 @@ export type GalleryRow = {
   title: string;
   introduction: string;
   theme: ClientTheme;
+  layoutPreset: ClientGalleryLayout;
   coverImageId: string | null;
   allowDownloads: number;
   status: ClientGalleryStatus;
@@ -43,7 +45,7 @@ const CLIENT_COLUMNS = `id,name,email,password_hash AS passwordHash,password_sal
   password_iterations AS passwordIterations,must_change_password AS mustChangePassword,
   session_version AS sessionVersion,disabled_at AS disabledAt`;
 const GALLERY_COLUMNS = `g.id,g.client_id AS clientId,g.title,g.introduction,g.theme,
-  g.cover_image_id AS coverImageId,g.allow_downloads AS allowDownloads,g.status`;
+  g.layout_preset AS layoutPreset,g.cover_image_id AS coverImageId,g.allow_downloads AS allowDownloads,g.status`;
 const IMAGE_COLUMNS = `id,gallery_id AS galleryId,storage_key AS storageKey,
   original_filename AS originalFilename,mime_type AS mimeType,size_bytes AS sizeBytes,
   original_sha256 AS originalSha256,

@@ -143,8 +143,9 @@ def build_report(token: str, *, target: str = "premium", check_domain: bool = Fa
             "is_enabled": row.get("is_enabled"),
         }
         sanitized.append(item)
+        expected_domains = (main_domain, MAIN_DOMAIN) if target == "unlimited" else (main_domain,)
         if (
-            row.get("domain") == main_domain
+            row.get("domain") in expected_domains
             and row.get("username") == username
             and row.get("order_id") == order_id
             and row.get("website_type") == "nodejs"
@@ -203,7 +204,8 @@ def build_report(token: str, *, target: str = "premium", check_domain: bool = Fa
     }
 
     # Node build settings READ on main Node site (does not mutate)
-    site = f"/accounts/{username}/websites/{main_domain}/nodejs"
+    resolved_domain = punctum["domain"] if punctum and punctum.get("domain") else main_domain
+    site = f"/accounts/{username}/websites/{resolved_domain}/nodejs"
     for label, path in (
         ("build_settings", site + "/builds/settings"),
         ("build_history", site + "/builds"),

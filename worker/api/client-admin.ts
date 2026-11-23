@@ -26,12 +26,13 @@ import { clientAuthMode } from "../client/auth-mode";
 import { loadSanitizedTitularExport } from "../client/lgpd";
 import { providerImageInputLimit } from "../media/provider-input-limit";
 import {
+  isClerkAuthEnabled,
   linkClerkClientAccount,
   unlinkClerkClientAccount,
 } from "../auth/clerk-auth";
 
 const accountColumns =
-  "id,name,email,disabled_at AS disabledAt,must_change_password AS mustChangePassword,created_at AS createdAt";
+  "c.id,c.name,c.email,c.disabled_at AS disabledAt,c.must_change_password AS mustChangePassword,c.created_at AS createdAt,l.clerk_user_id AS clerkUserId";
 export async function handleClientAdminApi(
   request: Request,
   url: URL,
@@ -53,10 +54,14 @@ export async function handleClientAdminApi(
   if (!id && request.method === "GET") {
     return privateJson({
       authMode: mode,
+      clerkEnabled: isClerkAuthEnabled(env),
       clients: (
         await db
           .prepare(
-            `SELECT ${accountColumns} FROM client_accounts ORDER BY created_at DESC,id`,
+            `SELECT ${accountColumns}
+             FROM client_accounts c
+             LEFT JOIN clerk_pilot_identity_links l ON l.client_id = c.id
+             ORDER BY c.created_at DESC, c.id`,
           )
           .all()
       ).results,
@@ -139,7 +144,7 @@ export async function handleClientAdminApi(
     return privateJson(exported);
   }
   if (match[2] === "reset-password" && request.method === "POST") {
-    if (mode === "access") {
+    if (mode === "access" || mode === "clerk") {
       await db.batch([
         db
           .prepare(
@@ -148,7 +153,13 @@ export async function handleClientAdminApi(
           session_version=session_version+1,updated_at=? WHERE id=?`,
           )
           .bind(new Date().toISOString(), id),
-        prepareAudit(db, auditPrincipal(actor), "client.access_reauthorized", "client_account", id),
+        prepareAudit(
+          db,
+          auditPrincipal(actor),
+          mode === "clerk" ? "client.clerk_sessions_revoked" : "client.access_reauthorized",
+          "client_account",
+          id,
+        ),
       ]);
       return privateJson({ ok: true, authMode: mode });
     }
@@ -250,8 +261,8 @@ async function handleGalleryAdminApi(
     const now = new Date().toISOString();
     await db.batch([
       db.prepare(
-        `INSERT INTO client_galleries (id,client_id,title,introduction,theme,allow_downloads,status,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,'draft',?,?)`,
+        `INSERT INTO client_galleries (id,client_id,title,introduction,theme,layout_preset,allow_downloads,status,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,'draft',?,?)`,
       )
       .bind(
         galleryId,
@@ -259,6 +270,7 @@ async function handleGalleryAdminApi(
         input.title,
         input.introduction ?? "",
         input.theme,
+        input.layoutPreset,
         input.allowDownloads ? 1 : 0,
         now,
         now,
@@ -395,6 +407,7 @@ async function handleGalleryAdminApi(
       title: "title",
       introduction: "introduction",
       theme: "theme",
+      layoutPreset: "layout_preset",
       allowDownloads: "allow_downloads",
     } as const;
     const assignments: string[] = [];

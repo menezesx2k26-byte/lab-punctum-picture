@@ -54,6 +54,12 @@ describe("private API recovery", () => {
       ["/api/client/galleries/a", "GET", { gallery: {} }],
       ["/api/client/galleries/a/favorites/b", "PUT", { favorite: "yes" }],
       ["/api/client/me", "GET", { authMode: "unexpected" }],
+      ["/api/client/galleries", "GET", {
+        galleries: [{
+          id: "a", clientId: "client-a", title: "Album", introduction: "", theme: "noir",
+          layoutPreset: "custom-hack", coverImageId: null, allowDownloads: true, status: "published",
+        }],
+      }],
       ["/api/client/session", "DELETE", { ok: true, logoutUrl: "https://example.com" }],
       ["/api/client/password", "POST", {}],
     ] as const) {
@@ -67,7 +73,7 @@ describe("private API recovery", () => {
   it("accepts complete client response envelopes and rejects a mismatched detail gallery", async () => {
     const gallery = {
       id: "a", clientId: "client-a", title: "Album", introduction: "", theme: "noir",
-      coverImageId: null, allowDownloads: true, status: "published", images: [{
+      layoutPreset: "cinema", coverImageId: null, allowDownloads: true, status: "published", images: [{
         id: "image-a", originalFilename: "photo.png", altText: "Retrato", position: 0,
         status: "ready", favorite: false,
       }],
@@ -77,6 +83,7 @@ describe("private API recovery", () => {
       ["/api/client/galleries/a", "GET", { gallery }],
       ["/api/client/galleries/a/favorites/image-a", "PUT", { favorite: true }],
       ["/api/client/me", "GET", { client: { id: "client-a", name: "Client" }, authMode: "access", mustChangePassword: false }],
+      ["/api/client/me", "GET", { client: { id: "client-a", name: "Client" }, authMode: "clerk", mustChangePassword: false }],
       ["/api/client/session", "DELETE", { ok: true, logoutUrl: "/cdn-cgi/access/logout" }],
       ["/api/client/password", "POST", { ok: true }],
     ] as const) {

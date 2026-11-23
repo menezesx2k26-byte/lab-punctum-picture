@@ -110,6 +110,14 @@ class UnlimitedDomainPreflightTest(unittest.TestCase):
         self.assertEqual(report["domainAssociation"]["challengeLength"], 0)
         self.assertEqual(report["dnsWrites"], 0)
 
+    def test_unlimited_accepts_punctumpicture_website_on_order_1008583103(self):
+        report, _ = self.report(
+            {"domain": "punctumpicture.com", "is_accessible": False, "txt_to_verify": ""},
+            website={**self.website, "domain": "punctumpicture.com"},
+        )
+        self.assertTrue(report["accountConfirmed"])
+        self.assertTrue(report["checks"]["websites_by_order"]["punctum_nodejs"])
+
     def test_wrong_order_user_or_domain_denies_site_specific_probes(self):
         for field, value in (("order_id", 1008628483), ("username", "u571409090"),
                              ("domain", "unrelated.example"), ("is_enabled", False)):

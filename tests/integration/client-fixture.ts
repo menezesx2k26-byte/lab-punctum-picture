@@ -5,12 +5,10 @@ const migrations = import.meta.glob("../../migrations/*.sql", {
   eager: true,
 }) as unknown as Record<string, string>;
 export async function bootstrapPrivateDb() {
-  if (
-    await env.DB.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='revoked_clerk_tokens'",
-    ).first()
-  )
-    return;
+  const columns = (
+    await env.DB.prepare("PRAGMA table_info(client_galleries)").all<{ name: string }>()
+  ).results;
+  if (columns.some((c) => c.name === "layout_preset")) return;
   for (const key of Object.keys(migrations).sort()) {
     for (const statement of migrations[key]
       .split(";")
@@ -19,7 +17,10 @@ export async function bootstrapPrivateDb() {
       try {
         await env.DB.prepare(statement).run();
       } catch (err) {
-        if (!String(err).includes("already exists")) throw err;
+        const message = String(err);
+        if (!message.includes("already exists") && !message.includes("duplicate column name")) {
+          throw err;
+        }
       }
     }
   }

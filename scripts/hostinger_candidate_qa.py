@@ -13,7 +13,7 @@ from contextlib import nullcontext
 from hostinger_managed_qa import API, SITE, DOMAIN, Recovery, RequestFailure, PROBE_SETTINGS, check_probe_settings, probe_archive, digest
 
 ALLOWED_ROOTS = {'app','build','config','db','drizzle','migrations','public','shared','worker'}
-ALLOWED_FILES = {'package.json','package-lock.json','next.config.ts','tsconfig.json','worker-configuration.d.ts','wrangler.jsonc','cron.mjs'}
+ALLOWED_FILES = {'package.json','package-lock.json','next.config.ts','tsconfig.json','worker-configuration.d.ts','wrangler.jsonc','cron.mjs','app.mjs'}
 
 
 def candidate_archive(root, tracked, revision=None):

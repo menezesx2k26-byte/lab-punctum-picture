@@ -54,6 +54,36 @@ export function isClerkAuthEnabled(env: Env): boolean {
   );
 }
 
+/**
+ * Enable Clerk script/connect CSP directives strictly on routes that mount
+ * ClerkProvider (/acesso, /admin/* logout shell, /albuns/entrar, /clerk-pilot).
+ * Public pages and the Studio preview iframe never receive Clerk directives.
+ */
+export function shouldAllowClerkCsp(pathname: string, env: Env): boolean {
+  const adminMode = envString(env, "ADMIN_AUTH_MODE") ?? "legacy";
+  const clientMode = envString(env, "CLIENT_AUTH_MODE") ?? "password";
+  const clerkEnabled = isClerkAuthEnabled(env);
+  if (pathname === "/acesso") {
+    return (
+      adminMode === "clerk" ||
+      (clerkEnabled && adminMode !== "legacy" && adminMode !== "password")
+    );
+  }
+  if (
+    (pathname === "/admin" || pathname.startsWith("/admin/")) &&
+    pathname !== "/admin/studio/preview"
+  ) {
+    return clerkEnabled || adminMode === "hybrid";
+  }
+  if (pathname === "/albuns/entrar") {
+    return clientMode !== "access" && clerkEnabled;
+  }
+  if (pathname === "/clerk-pilot") {
+    return envString(env, "CLERK_PILOT_ENABLED") === "true";
+  }
+  return false;
+}
+
 export function normalizePemKey(raw: string): string {
   return raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
 }

@@ -1,3 +1,5 @@
+import { CLIENT_GALLERY_LAYOUTS, type ClientGalleryLayout } from "../../../shared/client-galleries";
+
 type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): value is ObjectValue =>
   value !== null && typeof value === "object" && !Array.isArray(value);
@@ -14,6 +16,7 @@ function gallery(value: unknown, details = false): value is ObjectValue {
   return object(value) && identifier(value.id) && identifier(value.clientId) &&
     text(value.title) && text(value.introduction) &&
     ["noir", "ivory", "warm"].includes(value.theme as string) &&
+    (value.layoutPreset === undefined || CLIENT_GALLERY_LAYOUTS.includes(value.layoutPreset as ClientGalleryLayout)) &&
     (value.coverImageId === null || identifier(value.coverImageId)) &&
     typeof value.allowDownloads === "boolean" && value.status === "published" &&
     (value.images === undefined && !details || Array.isArray(value.images) && value.images.every(image));
@@ -32,7 +35,7 @@ export function validClientResponse(path: string, method: string, data: ObjectVa
     return typeof data.favorite === "boolean";
   if (path === "/api/client/me" && method === "GET")
     return object(data.client) && identifier(data.client.id) && text(data.client.name) &&
-      ["access", "password"].includes(data.authMode as string) && typeof data.mustChangePassword === "boolean";
+      ["access", "password", "clerk"].includes(data.authMode as string) && typeof data.mustChangePassword === "boolean";
   if (path === "/api/client/session" && method === "DELETE")
     return data.ok === true && ["/albuns/entrar", "/cdn-cgi/access/logout"].includes(data.logoutUrl as string);
   if (path === "/api/client/session" && method === "POST")

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- Private media must use authenticated Worker endpoints, without the public image optimizer. */
 "use client";
 import { useEffect, useState, type CSSProperties } from "react";
-import type { ClientGallery } from "../../../shared/client-galleries";
+import { resolveClientGalleryLayout, type ClientGallery } from "../../../shared/client-galleries";
 import { ClientHeader } from "./ClientHeader";
 import { PhotoViewer } from "./PhotoViewer";
 import { themeTokens } from "./theme";
@@ -77,6 +77,7 @@ function GalleryContent({ galleryId }: { galleryId: string }) {
     <div
       style={themeTokens(gallery?.theme ?? "noir") as CSSProperties}
       className="pa-themed"
+      data-layout-preset={resolveClientGalleryLayout(gallery?.layoutPreset)}
     >
       <ClientHeader />
       <main className="pa-library">

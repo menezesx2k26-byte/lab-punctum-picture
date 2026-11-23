@@ -1,6 +1,21 @@
 import { z } from "zod";
 
 export const CLIENT_THEMES = ["noir", "ivory", "warm"] as const;
+export const CLIENT_GALLERY_LAYOUTS = ["classico", "editorial", "colagem", "mosaico", "cinema"] as const;
+export type ClientGalleryLayout = (typeof CLIENT_GALLERY_LAYOUTS)[number];
+export const CLIENT_GALLERY_TEMPLATE_OPTIONS: ReadonlyArray<{
+  id: ClientGalleryLayout; label: string; description: string;
+}> = [
+  { id: "classico", label: "Clássico", description: "Fotografias em colunas, no ritmo original." },
+  { id: "editorial", label: "Editorial", description: "Uma abertura ampla e páginas com respiro." },
+  { id: "colagem", label: "Colagem", description: "Composição de fotografias em proporções variadas." },
+  { id: "mosaico", label: "Mosaico", description: "Conjunto de quadros em composições variadas." },
+  { id: "cinema", label: "Cinema", description: "Um fotograma de cada vez, em tela generosa." },
+];
+export function resolveClientGalleryLayout(value: unknown): ClientGalleryLayout {
+  return typeof value === "string" && (CLIENT_GALLERY_LAYOUTS as readonly string[]).includes(value)
+    ? value as ClientGalleryLayout : "classico";
+}
 // Operational upload ceiling. Do not advertise or accept a larger upload until
 // the complete private Images-validation path is proven for the original spec.
 export const CLIENT_MAX_UPLOAD_BYTES = 20_000_000;
@@ -33,6 +48,7 @@ export const clientGalleryUpdateSchema = z
     title: z.string().trim().min(1).max(120).optional(),
     introduction: z.string().trim().max(5000).optional(),
     theme: z.enum(CLIENT_THEMES).optional(),
+    layoutPreset: z.enum(CLIENT_GALLERY_LAYOUTS).optional(),
     allowDownloads: z.boolean().optional(),
   })
   .strict();
@@ -41,6 +57,7 @@ export const clientGalleryCreateSchema = clientGalleryUpdateSchema
     clientId: z.uuid(),
     title: z.string().trim().min(1).max(120),
     theme: z.enum(CLIENT_THEMES).default("noir"),
+    layoutPreset: z.enum(CLIENT_GALLERY_LAYOUTS).default("classico"),
   })
   .strict();
 export const clientImageIntentSchema = z
@@ -72,6 +89,7 @@ export type ClientGallery = {
   title: string;
   introduction: string;
   theme: ClientTheme;
+  layoutPreset?: ClientGalleryLayout;
   coverImageId: string | null;
   allowDownloads: boolean;
   status: ClientGalleryStatus;
