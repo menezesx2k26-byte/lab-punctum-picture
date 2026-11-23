@@ -188,13 +188,17 @@ async function main() {
       }
     });
     for (const path of ["/", "/portfolio", "/arquivo", "/servicos", "/contato", "/fotografia", "/acesso", "/albuns/entrar"]) {
+      const waitMode = path === "/acesso" || path === "/albuns/entrar" ? "domcontentloaded" : "load";
       let resp;
       for (let attempt = 0; attempt < 3; attempt++) {
-        resp = await publicPage.goto(`${ORIGIN}${path}`, { waitUntil: "networkidle" });
+        resp = await publicPage.goto(`${ORIGIN}${path}`, { waitUntil: waitMode });
         if (resp && resp.status() !== 429) break;
         await publicPage.waitForTimeout(8_000);
       }
       assert(resp && resp.status() === 200, `Public route ${path} returned ${resp?.status()}`);
+      if (waitMode === "domcontentloaded") {
+        await publicPage.locator("button").first().waitFor({ timeout: 20_000 });
+      }
       await publicPage.waitForTimeout(800);
     }
     const non429Failures = failedAssets.filter((entry) => entry.status !== 429);
@@ -243,7 +247,7 @@ async function main() {
     report.checks.adminClerkSessionExchange = true;
 
     // Verify admin UI renders client list & private albums + template badge
-    await adminPage.goto(`${ORIGIN}/admin/albuns-privados`, { waitUntil: "networkidle" });
+    await adminPage.goto(`${ORIGIN}/admin/albuns-privados`, { waitUntil: "domcontentloaded" });
     assert(adminPage.url().startsWith(`${ORIGIN}/admin/albuns-privados`));
     report.checks.adminPrivateGalleriesUi = true;
 
@@ -277,7 +281,7 @@ async function main() {
     state.galleryId = createGallery.data.gallery.id;
 
     // Confirm admin private album list displays template badge for the new gallery
-    await adminPage.reload({ waitUntil: "networkidle" });
+    await adminPage.reload({ waitUntil: "domcontentloaded" });
     await adminPage.locator(".pga-badge--template").first().waitFor({ timeout: 20_000 });
     const badgeCount = await adminPage.locator(".pga-badge--template").count();
     assert(badgeCount >= 1, "Expected .pga-badge--template to render on admin album card");
@@ -285,7 +289,7 @@ async function main() {
 
     // Open gallery editor page & upload standard image via UI file chooser
     await adminPage.goto(`${ORIGIN}/admin/albuns-privados/${state.galleryId}`, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
     });
     const fileInput = adminPage.locator('input[type="file"]');
     await fileInput.waitFor({ timeout: 20_000 });
@@ -350,16 +354,16 @@ async function main() {
       g05Probe.directPutStatus = putResp.status();
       if (putResp.ok()) {
         const completeStarted = performance.now();
-        const comp = await pageJsonFetch(
-          adminPage,
-          `/admin/api/albuns-privados/${state.galleryId}/uploads/${intent25.data.intentId}/complete`,
+        const comp = await adminContext.request.post(
+          `${ORIGIN}/admin/api/albuns-privados/${state.galleryId}/uploads/${intent25.data.intentId}/complete`,
           {
-            method: "POST",
+            headers: { origin: ORIGIN },
+            timeout: 90_000,
           },
         );
         g05Probe.completeMs = Math.round(performance.now() - completeStarted);
-        g05Probe.completeStatus = comp.status;
-        g05Probe.passedThroughPublicProxy = comp.status === 200;
+        g05Probe.completeStatus = comp.status();
+        g05Probe.passedThroughPublicProxy = comp.status() === 200;
       }
     }
     report.g05LiveProbe = g05Probe;
@@ -405,7 +409,7 @@ async function main() {
     });
     assert.equal(clientExchange.status, 200, `Client exchange failed: ${clientExchange.text}`);
 
-    await clientPage.goto(`${ORIGIN}/albuns`, { waitUntil: "networkidle" });
+    await clientPage.goto(`${ORIGIN}/albuns`, { waitUntil: "domcontentloaded" });
     const listCheck = await pageJsonFetch(clientPage, "/api/client/galleries");
     assert.equal(listCheck.status, 200);
     assert.equal(listCheck.data.galleries.length, 1, "Client must see ONLY its own synthetic published album");
@@ -420,7 +424,7 @@ async function main() {
         { method: "PATCH", body: { layoutPreset: preset } },
       );
       assert.equal(patch.status, 200, `PATCH layoutPreset=${preset} failed`);
-      await clientPage.goto(`${ORIGIN}/albuns/${state.galleryId}`, { waitUntil: "networkidle" });
+      await clientPage.goto(`${ORIGIN}/albuns/${state.galleryId}`, { waitUntil: "domcontentloaded" });
       await clientPage.locator(`.pa-themed[data-layout-preset="${preset}"]`).waitFor({ timeout: 20_000 });
       const activePreset = await clientPage.locator(".pa-themed[data-layout-preset]").getAttribute("data-layout-preset");
       assert.equal(activePreset, preset, `Expected data-layout-preset=${preset}, got ${activePreset}`);
@@ -454,7 +458,7 @@ async function main() {
     const favButton = clientPage.locator(`button[aria-label*="Favoritar"]`).first();
     await favButton.click();
     await clientPage.locator('button[aria-pressed="true"]').first().waitFor({ timeout: 15_000 });
-    await clientPage.reload({ waitUntil: "networkidle" });
+    await clientPage.reload({ waitUntil: "domcontentloaded" });
     await clientPage.locator('button[aria-pressed="true"]').first().waitFor({ timeout: 15_000 });
     const persistedFavCount = await clientPage.locator('button[aria-pressed="true"]').count();
     assert(persistedFavCount >= 1, "Favorite state did not persist after reload");
