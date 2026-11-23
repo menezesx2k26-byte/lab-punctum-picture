@@ -3,6 +3,7 @@ import {
   CLIENT_GALLERY_LAYOUTS,
   CLIENT_GALLERY_TEMPLATE_OPTIONS,
   clientGalleryCreateSchema,
+  clientGalleryLayoutLabel,
   clientGalleryUpdateSchema,
   resolveClientGalleryLayout,
 } from "../../shared/client-galleries";
@@ -17,6 +18,10 @@ describe("five fixed private album templates", () => {
     expect(resolveClientGalleryLayout(undefined)).toBe("classico");
     expect(resolveClientGalleryLayout("colagem")).toBe("colagem");
     expect(resolveClientGalleryLayout("javascript:alert(1)")).toBe("classico");
+    expect(clientGalleryLayoutLabel("colagem")).toBe("Colagem");
+    expect(clientGalleryLayoutLabel("cinema")).toBe("Cinema");
+    expect(clientGalleryLayoutLabel(undefined)).toBe("Clássico");
+    expect(clientGalleryLayoutLabel("javascript:alert(1)")).toBe("Clássico");
   });
   it("accepts allowlisted templates on create and update only", () => {
     const base = { clientId: "11111111-1111-4111-8111-111111111111", title: "Ensaio" };

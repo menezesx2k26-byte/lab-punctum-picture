@@ -8,6 +8,7 @@ import { sitemap } from "./seo";
 import { handleSiteMediaApi } from "./site-media";
 import { requireAdmin } from "./utils/auth";
 import { AppError } from "./utils/errors";
+import { maybeRedirectLegacyPublicRoute } from "./utils/public-routing";
 import { apiError, withSecurityHeaders } from "./utils/response";
 
 /**
@@ -23,6 +24,8 @@ export default {
     const url = new URL(request.url);
 
     try {
+      const legacyRedirect = maybeRedirectLegacyPublicRoute(url);
+      if (legacyRedirect) return legacyRedirect;
       const clerkPilot = await handleClerkPilotRequest(request, env);
       if (clerkPilot) return clerkPilot;
       const privateResult = await handlePrivateGalleryRoutes(request, url, env);

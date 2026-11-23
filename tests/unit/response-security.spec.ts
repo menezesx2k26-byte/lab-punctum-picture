@@ -75,4 +75,18 @@ describe("headers de framing", () => {
     expect(shouldAllowClerkCsp("/admin/clientes", legacyEnv)).toBe(false);
     expect(shouldAllowClerkCsp("/albuns/entrar", legacyEnv)).toBe(false);
   });
+
+  it("inclui largura 1254 da logo na allowlist de otimização e redireciona /sobre", async () => {
+    const {
+      INVALID_IMAGE_SOURCE_MESSAGE,
+      buildAllowedImageWidths,
+      maybeRedirectLegacyPublicRoute,
+    } = await import("../../worker/utils/public-routing");
+    expect(buildAllowedImageWidths([640, 1200], [32, 64])).toEqual([640, 1200, 32, 64, 1254]);
+    expect(INVALID_IMAGE_SOURCE_MESSAGE).toBe("A origem da imagem é inválida.");
+    const redir = maybeRedirectLegacyPublicRoute(new URL("https://punctumpicture.com/sobre"));
+    expect(redir?.status).toBe(308);
+    expect(redir?.headers.get("location")).toBe("https://punctumpicture.com/#sobre");
+    expect(maybeRedirectLegacyPublicRoute(new URL("https://punctumpicture.com/portfolio"))).toBeNull();
+  });
 });

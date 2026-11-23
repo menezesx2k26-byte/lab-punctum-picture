@@ -1086,4 +1086,12 @@ describe("Worker Punctum Picture", () => {
     );
     expect(image.status).toBe(404);
   });
+
+  it("redireciona /sobre com 308 para /#sobre", async () => {
+    const sobre = await exports.default.fetch("http://localhost:8787/sobre", {
+      redirect: "manual",
+    });
+    expect(sobre.status).toBe(308);
+    expect(sobre.headers.get("location")).toBe("http://localhost:8787/#sobre");
+  });
 });

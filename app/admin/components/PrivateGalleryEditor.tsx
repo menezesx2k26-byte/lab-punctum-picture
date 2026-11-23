@@ -15,6 +15,7 @@ import {
   IMAGES_BINDING_MAX_INPUT_BYTES,
   IMAGES_BINDING_LIMIT_MESSAGE,
   CLIENT_MIME_TYPES,
+  clientGalleryLayoutLabel,
 } from "../../../shared/client-galleries";
 import {
   privateApi,
@@ -140,9 +141,14 @@ export function PrivateGalleriesManager() {
             prefetch={false}
           >
             <div>
-              <span className="pga-badge">
-                {PRIVATE_GALLERY_STATUS[g.status]}
-              </span>
+              <div className="pga-badges">
+                <span className="pga-badge">
+                  {PRIVATE_GALLERY_STATUS[g.status]}
+                </span>
+                <span className="pga-badge pga-badge--template">
+                  {clientGalleryLayoutLabel(g.layoutPreset)}
+                </span>
+              </div>
               <h2>{g.title}</h2>
               <p>
                 {clients.find((c) => c.id === g.clientId)?.name ?? "Cliente"}

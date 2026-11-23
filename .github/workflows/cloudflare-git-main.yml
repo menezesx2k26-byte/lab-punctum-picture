@@ -2,23 +2,6 @@ name: Git main → Cloudflare Worker
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
-    paths:
-      - "app/**"
-      - "worker/**"
-      - "shared/**"
-      - "db/**"
-      - "migrations/**"
-      - "public/**"
-      - "scripts/**"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.*"
-      - "vinext.config.*"
-      - "tsconfig.json"
-      - "requests/cloudflare-git-deploy.json"
-      - ".github/workflows/cloudflare-git-main.yml"
 
 permissions:
   contents: write
