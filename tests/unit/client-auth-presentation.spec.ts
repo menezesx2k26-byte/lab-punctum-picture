@@ -10,10 +10,7 @@ function renderEntry(
   config: unknown = PUNCTUM_DEFAULT_SITE_CONFIG,
 ): string {
   return renderToStaticMarkup(
-    createElement(ClientAuthShell, {
-      config,
-      children: createElement(ClientLogin, props),
-    }),
+    createElement(ClientAuthShell, { config }, createElement(ClientLogin, props)),
   );
 }
 
