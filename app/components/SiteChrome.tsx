@@ -45,6 +45,9 @@ export function SiteHeader({
         <Link href="/portfolio">{editorial.chrome.navigation.portfolio}</Link>
         <Link href="/arquivo">{editorial.chrome.navigation.archive}</Link>
         <Link href="/#sobre">{editorial.chrome.navigation.about}</Link>
+        <Link href="/albuns/entrar" className="nav-client-cta">
+          Área do cliente
+        </Link>
         <Link href="/contato" className="nav-cta">
           {editorial.chrome.navigation.contact}
         </Link>
@@ -74,6 +77,10 @@ export function SiteFooter({
           <Link href="/servicos">O que fotografo</Link>
           <Link href="/fotografia">Onde fotografo</Link>
           <Link href="/contato">{editorial.chrome.footer.contact}</Link>
+          <Link href="/albuns/entrar">Área do cliente</Link>
+          <Link href="/acesso" className="footer-studio-link">
+            Entrar no estúdio
+          </Link>
           {site.instagramUrl ? (
             <a href={site.instagramUrl} target="_blank" rel="noreferrer">
               {editorial.chrome.footer.instagram}

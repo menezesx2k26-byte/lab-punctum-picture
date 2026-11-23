@@ -519,3 +519,138 @@
   .private-albums .pa-themed[data-layout-preset="colagem"] .pa-photo,
   .private-albums .pa-themed[data-layout-preset="mosaico"] .pa-photo { grid-column: auto !important; }
 }
+
+.private-albums .pa-steps {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.private-albums .pa-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--pa-fg, #242022);
+}
+.private-albums .pa-steps li span {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--pa-line, rgba(36, 32, 34, 0.28));
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+.private-albums .pa-entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+.private-albums .pa-studio-link {
+  font-size: 0.85rem;
+  color: #3a332f;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.private-albums .pa-studio-link:hover,
+.private-albums .pa-studio-link:focus-visible {
+  color: #161311;
+}
+.private-albums .pa-user-pill {
+  font-size: 0.85rem;
+  color: var(--pa-fg, #242022);
+  font-weight: 500;
+}
+.private-albums .pa-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+.private-albums .pa-skeleton-card {
+  display: grid;
+  gap: 10px;
+}
+.private-albums .pa-skeleton-media {
+  aspect-ratio: 4 / 5;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pa-fg, #242022) 9%, transparent);
+}
+.private-albums .pa-skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pa-fg, #242022) 9%, transparent);
+}
+.private-albums .pa-skeleton-line.short {
+  width: 55%;
+}
+.private-albums .pa-album-placeholder {
+  aspect-ratio: 4 / 5;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--pa-line, rgba(36, 32, 34, 0.22));
+  color: color-mix(in srgb, var(--pa-fg, #242022) 78%, transparent);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.private-albums .pa-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--pa-fg, #242022) 86%, transparent);
+  margin: 0.35rem 0 0.65rem;
+}
+.private-albums .pa-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.private-albums .pa-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.92rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.private-albums .pa-access-pill {
+  font-size: 0.78rem;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--pa-line, rgba(36, 32, 34, 0.22));
+  color: var(--pa-fg, #242022);
+}
+.private-albums .pa-filter-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.private-albums .pa-filter-tabs button,
+.private-albums .pa-secondary-btn {
+  min-height: 44px;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--pa-line, rgba(36, 32, 34, 0.22));
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.private-albums .pa-filter-tabs button.is-active {
+  background: var(--pa-fg, #242022);
+  color: var(--pa-bg, #f4efe7);
+  border-color: var(--pa-fg, #242022);
+}
+

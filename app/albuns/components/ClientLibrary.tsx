@@ -2,19 +2,39 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ClientGallery } from "../../../shared/client-galleries";
+import type {
+  ClientGallery,
+  ClientGalleryLayout,
+} from "../../../shared/client-galleries";
 import { ClientHeader } from "./ClientHeader";
 import { privateApi, errorMessage } from "./api";
 import { galleryHref, privateImageUrl } from "./routes";
+
+const LAYOUT_LABELS: Record<ClientGalleryLayout, string> = {
+  classico: "Clássico",
+  editorial: "Editorial",
+  colagem: "Colagem",
+  mosaico: "Mosaico",
+  cinema: "Cinema",
+};
+
 export function ClientLibrary() {
   const [galleries, setGalleries] = useState<ClientGallery[]>([]);
+  const [clientName, setClientName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    privateApi<{ galleries: ClientGallery[] }>("/api/client/galleries")
-      .then((data) => {
-        if (active) setGalleries(data.galleries);
+    Promise.all([
+      privateApi<{ galleries: ClientGallery[] }>("/api/client/galleries"),
+      privateApi<{ client?: { name?: string } }>("/api/client/me").catch(
+        () => ({ client: undefined }),
+      ),
+    ])
+      .then(([galleriesData, meData]) => {
+        if (!active) return;
+        setGalleries(galleriesData.galleries);
+        if (meData.client?.name) setClientName(meData.client.name);
       })
       .catch((e) => {
         if (active) setError(errorMessage(e));
@@ -26,11 +46,16 @@ export function ClientLibrary() {
       active = false;
     };
   }, []);
+  const firstName = clientName.trim().split(/\s+/)[0] ?? "";
   return (
     <>
       <ClientHeader />
       <main className="pa-library">
-        <p className="pa-eyebrow">Sua coleção particular</p>
+        <p className="pa-eyebrow">
+          {firstName
+            ? `Olá, ${firstName} · Sua coleção particular`
+            : "Sua coleção particular"}
+        </p>
         <h1>
           Memórias para
           <br />
@@ -41,9 +66,15 @@ export function ClientLibrary() {
           <span>{galleries.length.toString().padStart(2, "0")}</span>
         </div>
         {loading && (
-          <p role="status" className="pa-caption">
-            Preparando os seus álbuns…
-          </p>
+          <div className="pa-skeleton-grid" role="status" aria-label="Preparando os seus álbuns">
+            {[0, 1, 2].map((slot) => (
+              <div className="pa-skeleton-card" key={slot} aria-hidden="true">
+                <div className="pa-skeleton-media" />
+                <div className="pa-skeleton-line" />
+                <div className="pa-skeleton-line short" />
+              </div>
+            ))}
+          </div>
         )}
         {error && (
           <p role="alert" className="pa-error">
@@ -59,30 +90,50 @@ export function ClientLibrary() {
           </div>
         )}
         <div className="pa-album-grid">
-          {galleries.map((g, index) => (
-            <Link
-              className="pa-album-card"
-              href={galleryHref(g.id)}
-              prefetch={false}
-              key={g.id}
-            >
-              {g.coverImageId && (
-                <img
-                  src={privateImageUrl(g.id, g.coverImageId, "gallery")}
-                  alt={"Capa de " + g.title}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                />
-              )}
-              <div>
-                <span className="pa-eyebrow">
-                  {String(index + 1).padStart(2, "0")} / Coleção privada
-                </span>
-                <h2>{g.title}</h2>
-                <span aria-hidden="true">Explorar álbum ↗</span>
-              </div>
-            </Link>
-          ))}
+          {galleries.map((g, index) => {
+            const layoutLabel =
+              LAYOUT_LABELS[(g.layoutPreset ?? "classico") as ClientGalleryLayout] ??
+              "Clássico";
+            const photoCount = g.readyImageCount ?? 0;
+            const favCount = g.favoriteCount ?? 0;
+            return (
+              <Link
+                className="pa-album-card"
+                href={galleryHref(g.id)}
+                prefetch={false}
+                key={g.id}
+              >
+                {g.coverImageId ? (
+                  <img
+                    src={privateImageUrl(g.id, g.coverImageId, "gallery")}
+                    alt={"Capa de " + g.title}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="pa-album-placeholder" aria-hidden="true">
+                    Punctum Picture
+                  </div>
+                )}
+                <div>
+                  <span className="pa-eyebrow">
+                    {String(index + 1).padStart(2, "0")} / {layoutLabel}
+                  </span>
+                  <h2>{g.title}</h2>
+                  <p className="pa-card-meta">
+                    <span>
+                      {photoCount} {photoCount === 1 ? "foto" : "fotos"}
+                    </span>
+                    {favCount > 0 && <span>· {favCount} favoritas</span>}
+                    <span>
+                      · {g.allowDownloads ? "Download liberado" : "Somente visualização"}
+                    </span>
+                  </p>
+                  <span aria-hidden="true">Explorar álbum ↗</span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </main>
     </>
