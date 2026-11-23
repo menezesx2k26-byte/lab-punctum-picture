@@ -20,8 +20,8 @@ vi.mock("next/image", async () => {
 vi.mock("next/link", async () => {
   const { createElement } = await import("react");
   return {
-    default: ({ href, children }: { href: string; children: ReactNode }) =>
-      createElement("a", { href }, children),
+    default: ({ href, children, ...props }: { href: string; children: ReactNode; "aria-label"?: string }) =>
+      createElement("a", { href, ...props }, children),
   };
 });
 
@@ -72,7 +72,7 @@ describe("Punctum client authentication presentation", () => {
   it("preserves password change semantics without displaying the login email field", () => {
     const html = renderEntry({ changePassword: true });
     expect(html).toContain("Escolha sua senha");
-    expect(html).toContain('autocomplete="new-password"');
+    expect(html).toContain('autoComplete="new-password"');
     expect(html).toContain('minLength="12"');
     expect(html).toContain("Confirme a nova senha");
     expect(html).toContain("Salvar senha e entrar");
