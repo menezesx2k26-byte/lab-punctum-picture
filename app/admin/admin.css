@@ -1411,6 +1411,25 @@ textarea.admin-input {
   font-size: 0.78rem;
 }
 
+.access-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.access-divider::before,
+.access-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
 .access-back {
   width: fit-content;
   border-bottom: 1px solid currentColor;

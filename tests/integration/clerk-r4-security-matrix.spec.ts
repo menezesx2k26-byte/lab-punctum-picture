@@ -1043,4 +1043,94 @@ describe("Gate 03: Clerk + R4 + Studio security matrix (real RS256 + @clerk/back
     expect(failure.status).toBe(503);
     expect((await failure.json()) as unknown).not.toMatchObject({ ok: true });
   });
+
+  it("allows Clerk-authenticated admins to set definitive password without currentPassword in hybrid mode while requiring currentPassword for password sessions", async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const primaryAdminEmail = `maria-${suffix}@example.test`;
+    const secondaryAdminEmail = `operador-${suffix}@example.test`;
+    const adminClerkUserId = `user_hybrid_adm_${suffix}`;
+    const hybridEnv = makeEnv(primaryPem, {
+      ADMIN_AUTH_MODE: "hybrid",
+      ADMIN_ALLOWED_EMAILS: `${primaryAdminEmail},${secondaryAdminEmail}`,
+    });
+
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO clerk_admin_identity_links (clerk_user_id, admin_principal_id, role, session_version, created_at, updated_at)
+       VALUES (?, ?, 'admin', 1, ?, ?)`,
+    )
+      .bind(adminClerkUserId, primaryAdminEmail, now, now)
+      .run();
+
+    const clerkJwt = await signClerkJwt(primaryPriv, {
+      sub: adminClerkUserId,
+      sid: `sess_hybrid_${suffix}`,
+    });
+    const clerkLogin = await dispatch(hybridEnv, "/admin/api/clerk-session", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${clerkJwt}` },
+    });
+    expect(clerkLogin.status).toBe(200);
+    const clerkCookie = cookieValue(clerkLogin.headers.get("set-cookie"), "punctum_admin_session");
+
+    const meRes = await dispatch(hybridEnv, "/admin/api/me", {
+      headers: { Cookie: clerkCookie },
+    });
+    expect(meRes.status).toBe(200);
+    expect(await meRes.json()).toMatchObject({
+      email: primaryAdminEmail,
+      authSource: "clerk",
+    });
+
+    const newDefinitivePassword = `StudioHybrid!${suffix}2026`;
+    const resetViaClerk = await dispatch(hybridEnv, "/admin/api/session", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: clerkCookie,
+      },
+      body: JSON.stringify({ newPassword: newDefinitivePassword }),
+    });
+    expect(resetViaClerk.status).toBe(200);
+    expect(resetViaClerk.headers.get("set-cookie")).toContain("Max-Age=0");
+
+    // Both allowed admin emails can sign in with the newly set password.
+    const primaryPasswordLogin = await dispatch(hybridEnv, "/admin/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: primaryAdminEmail,
+        password: newDefinitivePassword,
+      }),
+    });
+    expect(primaryPasswordLogin.status).toBe(200);
+    const passwordCookie = cookieValue(
+      primaryPasswordLogin.headers.get("set-cookie"),
+      "punctum_admin_session",
+    );
+
+    const secondaryPasswordLogin = await dispatch(hybridEnv, "/admin/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: secondaryAdminEmail,
+        password: newDefinitivePassword,
+      }),
+    });
+    expect(secondaryPasswordLogin.status).toBe(200);
+
+    // Password-authenticated sessions still require currentPassword to change password.
+    const missingCurrent = await dispatch(hybridEnv, "/admin/api/session", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: passwordCookie,
+      },
+      body: JSON.stringify({ newPassword: `OutraSenha!${suffix}2026` }),
+    });
+    expect(missingCurrent.status).toBe(400);
+    expect(await missingCurrent.json()).toMatchObject({
+      error: { code: "CURRENT_PASSWORD_REQUIRED" },
+    });
+  });
 });

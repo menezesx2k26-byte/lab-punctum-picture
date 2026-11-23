@@ -114,7 +114,7 @@ export const env = {
     return config().publicOrigin.origin;
   },
   get ADMIN_ALLOWED_EMAILS() {
-    return config().adminEmail;
+    return config().adminAllowedEmails;
   },
   get ADMIN_PASSWORD_HASH() {
     return config().adminPasswordHash || undefined;

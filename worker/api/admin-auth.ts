@@ -26,7 +26,7 @@ const LOGIN_PATH = "/admin/api/session";
 const CLERK_LOGIN_PATH = "/admin/api/clerk-session";
 const passwordChangeSchema = z
   .object({
-    currentPassword: z.string().min(1).max(256),
+    currentPassword: z.string().min(1).max(256).optional(),
     newPassword: z.string().min(12).max(128),
   })
   .strict();
@@ -140,11 +140,23 @@ export async function handleAdminAuth(
     const identity = await requireAdmin(request, env);
     await assertRateLimit(request, db, "admin-password-change", 5, 3600);
     const input = await parseJson(request, passwordChangeSchema);
-    if (input.currentPassword === input.newPassword) {
-      throw new AppError(400, "PASSWORD_UNCHANGED", "Escolha uma senha diferente da atual.");
-    }
-    if (!(await verifyAdminPassword(input.currentPassword, env, db))) {
-      throw new AppError(401, "ADMIN_LOGIN_FAILED", "A senha atual está incorreta.");
+    if (identity.authSource !== "clerk") {
+      if (!input.currentPassword) {
+        throw new AppError(400, "CURRENT_PASSWORD_REQUIRED", "Informe a senha atual.");
+      }
+      if (input.currentPassword === input.newPassword) {
+        throw new AppError(400, "PASSWORD_UNCHANGED", "Escolha uma senha diferente da atual.");
+      }
+      if (!(await verifyAdminPassword(input.currentPassword, env, db))) {
+        throw new AppError(401, "ADMIN_LOGIN_FAILED", "A senha atual está incorreta.");
+      }
+    } else if (input.currentPassword !== undefined) {
+      if (input.currentPassword === input.newPassword) {
+        throw new AppError(400, "PASSWORD_UNCHANGED", "Escolha uma senha diferente da atual.");
+      }
+      if (!(await verifyAdminPassword(input.currentPassword, env, db))) {
+        throw new AppError(401, "ADMIN_LOGIN_FAILED", "A senha atual está incorreta.");
+      }
     }
     await db.batch([
       await prepareAdminPassword(input.newPassword, db, auditPrincipal(identity)),

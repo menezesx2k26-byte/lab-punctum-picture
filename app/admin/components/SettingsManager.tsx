@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 type Settings = {
   brandName: string;
@@ -34,8 +33,8 @@ const empty: Settings = {
 };
 
 export function SettingsManager() {
-  const router = useRouter();
   const [settings, setSettings] = useState<Settings>(empty);
+  const [authSource, setAuthSource] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [passwordStatus, setPasswordStatus] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -48,6 +47,15 @@ export function SettingsManager() {
         if (parsed.settings) setSettings(parsed.settings);
       })
       .catch(() => setStatus("Não foi possível carregar as configurações."));
+    fetch("/admin/api/me", { credentials: "same-origin" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: unknown) => {
+        const parsed = body as { authSource?: unknown } | null;
+        if (parsed && typeof parsed.authSource === "string") {
+          setAuthSource(parsed.authSource);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   async function save(event: FormEvent) {
@@ -88,13 +96,18 @@ export function SettingsManager() {
       return;
     }
 
+    const payload =
+      authSource === "clerk"
+        ? { newPassword }
+        : { currentPassword, newPassword };
+
     setChangingPassword(true);
     setPasswordStatus("Alterando senha…");
     try {
       const response = await fetch("/admin/api/session", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify(payload),
       });
       const body = (await response.json()) as { error?: { message?: string } };
       if (!response.ok) {
@@ -103,8 +116,7 @@ export function SettingsManager() {
       form.reset();
       setPasswordStatus("Senha definitiva salva. Entre novamente com a nova senha.");
       window.setTimeout(() => {
-        router.replace("/acesso");
-        router.refresh();
+        window.location.replace("/acesso");
       }, 1600);
     } catch (error) {
       setPasswordStatus(
@@ -229,21 +241,24 @@ export function SettingsManager() {
           <p className="eyebrow">Segurança</p>
           <h2>Senha definitiva</h2>
           <p className="admin-muted">
-            Defina uma senha com pelo menos 12 caracteres. Ela será usada pelos
-            dois e-mails autorizados e poderá ser trocada novamente aqui.
+            {authSource === "clerk"
+              ? "Você entrou pelo Clerk. Defina abaixo uma senha com pelo menos 12 caracteres para entrar com os e-mails autorizados no painel."
+              : "Defina uma senha com pelo menos 12 caracteres. Ela será usada pelos dois e-mails autorizados e poderá ser trocada novamente aqui."}
           </p>
         </div>
         <div className="admin-password-fields">
-          <label>
-            <span>Senha atual</span>
-            <input
-              className="admin-input"
-              name="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
+          {authSource !== "clerk" && (
+            <label>
+              <span>Senha atual</span>
+              <input
+                className="admin-input"
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </label>
+          )}
           <label>
             <span>Nova senha</span>
             <input

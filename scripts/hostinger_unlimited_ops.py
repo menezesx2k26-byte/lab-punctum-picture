@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import pathlib
@@ -32,6 +33,36 @@ from scripts.hostinger_unlimited_d1_r2_sync import (  # noqa: E402
 CRON_BASE = f"/accounts/{USERNAME}/cron-jobs"
 DEPLOYMENT_BASE = f"/home/{USERNAME}/domains/{DOMAIN}/hbuilds"
 DAILY_OFFPEAK_UTC = "0 6 * * *"
+EMAIL_RE = re.compile(r"^[^\s@,]+@[^\s@,]+\.[^\s@,]+$")
+SHA256_HEX_RE = re.compile(r"^[a-f0-9]{64}$")
+
+
+def resolve_admin_password_hash(*, explicit_hash: str = "", raw_password: str = "") -> str:
+    candidate_hash = explicit_hash.strip().lower()
+    if candidate_hash:
+        if not SHA256_HEX_RE.fullmatch(candidate_hash):
+            raise ValueError("Invalid admin password hash format")
+        return candidate_hash
+    if raw_password:
+        return hashlib.sha256(raw_password.encode("utf-8")).hexdigest()
+    return secrets.token_hex(32)
+
+
+def merge_admin_allowed_emails(primary_email: str, *extra_sources: str) -> str:
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for raw in (primary_email, *extra_sources):
+        for piece in (raw or "").split(","):
+            email = piece.strip().lower()
+            if not email or email in seen:
+                continue
+            if not EMAIL_RE.fullmatch(email):
+                raise ValueError("Invalid admin email in allowlist")
+            seen.add(email)
+            ordered.append(email)
+    if not ordered:
+        raise ValueError("At least one admin email is required")
+    return ",".join(ordered)
 
 
 def cron_command(mode: str) -> str:
@@ -51,7 +82,19 @@ def build_clean_redeploy_env(
     admin_email: str,
     clerk_admin_user_id: str,
     source_sha: str,
+    admin_password_hash: str | None = None,
+    admin_allowed_emails: str | None = None,
 ) -> dict[str, str]:
+    resolved_hash = (
+        resolve_admin_password_hash(explicit_hash=admin_password_hash)
+        if admin_password_hash
+        else secrets.token_hex(32)
+    )
+    resolved_allowlist = (
+        merge_admin_allowed_emails(admin_email, admin_allowed_emails)
+        if admin_allowed_emails
+        else None
+    )
     full = build_unlimited_sync_env(
         publishable_key=publishable_key,
         secret_key=secret_key,
@@ -59,7 +102,8 @@ def build_clean_redeploy_env(
         admin_email=admin_email,
         clerk_admin_user_id=clerk_admin_user_id,
         source_sha=source_sha,
-        admin_password_hash=secrets.token_hex(32),
+        admin_allowed_emails=resolved_allowlist,
+        admin_password_hash=resolved_hash,
         admin_session_secret=secrets.token_hex(48),
         client_session_secret=secrets.token_hex(48),
     )
@@ -375,6 +419,16 @@ def main():
         if not publishable_key or not secret_key or not clerk_admin_user_id:
             raise ValueError("CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, and PUNCTUM_CLERK_ADMIN_USER_ID are required for --deploy")
         admin_email, pem = _fetch_clerk_admin_email_and_pem(secret_key, clerk_admin_user_id)
+        admin_password_hash = resolve_admin_password_hash(
+            explicit_hash=os.environ.get("PUNCTUM_ADMIN_PASSWORD_HASH", ""),
+            raw_password=os.environ.get("SOURCE_ADMIN_PASSWORD", ""),
+        )
+        admin_allowed_emails = merge_admin_allowed_emails(
+            admin_email,
+            os.environ.get("SOURCE_ADMIN_EMAIL", ""),
+            os.environ.get("PUNCTUM_CLERK_ADMIN_EMAIL", ""),
+            os.environ.get("ADMIN_ALLOWED_EMAILS", ""),
+        )
         redeploy_env = build_clean_redeploy_env(
             publishable_key=publishable_key,
             secret_key=secret_key,
@@ -382,6 +436,8 @@ def main():
             admin_email=admin_email,
             clerk_admin_user_id=clerk_admin_user_id,
             source_sha=source_sha,
+            admin_password_hash=admin_password_hash,
+            admin_allowed_emails=admin_allowed_emails,
         )
         client.replace_env(redeploy_env)
         archive_bytes = subprocess.check_output(["git", "archive", "--format=zip", "HEAD"], cwd=root)

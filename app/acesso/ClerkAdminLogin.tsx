@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ClerkProvider, Show, SignInButton, useAuth, useClerk } from "@clerk/react";
 import { ArrowRight } from "lucide-react";
 
-function ClerkAdminSessionExchange() {
+function ClerkAdminSessionExchange({ secondary = false }: { secondary?: boolean }) {
   const { getToken, isLoaded } = useAuth();
   const { signOut } = useClerk();
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,10 @@ function ClerkAdminSessionExchange() {
         );
       }
       const requested = new URLSearchParams(window.location.search).get("next");
-      window.location.href = requested?.startsWith("/admin") ? requested : "/admin";
+      window.location.href =
+        requested?.startsWith("/admin") && !requested.includes(".rsc")
+          ? requested
+          : "/admin";
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -59,11 +62,13 @@ function ClerkAdminSessionExchange() {
     }
   }
 
+  const buttonClass = secondary ? "button ghost access-submit" : "button access-submit";
+
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <Show when="signed-out">
         <SignInButton mode="modal">
-          <button className="button access-submit" type="button" disabled={!isLoaded}>
+          <button className={buttonClass} type="button" disabled={!isLoaded}>
             Entrar com Clerk
             <ArrowRight size={16} aria-hidden="true" />
           </button>
@@ -83,7 +88,7 @@ function ClerkAdminSessionExchange() {
           </button>
         </div>
         <button
-          className="button access-submit"
+          className={buttonClass}
           type="button"
           disabled={busy}
           onClick={() => void exchangeSession()}
@@ -101,11 +106,17 @@ function ClerkAdminSessionExchange() {
   );
 }
 
-export function ClerkAdminLogin({ publishableKey }: { publishableKey: string }) {
+export function ClerkAdminLogin({
+  publishableKey,
+  secondary = false,
+}: {
+  publishableKey: string;
+  secondary?: boolean;
+}) {
   return (
     <ClerkProvider publishableKey={publishableKey}>
-      <div className="access-clerk-box" style={{ display: "grid", gap: 12, marginTop: 12 }}>
-        <ClerkAdminSessionExchange />
+      <div className="access-clerk-box" style={{ display: "grid", gap: 12 }}>
+        <ClerkAdminSessionExchange secondary={secondary} />
       </div>
     </ClerkProvider>
   );

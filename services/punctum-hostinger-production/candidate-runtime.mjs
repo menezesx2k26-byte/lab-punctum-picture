@@ -85,10 +85,21 @@ export function candidateConfig() {
   const originals = privateDir(process.env.PUNCTUM_CANDIDATE_ORIGINALS, "CANDIDATE_ORIGINALS_INVALID");
   const backupsRoot = privateDir(process.env.PUNCTUM_CANDIDATE_BACKUPS_ROOT, "CANDIDATE_BACKUPS_ROOT_INVALID");
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const adminEmail = (process.env.PUNCTUM_CANDIDATE_ADMIN_EMAIL ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
+  if (!emailRegex.test(adminEmail)) {
     throw Error("CANDIDATE_ADMIN_EMAIL_REQUIRED");
   }
+  const extraAdminEmails = (process.env.PUNCTUM_CANDIDATE_ADMIN_ALLOWED_EMAILS ?? "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  for (const extra of extraAdminEmails) {
+    if (!emailRegex.test(extra)) {
+      throw Error("CANDIDATE_ADMIN_EMAIL_REQUIRED");
+    }
+  }
+  const adminAllowedEmails = [...new Set([adminEmail, ...extraAdminEmails])].join(",");
   const adminPasswordHash = process.env.PUNCTUM_CANDIDATE_ADMIN_PASSWORD_HASH ?? "";
   if (adminPasswordHash && !/^[a-f0-9]{64}$/.test(adminPasswordHash)) {
     throw Error("CANDIDATE_ADMIN_PASSWORD_HASH_INVALID");
@@ -98,6 +109,7 @@ export function candidateConfig() {
   if (adminSessionSecret.length < 40 || clientSessionSecret.length < 40) {
     throw Error("CANDIDATE_SESSION_SECRETS_REQUIRED");
   }
+
   const trustedProxy = process.env.PUNCTUM_CANDIDATE_TRUSTED_PROXY || (managed ? "none" : "caddy");
   if (!["caddy", "none"].includes(trustedProxy)) {
     throw Error("CANDIDATE_TRUSTED_PROXY_INVALID");
@@ -114,6 +126,7 @@ export function candidateConfig() {
     originals,
     backupsRoot,
     adminEmail,
+    adminAllowedEmails,
     adminPasswordHash,
     trustedProxy,
   };
