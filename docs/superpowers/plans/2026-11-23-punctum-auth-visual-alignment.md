@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Goal ID:** `PUNCTUM-AUTH-VISUAL-001`
+
 **Goal:** Unificar a identidade visual da entrada de álbuns privados com a identidade fotográfica publicada do Punctum, eliminando a tela bege extensa e o jargão Clerk sem alterar a autenticação.
 
 **Architecture:** Aplicar na entrada do cliente a configuração **pública publicada** já resolvida por `loadPublicSiteConfig` e `SiteThemeRoot`, com CSS estritamente escopado às duas telas de autenticação. Preservar o componente Clerk e o fluxo de troca de sessão; reutilizar fotografia pública/local existente e testes de integração R4.
