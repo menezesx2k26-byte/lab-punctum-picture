@@ -294,17 +294,17 @@ async function main() {
     const fileInput = adminPage.locator('input[type="file"]');
     await fileInput.waitFor({ timeout: 20_000 });
     await fileInput.setInputFiles(smallFilePath);
-    await adminPage.waitForFunction(
-      async (gid) => {
-        const res = await fetch(`/admin/api/albuns-privados/${gid}`, { credentials: "same-origin" });
-        if (!res.ok) return false;
-        const json = await res.json();
-        return Array.isArray(json.gallery?.images) && json.gallery.images.some((i) => i.status === "ready");
-      },
-      state.galleryId,
-      { timeout: 45_000 },
-    );
-    const detailAfterSmall = await pageJsonFetch(adminPage, `/admin/api/albuns-privados/${state.galleryId}`);
+    let detailAfterSmall = null;
+    for (let attempt = 0; attempt < 90; attempt++) {
+      const candidate = await pageJsonFetch(adminPage, `/admin/api/albuns-privados/${state.galleryId}`);
+      if (candidate.status === 200 && candidate.data?.gallery?.images?.some((i) => i.status === "ready")) {
+        detailAfterSmall = candidate;
+        break;
+      }
+      await adminPage.waitForTimeout(500);
+    }
+    assert(detailAfterSmall, "Timed out waiting for small browser upload to become ready");
+    await adminPage.locator(".pga-photo img").first().waitFor({ timeout: 20_000 });
     assert.equal(detailAfterSmall.status, 200);
     assert(detailAfterSmall.data.uploadMaxBytes === G05_BYTES, `uploadMaxBytes was ${detailAfterSmall.data.uploadMaxBytes}`);
     const smallImageId = detailAfterSmall.data.gallery.images.find((i) => i.status === "ready")?.id;
