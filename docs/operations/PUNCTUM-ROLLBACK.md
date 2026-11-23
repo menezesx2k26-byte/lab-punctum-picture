@@ -145,3 +145,19 @@ Corte de DNS, após autorização explícita e ensaio de rollback em staging iso
 Em 21/11/2026, o runner auxiliar na VPS `2135319` testou `createManagedBackup` com SQLite e originais sintéticos. O primeiro TAR foi preservado. Um segundo backup restaurou a linha e a imagem adicionadas após o checkpoint. A restauração passou a exigir que os originais privados prontos correspondam ao tamanho gravado no SQLite e ao SHA-256, quando preenchido. O teste cobriu a coluna ausente antes de `0011` e hashes nulos em registros legados.
 
 G18 e G23 continuam bloqueados para liberação. O ensaio da Unlimited precisa comprovar backup retido e restore na origem isolada, além da reconciliação de escritas novas após o retorno de tráfego. O DoD continua condicionado à identificação do Node gerenciado, ao domínio e às autorizações de cada fase. Os detalhes e hashes do ensaio auxiliar estão no ciclo BA de `private-albums-r4/execution-state.json`.
+
+---
+
+## 9. Camada ativa na Hostinger Unlimited (`u775492464` / `punctumpicture.com`)
+
+Após a passagem de DNS autoritativo para a Hostinger (`orbit.dns-parking.com` / `horizon.dns-parking.com`) e o merge do PR #45 na `main`:
+
+1. **Alvo ativo em produção:**
+   - Conta/usuário Hostinger Unlimited: `u775492464` (order `1008583103`), domínio `punctumpicture.com`, Node.js 24.
+   - Armazenamento privado persistente fora de `public_html` (`0700`/`0600`): `/home/u775492464/punctum-managed-storage/punctum-unlimited-r4` (ou diretório importado `punctum-unlimited-d1-r4`).
+2. **Rollback rápido de aplicação (código):**
+   - No hPanel ou via Hostinger API (`hosting_deploy` com `git archive <SHA_ANTERIOR>`), reimplantar o commit estável anterior da `main` usando `buildScript: "build:hostinger:unlimited"` e `entryFile: "services/punctum-hostinger-production/candidate-server.mjs"`. O bootstrap idempotente ([`unlimited-bootstrap.mjs`](file:///home/antigravity/menezesx2k26-byte/lab-punctum-picture/services/punctum-hostinger-production/unlimited-bootstrap.mjs)) preserva o SQLite, originais e vínculos Clerk sem perdas.
+3. **Restauração lógica/física de dados (`G18`):**
+   - Backups automáticos diários (`cron.mjs daily`) em `backupsRoot/daily-YYYY-MM-DD-*.tar` + snapshots lógicos `backups/d1/daily/` (retenção de 7 dias para TARs físicos e 180 dias para JSON lógico).
+4. **Retorno de emergência à Cloudflare:**
+   - Caso seja necessário retornar temporariamente para o Worker Cloudflare legado, o workflow manual `Git main → Cloudflare Worker` permanece disponível via `workflow_dispatch` e o DNS na Hostinger pode ser repontado ao Worker após validação.

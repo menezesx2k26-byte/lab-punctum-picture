@@ -21,6 +21,11 @@ import { handleSiteMediaApi } from "./site-media";
 import { assertAllowedOrigin, requireAdmin } from "./utils/auth";
 import { resolveClerkRuntimeConfig, shouldAllowClerkCsp } from "./auth/clerk-auth";
 import { AppError } from "./utils/errors";
+import {
+  INVALID_IMAGE_SOURCE_MESSAGE,
+  buildAllowedImageWidths,
+  maybeRedirectLegacyPublicRoute,
+} from "./utils/public-routing";
 import { apiError, withSecurityHeaders } from "./utils/response";
 
 async function routeRequest(
@@ -38,6 +43,8 @@ async function routeRequest(
     );
     return isPrivateGalleryPath(url.pathname) ? privateResponse(redirect) : redirect;
   }
+  const legacyRedirect = maybeRedirectLegacyPublicRoute(url);
+  if (legacyRedirect) return legacyRedirect;
   const clerkPilot = await handleClerkPilotRequest(request, env);
   if (clerkPilot) return clerkPilot;
   const privateResult = await handlePrivateGalleryRoutes(request, url, env);
@@ -47,7 +54,7 @@ async function routeRequest(
     if (!env.IMAGES) {
       const source = url.searchParams.get("url");
       if (!source || !source.startsWith("/") || source.startsWith("//")) {
-        throw new AppError(400, "INVALID_IMAGE_SOURCE", "A origem da imagem Ã© invÃ¡lida.");
+        throw new AppError(400, "INVALID_IMAGE_SOURCE", INVALID_IMAGE_SOURCE_MESSAGE);
       }
 
       const sourceUrl = new URL(source, request.url);
@@ -65,7 +72,10 @@ async function routeRequest(
         await env.ASSETS.fetch(new Request(sourceUrl)),
       );
     }
-    const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
+    const allowedWidths = buildAllowedImageWidths(
+      DEFAULT_DEVICE_SIZES,
+      DEFAULT_IMAGE_SIZES,
+    );
     return handleImageOptimization(
       request,
       {

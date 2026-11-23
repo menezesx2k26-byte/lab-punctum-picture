@@ -16,6 +16,10 @@ export function resolveClientGalleryLayout(value: unknown): ClientGalleryLayout 
   return typeof value === "string" && (CLIENT_GALLERY_LAYOUTS as readonly string[]).includes(value)
     ? value as ClientGalleryLayout : "classico";
 }
+export function clientGalleryLayoutLabel(value: unknown): string {
+  const layout = resolveClientGalleryLayout(value);
+  return CLIENT_GALLERY_TEMPLATE_OPTIONS.find((item) => item.id === layout)?.label ?? "Clássico";
+}
 // Operational upload ceiling. Do not advertise or accept a larger upload until
 // the complete private Images-validation path is proven for the original spec.
 export const CLIENT_MAX_UPLOAD_BYTES = 20_000_000;

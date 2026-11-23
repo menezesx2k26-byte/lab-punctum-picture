@@ -106,6 +106,12 @@
   padding: 6px 10px;
   font-size: 11px;
 }
+.pga .pga-badge--template {
+  background: #f7edf0;
+  border-color: #6b2939;
+  color: #521d2b;
+  font-weight: 600;
+}
 .pga .pga-error {
   border: 1px solid #b53333;
   color: #8e2020;
