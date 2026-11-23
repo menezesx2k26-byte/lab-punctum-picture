@@ -1,3 +1,3 @@
 {
-  "install": "npm ci --no-audit --no-fund && npm install -g clerk --no-audit --no-fund && npx --yes skills add clerk/skills -g -a antigravity universal -y && CI=true WRANGLER_SEND_METRICS=false WRANGLER_LOG_PATH=.wrangler/wrangler.log npm run db:migrate:local"
+  "install": "npm ci --no-audit --no-fund && npm install -g clerk @hostinger/mcp --no-audit --no-fund && npx --yes skills add clerk/skills -g -a antigravity universal -y && CI=true WRANGLER_SEND_METRICS=false WRANGLER_LOG_PATH=.wrangler/wrangler.log npm run db:migrate:local"
 }
