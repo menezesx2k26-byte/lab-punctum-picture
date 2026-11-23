@@ -17,6 +17,15 @@ vi.mock("next/image", async () => {
   };
 });
 
+vi.mock("@clerk/react", () => ({
+  ClerkProvider: ({ children }: { children: ReactNode }) => children,
+  Show: ({ when, children }: { when: string; children: ReactNode }) =>
+    when === "signed-out" ? children : null,
+  SignInButton: ({ children }: { children: ReactNode }) => children,
+  useAuth: () => ({ isLoaded: true, getToken: async () => null }),
+  useClerk: () => ({ signOut: async () => {} }),
+}));
+
 vi.mock("next/link", async () => {
   const { createElement } = await import("react");
   return {
@@ -77,6 +86,20 @@ describe("Punctum client authentication presentation", () => {
     expect(html).toContain("Confirme a nova senha");
     expect(html).toContain("Salvar senha e entrar");
     expect(html).not.toContain('name="email"');
+    expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
+  });
+
+  it("uses provider-neutral copy for Clerk-only access and hides the legacy form", () => {
+    const html = renderEntry({
+      clerkEnabled: true,
+      clerkOnly: true,
+      publishableKey: "pk_test_synthetic",
+    });
+    expect(html).toContain("Entrar nos meus álbuns");
+    expect(html).not.toContain("Entrar com Clerk");
+    expect(html).not.toContain("Conta Clerk conectada");
+    expect(html).not.toContain('name="email"');
+    expect(html).not.toContain('name="password"');
     expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
   });
 
