@@ -5,6 +5,7 @@ import Link from "next/link";
 import type {
   ClientGallery,
   ClientTheme,
+  ClientGalleryLayout,
 } from "../../../shared/client-galleries";
 import {
   CLIENT_MAX_UPLOAD_BYTES,
@@ -29,12 +30,14 @@ import {
   PRIVATE_GALLERY_STATUS,
   type ClientAccountSummary,
 } from "./private-gallery-utils";
+import { PrivateGalleryTemplatePicker } from "./PrivateGalleryTemplatePicker";
 
 export function PrivateGalleriesManager() {
   const [galleries, setGalleries] = useState<ClientGallery[]>([]);
   const [clients, setClients] = useState<ClientAccountSummary[]>([]);
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState("");
+  const [layoutPreset, setLayoutPreset] = useState<ClientGalleryLayout>("classico");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ export function PrivateGalleriesManager() {
       const data = await privateApi<{ gallery: ClientGallery }>(
         "/admin/api/albuns-privados",
         "POST",
-        { title, clientId },
+        { title, clientId, layoutPreset },
       );
       window.location.replace("/admin/albuns-privados/" + data.gallery.id);
     } catch (e) {
@@ -113,6 +116,7 @@ export function PrivateGalleriesManager() {
                 ))}
             </select>
           </label>
+          <PrivateGalleryTemplatePicker value={layoutPreset} onChange={setLayoutPreset} />
           <button
             className="button"
             disabled={busy || !canSubmitPrivateGallery({ title, clientId })}
@@ -208,6 +212,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
     title: "",
     introduction: "",
     theme: "noir" as ClientTheme,
+    layoutPreset: "classico" as ClientGalleryLayout,
     allowDownloads: false,
   });
   const [error, setError] = useState("");
@@ -229,6 +234,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
           title: data.gallery.title,
           introduction: data.gallery.introduction,
           theme: data.gallery.theme,
+          layoutPreset: data.gallery.layoutPreset ?? "classico",
           allowDownloads: data.gallery.allowDownloads,
         });
     },
@@ -407,6 +413,7 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
                   <option value="warm">Warm · acolhedor</option>
                 </select>
               </label>
+              <PrivateGalleryTemplatePicker value={form.layoutPreset} onChange={(layoutPreset) => setForm({ ...form, layoutPreset })} />
               <label className="pga-wide">
                 Introdução
                 <textarea
