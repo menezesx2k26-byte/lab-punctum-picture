@@ -184,7 +184,7 @@ export function ClientLogin({
       <footer className="pa-entry-footer">
         <span>Fotografia que permanece.</span>
         <div className="pa-entry-links">
-          <Link href="/acesso" className="pa-studio-link">
+          <Link href="/acesso" prefetch={false} className="pa-studio-link">
             É da equipe do estúdio? Entrar no estúdio →
           </Link>
           <Link href="/">Voltar ao Punctum ↗</Link>
