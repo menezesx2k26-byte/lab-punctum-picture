@@ -1,6 +1,8 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { getPublicVisualAsset } from "../../lib/public-visuals";
 import { privateApi, errorMessage } from "./api";
 import { loginErrorMessage } from "./routes";
 import { ClerkClientLogin } from "./ClerkClientLogin";
@@ -56,138 +58,131 @@ export function ClientLogin({
     }
   }
   return (
-    <main className="pa-entry">
-      <Link href="/" className="pa-wordmark">
-        PUNCTUM <span>PICTURE</span>
-      </Link>
+    <main id="conteudo" className="pa-entry">
+      <header className="pa-entry-topbar">
+        <Link href="/" className="pa-brand" aria-label="Punctum Picture, voltar à página inicial">
+          <Image
+            src={getPublicVisualAsset("logo").src}
+            alt=""
+            width={70}
+            height={70}
+            priority
+          />
+          <span>PUNCTUM <strong>PICTURE</strong></span>
+        </Link>
+        <Link href="/" className="pa-top-link">
+          <span aria-hidden="true">←</span> Voltar ao portfólio
+        </Link>
+      </header>
+
       <div className="pa-entry-grid">
-        <section className="pa-entry-copy">
-          <p className="pa-eyebrow">Um arquivo só seu</p>
-          <h1>
+        <section className="pa-entry-copy" aria-labelledby="pa-entry-title">
+          <p className="pa-eyebrow">Punctum Picture / Área reservada</p>
+          <h1 id="pa-entry-title">
             {changePassword ? (
-              <>
-                Suas memórias.
-                <br />
-                <em>Sua chave.</em>
-              </>
+              <>Seu acesso, <em>seu momento.</em></>
             ) : (
-              <>
-                O que fica,
-                <br />
-                <em>é seu.</em>
-              </>
+              <>Suas imagens. <em>Seu olhar.</em></>
             )}
           </h1>
           <p>
             {changePassword
-              ? "Escolha uma senha pessoal para abrir os seus álbuns. Ela deve ter pelo menos 12 caracteres."
-              : "Fotografias para revisitar com calma. Entre para encontrar os seus álbuns, guardar favoritas e reviver cada detalhe."}
+              ? "Escolha uma senha pessoal para continuar a explorar suas fotografias."
+              : "Um lugar para rever seus ensaios, escolher favoritas e guardar os detalhes que importam."}
           </p>
-          {!changePassword && (
-            <ol className="pa-steps" aria-label="Como acessar seus álbuns">
-              <li>
-                <span>01</span>
-                Entre com o mesmo e-mail combinado com o estúdio
-              </li>
-              <li>
-                <span>02</span>
-                Escolha um dos seus álbuns publicados
-              </li>
-              <li>
-                <span>03</span>
-                Favorite imagens e baixe os originais liberados
-              </li>
-            </ol>
-          )}
-          <span className="pa-entry-signature">
-            Punctum Picture · Maria Helena
-          </span>
+          <span className="pa-entry-signature">Fotografia por Maria Helena</span>
         </section>
+
         <section className="pa-login-card" aria-labelledby="login-title">
-          <p className="pa-eyebrow">Área do cliente</p>
+          <p className="pa-eyebrow">Acesso aos álbuns</p>
           <h2 id="login-title">
-            {changePassword ? "Escolha sua senha" : "Bem-vindo de volta"}
+            {changePassword ? "Defina sua senha" : "Entre no seu arquivo"}
           </h2>
+          {!changePassword && (
+            <p className="pa-form-intro">Use o e-mail cadastrado com o estúdio para acessar suas fotografias.</p>
+          )}
           {!changePassword && clerkEnabled && publishableKey && (
             <ClerkClientLogin publishableKey={publishableKey} />
           )}
           {(changePassword || !clerkOnly) && (
             <form onSubmit={submit}>
-            {!changePassword && (
+              {!changePassword && (
+                <label>
+                  E-mail
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="username"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    maxLength={180}
+                    required
+                  />
+                </label>
+              )}
               <label>
-                E-mail
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  maxLength={180}
-                  required
-                />
-              </label>
-            )}
-            <label>
-              {changePassword ? "Nova senha" : "Senha"}
-              <input
-                type="password"
-                name="password"
-                autoComplete={
-                  changePassword ? "new-password" : "current-password"
-                }
-                minLength={changePassword ? 12 : 1}
-                maxLength={1024}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </label>
-            {changePassword && (
-              <label>
-                Confirme a nova senha
+                {changePassword ? "Nova senha" : "Senha"}
                 <input
                   type="password"
-                  name="confirmation"
-                  autoComplete="new-password"
-                  minLength={12}
+                  name="password"
+                  autoComplete={changePassword ? "new-password" : "current-password"}
+                  minLength={changePassword ? 12 : 1}
                   maxLength={1024}
-                  value={confirmation}
-                  onChange={(e) => setConfirmation(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </label>
-            )}
-            {error && (
-              <p role="alert" className="pa-error">
-                {error}
-              </p>
-            )}
-            <button className="pa-primary" disabled={busy} type="submit">
-              {busy
-                ? "Aguarde…"
-                : changePassword
-                  ? "Salvar senha e entrar"
-                  : "Abrir meus álbuns"}{" "}
-              <span aria-hidden="true">↗</span>
-            </button>
-          </form>
+              {changePassword && (
+                <label>
+                  Confirme a nova senha
+                  <input
+                    type="password"
+                    name="confirmation"
+                    autoComplete="new-password"
+                    minLength={12}
+                    maxLength={1024}
+                    value={confirmation}
+                    onChange={(e) => setConfirmation(e.target.value)}
+                    required
+                  />
+                </label>
+              )}
+              {error && <p role="alert" className="pa-error">{error}</p>}
+              <button className="pa-primary" disabled={busy} type="submit">
+                {busy ? "Aguarde…" : changePassword ? "Salvar senha e entrar" : "Acessar meus álbuns"}
+                <span aria-hidden="true">↗</span>
+              </button>
+            </form>
           )}
           <p className="pa-caption">
             {changePassword
               ? "Sua senha é pessoal. Evite reutilizar senhas de outros serviços."
               : clerkOnly
-                ? "Entre com sua conta Clerk vinculada pelo estúdio para abrir os seus álbuns."
+                ? "Seu acesso é pessoal. Se ainda não recebeu um convite, entre em contato com o estúdio."
                 : "Primeiro acesso ou esqueceu a senha? Peça uma nova senha temporária ao estúdio."}
           </p>
         </section>
+
+        <figure className="pa-entry-art">
+          <Image
+            src={getPublicVisualAsset("hero").src}
+            alt={getPublicVisualAsset("hero").alt}
+            width={getPublicVisualAsset("hero").width}
+            height={getPublicVisualAsset("hero").height}
+            sizes="(max-width: 760px) 100vw, 46vw"
+          />
+          <figcaption>O olhar de Maria Helena. As suas histórias.</figcaption>
+        </figure>
       </div>
+
       <footer className="pa-entry-footer">
-        <span>Fotografia que permanece.</span>
+        <span>© {new Date().getFullYear()} Punctum Picture</span>
         <div className="pa-entry-links">
           <Link href="/acesso" prefetch={false} className="pa-studio-link">
-            É da equipe do estúdio? Entrar no estúdio →
+            Acesso do estúdio
           </Link>
-          <Link href="/">Voltar ao Punctum ↗</Link>
+          <Link href="/">Página inicial ↗</Link>
         </div>
       </footer>
     </main>
