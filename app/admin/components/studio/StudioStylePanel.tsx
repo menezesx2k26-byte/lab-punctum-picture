@@ -170,7 +170,8 @@ export function StudioStylePanel({
       </div>
 
       <div className="studio-subsection">
-        <h3>Escolha um clima</h3>
+        <h3>Templates do site</h3>
+        <p>Selecione um visual pronto e confira no preview antes de publicar. Fotos, textos e ordem permanecem intactos.</p>
         <div className="studio-preset-grid">
           {Object.values(SITE_PRESET_REGISTRY).map((preset) => (
             <button
