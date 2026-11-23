@@ -15,6 +15,7 @@ import {
   Tablet,
   Undo2,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EDITORIAL_TEXT_LIMITS,
@@ -677,6 +678,17 @@ export function StudioManager() {
           <p className="eyebrow">Seu espaço criativo</p>
           <h1>Studio</h1>
           <p>Troque as palavras e o clima do site sem medo de estragar.</p>
+          <div className="studio-quick-links" aria-label="Atalhos de entrega e portfólio">
+            <Link href="/admin/albuns-privados" className="button ghost small">
+              Álbuns privados ↗
+            </Link>
+            <Link href="/admin/clientes" className="button ghost small">
+              Clientes ↗
+            </Link>
+            <Link href="/admin/ensaios" className="button ghost small">
+              Ensaios públicos ↗
+            </Link>
+          </div>
         </div>
         <div className="studio-top-actions">
           <div className="studio-undo-actions" role="group" aria-label="Desfazer e refazer">

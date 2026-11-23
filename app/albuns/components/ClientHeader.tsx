@@ -6,10 +6,18 @@ export function ClientHeader() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [authMode, setAuthMode] = useState<"password" | "access" | "clerk" | null>(null);
+  const [clientName, setClientName] = useState("");
   useEffect(() => {
     let active = true;
-    void privateApi<{ authMode: "password" | "access" | "clerk" }>("/api/client/me")
-      .then((data) => { if (active) setAuthMode(data.authMode); })
+    void privateApi<{
+      authMode: "password" | "access" | "clerk";
+      client?: { name?: string };
+    }>("/api/client/me")
+      .then((data) => {
+        if (!active) return;
+        setAuthMode(data.authMode);
+        if (data.client?.name) setClientName(data.client.name);
+      })
       .catch(() => undefined);
     return () => { active = false; };
   }, []);
@@ -23,6 +31,7 @@ export function ClientHeader() {
       setBusy(false);
     }
   }
+  const firstName = clientName.trim().split(/\s+/)[0] ?? "";
   return (
     <>
       <header className="pa-header">
@@ -30,9 +39,11 @@ export function ClientHeader() {
           PUNCTUM <span>PICTURE</span>
         </Link>
         <nav aria-label="Seus álbuns">
+          {firstName && <span className="pa-user-pill">Olá, {firstName}</span>}
           <Link href="/albuns" prefetch={false}>
             Meus álbuns
           </Link>
+          <Link href="/">Site principal</Link>
           {authMode === "password" && (
             <Link href="/albuns/trocar-senha" prefetch={false}>
               Senha

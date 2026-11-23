@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   clientAccountCreateSchema,
   clientGalleryCreateSchema,
+  clientGalleryOwnerTransferSchema,
   clientGalleryUpdateSchema,
 } from "../../shared/client-galleries";
 import {
@@ -30,6 +31,11 @@ import {
   linkClerkClientAccount,
   unlinkClerkClientAccount,
 } from "../auth/clerk-auth";
+import {
+  inviteClerkClientByEmail,
+  lookupClerkUsersByEmail,
+  type ClerkAdminDirectoryClient,
+} from "../auth/clerk-admin-directory";
 
 const accountColumns =
   "c.id,c.name,c.email,c.disabled_at AS disabledAt,c.must_change_password AS mustChangePassword,c.created_at AS createdAt,l.clerk_user_id AS clerkUserId";
@@ -37,6 +43,7 @@ export async function handleClientAdminApi(
   request: Request,
   url: URL,
   env: Env,
+  options: { clerkClient?: ClerkAdminDirectoryClient } = {},
 ): Promise<Response | null> {
   if (/^\/admin\/api\/albuns-privados(?:\/|$)/.test(url.pathname))
     return handleGalleryAdminApi(request, url, env);
@@ -46,8 +53,15 @@ export async function handleClientAdminApi(
   const db = requireDb(env);
   const mode = clientAuthMode(env);
   await assertRateLimit(request, db, "client-admin", 200, 60);
+  if (url.pathname === "/admin/api/clientes/clerk-lookup") {
+    if (request.method !== "GET")
+      throw new AppError(405, "METHOD_NOT_ALLOWED", "Operação não permitida.");
+    const email = url.searchParams.get("email") ?? "";
+    const matches = await lookupClerkUsersByEmail(email, env, options);
+    return privateJson({ matches });
+  }
   const match = url.pathname.match(
-    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password|lgpd-export|clerk-link))?)?$/,
+    /^\/admin\/api\/clientes(?:\/([^/]+)(?:\/(reset-password|lgpd-export|clerk-link|clerk-invite))?)?$/,
   );
   if (!match) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   const id = match[1];
@@ -127,11 +141,39 @@ export async function handleClientAdminApi(
     );
   }
   const existing = await db
-    .prepare("SELECT id FROM client_accounts WHERE id=?")
+    .prepare("SELECT id, email, disabled_at AS disabledAt FROM client_accounts WHERE id=?")
     .bind(id ?? "")
-    .first();
+    .first<{ id: string; email: string; disabledAt: string | null }>();
   if (!existing)
     throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+  if (match[2] === "clerk-invite") {
+    if (request.method !== "POST")
+      throw new AppError(405, "METHOD_NOT_ALLOWED", "Operação não permitida.");
+    if (existing.disabledAt !== null) {
+      throw new AppError(
+        404,
+        "NOT_FOUND",
+        "Cliente desativado não pode receber convites.",
+      );
+    }
+    const result = await inviteClerkClientByEmail(
+      existing.email,
+      request,
+      env,
+      options,
+    );
+    if (result.status === "invited") {
+      await writeAudit(
+        db,
+        auditPrincipal(actor),
+        "client.clerk_invited",
+        "client_account",
+        id,
+        { email: existing.email, invitationId: result.invitationId },
+      );
+    }
+    return privateJson(result);
+  }
   if (match[2] === "lgpd-export" && request.method === "GET") {
     const exported = await loadSanitizedTitularExport(db, id);
     await writeAudit(
@@ -245,7 +287,7 @@ async function handleGalleryAdminApi(
   const db = requireDb(env);
   await assertRateLimit(request, db, "private-gallery-admin", 200, 60);
   const match = url.pathname.match(
-    /^\/admin\/api\/albuns-privados(?:\/([^/]+)(?:\/(cover|order|publish|archive|unpublish))?)?$/,
+    /^\/admin\/api\/albuns-privados(?:\/([^/]+)(?:\/(cover|order|publish|archive|unpublish|owner))?)?$/,
   );
   if (!match) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   const id = match[1];
@@ -401,6 +443,39 @@ async function handleGalleryAdminApi(
       },
     });
   }
+  if (action === "owner" && request.method === "PUT") {
+    const input = await parseJson(request, clientGalleryOwnerTransferSchema);
+    if (input.clientId === gallery.clientId) {
+      return privateJson({ gallery: serializeGallery(gallery) });
+    }
+    if (gallery.status !== "draft") {
+      throw new AppError(
+        409,
+        "CONFLICT",
+        "Volte o álbum para rascunho antes de transferir para outro cliente.",
+      );
+    }
+    if (!(await getActiveClient(db, input.clientId))) {
+      throw new AppError(404, "NOT_FOUND", "Cliente indisponível.");
+    }
+    const now = new Date().toISOString();
+    await db.batch([
+      db
+        .prepare("UPDATE client_galleries SET client_id=?,updated_at=? WHERE id=?")
+        .bind(input.clientId, now, id),
+      prepareAudit(
+        db,
+        auditPrincipal(actor),
+        "client_gallery.owner_changed",
+        "client_gallery",
+        id,
+        { previousClientId: gallery.clientId, nextClientId: input.clientId },
+      ),
+    ]);
+    return privateJson({
+      gallery: serializeGallery((await getGallery(db, id))!),
+    });
+  }
   if (!action && request.method === "PATCH") {
     const input = await parseJson(request, clientGalleryUpdateSchema);
     const columns = {
@@ -422,11 +497,18 @@ async function handleGalleryAdminApi(
     assignments.push("updated_at=?");
     values.push(now, id);
     await db.batch([
-      db.prepare(
-        "UPDATE client_galleries SET " + assignments.join(",") + " WHERE id=?",
-      )
-      .bind(...values),
-      prepareAudit(db, auditPrincipal(actor), "client_gallery.updated", "client_gallery", id),
+      db
+        .prepare(
+          "UPDATE client_galleries SET " + assignments.join(",") + " WHERE id=?",
+        )
+        .bind(...values),
+      prepareAudit(
+        db,
+        auditPrincipal(actor),
+        "client_gallery.updated",
+        "client_gallery",
+        id,
+      ),
     ]);
     return privateJson({
       gallery: serializeGallery((await getGallery(db, id))!),

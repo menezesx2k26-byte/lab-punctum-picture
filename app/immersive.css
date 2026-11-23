@@ -259,3 +259,11 @@ body:has(dialog[open]) .floating-whatsapp,body:has(input:focus,textarea:focus,se
   inset-inline:var(--frame-edge);
  }
 }
+@media(max-width:720px) {
+ .site-shell.immersive-home .site-nav {
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  row-gap:.4rem;
+ }
+}
+

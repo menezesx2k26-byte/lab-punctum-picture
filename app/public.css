@@ -1997,4 +1997,42 @@
   font-weight: 500;
 }
 
+.site-nav a.nav-client-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  white-space: nowrap;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.site-nav a.nav-client-cta:hover,
+.site-nav a.nav-client-cta:focus-visible {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  border-color: currentColor;
+}
+
+.site-footer nav a.footer-studio-link {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 720px) {
+  .site-nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 0.35rem;
+  }
+
+  .site-nav a.nav-client-cta {
+    min-height: 40px;
+    padding: 0.35rem 0.72rem;
+    font-size: 0.72rem;
+  }
+}
+
+
 

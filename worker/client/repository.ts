@@ -25,6 +25,8 @@ export type GalleryRow = {
   coverImageId: string | null;
   allowDownloads: number;
   status: ClientGalleryStatus;
+  readyImageCount?: number;
+  favoriteCount?: number;
 };
 export type GalleryImageRow = {
   id: string;
@@ -127,7 +129,10 @@ export async function listPublishedGalleriesForClient(
   return (
     await db
       .prepare(
-        `SELECT ${GALLERY_COLUMNS} FROM client_galleries g JOIN client_accounts c ON c.id=g.client_id
+        `SELECT ${GALLERY_COLUMNS},
+                (SELECT COUNT(*) FROM client_gallery_images i WHERE i.gallery_id=g.id AND i.deleted_at IS NULL AND i.status='ready') AS readyImageCount,
+                (SELECT COUNT(*) FROM client_gallery_favorites f WHERE f.gallery_id=g.id AND f.client_id=g.client_id) AS favoriteCount
+         FROM client_galleries g JOIN client_accounts c ON c.id=g.client_id
     WHERE g.client_id=? AND g.status='published' AND c.disabled_at IS NULL ORDER BY g.published_at DESC,g.id`,
       )
       .bind(clientId)
@@ -138,13 +143,25 @@ export async function listAllGalleries(db: D1Database): Promise<GalleryRow[]> {
   return (
     await db
       .prepare(
-        `SELECT ${GALLERY_COLUMNS} FROM client_galleries g ORDER BY g.updated_at DESC,g.id`,
+        `SELECT ${GALLERY_COLUMNS},
+                (SELECT COUNT(*) FROM client_gallery_images i WHERE i.gallery_id=g.id AND i.deleted_at IS NULL AND i.status='ready') AS readyImageCount,
+                (SELECT COUNT(*) FROM client_gallery_favorites f WHERE f.gallery_id=g.id) AS favoriteCount
+         FROM client_galleries g ORDER BY g.updated_at DESC,g.id`,
       )
       .all<GalleryRow>()
   ).results;
 }
 export function serializeGallery(gallery: GalleryRow) {
-  return { ...gallery, allowDownloads: Boolean(gallery.allowDownloads) };
+  return {
+    ...gallery,
+    allowDownloads: Boolean(gallery.allowDownloads),
+    ...(typeof gallery.readyImageCount === "number"
+      ? { readyImageCount: Number(gallery.readyImageCount) }
+      : {}),
+    ...(typeof gallery.favoriteCount === "number"
+      ? { favoriteCount: Number(gallery.favoriteCount) }
+      : {}),
+  };
 }
 export function serializeImage(image: GalleryImageRow) {
   return {

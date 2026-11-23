@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- Private media must use authenticated Worker endpoints, without the public image optimizer. */
 "use client";
+import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { resolveClientGalleryLayout, type ClientGallery } from "../../../shared/client-galleries";
 import { ClientHeader } from "./ClientHeader";
@@ -19,6 +20,7 @@ function GalleryContent({ galleryId }: { galleryId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
+  const [filter, setFilter] = useState<"all" | "favorites">("all");
   const [pending, setPending] = useState<Set<string>>(new Set());
   useEffect(() => {
     let active = true;
@@ -73,6 +75,9 @@ function GalleryContent({ galleryId }: { galleryId: string }) {
     }
   }
   const images = gallery?.images ?? [];
+  const favoriteCount = images.filter((i) => i.favorite).length;
+  const visibleImages =
+    filter === "favorites" ? images.filter((i) => i.favorite) : images;
   return (
     <div
       style={themeTokens(gallery?.theme ?? "noir") as CSSProperties}
@@ -81,6 +86,16 @@ function GalleryContent({ galleryId }: { galleryId: string }) {
     >
       <ClientHeader />
       <main className="pa-library">
+        <div className="pa-breadcrumb">
+          <Link className="pa-back-link" href="/albuns" prefetch={false}>
+            ← Meus álbuns
+          </Link>
+          {gallery && (
+            <span className="pa-access-pill">
+              {gallery.allowDownloads ? "Downloads originais liberados" : "Somente visualização"}
+            </span>
+          )}
+        </div>
         {loading && <p role="status">Abrindo o seu álbum…</p>}
         {error && (
           <p role="alert" className="pa-error">
@@ -95,12 +110,50 @@ function GalleryContent({ galleryId }: { galleryId: string }) {
               <p className="pa-introduction">{gallery.introduction}</p>
             )}
             <div className="pa-section-heading">
-              <span>{images.length} fotografias</span>
-              <span>{images.filter((i) => i.favorite).length} favoritas</span>
+              <div className="pa-filter-tabs" role="group" aria-label="Filtrar fotografias">
+                <button
+                  type="button"
+                  className={filter === "all" ? "is-active" : undefined}
+                  aria-pressed={filter === "all"}
+                  onClick={() => {
+                    setFilter("all");
+                    setSelected(null);
+                  }}
+                >
+                  Todas ({images.length})
+                </button>
+                <button
+                  type="button"
+                  className={filter === "favorites" ? "is-active" : undefined}
+                  aria-pressed={filter === "favorites"}
+                  onClick={() => {
+                    setFilter("favorites");
+                    setSelected(null);
+                  }}
+                >
+                  Favoritas ({favoriteCount})
+                </button>
+              </div>
+              <span>{favoriteCount} selecionadas</span>
             </div>
             {images.length === 0 && <p>Nenhuma foto disponível neste álbum.</p>}
+            {images.length > 0 && visibleImages.length === 0 && (
+              <div className="pa-empty">
+                <h2>Nenhuma fotografia favorita ainda.</h2>
+                <p>
+                  Toque no coração de uma fotografia para montar a sua seleção favorita.
+                </p>
+                <button
+                  type="button"
+                  className="pa-secondary-btn"
+                  onClick={() => setFilter("all")}
+                >
+                  Mostrar todas as fotos
+                </button>
+              </div>
+            )}
             <div className="pa-photo-grid">
-              {images.map((image, index) => (
+              {visibleImages.map((image, index) => (
                 <figure className="pa-photo" key={image.id}>
                   <button
                     className="pa-photo-open"
@@ -159,16 +212,16 @@ function GalleryContent({ galleryId }: { galleryId: string }) {
           </>
         )}
       </main>
-      {gallery && selected !== null && images[selected] && (
+      {gallery && selected !== null && visibleImages[selected] && (
         <PhotoViewer
           galleryId={gallery.id}
-          images={images}
+          images={visibleImages}
           index={selected}
           onIndex={setSelected}
           onClose={() => setSelected(null)}
           onFavorite={favorite}
           allowDownloads={gallery.allowDownloads}
-          busy={pending.has(images[selected].id)}
+          busy={pending.has(visibleImages[selected].id)}
           error={error}
         />
       )}

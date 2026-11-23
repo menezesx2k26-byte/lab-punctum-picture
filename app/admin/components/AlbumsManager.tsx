@@ -24,6 +24,10 @@ export function AlbumsManager() {
   const router = useRouter();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [title, setTitle] = useState("");
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft" | "archived"
+  >("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -64,12 +68,22 @@ export function AlbumsManager() {
     router.push(`/admin/ensaios/${body.album.id}`);
   }
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleAlbums = albums.filter((album) => {
+    if (statusFilter !== "all" && album.status !== statusFilter) return false;
+    if (!normalizedQuery) return true;
+    return (
+      album.title.toLowerCase().includes(normalizedQuery) ||
+      album.slug.toLowerCase().includes(normalizedQuery)
+    );
+  });
+
   return (
     <>
       <div className="admin-topbar">
         <div>
           <p className="eyebrow">Biblioteca</p>
-          <h1>Ensaios</h1>
+          <h1>Ensaios públicos</h1>
         </div>
       </div>
       <section className="admin-card full">
@@ -96,9 +110,45 @@ export function AlbumsManager() {
         )}
       </section>
       <section style={{ marginTop: "1rem" }}>
+        <div className="admin-filter-bar">
+          <div className="admin-filter-chips" role="group" aria-label="Filtrar ensaios por estado">
+            {(
+              [
+                ["all", "Todos"],
+                ["published", "Publicados"],
+                ["draft", "Rascunhos"],
+                ["archived", "Arquivados"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className={
+                  "admin-filter-chip" + (statusFilter === key ? " is-active" : "")
+                }
+                aria-pressed={statusFilter === key}
+                onClick={() => setStatusFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <input
+            type="search"
+            className="admin-input"
+            style={{ maxWidth: "18rem" }}
+            placeholder="Buscar ensaio por nome…"
+            aria-label="Buscar ensaio por nome"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
         <div className="admin-list">
           {loading && <p className="admin-muted">Carregando ensaios…</p>}
-          {albums.map((album) => (
+          {!loading && visibleAlbums.length === 0 && (
+            <p className="admin-muted">Nenhum ensaio encontrado neste filtro.</p>
+          )}
+          {visibleAlbums.map((album) => (
             <div className="admin-list-item" key={album.id}>
               <div>
                 <strong>{album.title}</strong>

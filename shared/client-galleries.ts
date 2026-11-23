@@ -56,6 +56,11 @@ export const clientGalleryUpdateSchema = z
     allowDownloads: z.boolean().optional(),
   })
   .strict();
+export const clientGalleryOwnerTransferSchema = z
+  .object({
+    clientId: z.uuid(),
+  })
+  .strict();
 export const clientGalleryCreateSchema = clientGalleryUpdateSchema
   .extend({
     clientId: z.uuid(),
@@ -98,5 +103,6 @@ export type ClientGallery = {
   allowDownloads: boolean;
   status: ClientGalleryStatus;
   images?: ClientImage[];
+  readyImageCount?: number;
   favoriteCount?: number;
 };

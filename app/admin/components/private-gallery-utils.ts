@@ -39,9 +39,28 @@ export type ClientAccountSummary = {
   disabledAt: string | null;
   mustChangePassword: number;
   clerkUserId?: string | null;
+  createdAt?: string;
 };
 export const PRIVATE_GALLERY_STATUS = {
   draft: "Rascunho",
   published: "Publicado",
   archived: "Arquivado",
 };
+
+export function buildClientInviteMessage(params: {
+  clientName: string;
+  albumTitle?: string;
+  portalUrl: string;
+  email?: string;
+}): string {
+  const firstName = params.clientName.trim().split(/\s+/)[0] || "olá";
+  const subject = params.albumTitle
+    ? `o álbum "${params.albumTitle}"`
+    : "a sua coleção privada";
+  return (
+    `Olá, ${firstName}! Acabei de disponibilizar ${subject} na Punctum Picture.\n\n` +
+    `Acesse seus álbuns particulares em:\n${params.portalUrl}` +
+    (params.email ? `\n\nEntre com o e-mail: ${params.email}` : "")
+  );
+}
+

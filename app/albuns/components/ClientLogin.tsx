@@ -83,6 +83,22 @@ export function ClientLogin({
               ? "Escolha uma senha pessoal para abrir os seus álbuns. Ela deve ter pelo menos 12 caracteres."
               : "Fotografias para revisitar com calma. Entre para encontrar os seus álbuns, guardar favoritas e reviver cada detalhe."}
           </p>
+          {!changePassword && (
+            <ol className="pa-steps" aria-label="Como acessar seus álbuns">
+              <li>
+                <span>01</span>
+                Entre com o mesmo e-mail combinado com o estúdio
+              </li>
+              <li>
+                <span>02</span>
+                Escolha um dos seus álbuns publicados
+              </li>
+              <li>
+                <span>03</span>
+                Favorite imagens e baixe os originais liberados
+              </li>
+            </ol>
+          )}
           <span className="pa-entry-signature">
             Punctum Picture · Maria Helena
           </span>
@@ -167,7 +183,12 @@ export function ClientLogin({
       </div>
       <footer className="pa-entry-footer">
         <span>Fotografia que permanece.</span>
-        <Link href="/">Voltar ao Punctum ↗</Link>
+        <div className="pa-entry-links">
+          <Link href="/acesso" prefetch={false} className="pa-studio-link">
+            É da equipe do estúdio? Entrar no estúdio →
+          </Link>
+          <Link href="/">Voltar ao Punctum ↗</Link>
+        </div>
       </footer>
     </main>
   );
