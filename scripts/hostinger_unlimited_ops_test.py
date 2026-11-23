@@ -4,30 +4,52 @@ import unittest
 
 from scripts.hostinger_unlimited_ops import (
     BUILD_SETTINGS,
-    build_redeploy_env,
+    build_clean_redeploy_env,
     compute_temp_daily_schedule,
     cron_command,
     extract_cron_receipt,
     parse_bootstrap_receipt,
+    sanitize_build_logs,
     verify_cron_230_and_restore,
 )
 
 
 class HostingerUnlimitedOpsTest(unittest.TestCase):
-    def test_build_redeploy_env_preserves_keys_updates_sha_and_strips_import_secrets(self):
-        existing = [
-            {"key": "NODE_ENV", "value": "production"},
-            {"key": "CLERK_SECRET_KEY", "value": "sk_live_kept"},
-            {"key": "PUNCTUM_MANAGED_IMPORT_KEY", "value": "secret_key"},
-            {"key": "PUNCTUM_MANAGED_IMPORT_SHA256", "value": "secret_sha"},
-            {"key": "PUNCTUM_QA_SOURCE_SHA", "value": "0" * 40},
-        ]
-        updated = build_redeploy_env(existing, "a" * 40)
+    def test_build_clean_redeploy_env_builds_unmasked_canonical_env(self):
+        updated = build_clean_redeploy_env(
+            publishable_key="pk_live_123",
+            secret_key="sk_live_456",
+            jwt_key_pem_single_line="-----BEGIN PUBLIC KEY-----\\nABC\\n-----END PUBLIC KEY-----",
+            admin_email="studio@example.com",
+            clerk_admin_user_id="user_3M7epRZWjA3wg33n8xOk9ddeOzg",
+            source_sha="a" * 40,
+        )
         self.assertEqual(updated["NODE_ENV"], "production")
-        self.assertEqual(updated["CLERK_SECRET_KEY"], "sk_live_kept")
+        self.assertEqual(updated["CLERK_PUBLISHABLE_KEY"], "pk_live_123")
+        self.assertEqual(updated["CLERK_SECRET_KEY"], "sk_live_456")
         self.assertEqual(updated["PUNCTUM_QA_SOURCE_SHA"], "a" * 40)
+        self.assertRegex(updated["PUNCTUM_CANDIDATE_ADMIN_PASSWORD_HASH"], r"^[a-f0-9]{64}$")
+        self.assertGreaterEqual(len(updated["PUNCTUM_CANDIDATE_ADMIN_SESSION_SECRET"]), 64)
+        self.assertGreaterEqual(len(updated["PUNCTUM_CANDIDATE_CLIENT_SESSION_SECRET"]), 64)
         self.assertNotIn("PUNCTUM_MANAGED_IMPORT_KEY", updated)
         self.assertNotIn("PUNCTUM_MANAGED_IMPORT_SHA256", updated)
+
+    def test_sanitize_build_logs_extracts_safe_errors_without_leaking_secrets(self):
+        raw = {
+            "logs": "\n".join(
+                [
+                    "normal build output line",
+                    "sk_live_secretvalue should never appear",
+                    "Error: UNLIMITED_BOOTSTRAP_INVALID_ADMIN_CONFIG for studio@punctumpicture.com",
+                    "npm error code 1",
+                ]
+            )
+        }
+        summary = sanitize_build_logs(raw)
+        self.assertIn("UNLIMITED_BOOTSTRAP_INVALID_ADMIN_CONFIG", summary["codes"])
+        joined = "\n".join(summary["tailLines"])
+        self.assertNotIn("sk_live_secretvalue", joined)
+        self.assertNotIn("studio@punctumpicture.com", joined)
 
     def test_compute_temp_daily_schedule_wraps_cleanly(self):
         dt = datetime.datetime(2026, 11, 23, 23, 58, 30, tzinfo=datetime.timezone.utc)
