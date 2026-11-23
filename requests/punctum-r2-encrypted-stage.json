@@ -1,0 +1,13 @@
+{
+  "scope": "PUNCTUM_R2_ENCRYPTED_STAGING_ONLY",
+  "action": "encrypt-r2",
+  "sourceReadOnly": true,
+  "dnsTouched": false,
+  "productionDataImported": false,
+  "bucket": "punctum-picture-originals",
+  "expectedObjects": 230,
+  "expectedBytes": 372040548,
+  "recipientCertFingerprintSha256": "084d9c304632758f673a920930a388dc45300878d7ecf4fecc3be2fd873fd1d0",
+  "sourceAuditRun": 43477405756,
+  "note": "Only encrypted AES-256-GCM CMS artifacts containing originals and protected key manifest; zero plaintext artifact or DNS."
+}

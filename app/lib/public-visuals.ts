@@ -9,6 +9,12 @@ const PUBLIC_VISUAL_ASSETS = {
     width: 3840,
     height: 2160,
   },
+  cinematicHero: {
+    src: "/photos/p002.jpg",
+    alt: "Vela acesa iluminando uma mão em uma cena escura",
+    width: 1080,
+    height: 1440,
+  },
 } as const;
 
 const HERO_OBJECT_POSITIONS = { desktop: "45% 42%", mobile: "50% 50%" } as const;
@@ -33,10 +39,11 @@ export function resolveConfiguredHeroVisual(
   heroMedia: HeroMediaRef | null | undefined,
   legacyImageId: string | null,
   images: readonly HeroCandidate[],
+  audience: "public" | "admin" = "public",
 ) {
   if (heroMedia?.kind === "site-media") {
     return {
-      src: `/media/${heroMedia.id}/display`,
+      src: `${audience === "admin" ? "/admin" : ""}/media/${heroMedia.id}/display`,
       alt: "Fotografia principal da Punctum Picture",
       width: 3840,
       height: 2160,

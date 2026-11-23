@@ -1,0 +1,65 @@
+{
+  "atUtc": "2026-10-28T23:25:21.482948+00:00",
+  "expectedVersion": "e05a3001-3c78-4703-8055-acf3026bd450",
+  "scope": "Post-finally isolated QA and existing Hostinger readback",
+  "private": [
+    {
+      "path": "/robots.txt",
+      "method": "GET",
+      "status": 403,
+      "bytes": 17,
+      "version": null,
+      "cache": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+      "passed": false
+    },
+    {
+      "path": "/api/client/me",
+      "method": "GET",
+      "status": 403,
+      "bytes": 17,
+      "version": null,
+      "cache": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+      "passed": false
+    },
+    {
+      "path": "/api/client/galleries/b608d853-318d-428a-9961-69aa21c0907e/images/511b7a76-bded-4653-bc9c-37eb58dfee55/download",
+      "method": "GET",
+      "status": 403,
+      "bytes": 17,
+      "version": null,
+      "cache": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+      "passed": false
+    },
+    {
+      "path": "/api/client/galleries/b608d853-318d-428a-9961-69aa21c0907e/images/511b7a76-bded-4653-bc9c-37eb58dfee55/download",
+      "method": "HEAD",
+      "status": 403,
+      "bytes": 0,
+      "version": null,
+      "cache": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+      "passed": false
+    }
+  ],
+  "hostinger": [
+    {
+      "status": 200,
+      "version": "r4-node-probe-20261028-v2",
+      "node": "v24.22.1",
+      "nonceMatched": true,
+      "cache": "no-store",
+      "ssrValidated": false,
+      "production": false
+    },
+    {
+      "status": 200,
+      "version": "r4-node-probe-20261028-v2",
+      "node": "v24.22.1",
+      "nonceMatched": true,
+      "cache": "no-store",
+      "ssrValidated": false,
+      "production": false
+    }
+  ],
+  "productionWrites": 0,
+  "status": "FAILED_POST_RETURN_PROBES"
+}

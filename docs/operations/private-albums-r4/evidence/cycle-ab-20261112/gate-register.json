@@ -1,0 +1,738 @@
+{
+  "schemaVersion": 1,
+  "dateUtc": "2026-11-12",
+  "source": "execution-state.json gateLedger",
+  "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+  "scope": "24 canonical G01-G24 gates; statuses preserved exactly; historical PASS evidence remains tied to its recorded SHA",
+  "counts": {
+    "PASS": 17,
+    "FAIL": 2,
+    "BLOCKED_EXTERNAL": 5
+  },
+  "gates": [
+    {
+      "gate": "G01",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Original SPEC and handoff fully read and hash-verified; PR17/20/24, remote HEAD, worktrees and main-only diff audited. Existing work preserved.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G02",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "CI exact-head checkout fixed; deterministic tests, lint, typecheck, build and Chromium on stacked PR. No merge into main authorized.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G03",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Local Chromium creates Access client without password; D1 verifies persisted data. Synthetic QA identity; no real OTP claim.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G04",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Local browser creates, edits and publishes gallery, cover/theme/intro verified in D1; public approved UI preserved.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G05",
+      "status": "FAIL",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM + CLOUDFLARE_IMAGES_CAPABILITY_OWNER",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Local bytes/retry/progress tests pass, but real isolated recovery upload returned400 INVALID_IMAGE because QA lacked IMAGES. New503 guard preserves upload instead of falsely corrupting it. Remote upload not homologated.",
+      "environment": "Local integration plus Cloudflare Images QA; real authenticated upload not homologated",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        },
+        "docs/operations/private-albums-r4/34-images-input-limit-2026-11-08.md"
+      ],
+      "blockers": "Local bytes/retry/progress tests pass, but real isolated recovery upload returned400 INVALID_IMAGE because QA lacked IMAGES. New503 guard preserves upload instead of falsely corrupting it. Remote upload not homologated.",
+      "nextAction": "Local bytes/retry/progress tests pass, but real isolated recovery upload returned400 INVALID_IMAGE because QA lacked IMAGES. New503 guard preserves upload instead of falsely corrupting it. Remote upload not homologated."
+    },
+    {
+      "gate": "G06",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "CI cryptographic claim regressions plus actual provider JWKS/RS256 issuer/audience verification in QA; tampered signature and wrong issuer/audience denied. Expiration negative uses verifier future clock, not an elapsed-hour observation.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G07",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "PASS for real human OTP on Access QA: live JWKS verification, current deployed1c9cee9/eb6d11b2 browser me200, logout/old-cookie401/reentry, Access logout and reauthentication observed; controlled QA-only disable same valid v4 cookie401 and reenable fresh v5 me200. Android entry reported by human; no phone gallery approval. Prior Android owner+OTP denial cause remains opaque; policy not widened.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G08",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Real QA logout invalidates old cookie401; disabled new synthetic owner version4->5 denies same previously valid cookie401; reenabled version5 and fresh Access session200. Original five clients unchanged. Separate old-v4 replay AFTER reenable not run because automatic entry replaced cookie; earlier real logout replay and local version checks remain explicit evidence.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G09",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "CI A/B galleries/media/download/favorites and pending-navigation isolation; real restored/source synthetic A/B PASS in40786688338. Real owner session foreign gallery404 and media404/0 bytes. Two-client real OTP not claimed.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G10",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "CI denied media zero bytes; remote source synthetic ownership and real-owner foreign-media denial; private buckets checked. After flag-off, Chromium GET/HEAD media404/0 bytes on versione05a3001. Python channel got403 without version header, recorded separately and not counted as Worker evidence.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G11",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Local browser favorite persisted across reload with D1 verification and A/B tests.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G12",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Local API/UI downloads checked byte/hash and foreign gallery denial; no real private photos used.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G13",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "14-check real Chromium against local production bundle: libraries/viewer/lightbox/Escape/focus/loading/errors/empty and A/B navigation. Mobile viewports are emulation.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G14",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Admin browser creation/upload/progress/edit/publish at8 widths. CSS chunk404 fixed and clipped action labels at320px reproduced/fixed; screenshots retained.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G15",
+      "status": "BLOCKED_EXTERNAL",
+      "owner": {
+        "role": "PHYSICAL_ACCESSIBILITY_TESTER",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "BLOCKED: human Android Chrome entry only, then explicitly reported empty/static page cannot exercise gallery. No physical lightbox/favorites/download/overflow proof, model/versions unknown; iOS unavailable and full assistive matrix incomplete. Emulation remains separately scoped.",
+      "environment": "Local/browser accessibility only; physical TalkBack and VoiceOver not run",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "BLOCKED: human Android Chrome entry only, then explicitly reported empty/static page cannot exercise gallery. No physical lightbox/favorites/download/overflow proof, model/versions unknown; iOS unavailable and full assistive matrix incomplete. Emulation remains separately scoped.",
+      "nextAction": "BLOCKED: human Android Chrome entry only, then explicitly reported empty/static page cannot exercise gallery. No physical lightbox/favorites/download/overflow proof, model/versions unknown; iOS unavailable and full assistive matrix incomplete. Emulation remains separately scoped."
+    },
+    {
+      "gate": "G16",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Public home/Studio/Colagem preserved; production bundle and SSR import checks, Colagem7tests and browser flows pass. Main-only diff is CI permission-probe receipt, no public app code.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G17",
+      "status": "FAIL",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM + CLOUDFLARE_WORKERS_CPU_OWNER",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "FAIL: latest actual Edge run40779241089 candidate1d30b97 CPU telemetry p50/p95/p99=31/57/145ms n63, HTTP0/64; baseline53/106/160 n61, HTTP14/64. Baseline field error preserved with erratum: actual build16c86d1. Not billed invoice, not current13a6 CPU qualification. Free entitlement/capacity/cost not fully proven; Hostinger v2 Node200 does not prove SSR.",
+      "environment": "Local SSR plus historical Cloudflare QA; exact-HEAD cold-MISS telemetry workflow pending",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        },
+        "docs/operations/private-albums-r4/64-cycle-aa-concurrent-upload-publication-fence-security-2026-11-11.md",
+        "cycle-ab-20261112 CPU QA: pending exact-HEAD run"
+      ],
+      "blockers": "FAIL: latest actual Edge run40779241089 candidate1d30b97 CPU telemetry p50/p95/p99=31/57/145ms n63, HTTP0/64; baseline53/106/160 n61, HTTP14/64. Baseline field error preserved with erratum: actual build16c86d1. Not billed invoice, not current13a6 CPU qualification. Free entitlement/capacity/cost not fully proven; Hostinger v2 Node200 does not prove SSR.",
+      "nextAction": "FAIL: latest actual Edge run40779241089 candidate1d30b97 CPU telemetry p50/p95/p99=31/57/145ms n63, HTTP0/64; baseline53/106/160 n61, HTTP14/64. Baseline field error preserved with erratum: actual build16c86d1. Not billed invoice, not current13a6 CPU qualification. Free entitlement/capacity/cost not fully proven; Hostinger v2 Node200 does not prove SSR."
+    },
+    {
+      "gate": "G18",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "PASS scoped remote40786688338 exact13a6c83: two new synthetic clients,26 rows/10 PNG79B restored, hashes/relations/FK checked, private backup readback hash verified, both restored accounts quarantined, old sessions401 after rotation. Original failed case full-row/object digests unchanged. Finally source3clients/restore2, buckets retained, current versione05a3001 flagfalse/noR2. No historical DB restore, no G05 upload homologation.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G19",
+      "status": "BLOCKED_EXTERNAL",
+      "owner": {
+        "role": "INDEPENDENT_SECURITY_REVIEWER",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "BLOCKED: auxiliary distinct technical reviews and corrected findings are reproducible, but no formal authorized independent security signoff. Individual administrative identity and full runtime boundary audit still require reviewer.",
+      "environment": "Automated local/CI checks; independent review not performed",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "BLOCKED: auxiliary distinct technical reviews and corrected findings are reproducible, but no formal authorized independent security signoff. Individual administrative identity and full runtime boundary audit still require reviewer.",
+      "nextAction": "BLOCKED: auxiliary distinct technical reviews and corrected findings are reproducible, but no formal authorized independent security signoff. Individual administrative identity and full runtime boundary audit still require reviewer."
+    },
+    {
+      "gate": "G20",
+      "status": "BLOCKED_EXTERNAL",
+      "owner": {
+        "role": "STUDIO_DATA_CONTROLLER",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "Controller decisions prepared for purpose/legal basis, retention/deletion, third parties, backups/export/delivery. No legal or controller approval invented.",
+      "environment": "Documentation prepared; controller approval not obtained",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "Controller decisions prepared for purpose/legal basis, retention/deletion, third parties, backups/export/delivery. No legal or controller approval invented.",
+      "nextAction": "Controller decisions prepared for purpose/legal basis, retention/deletion, third parties, backups/export/delivery. No legal or controller approval invented."
+    },
+    {
+      "gate": "G21",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "PASS code CI40786692800 exact13a6c83:223Workers/54files,7Colagem,57Node(including14Bridge and real two-origin cookie regression),14Chromium. Artifact12858889396 readback exactSHA/clean checkout/5PNGs/no unexpected browser errors. Final documentation HEAD must receive separate exact-SHA CI before closure.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "PASS applies only to the stated test/environment; not production authorization.",
+      "nextAction": "Preserve evidence; assess new changes selectively before release."
+    },
+    {
+      "gate": "G22",
+      "status": "BLOCKED_EXTERNAL",
+      "owner": {
+        "role": "RELEASE_AUTHORIZER",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "No explicit production release authorization. No main merge/deploy/real-client activation/migration/production Access or billing changes.",
+      "environment": "PR #32 draft; no production release authorization",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "No explicit production release authorization. No main merge/deploy/real-client activation/migration/production Access or billing changes.",
+      "nextAction": "No explicit production release authorization. No main merge/deploy/real-client activation/migration/production Access or billing changes."
+    },
+    {
+      "gate": "G23",
+      "status": "BLOCKED_EXTERNAL",
+      "owner": {
+        "role": "QA_OPERATOR_WITH_CLOUDFLARE_ACCESS",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "BLOCKED, remote partial: G18 restore/quarantine/secret rotation and Worker return flagfalse/noR2 observed; actual Chromium private GET/HEAD404/0 bytes after return. Missing complete previously-verified-version/config comparison, validated reopening and isolated Studio/Colagem preset rollback. G18 does not promote G23.",
+      "environment": "Dedicated Cloudflare QA read-only inventory and partial Chromium route denial; full rollback not run",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        },
+        "docs/operations/private-albums-r4/evidence/resume-post-recovery-browser.json (G23-A partial)"
+      ],
+      "blockers": "BLOCKED, remote partial: G18 restore/quarantine/secret rotation and Worker return flagfalse/noR2 observed; actual Chromium private GET/HEAD404/0 bytes after return. Missing complete previously-verified-version/config comparison, validated reopening and isolated Studio/Colagem preset rollback. G18 does not promote G23.",
+      "nextAction": "BLOCKED, remote partial: G18 restore/quarantine/secret rotation and Worker return flagfalse/noR2 observed; actual Chromium private GET/HEAD404/0 bytes after return. Missing complete previously-verified-version/config comparison, validated reopening and isolated Studio/Colagem preset rollback. G18 does not promote G23."
+    },
+    {
+      "gate": "G24",
+      "status": "PASS",
+      "owner": {
+        "role": "IMPLEMENTATION_TEAM",
+        "named": false
+      },
+      "sha": {
+        "evidence": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0",
+        "currentReadbackHead": "f591706114ace01aeb4881b00c490ba8de289c54",
+        "scope": "historical evidence SHA is not attributed to current HEAD"
+      },
+      "tests": "PASS: new continuation Drive1qoEvcvRKPn4D5uRpbJuj5kb38fuEBxDV14404B/SHA7dce4add... metadata+raw independent byte readback; Engram SAME private conversation message4 verified; PersistFlow SAME run generation1/checkpoint5 at23:32:22.712Z inspected, checkpointOnly=true/takeover=false/automaticContinuation=false. Repo24gates/evidence retained. Final documentary HEAD CI is verified in final closure receipt and PR24, without self-referential SHA claim.",
+      "environment": "Historical environment is described in the cited report; not rerun on current HEAD.",
+      "evidence": [
+        "docs/operations/private-albums-r4/25-r4-continuation-real-otp-2026-10-28.md",
+        {
+          "runId": 40774699509,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509",
+          "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17"
+        },
+        {
+          "runId": 40786692800,
+          "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40786692800",
+          "sha": "13a6c835f4a76eb5ebb045d9107f773b4107a8e0"
+        }
+      ],
+      "blockers": "Checkpoint persistence is verified; no autonomous successor/run takeover. Final metadata HEAD CI still must be observed before reporting completion.",
+      "nextAction": "Verify exact documentary HEAD CI and update PR24/final output receipt."
+    }
+  ]
+}

@@ -2,8 +2,19 @@
 
 import { FormEvent, useState } from "react";
 import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ClerkAdminLogin } from "./ClerkAdminLogin";
 
-export function LoginForm() {
+export type AdminLoginProps = {
+  clerkEnabled?: boolean;
+  clerkOnly?: boolean;
+  publishableKey?: string;
+};
+
+export function LoginForm({
+  clerkEnabled = false,
+  clerkOnly = false,
+  publishableKey,
+}: AdminLoginProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -35,8 +46,10 @@ export function LoginForm() {
     }
   }
 
+  const showClerk = Boolean(clerkEnabled && publishableKey);
+
   return (
-    <form className="access-form" onSubmit={submit}>
+    <div className="access-form">
       <div className="access-lock" aria-hidden="true">
         <LockKeyhole size={18} />
       </div>
@@ -45,32 +58,39 @@ export function LoginForm() {
         <h1>Entrar no painel</h1>
         <p className="access-description">Área de administração da Punctum Picture.</p>
       </div>
-      <label className="field">
-        <span>E-mail</span>
-        <input
-          name="email"
-          type="email"
-          autoComplete="username"
-          placeholder="seuemail@gmail.com"
-          required
-        />
-      </label>
-      <label className="field">
-        <span>Senha</span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-        />
-      </label>
-      <button className="button access-submit" type="submit" disabled={busy}>
-        {busy ? "Entrando…" : "Entrar"}
-        {!busy && <ArrowRight size={16} aria-hidden="true" />}
-      </button>
-      <p className="access-status" role="alert" aria-live="polite">
-        {message}
-      </p>
-    </form>
+      {showClerk && publishableKey && (
+        <ClerkAdminLogin publishableKey={publishableKey} />
+      )}
+      {!clerkOnly && (
+        <form className="access-form" style={{ padding: 0, border: 0 }} onSubmit={submit}>
+          <label className="field">
+            <span>E-mail</span>
+            <input
+              name="email"
+              type="email"
+              autoComplete="username"
+              placeholder="seuemail@gmail.com"
+              required
+            />
+          </label>
+          <label className="field">
+            <span>Senha</span>
+            <input
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+          </label>
+          <button className="button access-submit" type="submit" disabled={busy}>
+            {busy ? "Entrando…" : "Entrar"}
+            {!busy && <ArrowRight size={16} aria-hidden="true" />}
+          </button>
+          <p className="access-status" role="alert" aria-live="polite">
+            {message}
+          </p>
+        </form>
+      )}
+    </div>
   );
 }

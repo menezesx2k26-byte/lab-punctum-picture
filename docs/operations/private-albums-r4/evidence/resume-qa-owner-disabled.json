@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "status": "BLOCKED_PRECONDITION_NOT_DISABLED",
+  "observedAtUtc": "2026-10-28T22:30:52.3924711Z",
+  "task": "Isolated QA synthetic owner-client deactivation/session revocation test",
+  "environment": "Cloudflare historical private albums QA / preview",
+  "accountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "effectiveWorker": {
+    "name": "punctum-picture-albums-qa",
+    "deployedVersionId": "8352cddb-331e-4493-ac2e-f6d1b57b8b80",
+    "percent": 100,
+    "dbBindingName": "DB",
+    "dbBindingId": "b5087ae7-8c28-40eb-b541-8a58755131d3",
+    "bindingVerified": true,
+    "clientAuthMode": "access",
+    "privateGalleriesEnabled": true
+  },
+  "target": {
+    "clientId": "901c78ff-2808-452b-9770-561f9ebcbd0b",
+    "syntheticName": "QA proprietario R4 OTP",
+    "createdAtUtc": "2026-10-28T22:20:01.638Z",
+    "createdAtMatched": true,
+    "mustChangePassword": 0,
+    "wasEnabledAtRead": true,
+    "expectedSessionVersionBeforeUpdate": 2,
+    "observedSessionVersionBeforeUpdate": 3,
+    "unexpectedVersion": true,
+    "disabledAtStillNull": true,
+    "sessionVersionAfterThisTask": 3
+  },
+  "preconditions": {
+    "accountClientCount": 6,
+    "originalClientCount": 5,
+    "originalDigestExpected": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "originalDigestBefore": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "originalDigestAfter": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "originalFiveFullRowDigestsIdentical": true,
+    "foreignKeyErrors": 0,
+    "priorAuditCount": 13,
+    "afterAuditCount": 13
+  },
+  "conditionalUpdate": {
+    "attempted": false,
+    "executed": false,
+    "rowsAffected": 0,
+    "reason": "The requested exact session_version=2 guard failed because the live row has version3; caller explicitly instructed to stop on any unexpected state, not overwrite or broaden guard.",
+    "noOverride": true,
+    "proposedNewSessionVersionNotApplied": 4
+  },
+  "audit": {
+    "appended": false,
+    "rowsAffected": 0,
+    "existingRowsPreserved": true
+  },
+  "foreignOwnershipFixture": {
+    "galleryId": "35c5f270-7b0f-485c-8b7a-f926d7ce4d5d",
+    "ownerClientId": "939efd5f-f7f9-4f36-abf4-387033efb2ad",
+    "belongsToPreservedOriginalFive": true,
+    "galleryStatus": "published",
+    "readyImageCount": 10,
+    "readyImage": {
+      "id": "00f6b7d4-9e52-4fbe-8002-296ce769e797",
+      "status": "ready",
+      "mimeType": "image/png",
+      "sizeBytes": 79
+    },
+    "mediaFetched": false,
+    "privateClientPIIFetched": false
+  },
+  "changes": {
+    "clientRowsInserted": 0,
+    "clientRowsUpdated": 0,
+    "clientRowsDeleted": 0,
+    "auditRowsAppended": 0,
+    "otherDatabaseWrites": 0,
+    "workerChanges": 0,
+    "accessPolicyChanges": 0,
+    "deployments": 0,
+    "r2Changes": 0,
+    "productionChanges": 0
+  },
+  "safety": {
+    "tokensRead": false,
+    "cookiesRead": false,
+    "passwordHashesEmitted": false,
+    "passwordSaltsEmitted": false,
+    "emailEmitted": false,
+    "rawFiveClientRowsPersisted": false
+  },
+  "nextStep": "Parent must reconcile why session_version is already3, then explicitly authorize a revised exact-version3 conditional deactivation if still required; retain enabled state until such instruction. No browser 401 deactivation test can be claimed at this stage."
+}

@@ -7,6 +7,8 @@ export default defineConfig({
       main: "./worker/test-entry.ts",
       wrangler: { configPath: "./wrangler.jsonc" },
       miniflare: {
+        d1Databases: { DB: "punctum-local-tests", RESTORE_DB: "punctum-local-restore-tests" },
+        r2Buckets: { ORIGINALS: "punctum-local-originals", BACKUPS: "punctum-local-backups", RESTORE_ORIGINALS: "punctum-local-restored" },
         assets: {
           directory: "./public",
           binding: "ASSETS",
@@ -20,6 +22,9 @@ export default defineConfig({
           ADMIN_ALLOWED_EMAILS: "maria.helena.ifc@gmail.com,menezesx2k26@gmail.com",
           ADMIN_PASSWORD_HASH: "c638833f69bbfb3c267afa0a74434812436b8f08a81fd263c6be6871de4f1265",
           ADMIN_SESSION_SECRET: "test-only-session-secret-with-enough-entropy",
+          CLIENT_SESSION_SECRET: "test-only-independent-client-session-secret",
+          PRIVATE_GALLERIES_ENABLED: "true",
+          CLIENT_AUTH_MODE: "password",
           ADMIN_LOGIN_RATE_LIMIT_MAX: "10",
           ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS: "900",
           MAX_UPLOAD_BYTES: "26214400",

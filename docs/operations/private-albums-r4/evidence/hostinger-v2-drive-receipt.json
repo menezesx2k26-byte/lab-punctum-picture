@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "status": "CREATED_AND_RAW_READBACK_VERIFIED",
+  "timestampUtc": "2026-10-28T21:51:30.2277583Z",
+  "source": {
+    "path": "C:\\Users\\Pichau\\Documents\\Codex\\2026-10-28\\miss-o-aut-noma-punctum-picture\\outputs\\PUNCTUM_R4_ADENDO_HOSTINGER_V2.md",
+    "bytes": 2426,
+    "sha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+    "encoding": "UTF-8 without BOM",
+    "lineEndings": "CRLF"
+  },
+  "drive": {
+    "fileId": "1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p",
+    "title": "PUNCTUM_R4_ADENDO_HOSTINGER_V2.md",
+    "owner": "sgtmenezes2002@gmail.com",
+    "ownerVerifiedFromProvider": true,
+    "linkId": "link_6ab88b515eec8191b6f52705be9c37f6",
+    "url": "https://drive.google.com/file/d/1TobuZai1C8Ms5ORW4pKOpApzpNdUZ96p/view?usp=drivesdk",
+    "mimeType": "text/markdown",
+    "createdTime": "2026-10-28T21:51:29.668Z",
+    "trashed": false,
+    "bytes": 2426,
+    "sha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+    "md5FromProvider": "dce110d3e17042d4e169380358954fee"
+  },
+  "verification": {
+    "metadataReadbackVerified": true,
+    "rawContentDownloaded": true,
+    "readbackVerified": true,
+    "byteLengthMatched": true,
+    "sha256Matched": true,
+    "md5Matched": true,
+    "localBytes": 2426,
+    "downloadedBytes": 2426,
+    "localSha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+    "downloadedSha256": "7f1f3ce48558f33b9717d4994b17365bee17ae35cf642ec12a054e269c40a1e2",
+    "method": "Drive raw fetch on designated Sgtmenezes account, exact bytes SHA256+MD5 checked in independent container against local Windows SHA256 and Google Drive provider metadata"
+  },
+  "actions": {
+    "newFileCreated": true,
+    "originalHandoffOverwritten": false,
+    "originalHandoffFileId": "1kmznqRZ67XkAtfBl-jlAMSQKZXgXooes",
+    "permissionsChanged": false,
+    "billingChanged": false,
+    "productionTouched": false,
+    "hostingerTouched": false,
+    "persistFlowTouched": false,
+    "codeTouched": false
+  },
+  "note": "This is a separate immutable Hostinger V2 addendum. Does not assert SSR, D1/R2, free-tier limits, cost qualification or managed restart."
+}

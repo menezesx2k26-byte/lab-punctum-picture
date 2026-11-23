@@ -1,0 +1,142 @@
+name: Punctum cutover capability inventory
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-cutover-access-preflight.yml]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Inspect authorized hosting and recovery capabilities
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys, urllib.error, urllib.request
+          sys.path.insert(0,'scripts')
+          from hostinger_managed_qa import Recovery, USERNAME
+          # Hostinger promoted the canonical domain to the primary Node.js website.
+          # The former hostingersite.com name is not a separate /websites entry.
+          DOMAIN='punctumpicture.com'
+          op=Recovery(pathlib.Path.cwd(),'prepare',None,domain=DOMAIN)
+          report={'mutations':0,'hosting':{},'cloudflare':{},'checks':{}}
+          def request(label,url,secret,body=None,extra=None):
+              import os
+              headers={'Authorization':'Bearer '+os.environ[secret], 'User-Agent':'Punctum QA inventory/1.0',
+                       'Content-Type':'application/json',**(extra or {})}
+              req=urllib.request.Request(url,headers=headers,data=None if body is None else json.dumps(body).encode())
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as response:
+                      report['checks'][label]=response.status
+                      if response.headers.get('Content-Type','').startswith('text/event-stream'):
+                          for unused in range(100):
+                              line=response.readline(1000000).decode()
+                              if line.startswith('data:'): return json.loads(line[5:].strip()),dict(response.headers)
+                          return {},dict(response.headers)
+                      raw=response.read(2000000)
+                      return json.loads(raw),dict(response.headers)
+              except urllib.error.HTTPError as error:
+                  report['checks'][label]=error.code
+                  return {},{}
+              except (OSError,ValueError) as error:
+                  report['checks'][label]=type(error).__name__
+                  return {},{}
+          rows=op.api('account','/websites?domain='+DOMAIN)
+          assert any(x.get('domain')==DOMAIN and x.get('username')==USERNAME and x.get('order_id')==1008628483 and x.get('website_type')=='nodejs' for x in rows), 'MANAGED_CANONICAL_NODE_OWNERSHIP_NOT_CONFIRMED'
+          report['hosting']['website']=[{k:x.get(k) for k in ('domain','website_type','vhost_type','root_directory')} for x in rows if x.get('domain')==DOMAIN]
+          for name in (DOMAIN,):
+              root=f'/accounts/{USERNAME}/websites/{name}'
+              for endpoint in ('cdn/status','ssl/status'):
+                  try: report['hosting'][name+':'+endpoint]=op.api(name+endpoint,root+'/'+endpoint)
+                  except Exception: report['hosting'][name+':'+endpoint]={'unavailable':True}
+          try: report['hosting']['aliases']=op.api('aliases',f'/accounts/{USERNAME}/websites/{DOMAIN}/parked-domains')
+          except Exception as error: report['hosting']['aliases']={'unavailable':type(error).__name__}
+          base='https://api.cloudflare.com/client/v4/accounts/257bca437616da74ece1ce4bbaf0bd89'
+          for label,path,token in [('subscriptions','/subscriptions','CF_TOKEN'),('databases','/d1/database?per_page=100','D1_TOKEN'),('buckets','/r2/buckets?per_page=1000','CF_TOKEN')]:
+              value,_=request(label,base+path,token)
+              if not value.get('success'): continue
+              result=value.get('result')
+              if label=='subscriptions': report['cloudflare'][label]=[{'ratePlan':x.get('rate_plan'),'state':x.get('state')} for x in result]
+              elif label=='databases': report['cloudflare'][label]=[{k:x.get(k) for k in ('uuid','name','file_size','num_tables')} for x in result]
+              else:
+                  buckets=result.get('buckets',[]) if isinstance(result,dict) else result
+                  totals=[]
+                  for bucket in buckets:
+                      name=bucket['name']; cursor=None; count=0; size=0; complete=False
+                      for page in range(20):
+                          import urllib.parse
+                          path='/r2/buckets/'+urllib.parse.quote(name,safe='')+'/objects?per_page=1000'
+                          if cursor: path+='&cursor='+urllib.parse.quote(cursor,safe='')
+                          listed,_=request('bucket-'+name+'-'+str(page),base+path,'CF_TOKEN')
+                          if not listed.get('success'): break
+                          objects=listed.get('result',[])
+                          count+=len(objects); size+=sum(int(x.get('size',0)) for x in objects)
+                          info=listed.get('result_info',{})
+                          cursor=info.get('cursor')
+                          if not info.get('is_truncated'):
+                              complete=True; break
+                          if not cursor: break
+                      totals.append({'name':name,'objects':count,'bytes':size,'complete':complete})
+                  report['cloudflare'][label]=totals
+          # Read-only scope: existing QA resources can contain user data. Inventory is
+          # never an exclusive lease or permission to overwrite, reset or delete them.
+          databases=report['cloudflare'].get('databases',[])
+          buckets=report['cloudflare'].get('buckets',[])
+          production_d1='22697f13-7484-41e3-9441-f7b902c6577a'
+          def qa_name(name):
+              lowered=(name or '').lower()
+              return lowered.startswith('punctum') and any(word in lowered for word in ('qa','test','preview','stage','recovery'))
+          candidate_dbs=[{'name':entry.get('name'),'sizeBytes':entry.get('file_size'),
+                          'tableCount':entry.get('num_tables'),'exclusiveOwnerVerified':False,
+                          'writable':False}
+                         for entry in databases if entry.get('uuid')!=production_d1 and qa_name(entry.get('name'))]
+          candidate_buckets=[{'name':entry.get('name'),'objectCount':entry.get('objects'),
+                              'bytes':entry.get('bytes'),'scanComplete':entry.get('complete'),
+                              'exclusiveOwnerVerified':False,'writable':False}
+                             for entry in buckets if qa_name(entry.get('name'))]
+          report['remoteReversePreflight']={
+              'mode':'READ_ONLY_NO_MUTATIONS',
+              'productionD1Present':any(x.get('uuid')==production_d1 for x in databases),
+              'd1InventoryRead':isinstance(report['cloudflare'].get('databases'),list),
+              'r2InventoryRead':isinstance(report['cloudflare'].get('buckets'),list),
+              'candidateD1':candidate_dbs,
+              'candidateR2':candidate_buckets,
+              'eligibleWriteTargets':0,
+              'remoteD1RestoreVerified':False,
+              'remoteR2RestoreVerified':False,
+              'nextGate':'Prove exclusive vacancy/ownership of a segregated restore target; then rehearse all D1 rows and original hashes. Never overwrite the production or an occupied QA resource.'}
+          init={'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'punctum-cutover-audit','version':'1.0'}}}
+          for endpoint in ('https://mcp.hostinger.com','https://mcp.hostinger.com/mcp'):
+              initialized,headers=request('mcpInit'+endpoint,endpoint,'HOSTINGER_API',init,{'Accept':'application/json, text/event-stream'})
+              if initialized.get('result'):
+                  extra={'Accept':'application/json, text/event-stream'}
+                  if headers.get('Mcp-Session-Id'): extra['Mcp-Session-Id']=headers['Mcp-Session-Id']
+                  tools,_=request('mcpTools',endpoint,'HOSTINGER_API',{'jsonrpc':'2.0','id':2,'method':'tools/list'},extra)
+                  report['hosting']['mcpTools']=[{'name':x['name'],'description':x.get('description','')[:180]} for x in tools.get('result',{}).get('tools',[])]
+                  break
+          output=pathlib.Path('capability-evidence'); output.mkdir()
+          (output/'report.json').write_text(json.dumps(report,indent=2))
+          # Prevent unrelated domains/buckets/account data from entering public Actions logs.
+          print(json.dumps({'status':'READ_ONLY_REMOTE_REVERSE_PREFLIGHT_COMPLETE',
+              'mutations':report['mutations'],
+              'productionD1Present':report['remoteReversePreflight']['productionD1Present'],
+              'd1InventoryRead':report['remoteReversePreflight']['d1InventoryRead'],
+              'r2InventoryRead':report['remoteReversePreflight']['r2InventoryRead'],
+              'candidateD1Count':len(candidate_dbs),'candidateR2Count':len(candidate_buckets),
+              'eligibleWriteTargets':0,'remoteD1RestoreVerified':False,'remoteR2RestoreVerified':False},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-cutover-capabilities
+          path: capability-evidence/
+          retention-days: 7

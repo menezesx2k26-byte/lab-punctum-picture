@@ -1,0 +1,7 @@
+{
+  "measuredAt": "2026-11-20T03:43:23.792962+00:00",
+  "scope": "PASS_LOCAL",
+  "command": "node --test node-r4-stream-compat.test.mjs isolated-sharp.test.mjs persistence-probe.test.mjs migration-manifest.test.mjs",
+  "result": "12/12 pass (pre-boundary-addition run)",
+  "note": "G18-related migration/persistence + Sharp local only"
+}

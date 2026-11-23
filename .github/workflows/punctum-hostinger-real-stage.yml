@@ -1,0 +1,54 @@
+name: Punctum Hostinger — real snapshot staging (private only)
+
+on:
+  push:
+    branches: [agent/punctum-hostinger-real-stage-20261113]
+    paths:
+      - "services/punctum-hostinger-production/**"
+      - "services/punctum-hostinger-node/isolated-sharp.mjs"
+      - "app/components/ArchiveGrid.tsx"
+      - "app/public.css"
+      - "worker/media/**"
+      - "tests/unit/core.spec.ts"
+      - "scripts/hostinger-vinext-client-abort-patch*"
+      - "package.json"
+      - ".github/workflows/punctum-hostinger-real-stage.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-hostinger-real-stage-ci
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prove production snapshot origin and D1 write gates
+        run: node --test services/punctum-hostinger-production/staging.test.mjs services/punctum-hostinger-production/originals.test.mjs
+      - name: Test bounded isolated Sharp pool and image error recovery
+        run: node --test services/punctum-hostinger-production/sharp-pool.test.mjs
+      - name: Verify fail-closed Vinext client-abort handling without mutating dependency
+        run: node --test scripts/hostinger-vinext-client-abort-patch.test.mjs
+      - name: Verify image-format negotiation without changing Cloudflare defaults
+        run: npx vitest run tests/unit/core.spec.ts
+      - name: Build production staging app separately from QA
+        run: npm run build:hostinger:real-stage
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Publish only build metadata
+        if: success()
+        run: |
+          echo "PRIVATE_STAGING_BUILD_VERIFIED sha=$GITHUB_SHA"

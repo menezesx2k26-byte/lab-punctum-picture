@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "status": "REENABLED_AND_FULLY_VERIFIED",
+  "observedAtUtc": "2026-10-28T23:09:20.760Z",
+  "scope": "Only synthetic QA Access owner client reenabled after parent-observed existing session HTTP401; session_version stays 5",
+  "evidence": {
+    "parentBrowser401Receipt": "work/resume-disabled-browser.json",
+    "browserAtUtc": "2026-10-28T23:07:10.188Z",
+    "browserStatus": 401,
+    "browserCookiePresent": true,
+    "browserCookieWasSameAsPriorHTTP200": true,
+    "browserSessionVersion": 4,
+    "previousDeactivationReceipt": "work/resume-qa-owner-disabled-v4.json",
+    "ownerSelfLoginRecheckAfterReenableByThisWorker": false
+  },
+  "cloudflareAccountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "effectiveQaDbId": "b5087ae7-8c28-40eb-b541-8a58755131d3",
+  "worker": {
+    "name": "punctum-picture-albums-qa",
+    "correctDatabaseBindingReverified": true,
+    "environment": "preview",
+    "clientAuthMode": "access",
+    "privateGalleriesEnabled": true
+  },
+  "target": {
+    "id": "901c78ff-2808-452b-9770-561f9ebcbd0b",
+    "syntheticName": "QA proprietario R4 OTP",
+    "originalCreatedAtUtc": "2026-10-28T22:20:01.638Z",
+    "exactNameAndCreatedGuard": true,
+    "initialDisabledAtUtc": "2026-10-28T23:00:58.265Z",
+    "initialVersion": 5,
+    "currentEnabled": true,
+    "disabledAt": null,
+    "currentSessionVersion": 5,
+    "sessionVersionUnchanged": true,
+    "reactivatedUpdatedAtUtc": "2026-10-28T23:09:20.760Z",
+    "mustChangePassword": false,
+    "ownerEmailOmitted": true,
+    "hashesOmitted": true
+  },
+  "sql": {
+    "type": "single conditional UPDATE client_accounts SET disabled_at=NULL,updated_at=? WHERE id/name/created/version5/previous disabled_at/active flags and count6/original five IDs",
+    "rowsAffected": 1,
+    "noUpsert": true,
+    "noDelete": true,
+    "noVersionDecrement": true,
+    "noExtraFieldsTouched": true,
+    "retryPerformed": false
+  },
+  "originalFiveIntegrity": {
+    "originalCount": 5,
+    "totalClientCountBefore": 6,
+    "totalClientCountAfter": 6,
+    "originalFullRowDigestBefore": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "originalFullRowDigestAfter": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "allOriginalRowsUnchanged": true,
+    "foreignKeyErrors": 0
+  },
+  "audit": {
+    "eventId": "5b54c3a5-f312-4b3c-b3cc-1cab994cc322",
+    "action": "qa_synthetic_owner_reactivation",
+    "actorType": "synthetic_qa_automation",
+    "entityId": "901c78ff-2808-452b-9770-561f9ebcbd0b",
+    "metadataKeys": [
+      "synthetic",
+      "action",
+      "clientId"
+    ],
+    "countBefore": 14,
+    "countAfter": 15,
+    "readbackVerified": true
+  },
+  "mutations": {
+    "clientRowsUpdated": 1,
+    "auditRowsInserted": 1,
+    "otherClientRowsUpdated": 0,
+    "otherD1Databases": 0,
+    "workerSettings": 0,
+    "accessPolicies": 0,
+    "identityProviders": 0,
+    "r2": 0,
+    "production": 0,
+    "deployments": 0,
+    "migrations": 0
+  },
+  "privacy": {
+    "personalEmailStored": false,
+    "otpStored": false,
+    "cookieValueStored": false,
+    "jwtStored": false,
+    "passwordHashStored": false,
+    "passwordSaltStored": false,
+    "otherPersonalDataStored": false
+  },
+  "followup": "Parent to test prior browser session v4 remains rejected 401 and obtain fresh Access login/session v5 with /api/client/me HTTP200. This worker does not claim those browser outcomes without parent evidence."
+}

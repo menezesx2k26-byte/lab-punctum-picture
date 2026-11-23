@@ -1,0 +1,10 @@
+{
+  "scope": "PUNCTUM_D1_ENCRYPTED_STAGING_ONLY",
+  "action": "encrypt-d1",
+  "dnsTouched": false,
+  "productionDataImported": false,
+  "databaseId": "22697f13-7484-41e3-9441-f7b902c6577a",
+  "recipientCertFingerprintSha256": "084d9c304632758f673a920930a388dc45300878d7ecf4fecc3be2fd873fd1d0",
+  "sourceDatabase": "punctum-picture",
+  "note": "Read-only Cloudflare D1 export, AES-256-GCM CMS encrypted for the private recipient on Hostinger VPS 2135319; no plaintext SQL artifact, restore or DNS."
+}

@@ -1,0 +1,14 @@
+# Disposable R4 functional QA only: no production D1/R2, no DNS, no public ports.
+FROM punctum-picture-vps-qa:aa90c8a-20261113
+USER root
+WORKDIR /work
+COPY . /work
+RUN test -d /app/node_modules/vinext && \
+    if test ! -e /work/node_modules; then ln -s /app/node_modules /work/node_modules; fi && \
+    node scripts/hostinger-vinext-client-abort-patch.mjs && \
+    node --check /app/node_modules/vinext/dist/server/prod-server.js && \
+    test -f dist/hostinger-qa/server/index.js && \
+    test -d dist/hostinger-qa/client
+ENV NODE_ENV=production
+EXPOSE 3024
+CMD ["node", "services/punctum-hostinger-node/server.mjs"]

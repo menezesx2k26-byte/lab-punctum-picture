@@ -1,0 +1,43 @@
+name: Punctum current Studio credential verification
+on:
+  push:
+    branches: [codex/punctum-managed-production-20261114]
+    paths: [.github/workflows/punctum-source-identity-check.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Check the existing credential against the current public Studio
+        env:
+          SOURCE_ADMIN_EMAIL: ${{ secrets.SOURCE_ADMIN_EMAIL }}
+          SOURCE_ADMIN_PASSWORD: ${{ secrets.SOURCE_ADMIN_PASSWORD }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {mkdirSync,writeFileSync} from 'node:fs';
+          const origin='https://punctumpicture.com';
+          const send=(path,options={})=>fetch(origin+path,{...options,redirect:'manual',signal:AbortSignal.timeout(20000)});
+          const login=await send('/admin/api/session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},
+            body:JSON.stringify({email:process.env.SOURCE_ADMIN_EMAIL,password:process.env.SOURCE_ADMIN_PASSWORD})});
+          const cookie=(login.headers.get('set-cookie')??'').split(';')[0];
+          const proof={sourceOrigin:origin,loginHttp:login.status,credentialAccepted:login.status===200&&cookie.startsWith('punctum_admin_session='),contentChanged:false,authenticationAuditMayBeWritten:true};
+          if(proof.credentialAccepted){
+            proof.adminHttp=(await send('/admin/api/me',{headers:{Cookie:cookie}})).status;
+            proof.studioHttp=(await send('/admin/studio',{headers:{Cookie:cookie}})).status;
+            proof.logoutHttp=(await send('/admin/api/session',{method:'DELETE',headers:{Cookie:cookie,Origin:origin}})).status;
+          }
+          mkdirSync('identity-evidence');
+          writeFileSync('identity-evidence/report.json',JSON.stringify(proof,null,2));
+          console.log(JSON.stringify(proof));
+          assert(proof.credentialAccepted&&proof.adminHttp===200&&proof.studioHttp===200&&proof.logoutHttp===200);
+          JS
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-current-studio-identity
+          path: identity-evidence/report.json
+          retention-days: 7

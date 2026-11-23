@@ -14,7 +14,7 @@ import {
   saveDraftSiteConfig,
 } from "../../shared/site-config-storage";
 import { writeAudit } from "../utils/audit";
-import { AdminIdentity, assertAllowedOrigin, requireAdmin } from "../utils/auth";
+import { AdminIdentity, assertAllowedOrigin, auditPrincipal, requireAdmin } from "../utils/auth";
 import {
   envNumber,
   envString,
@@ -107,7 +107,7 @@ async function auditAndRespond(
   response: Response,
   data?: unknown,
 ): Promise<Response> {
-  await writeAudit(db, identity.email, action, entityType, entityId, data);
+  await writeAudit(db, auditPrincipal(identity), action, entityType, entityId, data);
   return response;
 }
 
@@ -289,7 +289,7 @@ async function updateAlbum(
   }
 
   const album = await getAlbumOrThrow(db, id);
-  await writeAudit(db, identity.email, "album.updated", "album", id, input);
+  await writeAudit(db, auditPrincipal(identity), "album.updated", "album", id, input);
   return json({ album: albumJson(album) }, { admin: true });
 }
 
@@ -355,7 +355,7 @@ async function publishAlbum(
     )
     .bind(publishedAt, new Date().toISOString(), id)
     .run();
-  await writeAudit(db, identity.email, "album.published", "album", id, checks);
+  await writeAudit(db, auditPrincipal(identity), "album.published", "album", id, checks);
   return json({ albumId: id, status: "published", publishedAt, checks }, { admin: true });
 }
 
@@ -405,7 +405,7 @@ async function reorderImages(
         .bind(position, new Date().toISOString(), imageId, albumId),
     ),
   );
-  await writeAudit(db, identity.email, "album.images_reordered", "album", albumId, input);
+  await writeAudit(db, auditPrincipal(identity), "album.images_reordered", "album", albumId, input);
   return json({ albumId, updated: input.imageIds.length }, { admin: true });
 }
 
@@ -604,13 +604,13 @@ async function createUploadIntent(
         input.filename,
         input.mimeType,
         input.sizeBytes,
-        identity.email,
+        auditPrincipal(identity),
         expiresAt,
         now.toISOString(),
       ),
   ]);
 
-  await writeAudit(db, identity.email, "upload.intent_created", "image", imageId, {
+  await writeAudit(db, auditPrincipal(identity), "upload.intent_created", "image", imageId, {
     intentId,
     albumId: input.albumId,
     sizeBytes: input.sizeBytes,
@@ -645,6 +645,28 @@ async function getIntent(db: D1Database, intentId: string): Promise<UploadIntent
   return intent;
 }
 
+// Public/editorial originals never share the private client-gallery namespace.
+// A restored or forged intent must match *all* its image fields, never a prefix.
+async function assertPublicUploadImage(db: D1Database, intent: UploadIntentRow): Promise<void> {
+  const segment = /^[A-Za-z0-9_-]{1,128}$/;
+  const ext = intent.expectedMime === "image/png" ? "png" :
+    intent.expectedMime === "image/webp" ? "webp" :
+    intent.expectedMime === "image/jpeg" ? "jpg" : null;
+  if (!segment.test(intent.albumId) || !segment.test(intent.imageId) || !ext ||
+      intent.objectKey !== `originals/${intent.albumId}/${intent.imageId}.${ext}`) {
+    throw new AppError(409, "UPLOAD_BINDING_CONFLICT", "Os dados deste envio não conferem.");
+  }
+  const image = await db.prepare(
+    `SELECT m.id FROM images m JOIN albums a ON a.id=m.album_id
+     WHERE m.id=? AND m.album_id=? AND m.original_key=?
+       AND m.mime_type=? AND m.size_bytes=?
+       AND m.status='pending' AND m.deleted_at IS NULL
+       AND a.deleted_at IS NULL AND a.status!='archived'`,
+  ).bind(intent.imageId, intent.albumId, intent.objectKey,
+    intent.expectedMime, intent.expectedSize).first<{ id: string }>();
+  if (!image) throw new AppError(409, "UPLOAD_STATE_CHANGED", "O envio foi alterado ou revogado.");
+}
+
 async function directUpload(
   request: Request,
   env: Env,
@@ -655,6 +677,7 @@ async function directUpload(
   if (intent.status !== "pending" || new Date(intent.expiresAt) <= new Date()) {
     throw new AppError(409, "INTENT_EXPIRED", "O prazo deste envio expirou.");
   }
+  await assertPublicUploadImage(db, intent);
   if (request.headers.get("content-type") !== intent.expectedMime) {
     throw new AppError(409, "OBJECT_TYPE_MISMATCH", "O tipo do arquivo não confere.");
   }
@@ -663,14 +686,33 @@ async function directUpload(
     throw new AppError(400, "EMPTY_UPLOAD", "O arquivo está vazio.");
   }
   const originals = requireOriginals(env);
-  await originals.put(intent.objectKey, body, {
+  const written = await originals.put(intent.objectKey, body, {
     onlyIf: { etagDoesNotMatch: "*" },
     httpMetadata: { contentType: intent.expectedMime },
   });
-  await db
-    .prepare("UPDATE upload_intents SET status = 'uploaded' WHERE id = ?")
-    .bind(intentId)
-    .run();
+  if (!written) {
+    throw new AppError(409, "ORIGINAL_EXISTS", "O original já foi reservado.");
+  }
+  // A cleanup/restore can win after the last SELECT or even after R2.put.
+  // Do not revive expired intents. R2 bytes stay immutable for recovery and
+  // are NEVER deleted as compensation without a distributed fencing protocol.
+  const updated = await db.prepare(
+    `UPDATE upload_intents SET status='uploaded'
+     WHERE id=? AND album_id=? AND image_id=? AND object_key=?
+       AND expected_mime=? AND expected_size=?
+       AND status='pending' AND completed_at IS NULL AND expires_at>?
+       AND EXISTS(SELECT 1 FROM images m JOIN albums a ON a.id=m.album_id
+         WHERE m.id=? AND m.album_id=? AND m.original_key=?
+           AND m.mime_type=? AND m.size_bytes=?
+           AND m.status='pending' AND m.deleted_at IS NULL
+           AND a.deleted_at IS NULL AND a.status!='archived')`,
+  ).bind(intent.id, intent.albumId, intent.imageId, intent.objectKey,
+    intent.expectedMime, intent.expectedSize, new Date().toISOString(),
+    intent.imageId, intent.albumId, intent.objectKey,
+    intent.expectedMime, intent.expectedSize).run();
+  if (updated.meta.changes !== 1) {
+    throw new AppError(409, "UPLOAD_STATE_CHANGED", "O envio mudou durante a gravação.");
+  }
   return new Response(null, { status: 200, headers: { ETag: `"${intent.imageId}"` } });
 }
 
@@ -680,15 +722,19 @@ async function completeUpload(
   db: D1Database,
   identity: AdminIdentity,
   intentId: string,
+  mark?: (phase: string) => void,
 ): Promise<Response> {
+  mark?.("upload-json-start");
   const input = await parseJson(request, uploadCompleteSchema);
+  mark?.("upload-json-end");
   const intent = await getIntent(db, intentId);
   if (intent.status === "completed") {
     throw new AppError(409, "INTENT_ALREADY_COMPLETED", "Este envio já foi finalizado.");
   }
-  if (new Date(intent.expiresAt) <= new Date()) {
+  if (intent.status !== "uploaded" || new Date(intent.expiresAt) <= new Date()) {
     throw new AppError(409, "INTENT_EXPIRED", "O prazo deste envio expirou.");
   }
+  await assertPublicUploadImage(db, intent);
   const originals = requireOriginals(env);
   const head = await originals.head(intent.objectKey);
   if (!head) {
@@ -701,45 +747,75 @@ async function completeUpload(
     throw new AppError(409, "OBJECT_TYPE_MISMATCH", "O tipo do arquivo não confere.");
   }
 
-  let width: number | null = null;
-  let height: number | null = null;
-  const object = await originals.get(intent.objectKey);
-  if (object) {
-    try {
-      const info = await env.IMAGES.info(object.body);
-      if ("width" in info) {
-        width = info.width;
-        height = info.height;
-      }
-    } catch (error) {
-      console.error(
-        JSON.stringify({
-          message: "Falha ao ler dimensões da imagem",
-          imageId: intent.imageId,
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
-    }
+  if (!env.IMAGES) {
+    throw new AppError(503, "IMAGE_VALIDATION_UNAVAILABLE", "Validação de imagens indisponível.");
   }
+  const object = await originals.get(intent.objectKey);
+  if (!object) throw new AppError(409, "OBJECT_NOT_FOUND", "O original não foi encontrado.");
+  let info: Awaited<ReturnType<ImagesBinding["info"]>>;
+  try {
+    mark?.("upload-validation-start");
+    info = await env.IMAGES.info(object.body);
+    mark?.("upload-validation-end");
+  } catch {
+    // Never mark invalid/unreadable bytes ready, even when R2 metadata matches.
+    // Preserve R2 and D1 pending/uploaded state for an exclusive recovery path.
+    throw new AppError(409, "INVALID_IMAGE_BYTES", "A imagem não pôde ser validada.");
+  }
+  const acceptedFormats = intent.expectedMime === "image/jpeg" ? ["jpeg", "jpg", "image/jpeg", "image/jpg"] :
+    intent.expectedMime === "image/png" ? ["png", "image/png"] : ["webp", "image/webp"];
+  if (!("width" in info) || !Number.isSafeInteger(info.width) || info.width <= 0 ||
+      !Number.isSafeInteger(info.height) || info.height <= 0 ||
+      !acceptedFormats.includes(info.format.toLowerCase()) ||
+      ("fileSize" in info && info.fileSize !== head.size)) {
+    throw new AppError(409, "IMAGE_METADATA_MISMATCH", "O formato da imagem não confere.");
+  }
+  const width = info.width;
+  const height = info.height;
 
   const now = new Date().toISOString();
-  await db.batch([
+  mark?.("upload-commit-start");
+  const changes = await db.batch([
     db
       .prepare(
         `UPDATE images
          SET status = 'ready', width = ?, height = ?, checksum = ?, updated_at = ?
-         WHERE id = ?`,
+         WHERE id=? AND album_id=? AND original_key=?
+           AND mime_type=? AND size_bytes=? AND status='pending'
+           AND deleted_at IS NULL
+           AND EXISTS(SELECT 1 FROM albums a WHERE a.id=?
+             AND a.deleted_at IS NULL AND a.status!='archived')
+           AND EXISTS(SELECT 1 FROM upload_intents i WHERE i.id=?
+             AND i.album_id=? AND i.image_id=? AND i.object_key=?
+             AND i.expected_mime=? AND i.expected_size=?
+             AND i.status='uploaded' AND i.completed_at IS NULL AND i.expires_at>?)`,
       )
-      .bind(width, height, input.clientChecksum ?? head.etag, now, intent.imageId),
+      .bind(width, height, input.clientChecksum ?? head.etag, now,
+        intent.imageId, intent.albumId, intent.objectKey, intent.expectedMime,
+        intent.expectedSize, intent.albumId, intentId,
+        intent.albumId, intent.imageId, intent.objectKey,
+        intent.expectedMime, intent.expectedSize, now),
     db
       .prepare(
         `UPDATE upload_intents
          SET status = 'completed', completed_at = ?
-         WHERE id = ?`,
+         WHERE id=? AND album_id=? AND image_id=? AND object_key=?
+           AND expected_mime=? AND expected_size=?
+           AND status='uploaded' AND completed_at IS NULL AND expires_at>?
+           AND EXISTS(SELECT 1 FROM images m WHERE m.id=? AND m.album_id=?
+             AND m.original_key=? AND m.mime_type=? AND m.size_bytes=?
+             AND m.status='ready' AND m.deleted_at IS NULL AND m.updated_at=?)`,
       )
-      .bind(now, intentId),
+      .bind(now, intentId, intent.albumId, intent.imageId, intent.objectKey,
+        intent.expectedMime, intent.expectedSize, now,
+        intent.imageId, intent.albumId, intent.objectKey,
+        intent.expectedMime, intent.expectedSize, now),
   ]);
-  await writeAudit(db, identity.email, "upload.completed", "image", intent.imageId, {
+  mark?.("upload-commit-end");
+  if (changes[0].meta.changes !== 1 || changes[1].meta.changes !== 1) {
+    throw new AppError(409, "UPLOAD_STATE_CHANGED", "O envio mudou durante a validação.");
+  }
+  await writeAudit(db, auditPrincipal(identity), "upload.completed", "image", intent.imageId, {
     intentId,
     etag: input.etag ?? head.etag,
   });
@@ -897,9 +973,12 @@ async function getSettings(db: D1Database): Promise<Response> {
   return json({ settings: settings ?? SITE_DEFAULTS }, { admin: true });
 }
 
-async function getStudio(db: D1Database): Promise<Response> {
+async function getStudio(db: D1Database, mark?: (phase: string) => void): Promise<Response> {
+  mark?.("studio-draft-start");
   const state = await readDraftSiteConfigState(db);
+  mark?.("studio-draft-end");
   const history = await listPublishedSiteConfigVersions(db);
+  mark?.("studio-history-end");
   return json(
     {
       siteConfig: state.config,
@@ -985,7 +1064,7 @@ async function updateStudio(
       db,
       input.siteConfig,
       input.revision,
-      identity.email,
+      auditPrincipal(identity),
     );
     return getStudio(db);
   } catch (error) {
@@ -1000,7 +1079,7 @@ async function publishStudio(
 ): Promise<Response> {
   const input = await parseJson(request, studioRevisionSchema);
   try {
-    await publishDraftSiteConfig(db, input.revision, identity.email);
+    await publishDraftSiteConfig(db, input.revision, auditPrincipal(identity));
     return getStudio(db);
   } catch (error) {
     return studioMutationError(error, db);
@@ -1016,7 +1095,7 @@ async function publishVisualOnly(
   try {
     const result = await publishVisualPresetPreservingDraft(
       db, input.presetId, input.expectedPublishedVersionId,
-      input.expectedDraftRevision, identity.email,
+      input.expectedDraftRevision, auditPrincipal(identity),
     );
     return json({ ...result, presetId: input.presetId, draftPreserved: true }, { admin: true });
   } catch (error) {
@@ -1031,7 +1110,7 @@ async function discardStudio(
 ): Promise<Response> {
   const input = await parseJson(request, studioRevisionSchema);
   try {
-    await discardDraftSiteConfig(db, input.revision, identity.email);
+    await discardDraftSiteConfig(db, input.revision, auditPrincipal(identity));
     return getStudio(db);
   } catch (error) {
     return studioMutationError(error, db);
@@ -1049,7 +1128,7 @@ async function restoreStudioVersion(
       db,
       input.versionId,
       input.revision,
-      identity.email,
+      auditPrincipal(identity),
     );
     return getStudio(db);
   } catch (error) {
@@ -1112,7 +1191,7 @@ async function updateSettings(
       .bind(...values)
       .run();
   }
-  await writeAudit(db, identity.email, "settings.updated", "site_settings", "1", input);
+  await writeAudit(db, auditPrincipal(identity), "settings.updated", "site_settings", "1", input);
   return getSettings(db);
 }
 
@@ -1160,15 +1239,17 @@ export async function handleAdminApi(
   request: Request,
   url: URL,
   env: Env,
+  mark?: (phase: string) => void,
 ): Promise<Response | null> {
   if (!url.pathname.startsWith("/admin/api/")) {
     return null;
   }
 
-  const identity = await requireAdmin(request, env);
+  const identity = await requireAdmin(request, env, undefined, mark);
   assertAllowedOrigin(request, env);
   const db = requireDb(env);
   if (["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+    mark?.("rate-limit-start");
     await assertRateLimit(
       request,
       db,
@@ -1176,6 +1257,7 @@ export async function handleAdminApi(
       envNumber(env, "ADMIN_RATE_LIMIT_MAX", 60),
       envNumber(env, "ADMIN_RATE_LIMIT_WINDOW_SECONDS", 60),
     );
+    mark?.("rate-limit-end");
   }
 
   if (request.method === "GET" && url.pathname === "/admin/api/me") {
@@ -1222,7 +1304,7 @@ export async function handleAdminApi(
   if (uploadMatch) {
     const intentId = decodeURIComponent(uploadMatch[1]);
     if (request.method === "POST" && uploadMatch[2] === "complete") {
-      return completeUpload(request, env, db, identity, intentId);
+      return completeUpload(request, env, db, identity, intentId, mark);
     }
     if (request.method === "PUT" && uploadMatch[2] === "direct") {
       return directUpload(request, env, db, intentId);
@@ -1245,7 +1327,7 @@ export async function handleAdminApi(
     if (request.method === "PATCH") return updateSettings(request, db, identity);
   }
   if (url.pathname === "/admin/api/studio") {
-    if (request.method === "GET") return getStudio(db);
+    if (request.method === "GET") return getStudio(db, mark);
     if (request.method === "PATCH") return updateStudio(request, db, identity);
   }
   if (url.pathname === "/admin/api/studio/photos" && request.method === "GET") {

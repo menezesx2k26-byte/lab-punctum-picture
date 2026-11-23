@@ -1,0 +1,125 @@
+
+> punctum-picture@0.1.0 test
+> vitest run
+
+
+=======================================================================================
+WARNING: @cloudflare/vitest-pool-workers has been renamed to @cloudflare/vitest-plugin.
+This package will not receive future updates.
+Run `npx @cloudflare/codemods vitest:pool-workers-to-vitest-plugin` to migrate.
+=======================================================================================
+
+
+ RUN  v4.1.12 /home/desktop/Documents/punctum-r4-takeover-f591
+
+uncaught exception; source = Uncaught (in promise); stack = TypeError: Can't read from request stream because client disconnected.
+uncaught exception; source = Uncaught (in promise); stack = TypeError: Can't read from request stream because client disconnected.
+uncaught exception; source = Uncaught (in promise); stack = TypeError: Can't read from request stream because client disconnected.
+uncaught exception; source = Uncaught (in promise); stack = TypeError: Can't read from request stream because client disconnected.
+exception = kj/async-io.c++:1713: disconnected: fixed-length pipe ended prematurely
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@589a82a /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@589a9f9 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58b85c8 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3096440 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3096440 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@34e2610 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3624f6b /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+uncaught exception; source = Uncaught (in promise); stack = Error: Network connection lost.
+uncaught exception; source = Uncaught (in promise); stack = Error: Network connection lost.
+exception = kj/async-io.c++:1713: disconnected: fixed-length pipe ended prematurely
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@589a82a /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@589a9f9 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58b85c8 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3096440 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3096440 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@34e2610 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3624f6b /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+uncaught exception; source = Uncaught (in promise); stack = Error: Network connection lost.
+uncaught exception; source = Uncaught (in promise); stack = Error: Network connection lost.
+ ✓ tests/integration/client-upload-config.spec.ts (24 tests) 4467ms
+   ✓ shows the local Images emulator accepts 25 MiB through the real raster helper and cannot prove the provider cap  2316ms
+   ✓ rejects excessive nonempty upload fragments before R2 and allows a normal retry  1386ms
+ ✓ tests/unit/client-passwords.spec.ts (3 tests) 7932ms
+     ✓ retains standard PBKDF2 hashes when the edge WebCrypto cap is enforced  7632ms
+ ✓ tests/unit/client-password-provider-resilience.spec.ts (4 tests) 5075ms
+     ✓ times out a stalled response body and cancels it without returning a password result  5007ms
+ ✓ tests/integration/client-pilot.spec.ts (1 test) 2526ms
+     ✓ delivers 10 real uploads with isolated retry and exercises the entire lifecycle  2468ms
+ ✓ tests/integration/client-galleries.spec.ts (12 tests) 2250ms
+     ✓ validates same-gallery cover and exact order, isolates lists/favorites and revokes on archive  374ms
+     ✓ creates one-time credentials, normalizes unique email, lists without secrets and resets/disables  607ms
+     ✓ forces first password change and revokes cookies after password/reset/disable  399ms
+     ✓ has generic login errors, Origin checks and request limits  628ms
+ ✓ tests/integration/client-security-matrix.spec.ts (5 tests) 1371ms
+     ✓ enforces zero bytes and zero sensitive headers on all A1, A2 and B1 media denials (GET, HEAD and /_vinext/image)  1053ms
+ ✓ tests/integration/site-media.spec.ts (2 tests) 1102ms
+     ✓ cria um envio de Hero sem albumId e lista a mídia no Studio  1034ms
+ ✓ tests/integration/worker.spec.ts (19 tests) 1806ms
+     ✓ responde o health check e dados públicos  550ms
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = workerd/api/streams/internal.c++:2643: disconnected: pump canceled
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@362501d /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+exception = kj/async-io.c++:1713: disconnected: fixed-length pipe ended prematurely
+stack: /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@589a82a /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@589a9f9 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58b85c8 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3096440 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3096440 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@34e2610 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3624f6b /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@33b2990 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2b66f90 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@58bd960 /home/desktop/Documents/punctum-r4-takeover-f591/node_modules/@cloudflare/vitest-pool-workers/node_modules/@cloudflare/workerd-linux-64/bin/workerd@25c4f80
+uncaught exception; source = Uncaught (in promise); stack = Error: Network connection lost.
+uncaught exception; source = Uncaught (in promise); stack = Error: Network connection lost.
+uncaught exception; source = Uncaught (in promise); stack = TypeError: Can't read from request stream because client disconnected.
+uncaught exception; source = Uncaught (in promise); stack = TypeError: Can't read from request stream because client disconnected.
+ ✓ tests/integration/client-media.spec.ts (17 tests) 1277ms
+ ✓ tests/integration/client-admin-audit.spec.ts (2 tests) 1380ms
+     ✓ records successful reorder without copying photograph metadata into the audit  1087ms
+ ✓ tests/integration/client-recovery.spec.ts (20 tests) 755ms
+ ✓ tests/integration/r4-public-rollback.spec.ts (1 test) 550ms
+     ✓ reverte duas publicações sem alterar R2, D1 privado ou expor imagens  463ms
+ ✓ tests/integration/client-access.spec.ts (8 tests) 358ms
+ ✓ tests/integration/client-access-flow.spec.ts (1 test) 192ms
+ ✓ tests/integration/client-maintenance.spec.ts (8 tests) 190ms
+ ✓ tests/unit/client-password-provider.spec.ts (7 tests) 142ms
+ ✓ tests/integration/public-scheduled-cleanup.spec.ts (4 tests) 143ms
+ ✓ tests/integration/public-upload-state-races.spec.ts (4 tests) 123ms
+ ✓ tests/unit/public-home-snapshot.spec.ts (7 tests) 168ms
+ ✓ tests/integration/rate-limit.spec.ts (2 tests) 77ms
+ ✓ tests/integration/admin-session-rotation.spec.ts (3 tests) 78ms
+ ✓ tests/integration/admin-access-claims.spec.ts (3 tests) 67ms
+ ✓ tests/unit/site-config.spec.ts (16 tests) 134ms
+ ✓ tests/unit/theme-resolver.spec.ts (6 tests) 22ms
+ ✓ tests/unit/studio-hero-media.spec.ts (2 tests) 8ms
+ ✓ tests/unit/public-home-cache.spec.ts (15 tests) 23ms
+ ✓ tests/unit/home-render-plan.spec.ts (4 tests) 9ms
+ ✓ tests/unit/private-rollout.spec.ts (4 tests) 14ms
+ ✓ tests/unit/private-preview.spec.ts (10 tests) 18ms
+ ✓ tests/unit/private-api-recovery.spec.ts (6 tests) 18ms
+ ✓ tests/unit/client-viewer.spec.ts (1 test) 13ms
+ ✓ tests/unit/legacy-refresh.spec.ts (4 tests) 16ms
+ ✓ tests/unit/editorial.spec.ts (3 tests) 13ms
+ ✓ tests/unit/collage-preset.spec.ts (3 tests) 44ms
+ ✓ tests/unit/collage-theme.spec.ts (2 tests) 9ms
+ ✓ tests/unit/section-registry.spec.ts (6 tests) 12ms
+ ✓ tests/unit/client-secret.spec.ts (2 tests) 10ms
+ ✓ tests/integration/assets-diagnostic.spec.ts (1 test) 16ms
+ ✓ tests/integration/client-production-entry.spec.ts (1 test) 15ms
+ ✓ tests/unit/client-galleries.spec.ts (2 tests) 11ms
+ ✓ tests/unit/client-lgpd.spec.ts (3 tests) 8ms
+ ✓ tests/unit/core.spec.ts (6 tests) 11ms
+ ✓ tests/unit/immersive-policy.spec.ts (3 tests) 7ms
+ ✓ tests/unit/public-content.spec.ts (4 tests) 8ms
+ ✓ tests/unit/public-visuals.spec.ts (7 tests) 17ms
+ ✓ tests/unit/r4-scoped-seed-auth.spec.ts (4 tests) 13ms
+ ✓ tests/unit/service-pages.spec.ts (6 tests) 9ms
+ ✓ tests/unit/service-seo.spec.ts (6 tests) 7ms
+ ✓ tests/unit/client-gallery-ui.spec.ts (5 tests) 6ms
+ ✓ tests/unit/portfolio.spec.ts (2 tests) 29ms
+ ✓ tests/unit/client-schema.spec.ts (1 test) 4ms
+ ✓ tests/unit/local-seo.spec.ts (3 tests) 5ms
+ ✓ tests/unit/response-security.spec.ts (2 tests) 7ms
+ ✓ tests/unit/wrangler-config.spec.ts (1 test) 4ms
+ ✓ tests/unit/album-artwork.spec.ts (3 tests) 6ms
+ ✓ tests/unit/deploy-workflow.spec.ts (1 test) 4ms
+ ✓ tests/unit/editorial-refresh.spec.ts (2 tests) 6ms
+ ✓ tests/unit/media-presets.spec.ts (1 test) 14ms
+ ✓ tests/unit/site-media-suitability.spec.ts (2 tests) 15ms
+
+ Test Files  59 passed (59)
+      Tests  307 passed (307)
+   Start at  03:46:31
+   Duration  117.72s (transform 3.60s, setup 0ms, import 31.10s, tests 32.61s, environment 6ms)
+

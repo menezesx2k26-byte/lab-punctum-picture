@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "cycle": "AQ",
+  "measuredAt": "2026-11-20T06:00:00Z",
+  "node": "v22.23.4",
+  "scope": "CI workflow verify steps, plus the local G05 25MiB stream test. No production secrets. No remote origin.",
+  "steps": [
+    {"name": "npm audit --audit-level=low", "exit": 0, "note": "found 0 vulnerabilities"},
+    {"name": "npm run typecheck", "exit": 0},
+    {"name": "npm run lint", "exit": 0},
+    {"name": "npm test", "exit": 0, "tests": 333, "files": 64},
+    {"name": "vitest collage", "exit": 0, "tests": 7, "files": 1},
+    {"name": "node --test CI files", "exit": 0, "pass": 141, "fail": 0},
+    {"name": "python3 hostinger preflight unittest", "exit": 0, "tests": 2},
+    {"name": "node G05 FixedLengthStream 26214400", "exit": 0, "result": "PASS_LOCAL"},
+    {"name": "npm run build", "exit": 0},
+    {"name": "playwright chromium + zoom evidence + test:e2e", "exit": 0, "e2ePassLines": 23}
+  ],
+  "g05Local": {
+    "bytes": 26214400,
+    "fill": "0x5a",
+    "sha256": "fe069ef5aeb1ac3e20b03348c73eb6c6a1dfad2e0660a9c2e8b68188cd3392db",
+    "rejected": 26214401,
+    "promotion": "NOT_RUN_REMOTE"
+  },
+  "g18Local": {
+    "test": "G18 local synthetic SQLite backup/restore preserves 2 clients / 2 galleries / 10 objects and NUL text",
+    "result": "PASS_LOCAL_SYNTHETIC",
+    "promotion": "NOT_RUN_REMOTE"
+  },
+  "g17": "NOT_RUN_REMOTE",
+  "e2eNote": "The browser script printed 'Punctum public home purge unconfirmed after a successful admin change' and still exited 0. That line is not a remote purge proof.",
+  "workerdNoise": "Vitest logged expected client-disconnect exceptions during abort cases. The run still reported 333 passed and exit 0.",
+  "promotedToRemotePass": false
+}

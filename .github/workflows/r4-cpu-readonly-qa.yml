@@ -1,0 +1,41 @@
+name: R4 CPU ephemeral public-home read-only QA
+on:
+  push:
+    branches: ["fix/punctum-albums-r4-completion-20261107"]
+    paths:
+      - ".github/workflows/r4-cpu-readonly-qa.yml"
+      - "scripts/r4-cpu-ephemeral-qa.mjs"
+      - "scripts/r4-cpu-guard.mjs"
+      - "scripts/r4-cpu-readonly.test.mjs"
+      - "scripts/lib/r4-cpu-readonly.mjs"
+permissions:
+  contents: read
+concurrency:
+  group: r4-cpu-readonly-qa
+  cancel-in-progress: false
+jobs:
+  public-cpu:
+    if: contains(github.event.head_commit.message, '[r4-cpu-readonly-qa]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/r4-cpu-readonly.test.mjs
+      - run: npm run build
+      - name: Measure current public home CPU on one isolated Worker; remove after
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN2 }}
+          R4_CPU_READONLY_QA: "true"
+        run: node scripts/r4-cpu-ephemeral-qa.mjs
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-cpu-ephemeral-readonly-report
+          path: outputs/r4-cpu-ephemeral.json
+          if-no-files-found: warn
+          retention-days: 7

@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "status": "READ_ONLY_COMPLETED_CAUSE_OPAQUE",
+  "observedAtUtc": "2026-10-28T23:04:55.3954770Z",
+  "scope": "Existing Cloudflare Access QA application and owner-matched auth events only; no policy edits, browsing or device interaction",
+  "cloudflareAccountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "application": {
+    "id": "9ba6f47a-a0d2-4588-9d21-6b14d54dad6a",
+    "name": "Punctum private albums QA 20261024",
+    "domain": "punctum-picture-albums-qa.menezesx2k26.workers.dev/albuns/entrar",
+    "type": "self_hosted",
+    "createdAtUtc": "2026-10-24T18:31:28Z",
+    "updatedAtUtc": "2026-10-24T18:31:28Z",
+    "updatedTimestampMatchesInitialPrivateReceipt": true,
+    "allowedIdentityProviderIds": [
+      "2f3f09a1-2715-4021-a359-810a3c596566"
+    ],
+    "sessionDuration": "1h",
+    "autoRedirectToIdentity": true,
+    "httpOnlyCookieAttribute": true,
+    "sameSiteCookieAttribute": "lax",
+    "enableBindingCookie": false,
+    "appLauncherVisible": false,
+    "explicitApprovalConditionPresent": false,
+    "explicitIndependentMfaConditionPresent": false,
+    "explicitWARPDevicePostureRequirementPresent": false,
+    "otherAppPoliciesCount": 0,
+    "blockOrBypassPolicyCount": 0
+  },
+  "policy": {
+    "id": "9fc898c0-21a0-40e3-9117-4f36604e9f06",
+    "name": "Owner QA OTP only",
+    "decision": "allow",
+    "precedence": 1,
+    "createdAtUtc": "2026-10-24T18:31:55Z",
+    "updatedAtUtc": "2026-10-24T18:31:55Z",
+    "updatedTimestampMatchesInitialPrivateReceipt": true,
+    "includeRuleCount": 1,
+    "includeSelectorTypes": [
+      "email"
+    ],
+    "expectedOwnerEmailMatched": true,
+    "rawEmailOmitted": true,
+    "excludeRuleCount": 0,
+    "requireRuleCount": 1,
+    "requireSelectorTypes": [
+      "login_method"
+    ],
+    "requiredIdentityProviderId": "2f3f09a1-2715-4021-a359-810a3c596566",
+    "requiredMethodIsValidKnownOnetimepinProvider": true,
+    "purposeJustificationRequiredPresent": false,
+    "approvalRequiredPresent": false,
+    "approvalGroupsCount": 0,
+    "isolationRequiredPresent": false,
+    "otherPoliciesOnSameApp": 0,
+    "reusableAdminPolicyExists": true,
+    "reusableAdminPolicyBoundToThisApp": false,
+    "reusableAdminPolicyAppCount": 0
+  },
+  "identityProviders": {
+    "totalProvidersInAccount": 2,
+    "otpProviderCount": 1,
+    "providers": [
+      {
+        "id": "2f3f09a1-2715-4021-a359-810a3c596566",
+        "type": "onetimepin",
+        "name": "Punctum albums QA OTP",
+        "versionPresent": true,
+        "configFieldNames": [
+          "redirect_url"
+        ]
+      },
+      {
+        "id": "362dbcd5-c23f-4d2d-bae0-225041d31aef",
+        "type": "cloudflare",
+        "allowedForThisApp": false,
+        "configFieldNames": [
+          "redirect_url",
+          "restrict_to_account_members"
+        ]
+      }
+    ],
+    "duplicatedOtpProvider": false,
+    "policyRequireMatchesAllowedOtpId": true,
+    "loginMethodGoogleAllowed": false
+  },
+  "organization": {
+    "domain": "shiny-violet-50ae.cloudflareaccess.com",
+    "createdAtUtc": "2026-07-20T22:31:27Z",
+    "updatedAtUtc": "2026-07-20T22:31:27Z",
+    "allowAuthenticateViaWarp": false,
+    "warpAuthNonBrowser401": false,
+    "denyUnmatchedRequests": false,
+    "strictServiceTokenAuth": false,
+    "serviceTokenInactivityEnabled": false,
+    "globalIndependentMfaRequirementNotPresentInReturnedConfiguration": true,
+    "note": "Settings read-only response contains no additional global mandatory MFA / WARP / approval constraints; absence of fields is not proof of any undocumented internal enforcement."
+  },
+  "authorizedOwnerUser": {
+    "exactEmailQueryAppliedServerSide": true,
+    "emailStored": false,
+    "matchingUserCount": 1,
+    "accessSeat": true,
+    "gatewaySeat": false,
+    "seatUidPresent": true,
+    "lastSuccessfulLoginUtc": "2026-10-28T22:43:39Z",
+    "updatedAtUtc": "2026-10-28T22:55:42.78512Z",
+    "activeDeviceCountNotReturned": true
+  },
+  "ownerAppAuthLogs": {
+    "windowUtc": [
+      "2026-10-28T22:35:00Z",
+      "2026-10-28T23:06:00Z"
+    ],
+    "appUidServerSideFilter": true,
+    "ownerEmailServerSideFilter": true,
+    "ownerEmailNotStored": true,
+    "events": [
+      {
+        "atUtc": "2026-10-28T22:37:04Z",
+        "action": "login",
+        "allowed": true,
+        "connection": "onetimepin"
+      },
+      {
+        "atUtc": "2026-10-28T22:38:47Z",
+        "action": "logout",
+        "allowed": true,
+        "connection": null
+      },
+      {
+        "atUtc": "2026-10-28T22:43:39Z",
+        "action": "login",
+        "allowed": true,
+        "connection": "onetimepin"
+      },
+      {
+        "atUtc": "2026-10-28T22:55:41Z",
+        "action": "login",
+        "allowed": false,
+        "connection": "onetimepin"
+      }
+    ],
+    "denialAtUtc": "2026-10-28T22:55:41Z",
+    "deniedOwnerEmailMatched": true,
+    "deniedProviderType": "onetimepin",
+    "denialSpecificReasonFieldExposed": false,
+    "deviceTypePresentInLog": false
+  },
+  "accountAuditLastHour": {
+    "windowUtc": [
+      "2026-10-28T22:04:24Z",
+      "2026-10-28T23:04:24Z"
+    ],
+    "endpoint": "GET /accounts/{account_id}/logs/audit",
+    "appIdFilterAppliedServerSide": true,
+    "policyIdFilterAppliedServerSide": true,
+    "appEntriesReturned": 4,
+    "appViewEvents": 4,
+    "appNonViewEvents": 0,
+    "policyEntriesReturned": 0,
+    "policyNonViewEvents": 0,
+    "paginationRemaining": false,
+    "unauthorizedConfigChangeObserved": false,
+    "limitation": "Only matching resource IDs and the stated hour were checked. This does not rule out out-of-window events or untracked internal enforcement."
+  },
+  "officialDocumentation": {
+    "commonPolicies": "https://developers.cloudflare.com/cloudflare-one/access-controls/policies/common-policies/",
+    "supportsRequireLoginMethodOtpIdentityProviderId": true,
+    "accessRequestLogFields": "https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/logs/",
+    "auditLogsV2": "https://developers.cloudflare.com/fundamentals/account/account-security/audit-logs/",
+    "note": "Official common-policies example explicitly uses require:[{login_method:{id:OTP_IDENTITY_PROVIDER_ID}}] together with restricted Include. No evidence warrants removing it."
+  },
+  "qaDataState": {
+    "effectiveD1": "b5087ae7-8c28-40eb-b541-8a58755131d3",
+    "syntheticOwnerId": "901c78ff-2808-452b-9770-561f9ebcbd0b",
+    "syntheticOwnerNameMatches": true,
+    "createdAtMatches": true,
+    "observedSessionVersion": 5,
+    "disabled": true,
+    "disabledAtUtc": "2026-10-28T23:00:58.265Z",
+    "D1ReadOnly": true,
+    "androidDenialOccurredBeforeD1Disable": true,
+    "limitation": "Temporary account deactivation happened AFTER Android 22:55:41Z rejection; must not be attributed as that denial cause. Parent must test existing desktop cookie 401 then explicitly reenable."
+  },
+  "conclusions": {
+    "ownerEmailMismatch": false,
+    "wrongGoogleLoginMethod": false,
+    "duplicateOtpProvider": false,
+    "visiblePolicyConfigurationMismatch": false,
+    "accessLoginDenialObserved": true,
+    "rootCauseProven": false,
+    "candidateClass": "Provider internal policy evaluation / identity session context not exposed by API. This is an investigation category, NOT a verified root cause.",
+    "shouldRemoveOtpRequirement": false,
+    "shouldWidenEmailAllowlist": false,
+    "shouldChangeAccessPolicy": false,
+    "nextSafeEvidence": "Cloudflare Access event-specific decision reason, detailed policy evaluation/trace via authenticated dashboard support (if available), plus human UI error exact text/screenshot (without OTP/token).",
+    "requiresParentReenableAfter401": true
+  },
+  "actions": {
+    "cloudflareMutations": 0,
+    "policyEdits": 0,
+    "IdpEdits": 0,
+    "d1Writes": 0,
+    "r2Actions": 0,
+    "workerDeployments": 0,
+    "mailOrOtpRead": 0,
+    "deviceInteraction": 0
+  },
+  "privacy": {
+    "storedOtherEmails": false,
+    "storedOwnerEmail": false,
+    "storedOtherPersonalNames": false,
+    "storedIpAddresses": false,
+    "storedOtp": false,
+    "storedJwt": false,
+    "storedCookies": false,
+    "storedSecrets": false
+  }
+}

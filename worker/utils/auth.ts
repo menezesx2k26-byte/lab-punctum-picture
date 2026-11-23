@@ -1,5 +1,14 @@
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { assertSeparateAccessAudiences } from "../client/audience";
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
+import {
+  hasClerkCredential,
+  isClerkTokenRevoked,
+  resolveLinkedClerkAdmin,
+  type ClerkRequestVerifier,
+  type LinkedClerkAdmin,
+} from "../auth/clerk-auth";
 import { AppError } from "./errors";
+import { createAdminSessionKey, sha256Hex } from "./admin-session-crypto.mjs";
 import { envString, requiredEnvString } from "./env";
 
 const ADMIN_SESSION_COOKIE = "punctum_admin_session";
@@ -8,7 +17,31 @@ const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
 export type AdminIdentity = {
   email: string;
   roles: ["admin"];
+  /** The email on a shared-password login is self-declared, not verified identity. */
+  authSource?: "shared-password" | "clerk";
+  clerkUserId?: string;
+  sessionVersion?: number;
+  clerkRevocationKeys?: string[];
 };
+
+export function adminAuthMode(env: Env): "legacy" | "hybrid" | "clerk" {
+  const mode = envString(env, "ADMIN_AUTH_MODE");
+  if (mode === "clerk") return "clerk";
+  if (mode === "legacy" || mode === "password") return "legacy";
+  if (envString(env, "CLERK_AUTH_ENABLED") === "true") return "hybrid";
+  return "legacy";
+}
+
+/** Audit attribution must not impersonate an individual through a shared secret. */
+export function auditPrincipal(identity: Pick<AdminIdentity, "email" | "authSource">): string {
+  if (identity.authSource === "shared-password") {
+    return "shared-password@punctum.invalid";
+  }
+  if (identity.authSource === "clerk") {
+    return `clerk:${identity.email}`;
+  }
+  return identity.email;
+}
 
 export function normalizeTeamDomain(value: string): string {
   const withoutProtocol = value.replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -60,20 +93,31 @@ function fromBase64Url(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-async function hmacKey(env: Env): Promise<CryptoKey> {
+async function hmacKey(env: Env) {
   const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
-  return crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
+  // Bind password-auth cookies to the current credential revision. A password
+  // rotation changes this signing key and invalidates previously copied cookies.
+  // Never place the stored credential hash or salt in the cookie payload.
+  const stored = env.DB ? await storedCredential(env.DB) : null;
+  const credentialRevision = stored
+    ? "d1:" + stored.passwordHash
+    : "env:" + requiredEnvString(env, "ADMIN_PASSWORD_HASH");
+  return createAdminSessionKey(
+    new TextEncoder().encode(secret + "\u0000" + credentialRevision),
+  );
+}
+
+async function clerkAdminHmacKey(env: Env) {
+  const secret = requiredEnvString(env, "ADMIN_SESSION_SECRET");
+  return createAdminSessionKey(
+    new TextEncoder().encode(secret + "\u0000clerk-admin"),
   );
 }
 
 async function verifyPasswordSession(
   request: Request,
   env: Env,
+  mark?: (phase: string) => void,
 ): Promise<AdminIdentity | null> {
   const token = parseCookies(request).get(ADMIN_SESSION_COOKIE);
   if (!token) return null;
@@ -82,27 +126,136 @@ async function verifyPasswordSession(
   if (!encodedPayload || !encodedSignature || extra) return null;
 
   try {
-    const valid = await crypto.subtle.verify(
-      "HMAC",
-      await hmacKey(env),
-      new Uint8Array(fromBase64Url(encodedSignature)).buffer,
-      new TextEncoder().encode(encodedPayload),
-    );
-    if (!valid) return null;
-
     const payload = JSON.parse(
       new TextDecoder().decode(fromBase64Url(encodedPayload)),
-    ) as { email?: unknown; exp?: unknown };
+    ) as {
+      email?: unknown;
+      exp?: unknown;
+      authSource?: unknown;
+      clerkUserId?: unknown;
+      sessionVersion?: unknown;
+      rk?: unknown;
+    };
     if (typeof payload.email !== "string" || typeof payload.exp !== "number") {
       return null;
     }
     const email = payload.email.toLowerCase();
     if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
     if (!allowedAdminEmails(env).includes(email)) return null;
-    return { email, roles: ["admin"] };
-  } catch {
+
+    const mode = adminAuthMode(env);
+    if (payload.authSource === "clerk") {
+      if (mode === "legacy") return null;
+      if (
+        typeof payload.clerkUserId !== "string" ||
+        !Number.isInteger(payload.sessionVersion) ||
+        !env.DB
+      ) {
+        return null;
+      }
+      const key = await clerkAdminHmacKey(env);
+      const valid = await key.verify(
+        new TextEncoder().encode(encodedPayload),
+        fromBase64Url(encodedSignature),
+      );
+      if (!valid) return null;
+
+      let link: {
+        clerkUserId: string;
+        adminPrincipalId: string;
+        role: string;
+        sessionVersion: number;
+        disabledAt: string | null;
+      } | null;
+      try {
+        link = await env.DB.prepare(
+          `SELECT clerk_user_id AS clerkUserId,
+                  admin_principal_id AS adminPrincipalId,
+                  role,
+                  session_version AS sessionVersion,
+                  disabled_at AS disabledAt
+           FROM clerk_admin_identity_links
+           WHERE clerk_user_id = ?`,
+        )
+          .bind(payload.clerkUserId)
+          .first<{
+            clerkUserId: string;
+            adminPrincipalId: string;
+            role: string;
+            sessionVersion: number;
+            disabledAt: string | null;
+          }>();
+      } catch {
+        // Never reinterpret a database outage as an absent/expired cookie.
+        throw new AppError(503, "ADMIN_SESSION_STORAGE_UNAVAILABLE", "Validação da sessão indisponível.");
+      }
+      if (
+        !link ||
+        link.disabledAt !== null ||
+        link.role !== "admin" ||
+        link.adminPrincipalId.toLowerCase() !== email ||
+        link.sessionVersion !== payload.sessionVersion
+      ) {
+        return null;
+      }
+      if (await isClerkTokenRevoked(env.DB, Array.isArray(payload.rk)
+        ? payload.rk.filter((item): item is string => typeof item === "string") : [])) return null;
+      return {
+        email,
+        roles: ["admin"],
+        authSource: "clerk",
+        clerkUserId: link.clerkUserId,
+        sessionVersion: link.sessionVersion,
+        ...(Array.isArray(payload.rk)
+          ? {
+              clerkRevocationKeys: payload.rk.filter(
+                (item): item is string => typeof item === "string",
+              ),
+            }
+          : {}),
+      };
+    }
+
+    if (mode === "clerk") return null;
+    const key = await hmacKey(env);
+    mark?.("session-key-ready");
+    const valid = await key.verify(
+      new TextEncoder().encode(encodedPayload),
+      fromBase64Url(encodedSignature),
+    );
+    mark?.("session-verified");
+    if (!valid) return null;
+    return { email, roles: ["admin"], authSource: "shared-password" };
+  } catch (error) {
+    if (error instanceof AppError && error.status >= 500) throw error;
     return null;
   }
+}
+
+export async function createClerkAdminSession(
+  link: LinkedClerkAdmin,
+  env: Env,
+): Promise<string> {
+  const normalizedEmail = link.adminPrincipalId.trim().toLowerCase();
+  if (!allowedAdminEmails(env).includes(normalizedEmail)) {
+    throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+  }
+
+  const payload = toBase64Url(
+    new TextEncoder().encode(
+      JSON.stringify({
+        email: normalizedEmail,
+        exp: Math.floor(Date.now() / 1000) + ADMIN_SESSION_TTL_SECONDS,
+        authSource: "clerk",
+        clerkUserId: link.clerkUserId,
+        sessionVersion: link.sessionVersion,
+        ...(link.revocationKeys?.length ? { rk: link.revocationKeys } : {}),
+      }),
+    ),
+  );
+  const key = await clerkAdminHmacKey(env);
+  const signature = await key.sign(new TextEncoder().encode(payload));
+  return `${payload}.${toBase64Url(signature)}`;
 }
 
 export async function createAdminSession(email: string, env: Env): Promise<string> {
@@ -119,13 +272,8 @@ export async function createAdminSession(email: string, env: Env): Promise<strin
       }),
     ),
   );
-  const signature = new Uint8Array(
-    await crypto.subtle.sign(
-      "HMAC",
-      await hmacKey(env),
-      new TextEncoder().encode(payload),
-    ),
-  );
+  const key = await hmacKey(env);
+  const signature = await key.sign(new TextEncoder().encode(payload));
   return `${payload}.${toBase64Url(signature)}`;
 }
 
@@ -189,15 +337,15 @@ async function storedCredential(db: D1Database): Promise<StoredAdminCredential |
     .first<StoredAdminCredential>();
 }
 
-export async function setAdminPassword(
+export async function prepareAdminPassword(
   password: string,
   db: D1Database,
   updatedBy: string,
-): Promise<void> {
+): Promise<D1PreparedStatement> {
   const iterations = 60_000;
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await derivePassword(password, salt, iterations);
-  await db
+  return db
     .prepare(
       `INSERT INTO admin_credentials (
         id, password_hash, password_salt, password_iterations, updated_at, updated_by
@@ -215,8 +363,7 @@ export async function setAdminPassword(
       iterations,
       new Date().toISOString(),
       updatedBy,
-    )
-    .run();
+    );
 }
 
 export async function verifyAdminPassword(
@@ -235,12 +382,7 @@ export async function verifyAdminPassword(
   }
 
   const expected = requiredEnvString(env, "ADMIN_PASSWORD_HASH").toLowerCase();
-  const digest = Array.from(
-    new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password)),
-    ),
-    (byte) => byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const digest = await sha256Hex(new TextEncoder().encode(password));
   if (digest.length !== expected.length) return false;
   let difference = 0;
   for (let index = 0; index < digest.length; index += 1) {
@@ -249,33 +391,77 @@ export async function verifyAdminPassword(
   return difference === 0;
 }
 
-export async function requireAdmin(request: Request, env: Env): Promise<AdminIdentity> {
+export async function requireAdmin(
+  request: Request,
+  env: Env,
+  jwksOverride?: JWTVerifyGetKey,
+  mark?: (phase: string) => void,
+  clerkVerifierOverride?: ClerkRequestVerifier,
+): Promise<AdminIdentity> {
   if (isLocalRequest(request, env)) {
     return { email: "maria.helena@local.dev", roles: ["admin"] };
   }
 
-  const passwordIdentity = await verifyPasswordSession(request, env);
+  mark?.("session-start");
+  const passwordIdentity = await verifyPasswordSession(request, env, mark);
+  mark?.("session-end");
   if (passwordIdentity) return passwordIdentity;
+
+  const mode = adminAuthMode(env);
+  if (mode !== "legacy") {
+    if (hasClerkCredential(request)) {
+      const linked = await resolveLinkedClerkAdmin(request, env, {
+        requireConfig: mode === "clerk",
+        verifier: clerkVerifierOverride,
+      });
+      if (linked) {
+        return {
+          email: linked.adminPrincipalId,
+          roles: ["admin"],
+          authSource: "clerk",
+          clerkUserId: linked.clerkUserId,
+          sessionVersion: linked.sessionVersion,
+          clerkRevocationKeys: linked.revocationKeys,
+        };
+      }
+      if (mode === "clerk") {
+        throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+      }
+    } else if (mode === "clerk") {
+      throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+    }
+  }
 
   const assertion = request.headers.get("cf-access-jwt-assertion");
   if (!assertion) {
     throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
   }
 
+  assertSeparateAccessAudiences(env);
   const teamDomain = normalizeTeamDomain(requiredEnvString(env, "CLOUDFLARE_TEAM_DOMAIN"));
   const audience = requiredEnvString(env, "CLOUDFLARE_ACCESS_AUD");
   const issuer = `https://${teamDomain}`;
-  const jwks = createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
+  const jwks = jwksOverride ?? createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
 
   try {
     const { payload } = await jwtVerify(assertion, jwks, {
       issuer,
       audience,
       algorithms: ["RS256"],
+      requiredClaims: ["exp", "iat", "sub", "email", "type"],
     });
-    const email = typeof payload.email === "string" ? payload.email : null;
-    if (!email) {
-      throw new Error("JWT sem e-mail");
+    if (
+      payload.type !== "app" ||
+      typeof payload.sub !== "string" || !payload.sub || payload.sub.length > 256 ||
+      !Number.isInteger(payload.iat) ||
+      payload.iat! > Math.floor(Date.now() / 1000) + 30 ||
+      payload.exp! <= payload.iat!
+    ) throw new Error("JWT administrativo sem identidade e validade completas");
+    const email =
+      typeof payload.email === "string" ? payload.email.trim().toLowerCase() : null;
+    const allowed = allowedAdminEmails(env);
+    if (!email || !allowed.includes(email)) {
+      throw new Error("JWT sem e-mail administrativo permitido");
     }
     return { email, roles: ["admin"] };
   } catch {

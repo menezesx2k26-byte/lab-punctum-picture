@@ -45,6 +45,22 @@ type PointerRow = {
   publishedVersionId: string;
 };
 
+type PublishedPointerVersionRow = {
+  id: string | null;
+  schemaVersion: number | null;
+  state: string | null;
+  revision: number | null;
+  configJson: string | null;
+  basedOnVersionId: string | null;
+  restoredFromVersionId: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  publishedAt: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  publishedBy: string | null;
+};
+
 export type PublicSiteConfigState = {
   config: SiteConfig;
   versionId: string | null;
@@ -192,6 +208,44 @@ async function readVersion(db: D1Database, id: string): Promise<VersionRow | nul
     .first<VersionRow>();
 }
 
+async function readPublishedPointerVersion(
+  db: D1Database,
+): Promise<{ row: VersionRow | null } | null> {
+  const joined = await db
+    .prepare(
+      `SELECT v.id AS id, v.schema_version AS schemaVersion, v.state AS state,
+        v.revision AS revision, v.config_json AS configJson,
+        v.based_on_version_id AS basedOnVersionId,
+        v.restored_from_version_id AS restoredFromVersionId,
+        v.created_at AS createdAt, v.updated_at AS updatedAt,
+        v.published_at AS publishedAt, v.created_by AS createdBy,
+        v.updated_by AS updatedBy, v.published_by AS publishedBy
+       FROM site_config_pointers p
+       LEFT JOIN site_config_versions v ON v.id = p.published_version_id
+       WHERE p.id = 1`,
+    )
+    .first<PublishedPointerVersionRow>();
+  if (!joined) return null;
+  if (joined.id === null) return { row: null };
+  return {
+    row: {
+      id: joined.id,
+      schemaVersion: Number(joined.schemaVersion ?? 0),
+      state: joined.state === "published" ? "published" : "draft",
+      revision: Number(joined.revision ?? 0),
+      configJson: joined.configJson ?? "",
+      basedOnVersionId: joined.basedOnVersionId,
+      restoredFromVersionId: joined.restoredFromVersionId,
+      createdAt: joined.createdAt ?? "",
+      updatedAt: joined.updatedAt ?? "",
+      publishedAt: joined.publishedAt,
+      createdBy: joined.createdBy ?? "",
+      updatedBy: joined.updatedBy ?? "",
+      publishedBy: joined.publishedBy,
+    },
+  };
+}
+
 async function ensureVersionedSiteConfig(
   db: D1Database,
   settings: PublicSiteSettings,
@@ -307,6 +361,29 @@ export function serializeSiteConfig(config: SiteConfig): string {
   return serialized;
 }
 
+async function readyHeroMediaIds(
+  db: D1Database,
+  ids: readonly string[],
+  originals?: Pick<R2Bucket, "head">,
+): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  try {
+    const result = await db.prepare(
+      `SELECT id, storage_key AS storageKey FROM site_media WHERE role = 'hero' AND status = 'ready'
+       AND id IN (${ids.map(() => "?").join(",")})`,
+    ).bind(...ids).all<{ id: string; storageKey: string }>();
+    const available = await Promise.all(result.results.map(async (row) => {
+      if (row.storageKey.startsWith("client-galleries/")) return null;
+      if (originals && !row.storageKey.startsWith("static:") && !await originals.head(row.storageKey)) return null;
+      return row.id;
+    }));
+    return new Set(available.filter((id): id is string => id !== null));
+  } catch (error) {
+    if (String(error).includes("no such table: site_media")) return new Set();
+    throw error;
+  }
+}
+
 export async function assertSiteConfigReferences(
   db: D1Database,
   config: SiteConfig,
@@ -318,14 +395,22 @@ export async function assertSiteConfigReferences(
     );
   }
   const imageIds = new Set<string>();
+  const siteMediaIds = new Set<string>();
   if (config.theme.background.imageId) imageIds.add(config.theme.background.imageId);
   for (const section of config.pages.home.sections) {
+    if (section.type === "hero" && section.heroMedia) {
+      if (section.heroMedia.kind === "site-media") siteMediaIds.add(section.heroMedia.id);
+      else imageIds.add(section.heroMedia.id);
+    }
     if (section.appearance.backgroundImageId) {
       imageIds.add(section.appearance.backgroundImageId);
     }
     if (section.type === "photo-reel") {
       section.photoIds.forEach((imageId) => imageIds.add(imageId));
     }
+  }
+  if (siteMediaIds.size && (await readyHeroMediaIds(db, [...siteMediaIds])).size !== siteMediaIds.size) {
+    throw new InvalidStoredSiteConfigError("A fotografia escolhida para o Hero não está pronta.");
   }
   if (!imageIds.size) return;
   const available = await readPublishedImagesById(db, [...imageIds]);
@@ -339,10 +424,23 @@ export async function assertSiteConfigReferences(
 export async function readPublicSiteConfigState(
   db: D1Database,
   settings?: PublicSiteSettings,
+  originals?: Pick<R2Bucket, "head">,
 ): Promise<PublicSiteConfigState> {
   const publicSettings = settings ?? (await readPublicSiteSettings(db));
-  const { pointers, bootstrapIssues } = await ensureVersionedSiteConfig(db, publicSettings);
-  const row = await readVersion(db, pointers.publishedVersionId);
+  const joined = await readPublishedPointerVersion(db);
+  let row: VersionRow | null;
+  let bootstrapIssues: readonly string[] = [];
+  if (joined) {
+    // A present pointer with a dangling or non-published version is a safe
+    // fallback, not a reason to bootstrap or mutate the published history.
+    row = joined.row;
+  } else {
+    // Preserve the existing one-time legacy bootstrap when the pointer row
+    // itself is absent. The steady-state path above is a single D1 read.
+    const bootstrapped = await ensureVersionedSiteConfig(db, publicSettings);
+    bootstrapIssues = bootstrapped.bootstrapIssues;
+    row = await readVersion(db, bootstrapped.pointers.publishedVersionId);
+  }
   if (!row || row.state !== "published") {
     return {
       config: siteConfigFromLegacySettings(publicSettings),
@@ -353,6 +451,26 @@ export async function readPublicSiteConfigState(
     };
   }
   const parsed = parseStoredConfig(row.configJson, publicSettings);
+  const siteMediaIds = parsed.config.pages.home.sections.flatMap((section) =>
+    section.type === "hero" && section.heroMedia?.kind === "site-media" ? [section.heroMedia.id] : [],
+  );
+  if (siteMediaIds.length) {
+    const readyIds = await readyHeroMediaIds(db, siteMediaIds, originals);
+    parsed.config = {
+      ...parsed.config,
+      pages: {
+        ...parsed.config.pages,
+        home: {
+          ...parsed.config.pages.home,
+          sections: parsed.config.pages.home.sections.map((section) =>
+            section.type === "hero" && section.heroMedia?.kind === "site-media" && !readyIds.has(section.heroMedia.id)
+              ? { ...section, heroMedia: null }
+              : section,
+          ),
+        },
+      },
+    };
+  }
   return {
     ...parsed,
     versionId: row.id,
@@ -368,8 +486,9 @@ export async function readPublicSiteConfigState(
 export async function readPublicSiteConfig(
   db: D1Database,
   settings?: PublicSiteSettings,
+  originals?: Pick<R2Bucket, "head">,
 ): Promise<SiteConfig> {
-  return (await readPublicSiteConfigState(db, settings)).config;
+  return (await readPublicSiteConfigState(db, settings, originals)).config;
 }
 
 export async function readDraftSiteConfigState(

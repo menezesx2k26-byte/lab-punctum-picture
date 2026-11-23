@@ -1,0 +1,1132 @@
+{
+  "sourceSha": "1d30b97558af76b039dc60e80156dea5b4c2c434",
+  "status": "PERFORMANCE_QA_WITH_REQUEST_FAILURES",
+  "performance": [
+    {
+      "label": "baseline",
+      "deploymentId": "1b9f72de-d50c-46c1-a878-02d8b07a3a88",
+      "versionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+      "createdOn": "2026-10-28T22:21:39.143826Z",
+      "sourceSha": "b417405c0406daf286b192a8151cf45c4a50f89c",
+      "startedAt": "2026-10-28T22:21:41.115Z",
+      "completedAt": "2026-10-28T22:22:36.969Z",
+      "samples": [
+        {
+          "index": 0,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1177.5305980000012,
+          "bytes": 66572
+        },
+        {
+          "index": 1,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1108.246638999999,
+          "bytes": 66572
+        },
+        {
+          "index": 2,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1098.8438619999997,
+          "bytes": 66572
+        },
+        {
+          "index": 3,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1034.0254839999998,
+          "bytes": 66572
+        },
+        {
+          "index": 4,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 997.8584640000008,
+          "bytes": 66572
+        },
+        {
+          "index": 5,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1036.9957280000017,
+          "bytes": 66572
+        },
+        {
+          "index": 6,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1026.6837350000023,
+          "bytes": 66572
+        },
+        {
+          "index": 7,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 994.4003879999982,
+          "bytes": 66572
+        },
+        {
+          "index": 8,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 993.5549390000015,
+          "bytes": 66572
+        },
+        {
+          "index": 9,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 986.9281179999998,
+          "bytes": 66572
+        },
+        {
+          "index": 10,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 938.7483979999997,
+          "bytes": 66572
+        },
+        {
+          "index": 11,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1056.9970820000017,
+          "bytes": 66572
+        },
+        {
+          "index": 12,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 986.7690939999993,
+          "bytes": 66572
+        },
+        {
+          "index": 13,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 929.9243119999992,
+          "bytes": 66572
+        },
+        {
+          "index": 14,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1103.3829420000002,
+          "bytes": 66572
+        },
+        {
+          "index": 15,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 931.0060010000016,
+          "bytes": 66572
+        },
+        {
+          "index": 16,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 908.9357720000007,
+          "bytes": 66572
+        },
+        {
+          "index": 17,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1070.7822089999972,
+          "bytes": 66572
+        },
+        {
+          "index": 18,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 962.1678019999999,
+          "bytes": 66572
+        },
+        {
+          "index": 19,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 924.0106339999984,
+          "bytes": 66572
+        },
+        {
+          "index": 20,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 949.8266760000006,
+          "bytes": 66572
+        },
+        {
+          "index": 21,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 937.718022999994,
+          "bytes": 66572
+        },
+        {
+          "index": 22,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 950.0839449999985,
+          "bytes": 66572
+        },
+        {
+          "index": 23,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1058.3337370000008,
+          "bytes": 66572
+        },
+        {
+          "index": 24,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 983.8903920000012,
+          "bytes": 66572
+        },
+        {
+          "index": 25,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1059.5645890000014,
+          "bytes": 66572
+        },
+        {
+          "index": 26,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1072.8358780000053,
+          "bytes": 66572
+        },
+        {
+          "index": 27,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 981.4833729999955,
+          "bytes": 66572
+        },
+        {
+          "index": 28,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1002.3638859999992,
+          "bytes": 66572
+        },
+        {
+          "index": 29,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1023.4879430000001,
+          "bytes": 66572
+        },
+        {
+          "index": 30,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1060.4394700000048,
+          "bytes": 66572
+        },
+        {
+          "index": 31,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 968.6714130000037,
+          "bytes": 66572
+        },
+        {
+          "index": 32,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 952.1159840000037,
+          "bytes": 66572
+        },
+        {
+          "index": 33,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 936.0200140000015,
+          "bytes": 66572
+        },
+        {
+          "index": 34,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 981.9127109999972,
+          "bytes": 66572
+        },
+        {
+          "index": 35,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1019.3808839999983,
+          "bytes": 66572
+        },
+        {
+          "index": 36,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 875.2444209999958,
+          "bytes": 4759
+        },
+        {
+          "index": 37,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 1258.0578770000066,
+          "bytes": 66572
+        },
+        {
+          "index": 38,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 485.723496000006,
+          "bytes": 4759
+        },
+        {
+          "index": 39,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 981.0034679999953,
+          "bytes": 66572
+        },
+        {
+          "index": 40,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 590.4845200000054,
+          "bytes": 4759
+        },
+        {
+          "index": 41,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 950.1213500000013,
+          "bytes": 66572
+        },
+        {
+          "index": 42,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 602.8842509999959,
+          "bytes": 4759
+        },
+        {
+          "index": 43,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 927.1586219999954,
+          "bytes": 66572
+        },
+        {
+          "index": 44,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 505.2008960000021,
+          "bytes": 4759
+        },
+        {
+          "index": 45,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 983.2910130000018,
+          "bytes": 66572
+        },
+        {
+          "index": 46,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 525.2994840000028,
+          "bytes": 4759
+        },
+        {
+          "index": 47,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 964.8886019999991,
+          "bytes": 66572
+        },
+        {
+          "index": 48,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 548.8649970000042,
+          "bytes": 4759
+        },
+        {
+          "index": 49,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 947.0648940000028,
+          "bytes": 66572
+        },
+        {
+          "index": 50,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 347.86663700000645,
+          "bytes": 4759
+        },
+        {
+          "index": 51,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 995.5483939999976,
+          "bytes": 66572
+        },
+        {
+          "index": 52,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 367.79689200000576,
+          "bytes": 4759
+        },
+        {
+          "index": 53,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 863.1779960000058,
+          "bytes": 66572
+        },
+        {
+          "index": 54,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 133.29408700000204,
+          "bytes": 4759
+        },
+        {
+          "index": 55,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 919.4741919999942,
+          "bytes": 66572
+        },
+        {
+          "index": 56,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 346.92445200000657,
+          "bytes": 4759
+        },
+        {
+          "index": 57,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 862.0799079999997,
+          "bytes": 66572
+        },
+        {
+          "index": 58,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 320.8466370000024,
+          "bytes": 4759
+        },
+        {
+          "index": 59,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 887.4516119999971,
+          "bytes": 66572
+        },
+        {
+          "index": 60,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 350.9954529999959,
+          "bytes": 4759
+        },
+        {
+          "index": 61,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 864.0279569999984,
+          "bytes": 66572
+        },
+        {
+          "index": 62,
+          "status": 503,
+          "actualVersionId": null,
+          "latencyMs": 362.2482960000052,
+          "bytes": 4759
+        },
+        {
+          "index": 63,
+          "status": 200,
+          "actualVersionId": "934be9af-4854-4d74-a824-5c6de1a9e45a",
+          "latencyMs": 881.7250630000053,
+          "bytes": 66572
+        }
+      ],
+      "latencyMs": {
+        "samples": 64,
+        "p50": 950.1213500000013,
+        "p95": 1103.3829420000002,
+        "p99": 1258.0578770000066,
+        "minimum": 133.29408700000204,
+        "maximum": 1258.0578770000066
+      },
+      "errors": 14,
+      "versionMismatches": 0,
+      "edgeMetrics": [
+        {
+          "quantiles": {
+            "cpuTimeP50": 57768,
+            "cpuTimeP95": 118818,
+            "cpuTimeP99": 160941,
+            "wallTimeP50": 909300,
+            "wallTimeP95": 1022943,
+            "wallTimeP99": 1070080
+          },
+          "sum": {
+            "errors": 2,
+            "requests": 38
+          }
+        }
+      ],
+      "telemetry": {
+        "returnedEvents": 74,
+        "versionFilteredSamples": 61,
+        "cpuMs": {
+          "samples": 61,
+          "p50": 53,
+          "p95": 106,
+          "p99": 160,
+          "minimum": 10,
+          "maximum": 160
+        },
+        "wallMs": {
+          "samples": 61,
+          "p50": 892,
+          "p95": 1005,
+          "p99": 1069,
+          "minimum": 86,
+          "maximum": 1069
+        }
+      }
+    },
+    {
+      "label": "candidate",
+      "deploymentId": "36acb653-69c3-44c8-a525-76ed05f34057",
+      "versionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+      "createdOn": "2026-10-28T22:22:58.278937Z",
+      "sourceSha": "1d30b97558af76b039dc60e80156dea5b4c2c434",
+      "startedAt": "2026-10-28T22:23:02.293Z",
+      "completedAt": "2026-10-28T22:23:59.008Z",
+      "samples": [
+        {
+          "index": 0,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 1059.3410220000078,
+          "bytes": 66572
+        },
+        {
+          "index": 1,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 939.0850230000069,
+          "bytes": 66572
+        },
+        {
+          "index": 2,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 998.0235260000045,
+          "bytes": 66572
+        },
+        {
+          "index": 3,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 960.2652780000062,
+          "bytes": 66572
+        },
+        {
+          "index": 4,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 966.6249469999893,
+          "bytes": 66572
+        },
+        {
+          "index": 5,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 865.510334000006,
+          "bytes": 66572
+        },
+        {
+          "index": 6,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 913.2868850000086,
+          "bytes": 66572
+        },
+        {
+          "index": 7,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 872.806540000005,
+          "bytes": 66572
+        },
+        {
+          "index": 8,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 1034.9252990000095,
+          "bytes": 66572
+        },
+        {
+          "index": 9,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 866.0882140000031,
+          "bytes": 66572
+        },
+        {
+          "index": 10,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 1019.1578489999956,
+          "bytes": 66572
+        },
+        {
+          "index": 11,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 920.7118429999973,
+          "bytes": 66572
+        },
+        {
+          "index": 12,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 853.1625159999967,
+          "bytes": 66572
+        },
+        {
+          "index": 13,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 934.6688319999957,
+          "bytes": 66572
+        },
+        {
+          "index": 14,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 863.3709210000088,
+          "bytes": 66572
+        },
+        {
+          "index": 15,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 846.2516420000029,
+          "bytes": 66572
+        },
+        {
+          "index": 16,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 817.7633889999997,
+          "bytes": 66572
+        },
+        {
+          "index": 17,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 922.9392459999945,
+          "bytes": 66572
+        },
+        {
+          "index": 18,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 993.5050200000114,
+          "bytes": 66572
+        },
+        {
+          "index": 19,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 879.2888059999968,
+          "bytes": 66572
+        },
+        {
+          "index": 20,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 876.4600510000018,
+          "bytes": 66572
+        },
+        {
+          "index": 21,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 847.6369140000024,
+          "bytes": 66572
+        },
+        {
+          "index": 22,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 854.2327510000032,
+          "bytes": 66572
+        },
+        {
+          "index": 23,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 883.473788999996,
+          "bytes": 66572
+        },
+        {
+          "index": 24,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 846.8758649999945,
+          "bytes": 66572
+        },
+        {
+          "index": 25,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 862.6078879999986,
+          "bytes": 66572
+        },
+        {
+          "index": 26,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 878.5560580000019,
+          "bytes": 66572
+        },
+        {
+          "index": 27,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 850.5698790000024,
+          "bytes": 66572
+        },
+        {
+          "index": 28,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 870.592616000009,
+          "bytes": 66572
+        },
+        {
+          "index": 29,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 867.2244650000066,
+          "bytes": 66572
+        },
+        {
+          "index": 30,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 871.264863999997,
+          "bytes": 66572
+        },
+        {
+          "index": 31,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 853.7346229999966,
+          "bytes": 66572
+        },
+        {
+          "index": 32,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 884.0631520000024,
+          "bytes": 66572
+        },
+        {
+          "index": 33,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 882.4081779999979,
+          "bytes": 66572
+        },
+        {
+          "index": 34,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 848.7235990000045,
+          "bytes": 66572
+        },
+        {
+          "index": 35,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 855.6123279999883,
+          "bytes": 66572
+        },
+        {
+          "index": 36,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 838.200800000006,
+          "bytes": 66572
+        },
+        {
+          "index": 37,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 873.3296159999882,
+          "bytes": 66572
+        },
+        {
+          "index": 38,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 866.2302420000051,
+          "bytes": 66572
+        },
+        {
+          "index": 39,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 844.9445470000064,
+          "bytes": 66572
+        },
+        {
+          "index": 40,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 853.4854960000084,
+          "bytes": 66572
+        },
+        {
+          "index": 41,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 843.2103289999941,
+          "bytes": 66572
+        },
+        {
+          "index": 42,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 851.2272610000073,
+          "bytes": 66572
+        },
+        {
+          "index": 43,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 909.6685670000152,
+          "bytes": 66572
+        },
+        {
+          "index": 44,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 854.3002370000177,
+          "bytes": 66572
+        },
+        {
+          "index": 45,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 902.0386549999821,
+          "bytes": 66572
+        },
+        {
+          "index": 46,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 851.1378529999929,
+          "bytes": 66572
+        },
+        {
+          "index": 47,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 848.4010799999814,
+          "bytes": 66572
+        },
+        {
+          "index": 48,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 868.2333539999963,
+          "bytes": 66572
+        },
+        {
+          "index": 49,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 880.5620209999906,
+          "bytes": 66572
+        },
+        {
+          "index": 50,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 847.4687569999951,
+          "bytes": 66572
+        },
+        {
+          "index": 51,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 912.2526469999866,
+          "bytes": 66572
+        },
+        {
+          "index": 52,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 871.9361459999927,
+          "bytes": 66572
+        },
+        {
+          "index": 53,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 916.0991459999932,
+          "bytes": 66572
+        },
+        {
+          "index": 54,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 889.4341779999959,
+          "bytes": 66572
+        },
+        {
+          "index": 55,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 914.4970730000059,
+          "bytes": 66572
+        },
+        {
+          "index": 56,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 920.2332069999829,
+          "bytes": 66572
+        },
+        {
+          "index": 57,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 845.1525120000006,
+          "bytes": 66572
+        },
+        {
+          "index": 58,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 870.1570380000048,
+          "bytes": 66572
+        },
+        {
+          "index": 59,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 840.3485459999938,
+          "bytes": 66572
+        },
+        {
+          "index": 60,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 863.347711999988,
+          "bytes": 66572
+        },
+        {
+          "index": 61,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 848.1037559999968,
+          "bytes": 66572
+        },
+        {
+          "index": 62,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 861.5595779999858,
+          "bytes": 66572
+        },
+        {
+          "index": 63,
+          "status": 200,
+          "actualVersionId": "30daa636-24a2-41c8-9e53-cd505d8fb55d",
+          "latencyMs": 868.3714750000217,
+          "bytes": 66572
+        }
+      ],
+      "latencyMs": {
+        "samples": 64,
+        "p50": 868.3714750000217,
+        "p95": 998.0235260000045,
+        "p99": 1059.3410220000078,
+        "minimum": 817.7633889999997,
+        "maximum": 1059.3410220000078
+      },
+      "errors": 0,
+      "versionMismatches": 0,
+      "edgeMetrics": [
+        {
+          "quantiles": {
+            "cpuTimeP50": 33270,
+            "cpuTimeP95": 57216,
+            "cpuTimeP99": 145416,
+            "wallTimeP50": 821994,
+            "wallTimeP95": 896598,
+            "wallTimeP99": 1004048
+          },
+          "sum": {
+            "errors": 0,
+            "requests": 42
+          }
+        }
+      ],
+      "telemetry": {
+        "returnedEvents": 63,
+        "versionFilteredSamples": 63,
+        "cpuMs": {
+          "samples": 63,
+          "p50": 31,
+          "p95": 57,
+          "p99": 145,
+          "minimum": 22,
+          "maximum": 145
+        },
+        "wallMs": {
+          "samples": 63,
+          "p50": 821,
+          "p95": 896,
+          "p99": 1003,
+          "minimum": 771,
+          "maximum": 1003
+        }
+      }
+    }
+  ],
+  "rollback": {
+    "deploymentId": "175c464d-a8f9-4853-bcd3-6d1a870c5507",
+    "versionId": "d8947a3d-0411-4771-bde3-44f0fad635d3",
+    "createdOn": "2026-10-28T22:24:20.012058Z",
+    "status": 200,
+    "restoredCandidate": {
+      "deploymentId": "795788e9-3b69-48a3-a377-5b4cc31077b2",
+      "versionId": "9768fed8-be3e-4980-bf58-d03dd83c23d3",
+      "createdOn": "2026-10-28T22:24:29.801054Z"
+    }
+  },
+  "publicHomeGate": {
+    "gate": "G17",
+    "status": "FAIL_HTTP_503",
+    "baselineFailedRequests": 14,
+    "candidateFailedRequests": 0,
+    "versionMismatches": 0
+  },
+  "preservedFixtureBefore": {
+    "counts": {
+      "accounts": 1,
+      "galleries": 1,
+      "images": 1,
+      "intents": 1,
+      "favorites": 0,
+      "pointers": 1
+    },
+    "rows": [
+      {
+        "clientId": "39a03fb3-d913-4380-a30d-f983fabd22e1",
+        "galleryId": "66c091c1-8a4f-47a8-bc57-43cfbebfa0f0",
+        "imageId": "e5afb187-6384-4812-b647-eddb430dbe02",
+        "intentId": "b7bf8640-b49e-4d34-8092-9cfd3e6314e5",
+        "imageStatus": "failed",
+        "intentStatus": "failed"
+      }
+    ]
+  },
+  "preservedFixtureAfter": {
+    "counts": {
+      "accounts": 1,
+      "galleries": 1,
+      "images": 1,
+      "intents": 1,
+      "favorites": 0,
+      "pointers": 1
+    },
+    "rows": [
+      {
+        "clientId": "39a03fb3-d913-4380-a30d-f983fabd22e1",
+        "galleryId": "66c091c1-8a4f-47a8-bc57-43cfbebfa0f0",
+        "imageId": "e5afb187-6384-4812-b647-eddb430dbe02",
+        "intentId": "b7bf8640-b49e-4d34-8092-9cfd3e6314e5",
+        "imageStatus": "failed",
+        "intentStatus": "failed"
+      }
+    ]
+  },
+  "privateFixturePreserved": true,
+  "budget": {
+    "databaseCount": 10,
+    "workerRequestsToday": 4990,
+    "r2": {
+      "maximumStorageBytes": 409194969,
+      "classARequests": 1604,
+      "classBRequests": 1604
+    },
+    "subscriptions": [
+      {
+        "id": "free",
+        "product": "Cloudflare Free Plan",
+        "price": 0,
+        "currency": "USD",
+        "state": "Paid"
+      },
+      {
+        "id": "free",
+        "product": "Cloudflare Free Plan",
+        "price": 0,
+        "currency": "USD",
+        "state": "Paid"
+      },
+      {
+        "id": "teams_free",
+        "product": "Teams Free Base",
+        "price": 0,
+        "currency": "USD",
+        "state": "Paid"
+      },
+      {
+        "id": "free",
+        "product": "Cloudflare Free Plan",
+        "price": 0,
+        "currency": "USD",
+        "state": "Paid"
+      },
+      {
+        "id": "r2_paid",
+        "product": "R2 Paid",
+        "price": 0,
+        "currency": "USD",
+        "state": "Paid"
+      }
+    ],
+    "operationClassification": "Every observed operation counted against both free limits; upper bound"
+  },
+  "d1Budget": {
+    "rowsRead": 723751,
+    "rowsWritten": 1923
+  },
+  "provenanceErratum": {
+    "reportedBaselineShaIncorrect": "b417405c0406daf286b192a8151cf45c4a50f89c",
+    "actualBuiltBaselineSha": "16c86d1110f34e1fb871bc9e5906ead5a6344f7a",
+    "evidence": "Actions40779241089 build log git archive16c86d1; original artifact preserved without rewriting",
+    "prospectiveFix": "0a5e9a6abfb23e02d16e9661958530402ec1815a"
+  }
+}

@@ -1,0 +1,453 @@
+{
+  "observedAt": "2026-11-22",
+  "source": "Authenticated GitHub in-app browser; both alert list pages and 23 distinct advisory pages read",
+  "scope": "31 open alerts on default branch; package applicability assessed separately against candidate lockfile",
+  "candidateBaselineSha": "855e91be001b271aa8eb98f16725754cae3a0dda",
+  "alerts": [
+    {
+      "number": 49,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/49",
+      "title": "React: Unauthenticated Remote Code Execution in React Server Components",
+      "package": "react-server-dom-webpack (npm)",
+      "affected": ">= 19.2.0, < 19.2.9",
+      "patched": "19.2.9",
+      "ghsa": "GHSA-xqc2-xf4c-x3h3",
+      "candidateVersions": [
+        "19.2.9"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 48,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/48",
+      "title": "React: Unauthenticated Remote Code Execution in React Server Components",
+      "package": "react-server-dom-webpack (npm)",
+      "affected": ">= 19.2.0, < 19.2.9",
+      "patched": "19.2.9",
+      "ghsa": "GHSA-xqc2-xf4c-x3h3",
+      "candidateVersions": [
+        "19.2.9"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 37,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/37",
+      "title": "sharp : Vulnerability in librsvg dependency CVE-2026-96889",
+      "package": "sharp (npm)",
+      "affected": "< 0.35.5",
+      "patched": "0.35.5",
+      "ghsa": "GHSA-wq5f-xc86-pv6w",
+      "candidateVersions": [
+        "0.35.5"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 4,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/4",
+      "title": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545",
+      "package": "sharp (npm)",
+      "affected": "< 0.35.4",
+      "patched": "0.35.4",
+      "ghsa": "GHSA-rgj7-g3m4-5g8c",
+      "candidateVersions": [
+        "0.35.5"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 41,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/41",
+      "title": "undici vulnerable to Denial of Service via unhandled error on excessive content-encodings",
+      "package": "undici (npm)",
+      "affected": ">= 7.18.0, < 7.30.1",
+      "patched": "7.30.1",
+      "ghsa": "GHSA-xjj6-f33q-929c",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 45,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/45",
+      "title": "undici vulnerable to Denial of Service via TLS 1.2 certificate-changing renegotiation",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.30.1",
+      "patched": "7.30.1",
+      "ghsa": "GHSA-qrxm-fqhp-jwvm",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 8,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/8",
+      "title": "undici vulnerable to TLS certificate validation bypass via dropped connect options in BalancedPool",
+      "package": "undici (npm)",
+      "affected": ">= 7.24.1, < 7.29.1",
+      "patched": "7.29.1",
+      "ghsa": "GHSA-w293-vg96-wgc3",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 46,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/46",
+      "title": "undici vulnerable to TLS certificate validation bypass via dropped tls options in Agent",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.30.1",
+      "patched": "7.30.1",
+      "ghsa": "GHSA-2m5v-pch6-74hx",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 47,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/47",
+      "title": "undici vulnerable to cache poisoning and cross-user disclosure via cross-origin redirects",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.30.1",
+      "patched": "7.30.1",
+      "ghsa": "GHSA-4w7w-5xrc-9h26",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 59,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/59",
+      "title": "Next.js: SVG rejection bypass in the image optimization",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-7qx7-33qx-rqx2",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 58,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/58",
+      "title": "Next.js: SVG rejection bypass in the image optimization",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-7qx7-33qx-rqx2",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 15,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/15",
+      "title": "undici vulnerable to cross-user cookie disclosure via Set-Cookie caching in shared caches",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.29.1",
+      "patched": "7.29.1",
+      "ghsa": "GHSA-2jfj-6hjv-fm6j",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 61,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/61",
+      "title": "Next.js: Cross-client response injection and disclosure in self-hosted Next.js applications forwarding fetched responses",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-pc58-hwjq-p385",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 60,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/60",
+      "title": "Next.js: Cross-client response injection and disclosure in self-hosted Next.js applications forwarding fetched responses",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-pc58-hwjq-p385",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 63,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/63",
+      "title": "Next.js: Cross-user cache disclosure and poisoning in Next.js use cache with binary arguments",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-rhh4-g77r-r9qj",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 62,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/62",
+      "title": "Next.js: Cross-user cache disclosure and poisoning in Next.js use cache with binary arguments",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-rhh4-g77r-r9qj",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 51,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/51",
+      "title": "Next.js: Information disclosure across root params when a 'use cache' function is called through unstable_cache()",
+      "package": "next (npm)",
+      "affected": ">= 16.3.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-mfr8-8qww-v76h",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 50,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/50",
+      "title": "Next.js: Information disclosure across root params when a 'use cache' function is called through unstable_cache()",
+      "package": "next (npm)",
+      "affected": ">= 16.3.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-mfr8-8qww-v76h",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 53,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/53",
+      "title": "Next.js: Cache leak across root param values in nested 'use cache' functions via delayed inner stream metadata",
+      "package": "next (npm)",
+      "affected": ">= 16.2.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-vc7v-qv4w-wrv8",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 52,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/52",
+      "title": "Next.js: Cache leak across root param values in nested 'use cache' functions via delayed inner stream metadata",
+      "package": "next (npm)",
+      "affected": ">= 16.2.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-vc7v-qv4w-wrv8",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 55,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/55",
+      "title": "Next.js: Cache poisoning of shared fallback shells in Cache Components via request-supplied placeholder route params",
+      "package": "next (npm)",
+      "affected": ">= 16.4.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-vvgp-ww4w-46vf",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 54,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/54",
+      "title": "Next.js: Cache poisoning of shared fallback shells in Cache Components via request-supplied placeholder route params",
+      "package": "next (npm)",
+      "affected": ">= 16.4.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-vvgp-ww4w-46vf",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 57,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/57",
+      "title": "Next.js: HttpOnly cookie exposure through internal response header on Next.js Edge runtime routes",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-f3mh-rxg3-f5g2",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 56,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/56",
+      "title": "Next.js: HttpOnly cookie exposure through internal response header on Next.js Edge runtime routes",
+      "package": "next (npm)",
+      "affected": ">= 16.0.0, <= 16.4.4",
+      "patched": "16.4.5",
+      "ghsa": "GHSA-f3mh-rxg3-f5g2",
+      "candidateVersions": [
+        "16.4.6"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 10,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/10",
+      "title": "undici vulnerable to Denial of Service via orphaned RetryHandler response body",
+      "package": "undici (npm)",
+      "affected": ">= 7.11.0, < 7.29.1",
+      "patched": "7.29.1",
+      "ghsa": "GHSA-pmjh-fq2x-6v4x",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 44,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/44",
+      "title": "undici WebSocket client vulnerable to Denial of Service via unbounded automatic PONG buffering",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.30.1",
+      "patched": "7.30.1",
+      "ghsa": "GHSA-9fm3-97px-rjf6",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 42,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/42",
+      "title": "Satori-generated SVG has improper escaping",
+      "package": "satori (npm)",
+      "affected": ">= 0.0.27, < 0.33.5",
+      "patched": "0.33.5",
+      "ghsa": "GHSA-wx4j-mvgx-mqwp",
+      "candidateVersions": [
+        "0.33.5"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 1,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/1",
+      "title": "esbuild enables any website to send any requests to the development server and read the response",
+      "package": "esbuild (npm)",
+      "affected": "<= 0.24.2",
+      "patched": "0.25.0",
+      "ghsa": "GHSA-67mh-4wv8-2f99",
+      "candidateVersions": [
+        "0.25.12",
+        "0.28.1",
+        "0.28.2"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 12,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/12",
+      "title": "undici vulnerable to downstream response splitting via retry interceptor",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.29.1",
+      "patched": "7.29.1",
+      "ghsa": "GHSA-r53p-7pc4-xj5r",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 11,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/11",
+      "title": "undici vulnerable to response truncation via oversized chunked responses in the dump interceptor",
+      "package": "undici (npm)",
+      "affected": ">= 7.1.0, < 7.29.1",
+      "patched": "7.29.1",
+      "ghsa": "GHSA-2gqq-gqf2-x968",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    },
+    {
+      "number": 16,
+      "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/security/dependabot/16",
+      "title": "undici vulnerable to caching and replay of unsafe HTTP method responses",
+      "package": "undici (npm)",
+      "affected": ">= 7.0.0, < 7.29.1",
+      "patched": "7.29.1",
+      "ghsa": "GHSA-8436-99hf-9mmv",
+      "candidateVersions": [
+        "7.30.1"
+      ],
+      "affectedCandidateVersions": [],
+      "assessment": "NOT_AFFECTED_BY_RECORDED_RANGE"
+    }
+  ],
+  "candidateLockfileBlob": "19ec74bc14e5487b26e8f66eba83bbdd7c798bd3",
+  "npmAudit": {
+    "total": 0,
+    "critical": 0,
+    "high": 0,
+    "moderate": 0,
+    "low": 0,
+    "source": "npm audit --json on 2026-11-22; local receipt in ignored execution workspace"
+  }
+}

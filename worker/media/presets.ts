@@ -20,8 +20,12 @@ export function isImagePreset(value: string): value is ImagePreset {
 
 export function negotiateImageFormat(
   accept: string | null,
+  preferWebp = false,
 ): "image/avif" | "image/webp" | "image/jpeg" {
   const normalized = accept?.toLowerCase() ?? "";
+  // The Hostinger Node CPU budget makes on-demand AVIF prohibitive. A browser
+  // offering WebP can receive WebP without changing Cloudflare's default.
+  if (preferWebp && normalized.includes("image/webp")) return "image/webp";
   if (normalized.includes("image/avif")) {
     return "image/avif";
   }

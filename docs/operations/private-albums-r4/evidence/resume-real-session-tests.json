@@ -1,0 +1,47 @@
+{
+  "observedAt": "2026-10-28T22:27:54.786Z",
+  "identity": "REAL_HUMAN_ACCESS_OTP",
+  "initial": {
+    "status": 200,
+    "build": "1570f61b58f9912c6cba9c0a37f99afeae035a23",
+    "version": "8352cddb-331e-4493-ac2e-f6d1b57b8b80"
+  },
+  "crossOriginMutation": {
+    "status": 403,
+    "cache": "private, no-store"
+  },
+  "sessionSurvivedRejectedCsrf": {
+    "status": 200,
+    "cache": "private, no-store"
+  },
+  "clientCookieOnAdmin": {
+    "status": 403,
+    "cache": "private, no-store"
+  },
+  "logout": {
+    "status": 200,
+    "ok": true,
+    "logoutUrl": "/cdn-cgi/access/logout",
+    "cache": "private, no-store"
+  },
+  "oldCookieReplayAfterLogout": {
+    "status": 401,
+    "cache": "private, no-store"
+  },
+  "browserAfterLogout": {
+    "status": 401
+  },
+  "reentry": {
+    "status": 200,
+    "build": "1570f61b58f9912c6cba9c0a37f99afeae035a23"
+  },
+  "clientCookieMetadata": {
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Strict",
+    "path": "/"
+  },
+  "tokensOrCookieValuesStored": false,
+  "serverVersion": "8352cddb-331e-4493-ac2e-f6d1b57b8b80",
+  "coreChecksPassed": true
+}

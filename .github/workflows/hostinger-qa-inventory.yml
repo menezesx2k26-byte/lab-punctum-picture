@@ -1,0 +1,344 @@
+name: Hostinger QA read-only inventory
+
+on:
+  pull_request:
+    branches: [fix/punctum-albums-r4-completion-20261107]
+    paths: [.github/workflows/hostinger-qa-inventory.yml]
+
+permissions: {}
+
+jobs:
+  inventory:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.head_ref == 'agent/hostinger-node-migration-20261112')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check access to the existing QA website and its Node builds
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+        shell: bash
+        run: |
+          set +x
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+
+          token = os.environ.get("HOSTINGER_API")
+          if not token:
+              raise SystemExit("HOSTINGER_API is unavailable in this workflow context.")
+
+          base = "https://developers.hostinger.com/api/hosting/v1"
+          domain = "aliceblue-locust-999458.hostingersite.com"
+          username = "u571409090"
+          site = f"/accounts/{username}/websites/{domain}/nodejs"
+          checks = {
+              "website": f"/websites?domain={domain}",
+              "build_settings": f"{site}/builds/settings",
+              "build_history": f"{site}/builds",
+              "env_inventory": f"{site}/builds/settings/env",
+              "document_root": f"/accounts/{username}/domains/{domain}/files?max_depth=1&max_items=20",
+          }
+          for file in ("app.mjs", "server.mjs", "package.json", "README.md"):
+              path = urllib.parse.urlencode({"path": file})
+              checks["probe_" + file] = f"/accounts/{username}/domains/{domain}/files/content?{path}"
+          opener = urllib.request.build_opener(NoRedirect())
+          settings_fields = {
+              "app_type", "node_version", "root_directory", "output_directory",
+              "build_script", "entry_file", "package_manager",
+          }
+          for name, path in checks.items():
+              req = urllib.request.Request(base + path, headers={
+                  "Authorization": f"Bearer {token}", "Accept": "application/json",
+                  "Content-Type": "application/json", "User-Agent": "Punctum QA inventory/1.0",
+              })
+              try:
+                  with opener.open(req, timeout=12) as response:
+                      payload = json.loads(response.read(512_000))
+                      data = payload.get("data", payload) if isinstance(payload, dict) else payload
+                      result = {"status": response.status}
+                      if name == "website" and isinstance(data, list):
+                          result["target_present"] = any(
+                              isinstance(row, dict) and row.get("domain") == domain
+                              and row.get("username") == username and row.get("website_type") == "nodejs"
+                              for row in data
+                          )
+                      if name == "build_settings" and isinstance(data, dict):
+                          result["settings"] = {key: data[key] for key in sorted(settings_fields.intersection(data))
+                                                if data[key] is None or isinstance(data[key], int) or
+                                                (isinstance(data[key], str) and len(data[key]) <= 100 and
+                                                 all(char.isalnum() or char in "/_-.:" for char in data[key]))}
+                      if name == "build_history" and isinstance(data, list):
+                          result["page_items"] = len(data)
+                          result["states"] = [row.get("state") for row in data if isinstance(row, dict)]
+                          result["recent_builds"] = [
+                              {"uuid": row.get("uuid"), "state": row.get("state")}
+                              for row in data[:5] if isinstance(row, dict)
+                              and isinstance(row.get("uuid"), str) and len(row["uuid"]) == 36
+                              and all(char in "0123456789abcdef-" for char in row["uuid"])
+                          ]
+                      if name == "env_inventory" and isinstance(data, list):
+                          result["variables"] = len(data)
+                      if name == "document_root" and isinstance(data, dict):
+                          result["shape"] = sorted(key for key in ("items", "files", "total_items") if key in data)
+                          rows = data.get("items", data.get("files", []))
+                          if isinstance(rows, list):
+                              result["items"] = len(rows)
+                              result["known_probe_files"] = sorted({row.get("name", "") for row in rows if isinstance(row, dict)} & {"server.mjs", "app.mjs", "package.json", "README.md"})
+                      if name.startswith("probe_") and isinstance(data, dict):
+                          content = data.get("content")
+                          if isinstance(content, str):
+                              content = content.replace("\r\n", "\n").rstrip("\n") + "\n"
+                              result["sha256_normalized"] = hashlib.sha256(content.encode()).hexdigest()
+                          else:
+                              result["has_text"] = False
+                      print(name, json.dumps(result))
+              except urllib.error.HTTPError as error:
+                  details = {}
+                  if error.code == 422 and error.headers.get_content_type() == "application/json":
+                      payload = json.loads(error.read(4096))
+                      fields = payload.get("errors", {})
+                      details["invalid_fields"] = sorted(set(fields) & {"path", "from_line", "max_lines", "directory", "max_depth", "max_items"}) if isinstance(fields, dict) else []
+                      message = str(payload.get("message", "")).lower()
+                      details["file_unavailable"] = any(reason in message for reason in ("not found", "not exist", "not a file"))
+                  print(name, json.dumps({
+                      **details,
+                      "status": error.code,
+                      "json": error.headers.get_content_type() == "application/json",
+                      "challenge": error.headers.get("cf-mitigated") == "challenge",
+                  }))
+              except (ValueError, OSError) as error:
+                  print(name, json.dumps({"error": type(error).__name__}))
+          PY
+      - name: Reconcile recovery, entitlement metadata and public health without provider writes
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_API }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set +x
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, pathlib, re, urllib.error, urllib.parse, urllib.request, uuid
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+          opener = urllib.request.build_opener(NoRedirect())
+          base = "https://developers.hostinger.com/api/hosting/v1"
+          domain = "aliceblue-locust-999458.hostingersite.com"
+          username = "u571409090"
+          site = f"/accounts/{username}/websites/{domain}/nodejs"
+          token = os.environ["HOSTINGER_API"]
+          report = {"schema": 1, "sourceSha": os.environ["SOURCE_SHA"],
+                    "observedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "scope": "read-only-provider-and-public-http", "managedQa": "NOT_TESTED",
+                    "writesAttempted": 0, "checks": {}}
+          def read(label, path):
+              req = urllib.request.Request(base + path, headers={"Authorization": "Bearer " + token, "Accept": "application/json", "Content-Type": "application/json", "User-Agent": "Punctum QA inventory/1.0"})
+              try:
+                  with opener.open(req, timeout=12) as response:
+                      raw = response.read(2000001)
+                      if len(raw) > 2000000:
+                          raise ValueError("bounded response exceeded")
+                      payload = json.loads(raw)
+                      data = payload.get("data", payload) if isinstance(payload, dict) else payload
+                      report["checks"][label] = {"status": response.status}
+                      return data
+              except urllib.error.HTTPError as error:
+                  report["checks"][label] = {"status": error.code}
+                  if error.code == 422:
+                      try:
+                          fields = json.loads(error.read(4096)).get("errors", {})
+                          report["checks"][label]["invalidFields"] = sorted(set(fields) & {"domain", "is_assigned", "per_page", "directory", "path"}) if isinstance(fields, dict) else []
+                      except (ValueError, OSError):
+                          pass
+              except (OSError, ValueError):
+                  report["checks"][label] = {"error": "READ_UNAVAILABLE"}
+              return None
+          websites = read("website", "/websites?" + urllib.parse.urlencode({"domain": domain}))
+          website = next((x for x in websites or [] if isinstance(x, dict) and x.get("domain") == domain and x.get("username") == username), {})
+          report["checks"]["website"].update({"targetPresent": bool(website), "websiteType": website.get("website_type")})
+          orders = read("orders", "/orders?per_page=100")
+          order = next((x for x in orders or [] if isinstance(x, dict) and x.get("id") == website.get("order_id")), {})
+          plan = order.get("plan", {})
+          if isinstance(plan, dict):
+              report["checks"]["orders"].update({"matchedWebsiteOrder": bool(order),
+                  "planName": plan.get("name"), "planCode": plan.get("code"),
+                  "planFieldNames": sorted(plan),
+                  "effectiveQuotasConfirmed": False, "newBuildEntitlementConfirmed": False})
+          settings = read("settings", site + "/builds/settings")
+          fields = ("app_type", "node_version", "root_directory", "output_directory", "build_script", "entry_file", "package_manager")
+          if isinstance(settings, dict):
+              report["checks"]["settings"]["configuration"] = {k: settings.get(k) for k in fields}
+          env = read("environment", site + "/builds/settings/env")
+          if isinstance(env, list):
+              report["checks"]["environment"]["variableCount"] = len(env)
+          files = read("documentRoot", f"/accounts/{username}/domains/{domain}/files?max_depth=1&max_items=30")
+          if isinstance(files, dict):
+              rows = files.get("items", [])
+              report["checks"]["documentRoot"].update({"totalItems": files.get("total_items"),
+                  "returnedItems": len(rows), "entryTypes": [x.get("type") for x in rows if isinstance(x, dict)],
+                  "probeFiles": sorted(x.get("name") for x in rows if isinstance(x, dict) and x.get("name") in ("app.mjs", "server.mjs", "package.json", "README.md"))})
+          dbs = read("assignedDatabases", f"/accounts/{username}/databases?" + urllib.parse.urlencode({"domain": domain, "is_assigned": "true", "per_page": 25}))
+          if isinstance(dbs, list):
+              report["checks"]["assignedDatabases"]["count"] = len(dbs)
+          account_dbs = read("accountDatabases", f"/accounts/{username}/databases")
+          if isinstance(account_dbs, list):
+              report["checks"]["accountDatabases"]["count"] = len(account_dbs)
+          builds = read("builds", site + "/builds")
+          build_summaries = []
+          for row in (builds or [])[:2]:
+              if not isinstance(row, dict) or not re.fullmatch(r"[a-fA-F0-9-]{36}", str(row.get("uuid", ""))):
+                  continue
+              build_id = row["uuid"]
+              detail = read("build-" + build_id, site + "/builds/" + build_id)
+              logs = read("logs-" + build_id, site + "/builds/" + build_id + "/logs?from_line=0")
+              options = (detail or row).get("options", {})
+              summary = {"uuid": build_id, "state": row.get("state"),
+                         "configuration": {k: options.get(k) for k in fields},
+                         "sourceType": options.get("source_type"),
+                         "sourceOptionKeys": sorted(options.get("source_options") or {})}
+              if isinstance(logs, dict) and isinstance(logs.get("logs"), str):
+                  content = logs["logs"]
+                  summary["logs"] = {"lines": logs.get("lines"), "sha256": hashlib.sha256(content.encode()).hexdigest(),
+                      "mentionsHbuilds": "hbuilds" in content, "mentionsProbe": "probe" in content.lower(),
+                      "mentionsBuildSuccess": bool(re.search(r"build.{0,30}(success|complet)", content, re.I))}
+              if not build_summaries and options.get("source_type") == "archive":
+                  archive = (options.get("source_options") or {}).get("archive_path")
+                  if isinstance(archive, str) and re.fullmatch(r"[A-Za-z0-9_./-]{1,240}", archive) and not archive.startswith("/") and ".." not in archive.split("/"):
+                      detected = read("previousArchiveDetection", site + "/builds/settings/from-archive?" + urllib.parse.urlencode({"archive_path": archive}))
+                      report["checks"]["previousArchiveDetection"]["configurationReadable"] = isinstance(detected, dict)
+                      summary["archiveName"] = pathlib.PurePosixPath(archive).name
+              build_summaries.append(summary)
+          report["checks"]["builds"]["history"] = build_summaries
+          for label, url in (
+              ("probeHealth", "https://" + domain + "/health?nonce=" + str(uuid.uuid4())),
+              ("productionHome", "https://punctumpicture.com/"),
+              ("productionStudioAnonymous", "https://punctumpicture.com/admin/studio"),
+              ("productionR4Anonymous", "https://punctumpicture.com/albuns/entrar")):
+              try:
+                  with opener.open(urllib.request.Request(url, headers={"User-Agent": "Punctum takeover read-only/1.0"}), timeout=15) as response:
+                      raw = response.read(1000000)
+                      result = {"status": response.status, "contentType": response.headers.get_content_type()}
+                      if label == "probeHealth":
+                          health = json.loads(raw)
+                          expected_nonce = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["nonce"][0]
+                          result.update({k: health.get(k) for k in ("service", "version", "node", "ssrValidated", "production")})
+                          result["nonceMatches"] = health.get("nonce") == expected_nonce
+                          storage = json.loads(response.headers.get("X-Punctum-QA-Persistence", "{}"))
+                          if isinstance(storage, dict) and storage.get("schema") == 1:
+                              result["privateStorage"] = {key: storage[key] for key in (
+                                  "scope", "status", "code", "bootId", "boots", "fixtureSha256",
+                                  "integrity", "backupVerified", "privateOutsideDeployment", "directoryMode", "databaseMode"
+                              ) if key in storage}
+                      report["checks"][label] = result
+              except urllib.error.HTTPError as error:
+                  report["checks"][label] = {"status": error.code,
+                      "loginRedirect": urllib.parse.urlsplit(urllib.parse.urljoin(url, error.headers.get("Location", ""))).path == "/acesso"}
+              except (OSError, ValueError):
+                  report["checks"][label] = {"error": "READ_UNAVAILABLE"}
+          path = pathlib.Path("outputs/hostinger-takeover/inventory.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: hostinger-takeover-readonly
+          path: outputs/hostinger-takeover/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Read Cloudflare production bindings and public table totals
+        env:
+          CF_WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+        shell: bash
+        run: |
+          set +x
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect())
+          account = "257bca437616da74ece1ce4bbaf0bd89"
+          database = "22697f13-7484-41e3-9441-f7b902c6577a"
+          base = f"https://api.cloudflare.com/client/v4/accounts/{account}"
+          worker = "/workers/scripts/punctum-picture-migration"
+          cf_token = os.environ.get("CF_WORKERS_TOKEN")
+          d1_token = os.environ.get("CF_D1_TOKEN")
+
+          def request(label, path, token, data=None, transform=lambda result: {}):
+              if not token:
+                  print(label, json.dumps({"credential_available": False}))
+                  return
+              body = json.dumps(data).encode() if data is not None else None
+              req = urllib.request.Request(base + path, data=body, headers={
+                  "Authorization": f"Bearer {token}", "Accept": "application/json", "Content-Type": "application/json",
+              })
+              try:
+                  with opener.open(req, timeout=15) as response:
+                      payload = json.loads(response.read(2_000_000))
+                      print(label, json.dumps({"status": response.status, **transform(payload)}))
+                      return payload
+              except urllib.error.HTTPError as error:
+                  print(label, json.dumps({"status": error.code}))
+              except (KeyError, TypeError, ValueError, OSError) as error:
+                  print(label, json.dumps({"error": type(error).__name__}))
+
+          def bindings(payload):
+              names = {"DB", "ORIGINALS", "BACKUPS", "IMAGES", "ASSETS", "ADMIN_SESSION_SECRET",
+                       "ADMIN_ACCESS_JWKS_URL", "ADMIN_ACCESS_AUDIENCE", "PRIVATE_GALLERIES_ENABLED"}
+              return {"bindings": {
+                  item["name"]: item["type"] for item in payload["result"].get("bindings", [])
+                  if item.get("name") in names
+              }}
+
+          request("production_worker", worker + "/settings", cf_token, transform=bindings)
+          request("production_d1", "/d1/database/" + database, d1_token,
+                  transform=lambda payload: {"database_present": payload["result"]["name"] == "punctum-picture"})
+          query = {"sql": """SELECT
+              (SELECT COUNT(*) FROM albums WHERE status = 'published' AND deleted_at IS NULL) AS published_albums,
+              (SELECT COUNT(*) FROM categories WHERE is_visible = 1) AS visible_categories,
+              (SELECT COUNT(*) FROM images WHERE status = 'ready' AND deleted_at IS NULL) AS ready_images,
+              (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'site_config_versions') AS has_editorial_versions""",
+              "params": []}
+          request("production_d1_aggregate", f"/d1/database/{database}/query", d1_token, query,
+                  transform=lambda payload: payload["result"][0]["results"][0])
+          for bucket in ("punctum-picture-originals", "punctum-picture-backups"):
+              request(bucket, f"/r2/buckets/{bucket}", cf_token,
+                      transform=lambda payload: {"bucket_present": bool(payload["result"].get("name"))})
+              count = size = 0
+              cursor = ""
+              complete = False
+              for page in range(1, 11):
+                  query = urllib.parse.urlencode({"per_page": 250, **({"cursor": cursor} if cursor else {})})
+                  result = request(bucket + "_page", f"/r2/buckets/{bucket}/objects?{query}", cf_token)
+                  if not result or not isinstance(result.get("result"), list):
+                      break
+                  count += len(result["result"])
+                  size += sum(item.get("size", 0) for item in result["result"])
+                  info = result.get("result_info", {})
+                  if not info.get("is_truncated"):
+                      complete = True
+                      break
+                  cursor = info.get("cursor")
+                  if not cursor:
+                      break
+              print(bucket + "_inventory", json.dumps({"objects": count, "bytes": size, "complete": complete}))
+          PY

@@ -1,0 +1,52 @@
+name: Reconcile stalled QA checkout
+on:
+  push:
+    branches: [agent/hostinger-node-migration-20261112]
+    paths: [.github/workflows/hostinger-reconcile-stalled-run.yml]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Cancel only the unchanged checkout before provider operations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, time, urllib.request
+          base = 'https://api.github.com/repos/menezesx2k26-byte/lab-punctum-picture/actions/runs/43315486525'
+          def request(url, method='GET'):
+              req = urllib.request.Request(url, method=method, headers={
+                  'Authorization':'Bearer '+os.environ['GH_TOKEN'], 'Accept':'application/vnd.github+json',
+                  'X-GitHub-Api-Version':'2022-11-28','User-Agent':'Punctum bounded runner reconciliation'})
+              with urllib.request.urlopen(req,timeout=20) as response:
+                  body = response.read()
+                  return response.status, json.loads(body) if body else None
+          run = request(base)[1]
+          assert run['head_sha'] == '40fcf603c1e975b1620f99907257894ae9b68c32'
+          assert run['head_branch'] == 'agent/hostinger-node-migration-20261112'
+          assert run['path'] == '.github/workflows/hostinger-managed-qa.yml'
+          if run['status'] == 'completed':
+              print({'result':'ALREADY_COMPLETED','conclusion':run['conclusion']})
+          else:
+              jobs = request(base + '/jobs?filter=latest')[1]['jobs']
+              assert len(jobs) == 1 and jobs[0]['id'] == 131522292402
+              steps = jobs[0]['steps']
+              checkout = next(x for x in steps if x['name'] == 'Run actions/checkout@v7')
+              # Never interrupt a job that advanced beyond checkout into provider operations.
+              assert checkout['status'] == 'in_progress'
+              assert all(x['status'] == 'pending' for x in steps if x['number'] > checkout['number'])
+              status, _ = request(base + '/cancel', 'POST')
+              assert status == 202
+              for attempt in range(18):
+                  current = request(base)[1]
+                  if current['status'] == 'completed':
+                      print({'result':'CHECKOUT_CANCEL_CONFIRMED','conclusion':current['conclusion'],'providerOperationsStarted':False})
+                      break
+                  time.sleep(3)
+              else:
+                  raise RuntimeError('Cancellation pending; do not submit a provider build')
+          PY

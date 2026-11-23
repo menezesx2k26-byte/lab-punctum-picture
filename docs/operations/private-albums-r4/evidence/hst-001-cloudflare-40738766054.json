@@ -1,0 +1,550 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-28T17:45:47.119Z",
+  "configurationWrites": 0,
+  "worker": "punctum-picture-albums-qa",
+  "candidates": [
+    {
+      "candidate": "CF_TOKEN_1",
+      "requests": [
+        {
+          "endpoint": "/accounts/[account]/workers/scripts/punctum-picture-albums-qa/settings",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/scripts/punctum-picture-albums-qa/deployments",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/account-settings",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/subscriptions",
+          "status": 403
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/observability/telemetry/keys",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/observability/telemetry/query",
+          "status": 200
+        },
+        {
+          "endpoint": "/graphql",
+          "status": 200
+        }
+      ],
+      "flags": [
+        {
+          "name": "CLIENT_AUTH_MODE",
+          "value": "access"
+        },
+        {
+          "name": "PRIVATE_GALLERIES_ENABLED",
+          "value": "true"
+        }
+      ],
+      "latestDeployment": {
+        "id": "224e43a5-7c5e-4521-9d1d-901dd29ad8a0",
+        "createdOn": "2026-10-24T19:17:42.363094Z",
+        "versions": [
+          {
+            "version_id": "446943ce-1ea5-4f7e-94ae-351c7b016424",
+            "percentage": 100
+          }
+        ]
+      },
+      "workerAccountSettings": {
+        "defaultUsageModel": "standard"
+      },
+      "telemetryKeysAccessible": true,
+      "telemetryFieldNames": [
+        "$metadata.service",
+        "$workers.wallTimeMs",
+        "$workers.cpuTimeMs",
+        "$workers.scriptName"
+      ],
+      "telemetry": {
+        "interval": {
+          "from": 1792800000000,
+          "to": 1793209547119
+        },
+        "filter": "$metadata.service == QA worker",
+        "returnedEvents": 200,
+        "totalEvents": 200,
+        "boundedSample": true,
+        "homeSamples": [
+          {
+            "cpuTimeMs": 134,
+            "wallTimeMs": 973,
+            "timestamp": 1792869465872,
+            "versionId": "446943ce-1ea5-4f7e-94ae-351c7b016424"
+          },
+          {
+            "cpuTimeMs": 166,
+            "wallTimeMs": 1044,
+            "timestamp": 1792869254300,
+            "versionId": "cb55ea91-6afe-4469-a724-c32fd711456f"
+          },
+          {
+            "cpuTimeMs": 129,
+            "wallTimeMs": 1014,
+            "timestamp": 1792868596995,
+            "versionId": "7e70313f-7162-4bfe-bda1-addcd254efd4"
+          }
+        ],
+        "routes": [
+          {
+            "route": "admin",
+            "samples": 65,
+            "cpuP50Ms": 4,
+            "cpuP95Ms": 12,
+            "cpuP99Ms": 13
+          },
+          {
+            "route": "client-api",
+            "samples": 48,
+            "cpuP50Ms": 3,
+            "cpuP95Ms": 7,
+            "cpuP99Ms": 10
+          },
+          {
+            "route": "client-session",
+            "samples": 4,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 2,
+            "cpuP99Ms": 2
+          },
+          {
+            "route": "public-home",
+            "samples": 3,
+            "cpuP50Ms": 134,
+            "cpuP95Ms": 166,
+            "cpuP99Ms": 166
+          },
+          {
+            "route": "image-optimization",
+            "samples": 2,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 0,
+            "cpuP99Ms": 0
+          },
+          {
+            "route": "public-media",
+            "samples": 2,
+            "cpuP50Ms": 2,
+            "cpuP95Ms": 2,
+            "cpuP99Ms": 2
+          },
+          {
+            "route": "client-password",
+            "samples": 1,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 0,
+            "cpuP99Ms": 0
+          },
+          {
+            "route": "other",
+            "samples": 1,
+            "cpuP50Ms": 1,
+            "cpuP95Ms": 1,
+            "cpuP99Ms": 1
+          }
+        ]
+      },
+      "historicalMetrics": {
+        "interval": [
+          "2026-10-24T00:00:00Z",
+          "2026-10-28T13:30:00Z"
+        ],
+        "rows": [
+          {
+            "requests": 142,
+            "errors": 0,
+            "cpuP50Ms": 4.259,
+            "cpuP95Ms": 12.667,
+            "cpuP99Ms": 134.2,
+            "wallP50Ms": 307.4,
+            "wallP95Ms": 925.893,
+            "wallP99Ms": 1052.753
+          }
+        ],
+        "graphqlError": false
+      }
+    },
+    {
+      "candidate": "CF_TOKEN_2",
+      "requests": [
+        {
+          "endpoint": "/accounts/[account]/workers/scripts/punctum-picture-albums-qa/settings",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/scripts/punctum-picture-albums-qa/deployments",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/account-settings",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/subscriptions",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/observability/telemetry/keys",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/observability/telemetry/query",
+          "status": 200
+        },
+        {
+          "endpoint": "/graphql",
+          "status": 200
+        }
+      ],
+      "flags": [
+        {
+          "name": "CLIENT_AUTH_MODE",
+          "value": "access"
+        },
+        {
+          "name": "PRIVATE_GALLERIES_ENABLED",
+          "value": "true"
+        }
+      ],
+      "latestDeployment": {
+        "id": "224e43a5-7c5e-4521-9d1d-901dd29ad8a0",
+        "createdOn": "2026-10-24T19:17:42.363094Z",
+        "versions": [
+          {
+            "version_id": "446943ce-1ea5-4f7e-94ae-351c7b016424",
+            "percentage": 100
+          }
+        ]
+      },
+      "workerAccountSettings": {
+        "defaultUsageModel": "standard"
+      },
+      "subscriptions": [
+        {
+          "product": "Cloudflare Free Plan",
+          "planId": "free",
+          "price": 0,
+          "state": "Paid"
+        },
+        {
+          "product": "Cloudflare Free Plan",
+          "planId": "free",
+          "price": 0,
+          "state": "Paid"
+        },
+        {
+          "product": "Teams Free Base",
+          "planId": "teams_free",
+          "price": 0,
+          "state": "Paid"
+        },
+        {
+          "product": "Cloudflare Free Plan",
+          "planId": "free",
+          "price": 0,
+          "state": "Paid"
+        },
+        {
+          "product": "R2 Paid",
+          "planId": "r2_paid",
+          "price": 0,
+          "state": "Paid"
+        }
+      ],
+      "telemetryKeysAccessible": true,
+      "telemetryFieldNames": [
+        "$metadata.service",
+        "$workers.wallTimeMs",
+        "$workers.cpuTimeMs",
+        "$workers.scriptName"
+      ],
+      "telemetry": {
+        "interval": {
+          "from": 1792800000000,
+          "to": 1793209547119
+        },
+        "filter": "$metadata.service == QA worker",
+        "returnedEvents": 200,
+        "totalEvents": 200,
+        "boundedSample": true,
+        "homeSamples": [
+          {
+            "cpuTimeMs": 134,
+            "wallTimeMs": 973,
+            "timestamp": 1792869465872,
+            "versionId": "446943ce-1ea5-4f7e-94ae-351c7b016424"
+          },
+          {
+            "cpuTimeMs": 166,
+            "wallTimeMs": 1044,
+            "timestamp": 1792869254300,
+            "versionId": "cb55ea91-6afe-4469-a724-c32fd711456f"
+          },
+          {
+            "cpuTimeMs": 129,
+            "wallTimeMs": 1014,
+            "timestamp": 1792868596995,
+            "versionId": "7e70313f-7162-4bfe-bda1-addcd254efd4"
+          }
+        ],
+        "routes": [
+          {
+            "route": "admin",
+            "samples": 65,
+            "cpuP50Ms": 4,
+            "cpuP95Ms": 12,
+            "cpuP99Ms": 13
+          },
+          {
+            "route": "client-api",
+            "samples": 48,
+            "cpuP50Ms": 3,
+            "cpuP95Ms": 7,
+            "cpuP99Ms": 10
+          },
+          {
+            "route": "client-session",
+            "samples": 4,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 2,
+            "cpuP99Ms": 2
+          },
+          {
+            "route": "public-home",
+            "samples": 3,
+            "cpuP50Ms": 134,
+            "cpuP95Ms": 166,
+            "cpuP99Ms": 166
+          },
+          {
+            "route": "image-optimization",
+            "samples": 2,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 0,
+            "cpuP99Ms": 0
+          },
+          {
+            "route": "public-media",
+            "samples": 2,
+            "cpuP50Ms": 2,
+            "cpuP95Ms": 2,
+            "cpuP99Ms": 2
+          },
+          {
+            "route": "client-password",
+            "samples": 1,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 0,
+            "cpuP99Ms": 0
+          },
+          {
+            "route": "other",
+            "samples": 1,
+            "cpuP50Ms": 1,
+            "cpuP95Ms": 1,
+            "cpuP99Ms": 1
+          }
+        ]
+      },
+      "historicalMetrics": {
+        "interval": [
+          "2026-10-24T00:00:00Z",
+          "2026-10-28T13:30:00Z"
+        ],
+        "rows": [
+          {
+            "requests": 142,
+            "errors": 0,
+            "cpuP50Ms": 4.259,
+            "cpuP95Ms": 12.667,
+            "cpuP99Ms": 134.2,
+            "wallP50Ms": 307.4,
+            "wallP95Ms": 925.893,
+            "wallP99Ms": 1052.753
+          }
+        ],
+        "graphqlError": false
+      }
+    },
+    {
+      "candidate": "CF_TOKEN_3",
+      "requests": [
+        {
+          "endpoint": "/accounts/[account]/workers/scripts/punctum-picture-albums-qa/settings",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/scripts/punctum-picture-albums-qa/deployments",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/account-settings",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/subscriptions",
+          "status": 403
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/observability/telemetry/keys",
+          "status": 200
+        },
+        {
+          "endpoint": "/accounts/[account]/workers/observability/telemetry/query",
+          "status": 200
+        },
+        {
+          "endpoint": "/graphql",
+          "status": 200
+        }
+      ],
+      "flags": [
+        {
+          "name": "CLIENT_AUTH_MODE",
+          "value": "access"
+        },
+        {
+          "name": "PRIVATE_GALLERIES_ENABLED",
+          "value": "true"
+        }
+      ],
+      "latestDeployment": {
+        "id": "224e43a5-7c5e-4521-9d1d-901dd29ad8a0",
+        "createdOn": "2026-10-24T19:17:42.363094Z",
+        "versions": [
+          {
+            "version_id": "446943ce-1ea5-4f7e-94ae-351c7b016424",
+            "percentage": 100
+          }
+        ]
+      },
+      "workerAccountSettings": {
+        "defaultUsageModel": "standard"
+      },
+      "telemetryKeysAccessible": true,
+      "telemetryFieldNames": [
+        "$metadata.service",
+        "$workers.wallTimeMs",
+        "$workers.cpuTimeMs",
+        "$workers.scriptName"
+      ],
+      "telemetry": {
+        "interval": {
+          "from": 1792800000000,
+          "to": 1793209547119
+        },
+        "filter": "$metadata.service == QA worker",
+        "returnedEvents": 200,
+        "totalEvents": 200,
+        "boundedSample": true,
+        "homeSamples": [
+          {
+            "cpuTimeMs": 134,
+            "wallTimeMs": 973,
+            "timestamp": 1792869465872,
+            "versionId": "446943ce-1ea5-4f7e-94ae-351c7b016424"
+          },
+          {
+            "cpuTimeMs": 166,
+            "wallTimeMs": 1044,
+            "timestamp": 1792869254300,
+            "versionId": "cb55ea91-6afe-4469-a724-c32fd711456f"
+          },
+          {
+            "cpuTimeMs": 129,
+            "wallTimeMs": 1014,
+            "timestamp": 1792868596995,
+            "versionId": "7e70313f-7162-4bfe-bda1-addcd254efd4"
+          }
+        ],
+        "routes": [
+          {
+            "route": "admin",
+            "samples": 65,
+            "cpuP50Ms": 4,
+            "cpuP95Ms": 12,
+            "cpuP99Ms": 13
+          },
+          {
+            "route": "client-api",
+            "samples": 48,
+            "cpuP50Ms": 3,
+            "cpuP95Ms": 7,
+            "cpuP99Ms": 10
+          },
+          {
+            "route": "client-session",
+            "samples": 4,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 2,
+            "cpuP99Ms": 2
+          },
+          {
+            "route": "public-home",
+            "samples": 3,
+            "cpuP50Ms": 134,
+            "cpuP95Ms": 166,
+            "cpuP99Ms": 166
+          },
+          {
+            "route": "image-optimization",
+            "samples": 2,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 0,
+            "cpuP99Ms": 0
+          },
+          {
+            "route": "public-media",
+            "samples": 2,
+            "cpuP50Ms": 2,
+            "cpuP95Ms": 2,
+            "cpuP99Ms": 2
+          },
+          {
+            "route": "client-password",
+            "samples": 1,
+            "cpuP50Ms": 0,
+            "cpuP95Ms": 0,
+            "cpuP99Ms": 0
+          },
+          {
+            "route": "other",
+            "samples": 1,
+            "cpuP50Ms": 1,
+            "cpuP95Ms": 1,
+            "cpuP99Ms": 1
+          }
+        ]
+      },
+      "historicalMetrics": {
+        "interval": [
+          "2026-10-24T00:00:00Z",
+          "2026-10-28T13:30:00Z"
+        ],
+        "rows": [
+          {
+            "requests": 142,
+            "errors": 0,
+            "cpuP50Ms": 4.259,
+            "cpuP95Ms": 12.667,
+            "cpuP99Ms": 134.2,
+            "wallP50Ms": 307.4,
+            "wallP95Ms": 925.893,
+            "wallP99Ms": 1052.753
+          }
+        ],
+        "graphqlError": false
+      }
+    }
+  ]
+}

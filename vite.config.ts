@@ -2,6 +2,7 @@ import vinext from "vinext";
 import { defineConfig } from "vite";
 import { localPhotographyFixtures } from "./build/local-photography-fixtures";
 import { sites } from "./build/sites-vite-plugin";
+import { ssrOnDemandClientReferences } from "./build/ssr-on-demand";
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
@@ -23,6 +24,12 @@ const localBindingConfig = {
     ADMIN_ALLOWED_EMAILS: "maria.helena.ifc@gmail.com,menezesx2k26@gmail.com",
     ADMIN_PASSWORD_HASH: "c638833f69bbfb3c267afa0a74434812436b8f08a81fd263c6be6871de4f1265",
     ADMIN_SESSION_SECRET: "local-only-session-secret-with-enough-entropy",
+    CLIENT_SESSION_SECRET:
+      process.env.CLIENT_SESSION_SECRET ??
+      "local-only-independent-client-session-secret",
+    PRIVATE_GALLERIES_ENABLED:
+      process.env.PRIVATE_GALLERIES_ENABLED ?? "false",
+    CLIENT_AUTH_MODE: process.env.CLIENT_AUTH_MODE ?? "password",
     ADMIN_LOGIN_RATE_LIMIT_MAX: "10",
     ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS: "900",
     BACKUP_PREFIX: "backups/d1",
@@ -51,6 +58,7 @@ export default defineConfig(async ({ command }) => {
         : {}),
     },
     plugins: [
+      ssrOnDemandClientReferences(),
       localPhotographyFixtures(),
       vinext(),
       sites(),

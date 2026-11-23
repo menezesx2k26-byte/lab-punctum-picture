@@ -1,0 +1,9 @@
+{
+  "app_type": "other",
+  "node_version": 24,
+  "package_manager": "npm",
+  "root_directory": null,
+  "output_directory": null,
+  "build_script": "build:hostinger:qa",
+  "entry_file": "services/punctum-hostinger-node/server.mjs"
+}

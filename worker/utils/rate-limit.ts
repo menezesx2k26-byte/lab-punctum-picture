@@ -1,10 +1,5 @@
 import { AppError } from "./errors";
-
-async function digest(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
+import { sha256Hex } from "./admin-session-crypto.mjs";
 
 export async function assertRateLimit(
   request: Request,
@@ -19,36 +14,42 @@ export async function assertRateLimit(
     "unknown";
   const now = new Date();
   const expires = new Date(now.getTime() + windowSeconds * 1000);
-  const bucketKey = await digest(`${scope}:${ip}`);
+  const bucketKey = await sha256Hex(new TextEncoder().encode(`${scope}:${ip}`));
 
-  const current = await db
+  const bucket = await db
     .prepare(
-      "SELECT request_count AS requestCount, expires_at AS expiresAt FROM rate_limit_buckets WHERE bucket_key = ?",
+      `INSERT INTO rate_limit_buckets (bucket_key, request_count, window_started_at, expires_at)
+       VALUES (?, 1, ?, ?)
+       ON CONFLICT(bucket_key) DO UPDATE SET
+         request_count = CASE
+           WHEN rate_limit_buckets.expires_at <= ? THEN 1
+           ELSE rate_limit_buckets.request_count + 1
+         END,
+         window_started_at = CASE
+           WHEN rate_limit_buckets.expires_at <= ? THEN excluded.window_started_at
+           ELSE rate_limit_buckets.window_started_at
+         END,
+         expires_at = CASE
+           WHEN rate_limit_buckets.expires_at <= ? THEN excluded.expires_at
+           ELSE rate_limit_buckets.expires_at
+         END
+       WHERE rate_limit_buckets.expires_at <= ?
+          OR rate_limit_buckets.request_count < ?
+       RETURNING request_count AS requestCount`,
     )
-    .bind(bucketKey)
-    .first<{ requestCount: number; expiresAt: string }>();
+    .bind(
+      bucketKey,
+      now.toISOString(),
+      expires.toISOString(),
+      now.toISOString(),
+      now.toISOString(),
+      now.toISOString(),
+      now.toISOString(),
+      max,
+    )
+    .first<{ requestCount: number }>();
 
-  if (!current || new Date(current.expiresAt) <= now) {
-    await db
-      .prepare(
-        `INSERT INTO rate_limit_buckets (bucket_key, request_count, window_started_at, expires_at)
-         VALUES (?, 1, ?, ?)
-         ON CONFLICT(bucket_key) DO UPDATE SET
-           request_count = 1,
-           window_started_at = excluded.window_started_at,
-           expires_at = excluded.expires_at`,
-      )
-      .bind(bucketKey, now.toISOString(), expires.toISOString())
-      .run();
-    return;
-  }
-
-  if (current.requestCount >= max) {
+  if (!bucket || bucket.requestCount > max) {
     throw new AppError(429, "RATE_LIMITED", "Muitas tentativas. Aguarde um pouco e tente novamente.");
   }
-
-  await db
-    .prepare("UPDATE rate_limit_buckets SET request_count = request_count + 1 WHERE bucket_key = ?")
-    .bind(bucketKey)
-    .run();
 }

@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "measuredAt": "2026-11-20T04:58:00Z",
+  "startHead": "63746e9dcaa95da52fd9f92684ffb574186f60c2",
+  "workflowsHead": "5a35c355e954d2efa9a9c87a3206b8db618bcbfc",
+  "productSha": "b0b18748f64269612c15f33921045ac9afe1372d",
+  "pr": 42,
+  "productionDecision": "NO_GO",
+  "verdict": "PARTIAL_VERIFIED",
+  "clerk": {
+    "ghSecretListFromAgent": "HTTP_403_Resource_not_accessible_by_integration",
+    "workflowDispatchFromAgent": "HTTP_403",
+    "namesPresentInActions": {
+      "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY": true,
+      "CLERK_SECRET_KEY": true,
+      "PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY": true
+    },
+    "backendSecretUsed": "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+    "backendKeyPrefix": "sk_live_",
+    "CLERK_SECRET_KEY_prefix": "pk_live_",
+    "CLERK_SECRET_KEY_note": "Present but is a publishable key — not a Backend API secret",
+    "instanceId": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+    "environment_type": "production",
+    "r1": "BLOCKED_API_GAP — max lifetime is Dashboard/Platform session_settings; Backend GET /instance does not expose it",
+    "ci": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44677313383"
+  },
+  "hostinger": {
+    "composioAccount": "hostinger_usings-moko",
+    "secretsHOSTINGER_API": true,
+    "accountConfirmed": true,
+    "orderId": 1008628483,
+    "username": "u571409090",
+    "nodejsMain": "punctumpicture.com",
+    "nodeApiReadable": true,
+    "deployPath": "HOSTINGER_API_NODE_BUILDS_READ_OK",
+    "aliceblueListed": false,
+    "isolatedQaOrigin": null,
+    "composioDeployTools": false,
+    "ci": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44677313365"
+  },
+  "remoteGates": {
+    "G05": "NOT_RUN_REMOTE — blocking: no isolated empty Node origin (will not POST builds to main punctumpicture.com)",
+    "G17": "NOT_RUN_REMOTE — same block (Node origin required; CF /api/health is not Node)",
+    "G18": "NOT_RUN_REMOTE — same block"
+  },
+  "g19": "no self-PASS",
+  "evidenceFiles": [
+    "docs/operations/private-albums-r4/evidence/2026-11-20-clerk-r1-instance-readonly.json",
+    "docs/operations/private-albums-r4/evidence/2026-11-20-hostinger-account-preflight.json"
+  ]
+}

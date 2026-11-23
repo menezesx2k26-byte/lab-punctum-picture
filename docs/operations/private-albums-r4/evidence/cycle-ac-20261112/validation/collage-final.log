@@ -1,0 +1,10 @@
+
+ RUN  v4.1.12 /home/desktop/Documents/punctum-r4-takeover-f591
+
+ ✓ tests/unit/collage-frontend.spec.tsx (7 tests) 96ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  15:42:04
+   Duration  1.73s (transform 461ms, setup 0ms, import 1.19s, tests 96ms, environment 0ms)
+

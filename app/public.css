@@ -206,6 +206,9 @@
 .archive-toolbar>p { font-size:.65rem; color:var(--color-muted); margin-bottom:.5rem; }
 .archive-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:2.5rem 1.5rem; }
 .archive-card { min-width:0; padding:0; border:0; background:transparent; text-align:left; }
+.archive-more { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:1rem 2rem; margin:3rem 0 0; font-size:.7rem; color:var(--color-muted); }
+.archive-more button { min-height:44px; border:1px solid var(--color-border); padding:.75rem 1.25rem; background:transparent; color:var(--color-foreground); cursor:pointer; font:inherit; }
+.archive-more button:hover,.archive-more button:focus-visible { border-color:currentColor; outline-offset:3px; }
 .archive-image { position:relative; display:block; aspect-ratio:4/5; }
 .archive-image img { object-fit:contain; }
 .archive-caption { display:flex; gap:.7rem; font-size:.63rem; padding-top:.75rem; }

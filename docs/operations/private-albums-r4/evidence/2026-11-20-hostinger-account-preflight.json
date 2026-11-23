@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "measuredAt": "2026-11-20T04:53:04.683185+00:00",
+  "purpose": "G03 Hostinger RO preflight \u2014 prove Punctum account before any create",
+  "writesAttempted": 0,
+  "secretPresence": {
+    "HOSTINGER_API": true
+  },
+  "expected": {
+    "order_id": 1008628483,
+    "username": "u571409090",
+    "main_domain": "punctumpicture.com",
+    "temp_domain_historical": "aliceblue-locust-999458.hostingersite.com",
+    "do_not_touch": "menezescontabilidade.com"
+  },
+  "checks": {
+    "websites_by_order": {
+      "http": 200,
+      "error": null,
+      "sites": [
+        {
+          "domain": "punctumpicture.com",
+          "username": "u571409090",
+          "order_id": 1008628483,
+          "website_type": "nodejs",
+          "vhost_type": "main",
+          "is_enabled": true
+        },
+        {
+          "domain": "menezescontabilidade.com",
+          "username": "u571409090",
+          "order_id": 1008628483,
+          "website_type": "builder",
+          "vhost_type": null,
+          "is_enabled": true
+        }
+      ],
+      "punctum_nodejs": true
+    },
+    "aliceblue_website": {
+      "http": 200,
+      "error": null,
+      "listed": false,
+      "count": 0
+    },
+    "build_settings": {
+      "http": 200,
+      "error": null,
+      "settings": {
+        "app_type": "other",
+        "node_version": 24,
+        "root_directory": null,
+        "output_directory": null,
+        "build_script": "build:hostinger:managed-runtime",
+        "entry_file": "services/punctum-hostinger-production/candidate-server.mjs",
+        "package_manager": "npm"
+      }
+    },
+    "build_history": {
+      "http": 200,
+      "error": null,
+      "page_items": 25,
+      "states": [
+        "completed",
+        "completed",
+        "completed",
+        "completed",
+        "completed",
+        "completed",
+        "failed",
+        "failed"
+      ]
+    },
+    "env_inventory": {
+      "http": 200,
+      "error": null,
+      "variable_count": 15
+    }
+  },
+  "accountConfirmed": true,
+  "nodeApiReadable": true,
+  "deployPath": "HOSTINGER_API_NODE_BUILDS_READ_OK",
+  "isolatedQaOrigin": null,
+  "blockingCall": null,
+  "verdict": "PUNCTUM_ACCOUNT_CONFIRMED_NODE_API_READABLE",
+  "nextSafeNote": "Composio cannot deploy. HOSTINGER_API can read Node builds. Isolated QA still needs an empty additional Node host (not main punctumpicture.com) before any build POST. GENERATE_FREE_SUBDOMAIN alone is not a host.",
+  "agentNote": {
+    "measuredAt": "2026-11-20T05:02:46.592829+00:00",
+    "composio": "hostinger_usings-moko confirmed same order/site; no deploy tools",
+    "ciRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44677313365",
+    "remoteG05G17G18": "STOPPED \u2014 no isolated empty Node origin; aliceblue unlisted; will not POST builds to main punctumpicture.com"
+  }
+}

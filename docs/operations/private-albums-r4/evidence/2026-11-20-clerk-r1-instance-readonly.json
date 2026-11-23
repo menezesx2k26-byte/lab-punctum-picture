@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "measuredAt": "2026-11-20T04:53:09.929Z",
+  "purpose": "G01/G02 Clerk secret presence + instance identity (R1 max lifetime NOT via Backend API)",
+  "docs": "https://clerk.com/docs/guides/secure/session-options",
+  "secretPresence": {
+    "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY": true,
+    "CLERK_SECRET_KEY": true,
+    "PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY": true
+  },
+  "keyPrefixes": {
+    "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY": "sk_live_",
+    "CLERK_SECRET_KEY": "pk_live_"
+  },
+  "attempts": [
+    {
+      "envName": "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+      "http": 200,
+      "keyPrefix": "sk_live_",
+      "instance": {
+        "id": "ins_3M6H9ktM3jO84RvEu5BmKFokCfr",
+        "object": "instance",
+        "environment_type": "production"
+      },
+      "result": "VALID"
+    },
+    {
+      "probe": "/jwt_templates",
+      "http": 200,
+      "note": "jwt_templates list status only"
+    },
+    {
+      "probe": "/users?limit=1",
+      "http": 200,
+      "note": "existence probe only; user payloads discarded"
+    }
+  ],
+  "r1": {
+    "status": "BLOCKED_API_GAP",
+    "reason": "Clerk Maximum lifetime / Inactivity timeout are Dashboard Sessions (Platform API session_settings). Backend API PATCH/GET /instance does not expose or set max session lifetime. JWT ~60s is session-token TTL, not R1 proof.",
+    "dashboardPath": "Clerk Dashboard \u2192 Sessions \u2192 Maximum lifetime \u2264 14 days (\u2264 336 hours)",
+    "productionSettingsChanged": false,
+    "sessionsRevoked": false
+  },
+  "verdict": "INSTANCE_READ_OK",
+  "secretNameUsed": "PUNCTUM_CLERK_PRODUCTION_SECRET_KEY",
+  "instanceClass": "production",
+  "agentNote": {
+    "measuredAt": "2026-11-20T05:02:46.592612+00:00",
+    "CLERK_SECRET_KEY_misnamed": "GitHub secret CLERK_SECRET_KEY is present but keyPrefix=pk_live_ (publishable). Backend validation used PUNCTUM_CLERK_PRODUCTION_SECRET_KEY (sk_live_) only.",
+    "r1": "Still BLOCKED_API_GAP \u2014 Dashboard/Platform session_settings required for max lifetime \u226414d proof",
+    "ciRun": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/44677313383"
+  }
+}

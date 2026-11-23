@@ -1,0 +1,81 @@
+{
+  "codeSha": "469c76e011d63df74e9a2f47cf66e4540884cedc",
+  "runId": 45048482582,
+  "jobs": {
+    "verify": {
+      "id": 137288178777,
+      "result": "SUCCESS"
+    },
+    "hostinger-node-qa": {
+      "id": 137288178941,
+      "result": "SUCCESS"
+    }
+  },
+  "coreVitest": {
+    "filesPassed": 66,
+    "testsPassed": 367
+  },
+  "collageVitest": {
+    "filesPassed": 1,
+    "testsPassed": 7
+  },
+  "artifacts": [
+    {
+      "kind": "r4",
+      "sha256": "4626e73e88af625ff971577583ce9a8e7d02d999a8301419bb03e777c5887221",
+      "zipCrc": "PASS",
+      "report": {
+        "status": "PASS_LOCAL",
+        "sourceSha": "469c76e011d63df74e9a2f47cf66e4540884cedc",
+        "checkoutDirtyAtRun": true,
+        "physicalDevicesTested": false,
+        "screenReaderTested": false,
+        "syntheticSessionOnly": true,
+        "checks": 25,
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "serverErrors": 0,
+        "heroChecks": [
+          "ready draft Hero decodes in authenticated Studio iframe; anonymous draft denied; published Hero decodes; fresh browser and old media URL recover missing R2 original without snapshot mutation",
+          "compiled public GET/HEAD deny inconsistent album and published Hero references to private originals, with zero original bytes"
+        ]
+      },
+      "artifactId": 14765160325
+    },
+    {
+      "kind": "node",
+      "sha256": "90c35e82913889af28fcab728af487732908b24c61b8a831d3af4776519969c3",
+      "zipCrc": "PASS",
+      "report": {
+        "sourceSha": "469c76e011d63df74e9a2f47cf66e4540884cedc",
+        "checkoutDirtyAtRun": true,
+        "managedQa": "NOT_TESTED",
+        "heroChecks": []
+      },
+      "artifactId": 14764811366
+    }
+  ],
+  "limits": [
+    "Local synthetic QA only; managedQa NOT_TESTED",
+    "Both reports checkoutDirtyAtRun=true",
+    "No physical screen reader or production authorization",
+    "Whole-candidate independent G19 acceptance remains absent"
+  ],
+  "nodeTestGroups": [
+    {
+      "scope": "managed production tests",
+      "tests": 83,
+      "passed": 82,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "managed HTTP proof refuses unsupported process-group platforms; unsupported-platform-only negative case"
+    },
+    {
+      "scope": "Node adapter and browser tests",
+      "tests": 40,
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0
+    }
+  ]
+}

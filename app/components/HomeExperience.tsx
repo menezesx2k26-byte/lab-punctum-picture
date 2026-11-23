@@ -16,11 +16,13 @@ export function HomeExperience({
   config,
   featuredAlbums,
   carouselImages,
+  mediaAudience,
 }: {
   site: PublicSiteSettings;
   config: SiteConfig;
   featuredAlbums: PublicAlbumSummary[];
   carouselImages: CarouselImage[];
+  mediaAudience?: "public" | "admin";
 }) {
   return (
     <SiteThemeRoot config={config} className="immersive-home" ambientCursor={false}>
@@ -32,6 +34,7 @@ export function HomeExperience({
           site={site}
           featuredAlbums={featuredAlbums}
           carouselImages={carouselImages}
+          mediaAudience={mediaAudience}
         />
       </main>
       <SiteFooter site={site} editorial={config.editorial} />

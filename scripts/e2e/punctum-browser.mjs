@@ -1,0 +1,567 @@
+/**
+ * Production-build browser checks against fresh local workerd, D1 and R2 only.
+ * No Cloudflare account, remote database, user browser profile or real OTP is used.
+ * Run after `npm run build`; see scripts/e2e/README.md.
+ */
+import assert from "node:assert/strict";
+import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { globSync } from "node:fs";
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { resolve, join } from "node:path";
+import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
+import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
+import { createZoomBrowser, readBrowserZoom, captureZoomViewport } from "./browser-zoom-evidence.mjs";
+import { measureConservativeContrast } from "./contrast-pixel-evidence.mjs";
+
+const playwright = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
+const buildDirectory = resolve(process.env.PUNCTUM_E2E_DIST || "dist");
+const reportDirectory = resolve(process.env.PUNCTUM_E2E_OUTPUT || "outputs/browser-e2e");
+const sourceSha = process.env.PUNCTUM_E2E_BUILD_SHA || execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const temporary = await mkdtemp(join(tmpdir(), "punctum-browser-e2e-"));
+const storage = join(temporary, "storage");
+const snapshot = join(temporary, "rollback");
+const sessionSecret = randomBytes(32).toString("base64url");
+const adminSecret = randomBytes(32).toString("base64url");
+const adminHash = createHash("sha256").update(randomBytes(32)).digest("hex");
+const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGOUkZFhYGBgYmBgYGBgAAAEGgBYbf/S0wAAAABJRU5ErkJggg==", "base64");
+const report = {
+  status: "running", startedUtc: new Date().toISOString(), sourceSha,
+  sourceRevisionProvided: Boolean(process.env.PUNCTUM_E2E_BUILD_SHA),
+  checkoutDirtyAtRun: Boolean(execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()),
+  buildSha256: createHash("sha256").update(await readFile(join(buildDirectory, "server/index.js"))).digest("hex"),
+  scope: "real Chromium against production bundle in local workerd with new synthetic D1/R2",
+  cloudflareAccessOtpTested: false, remoteQaTouched: false, productionTouched: false,
+  syntheticSessionOnly: true, physicalDevicesTested: false, screenReaderTested: false,
+  actualBrowserZoomTested: false, reducedMotion: "reduce", checks: [], pageErrors: [], consoleWarnings: [], consoleErrors: [], expectedDenials: [], serverErrors: [], screenshotModes: {}, accessibilityAudits: [],
+};
+await mkdir(reportDirectory, { recursive: true });
+const record = (check) => { report.checks.push(check); console.log("PASS " + check); };
+const auditAccessibility = async (page, label) => {
+  await page.addScriptTag({ path: resolve("node_modules/axe-core/axe.min.js") });
+  const result = await page.evaluate(async () => window.axe.run(document, {
+    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },
+  }));
+  const audit = summarizeAxeAudit(result);
+  report.accessibilityAudits.push({
+    label, standard: "WCAG 2.1 A/AA", ...audit,
+  });
+  if(process.env.PUNCTUM_CONTRAST_REVIEW==='1'){
+    const directory=join(reportDirectory,'contrast-backgrounds');
+    await mkdir(directory,{recursive:true});
+    const scroll=await page.evaluate(()=>({x:scrollX,y:scrollY}));
+    const nodes=audit.incomplete.filter(rule=>rule.id==='color-contrast').flatMap(rule=>rule.nodes);
+    const measurements=[];
+    try {
+      for(const [index,node] of nodes.entries()){
+        const filename=label.replace(/[^a-z0-9]+/gi,'-')+'-'+index+'.png';
+        const measurement=typeof node.target[0]==='string'&&node.target.length===1
+          ? await measureConservativeContrast(page,node.target[0],join(directory,filename))
+          : {status:'UNSUPPORTED_COMPOSITING',reason:'complex selector or frame'};
+        measurements.push({target:node.target,...measurement,
+          ...(measurement.backgroundSha256?{backgroundFile:'contrast-backgrounds/'+filename}:{})});
+      }
+    } finally {await page.evaluate(({x,y})=>scrollTo(x,y),scroll);}
+    report.accessibilityAudits.at(-1).contrastPixelReview={
+      scope:'Conservative whole-background pixel bound at observed scroll position; unsupported or low bounds require manual review; no full accessibility signoff',
+      measurements,
+    };
+  }
+  assert.deepEqual(audit.violations, [], `WCAG 2.1 AA ${label}: ${JSON.stringify(audit.violations)}`);
+  record(`axe-core WCAG 2.1 A/AA ${label}: ${audit.passes} rules passed, zero violations; ${audit.incompleteCount} manual review candidates`);
+};
+const screenshot = async (page, filename) => {
+  const mode = await takeEvidenceScreenshot(page, join(reportDirectory, filename));
+  report.screenshotModes[filename] = mode;
+  if (mode !== "fullPage") console.warn("Screenshot " + mode + ": " + filename);
+};
+const sign = (payload, secret) => {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return body + "." + createHmac("sha256", secret).update(body).digest("base64url");
+};
+const listenPort = await new Promise((resolvePort, reject) => {
+  const socket = createServer(); socket.on("error", reject);
+  socket.listen(0, "127.0.0.1", () => { const port = socket.address().port; socket.close(() => resolvePort(port)); });
+});
+const origin = "http://127.0.0.1:" + listenPort;
+const serverRoot = join(buildDirectory, "server");
+const options = convertV4MiniflareOptions({
+  name: "punctum-isolated-browser-e2e",
+  modules: [
+    { type: "ESModule", path: join(serverRoot, "index.js") },
+    ...globSync(join(serverRoot, "**/*.js")).filter((p) => p !== join(serverRoot, "index.js")).map((path) => ({ type: "ESModule", path })),
+  ],
+  modulesRoot: serverRoot, compatibilityDate: "2026-05-22", compatibilityFlags: ["nodejs_compat"],
+  host: "127.0.0.1", port: listenPort,
+  assets: { directory: join(buildDirectory, "client"), binding: "ASSETS", run_worker_first: ["/albuns", "/albuns/*", "/_vinext/image", "/api/*", "/admin/*", "/media/*", "/sitemap.xml", "/robots.txt"], routerConfig: { has_user_worker: true } },
+  images: { binding: "IMAGES" },
+  d1Databases: { DB: "punctum-browser-e2e-d1" },
+  r2Buckets: { ORIGINALS: "punctum-browser-e2e-originals", BACKUPS: "punctum-browser-e2e-backups" },
+  bindings: {
+    ENVIRONMENT: "preview", SITE_ORIGIN: origin, PUBLIC_SITE_URL: origin,
+    PRIVATE_GALLERIES_ENABLED: "true", CLIENT_AUTH_MODE: "access", CLIENT_SESSION_SECRET: sessionSecret,
+    PUBLIC_HOME_SNAPSHOT_ENABLED: "true", PUBLIC_HOME_SNAPSHOT_BUILD_ID: "punctum-isolated-browser-snapshot",
+    PUBLIC_HOME_CACHE_ENABLED: "true",
+    ADMIN_SESSION_SECRET: adminSecret, ADMIN_PASSWORD_HASH: adminHash, ADMIN_ALLOWED_EMAILS: "qa@punctum.invalid",
+    MAX_UPLOAD_BYTES: "26214400", ALLOWED_MIME_TYPES: "image/jpeg,image/png,image/webp",
+    PUBLIC_WHATSAPP_E164: "5511999999999", PUBLIC_INSTAGRAM_URL: "https://instagram.com/punctumpicture",
+    ADMIN_RATE_LIMIT_WINDOW_SECONDS: "60", ADMIN_RATE_LIMIT_MAX: "200",
+  },
+});
+options.resourcePersistencePath = storage;
+options.telemetry = { enabled: false };
+let mf, browser, zoomBrowser;
+const contexts = [];
+const expectedDenialPaths = new Set();
+const start = async () => { mf = new Miniflare(options); await mf.ready; };
+const newContext = async (viewport = { width: 1280, height: 900 }) => {
+  const context = await browser.newContext({ viewport, reducedMotion: "reduce" }); contexts.push(context);
+  await context.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    return url.origin === origin || url.protocol === "data:" ? route.continue() : route.abort("blockedbyclient");
+  });
+  context.on("page", (page) => {
+    page.on("pageerror", (error) => report.pageErrors.push(error.message));
+    page.on("console", (message) => { if (["warning", "warn"].includes(message.type())) report.consoleWarnings.push(message.text()); if (message.type() === "error") {
+      const observed = { message: message.text(), path: message.location().url ? new URL(message.location().url).pathname : null };
+      if (expectedDenialPaths.has(observed.path) && observed.message === "Failed to load resource: the server responded with a status of 404 (Not Found)") report.expectedDenials.push(observed);
+      else report.consoleErrors.push(observed);
+    } });
+    page.on("response", (response) => {
+      if (response.status() >= 500) report.serverErrors.push({ path: new URL(response.url()).pathname, status: response.status() });
+    });
+  });
+  return context;
+};
+const addClientCookie = (context, id, version = 1) => {
+  const now = Math.floor(Date.now() / 1000);
+  return context.addCookies([{ name: "punctum_client_session", value: sign({ sub: id, version, iat: now, exp: now + 3600, audience: "punctum-client-access" }, sessionSecret), url: origin, httpOnly: true, sameSite: "Strict" }]);
+};
+const noHorizontalOverflow = async (page) => assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "horizontal overflow");
+const privateHeaders = (response) => {
+  assert.equal(response.headers()["cache-control"], "private, no-store");
+  assert.match(response.headers()["x-robots-tag"] || "", /noindex/);
+};
+try {
+  await start();
+  const db = await mf.getD1Database("DB");
+  const originals = await mf.getR2Bucket("ORIGINALS");
+  for (const path of globSync(resolve("migrations/*.sql")).sort()) {
+    for (const statement of (await readFile(path, "utf8")).split(";").map((sql) => sql.trim()).filter(Boolean)) await db.prepare(statement).run();
+  }
+  const clients = [];
+  for (const label of ["A", "B"]) {
+    const client = { label, id: randomUUID(), gallery: randomUUID(), images: [] };
+    await db.prepare("INSERT INTO client_accounts (id,name,email,password_hash,password_salt,password_iterations,must_change_password,session_version,created_at,updated_at) VALUES (?,?,?,'unused','unused',310000,0,1,datetime('now'),datetime('now'))")
+      .bind(client.id, "Cliente sintético " + label, `browser-${client.id}@example.invalid`).run();
+    await db.prepare("INSERT INTO client_galleries (id,client_id,title,introduction,theme,allow_downloads,status,created_at,updated_at,published_at) VALUES (?,?,?,?,'ivory',1,'published',datetime('now'),datetime('now'),datetime('now'))")
+      .bind(client.gallery, client.id, "Álbum sintético " + label, "Somente dados fictícios de homologação local.").run();
+    for (let i = 0; i < 5; i++) {
+      const id = randomUUID(); const key = `client-galleries/${client.gallery}/${id}.png`;
+      await originals.put(key, png, { httpMetadata: { contentType: "image/png" } });
+      await db.prepare("INSERT INTO client_gallery_images (id,gallery_id,storage_key,original_filename,mime_type,size_bytes,width,height,alt_text,position,status,created_at,updated_at) VALUES (?,?,?,'synthetic.png','image/png',?,2,2,?,?,'ready',datetime('now'),datetime('now'))")
+        .bind(id, client.gallery, key, png.length, "Fotografia sintética " + label + " " + (i + 1), i).run();
+      client.images.push(id);
+    }
+    await db.prepare("UPDATE client_galleries SET cover_image_id=? WHERE id=?").bind(client.images[0], client.gallery).run();
+    clients.push(client);
+  }
+  record("fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals");
+  browser = await playwright.chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+  report.browser = browser.version();
+  const anonymous = await newContext();
+  const unauthorized = await anonymous.request.get(origin + "/albuns", { maxRedirects: 0 });
+  assert.equal(unauthorized.status(), 303, await unauthorized.text()); privateHeaders(unauthorized);
+  assert.equal((await anonymous.request.get(origin + "/api/client/galleries")).status(), 401);
+  assert.equal((await anonymous.request.post(origin + "/api/client/session", { headers: { Origin: origin }, data: { email: "nobody@example.invalid", password: "irrelevant" } })).status(), 405);
+  record("anonymous gallery access denied; Access mode disables password login");
+  const a = await newContext(); const b = await newContext();
+  await addClientCookie(a, clients[0].id); await addClientCookie(b, clients[1].id);
+  const pageA = await a.newPage(); const pageB = await b.newPage();
+  for (const [context, page, own, foreign] of [[a, pageA, clients[0], clients[1]], [b, pageB, clients[1], clients[0]]]) {
+    const response = await page.goto(origin + "/albuns"); assert.equal(response.status(), 200);
+    await page.getByRole("heading", { name: "Álbum sintético " + own.label }).waitFor();
+    assert.equal(await page.getByRole("heading", { name: "Álbum sintético " + foreign.label }).count(), 0);
+    assert.equal((await context.request.get(origin + "/api/client/galleries/" + foreign.gallery)).status(), 404);
+    assert.equal((await context.request.get(origin + `/api/client/galleries/${foreign.gallery}/images/${foreign.images[0]}/download`)).status(), 404);
+  }
+  assert.equal(await pageA.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches), true);
+  await auditAccessibility(pageA, "private client library");
+  record("real browser client A/B libraries and foreign gallery/original denial");
+  await pageA.getByRole("link", { name: /Álbum sintético A/ }).click();
+  await pageA.getByRole("heading", { name: "Álbum sintético A", exact: true }).waitFor();
+  await pageA.waitForFunction(() => document.querySelector(".pa-photo img")?.naturalWidth > 0);
+  await auditAccessibility(pageA, "private gallery detail");
+  await pageA.getByRole("button", { name: "Favoritar: Fotografia sintética A 1", exact: true }).click();
+  await pageA.getByRole("button", { name: "Remover dos favoritos: Fotografia sintética A 1", exact: true }).waitFor();
+  await pageA.reload();
+  await pageA.getByRole("button", { name: "Remover dos favoritos: Fotografia sintética A 1", exact: true }).waitFor();
+  const opener = pageA.getByRole("button", { name: "Abrir Fotografia sintética A 1", exact: true });
+  await opener.click();
+  const dialog = pageA.getByRole("dialog", { name: "Visualização da fotografia" }); await dialog.waitFor();
+  await auditAccessibility(pageA, "private gallery lightbox");
+  await pageA.keyboard.press("ArrowRight"); await dialog.getByText("Fotografia sintética A 2", { exact: true }).waitFor();
+  await pageA.keyboard.press("Escape"); await dialog.waitFor({ state: "hidden" });
+  assert.ok(await opener.evaluate((el) => el === document.activeElement), "lightbox restores keyboard focus");
+  const downloadPromise = pageA.waitForEvent("download");
+  await pageA.getByRole("link", { name: "Baixar Fotografia sintética A 1", exact: true }).click();
+  const download = await downloadPromise;
+  assert.deepEqual(await readFile(await download.path()), png);
+  assert.equal((await b.request.put(origin + `/api/client/galleries/${clients[0].gallery}/favorites/${clients[0].images[0]}`, { headers: { Origin: origin } })).status(), 404);
+  record("favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified");
+  for (const width of [320, 360, 375, 390, 430, 640, 768, 1024, 1440]) {
+    await pageA.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(pageA);
+  }
+  await pageA.setViewportSize({ width: 390, height: 844 });
+  await screenshot(pageA, "private-gallery-mobile.png");
+  record("private gallery has no horizontal overflow at 320/360/375/390/430/640/768/1024/1440px; 640px is a responsive-layout proxy only, not a 200% browser-zoom test");
+  const media = `/api/client/galleries/${clients[0].gallery}/images/${clients[0].images[0]}/gallery`;
+  assert.equal((await anonymous.request.get(origin + media)).status(), 404);
+  assert.equal((await a.request.get(origin + "/_vinext/image?url=" + encodeURIComponent(media) + "&w=640&q=75")).status(), 404);
+  assert.equal((await anonymous.request.get(origin + `/media/${clients[0].images[0]}/gallery`)).status(), 404);
+  record("private media is denied anonymously and cannot enter public media/image optimizer");
+  // Use the real hydrated router's public automation surface to preserve the client component.
+  const second = { gallery: randomUUID(), image: randomUUID() };
+  await db.prepare("INSERT INTO client_galleries (id,client_id,title,introduction,theme,allow_downloads,status,created_at,updated_at,published_at) VALUES (?,?,'Segundo álbum sintético A','','ivory',1,'published',datetime('now'),datetime('now'),datetime('now'))").bind(second.gallery, clients[0].id).run();
+  const secondKey = `client-galleries/${second.gallery}/${second.image}.png`;
+  await originals.put(secondKey, png, { httpMetadata: { contentType: "image/png" } });
+  await db.prepare("INSERT INTO client_gallery_images (id,gallery_id,storage_key,original_filename,mime_type,size_bytes,width,height,alt_text,position,status,created_at,updated_at) VALUES (?,?,?,'synthetic.png','image/png',?,2,2,'Segunda coleção A',0,'ready',datetime('now'),datetime('now'))").bind(second.image, second.gallery, secondKey, png.length).run();
+  await pageA.evaluate((href) => window.next.router.push(href), "/albuns/" + second.gallery);
+  await pageA.getByRole("heading", { name: "Segundo álbum sintético A", exact: true }).waitFor();
+  assert.equal(await pageA.getByRole("heading", { name: "Álbum sintético A", exact: true }).count(), 0);
+  const missing = randomUUID(); const missingPath = "/api/client/galleries/" + missing;
+  expectedDenialPaths.add(missingPath);
+  let releaseMissing, signalMissing;
+  const missingStarted = new Promise((resolveStarted) => { signalMissing = resolveStarted; });
+  await a.route(origin + missingPath, async (route) => {
+    await new Promise((resolveRelease) => { releaseMissing = resolveRelease; signalMissing(); });
+    await route.continue();
+  });
+  await pageA.evaluate((href) => window.next.router.push(href), "/albuns/" + missing);
+  let missingDeadline;
+  try {
+    await Promise.race([missingStarted, new Promise((_, reject) => { missingDeadline = setTimeout(() => reject(new Error("client navigation did not request the next gallery")), 30_000); })]);
+  } finally { clearTimeout(missingDeadline); }
+  try {
+    assert.equal(await pageA.getByRole("heading", { name: "Segundo álbum sintético A", exact: true }).count(), 0, "previous gallery cleared while the next gallery request is pending");
+    assert.equal(await pageA.locator(".pa-photo").count(), 0, "previous photographs cleared on gallery navigation");
+  } finally { releaseMissing(); }
+  await pageA.getByRole("alert").first().waitFor();
+  assert.equal(await pageA.locator(".pa-photo").count(), 0);
+  await pageA.evaluate((href) => window.next.router.push(href), "/albuns/" + clients[0].gallery);
+  await pageA.getByRole("heading", { name: "Álbum sintético A", exact: true }).waitFor();
+  record("same-component client navigation clears prior gallery while pending and after an intentional404");
+  const malformed = await newContext(); await addClientCookie(malformed, clients[0].id);
+  await malformed.route(origin + "/api/client/galleries", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  const malformedPage = await malformed.newPage();
+  await malformedPage.goto(origin + "/albuns");
+  await malformedPage.getByRole("alert").first().waitFor();
+  assert.equal(await malformedPage.locator(".pa-album-card").count(), 0);
+  record("malformed success envelope produces a safe library alert without a render exception");
+  // Private cases have completed; closing their renderers before the much
+  // heavier public SSR screenshot avoids unnecessary Chromium memory pressure.
+  await Promise.all([pageA.close(), pageB.close(), malformedPage.close()]);
+  const publicPage = await anonymous.newPage();
+  const publicStart = performance.now();
+  // Assert rendered content below instead of awaiting every editorial asset's
+  // load event on a CPU-constrained local runner.
+  const home = await publicPage.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 90_000 }); assert.equal(home.status(), 200);
+  assert.match(home.headers()["cache-control"] || "", /no-store/,
+    "snapshot mode bypasses shared cache even when both flags are enabled");
+  await publicPage.locator("h1").first().waitFor();
+  await auditAccessibility(publicPage, "public home");
+  report.localBrowserHomeNavigationMs = performance.now() - publicStart;
+  await screenshot(publicPage, "public-home.png");
+  assert.equal((await anonymous.request.get(origin + "/admin/studio", { maxRedirects: 0 })).status(), 303);
+  const admin = await newContext();
+  await admin.addCookies([{ name: "punctum_admin_session", value: sign({ email: "qa@punctum.invalid", exp: Math.floor(Date.now() / 1000) + 3600 }, adminSecret + "\0env:" + adminHash), domain: new URL(origin).hostname, path: "/admin", httpOnly: true, sameSite: "Strict" }]);
+  const studio = await admin.newPage();
+  assert.equal((await studio.goto(origin + "/admin/studio")).status(), 200);
+  await studio.getByRole("heading", { name: "Studio", exact: true }).waitFor();
+  await auditAccessibility(studio, "Studio");
+  await studio.getByRole("button", { name: "Textos", exact: true }).click();
+  await studio.getByRole("heading", { name: "Textos do site", exact: true }).waitFor();
+  await screenshot(studio, "studio.png");
+  record("public home and authenticated Studio render; anonymous Studio denied");
+
+  const initialHeroStudio = await (await admin.request.get(origin + "/admin/api/studio")).json();
+  const heroId = randomUUID(), heroKey = `site-media/hero/${heroId}.png`;
+  const { default: sharp } = await import("sharp");
+  const heroPng = await sharp({ create: { width: 1280, height: 720, channels: 3, background: "#516873" } }).png().toBuffer();
+  await originals.put(heroKey, heroPng, { httpMetadata: { contentType: "image/png" } });
+  await db.prepare(`INSERT INTO site_media (id,role,storage_key,original_filename,mime_type,size_bytes,status,width,height,created_at,updated_at)
+    VALUES (?,'hero',?,'synthetic-hero.png','image/png',?,'ready',1280,720,datetime('now'),datetime('now'))`)
+    .bind(heroId, heroKey, heroPng.length).run();
+  const heroDraft = structuredClone(initialHeroStudio.siteConfig);
+  const draftHero = heroDraft.pages.home.sections.find(section => section.type === "hero");
+  draftHero.heroMedia = { kind: "site-media", id: heroId };
+  draftHero.appearance.surface = "default";
+  draftHero.appearance.backgroundImageId = null;
+  const saveHero = await admin.request.patch(origin + "/admin/api/studio", {
+    headers: { Origin: origin }, data: { siteConfig: heroDraft, revision: initialHeroStudio.revision },
+  });
+  assert.equal(saveHero.status(), 200);
+  const savedHero = await saveHero.json();
+  const publicHeroPath = `/media/${heroId}/display`, adminHeroPath = `/admin/media/${heroId}/display`;
+  assert.equal((await anonymous.request.get(origin + publicHeroPath)).status(), 404);
+  assert.ok([401, 403].includes((await anonymous.request.get(origin + adminHeroPath)).status()));
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  assert.notEqual(await publicPage.locator(".lens-photograph img").getAttribute("src"), publicHeroPath);
+  await studio.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  await studio.setViewportSize({ width: 390, height: 844 });
+  await studio.getByRole("button", { name: "Ver como ficou", exact: true }).click();
+  const heroPreview = studio.frameLocator('iframe[title="Prévia do site com as alterações ainda não publicadas"]');
+  const previewImage = heroPreview.locator(".lens-photograph img");
+  assert.equal(await previewImage.getAttribute("src"), adminHeroPath);
+  assert.ok(await previewImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  const previewBytes = await admin.request.get(origin + adminHeroPath);
+  assert.equal(previewBytes.status(), 200);
+  assert.equal(previewBytes.headers()["cache-control"], "private, no-store");
+  const publishHero = await admin.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: savedHero.revision },
+  });
+  assert.equal(publishHero.status(), 200);
+  const publishedHero = await publishHero.json();
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  const publicHeroImage = publicPage.locator(".lens-photograph img");
+  assert.equal(await publicHeroImage.getAttribute("src"), publicHeroPath);
+  assert.ok(await publicHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  const publishedHeroRow = await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first();
+  await originals.delete(heroKey);
+  const recoveredHeroContext = await newContext();
+  const recoveredHeroPage = await recoveredHeroContext.newPage();
+  await recoveredHeroPage.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 90_000 });
+  const recoveredHeroImage = recoveredHeroPage.locator(".lens-photograph img");
+  assert.equal(await recoveredHeroImage.getAttribute("src"), "/photos/p002.jpg");
+  assert.ok(await recoveredHeroImage.evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  // Existing HTML may still reference this URL after storage loss.
+  const recoveredUrlPage = await recoveredHeroContext.newPage();
+  const recoveredUrlResponse = await recoveredUrlPage.goto(origin + publicHeroPath, { waitUntil: "load", timeout: 90_000 });
+  assert.equal(recoveredUrlResponse.status(), 200);
+  assert.match(recoveredUrlResponse.headers()["content-type"], /^image\//);
+  assert.ok(await recoveredUrlPage.locator("img").evaluate(async image => { await image.decode(); return image.naturalWidth; }) > 0);
+  await recoveredHeroContext.close();
+  assert.deepEqual(await db.prepare("SELECT config_json FROM site_config_versions WHERE id=(SELECT published_version_id FROM site_config_pointers WHERE id=1)").first(), publishedHeroRow);
+  assert.equal((await db.prepare("SELECT status FROM site_media WHERE id=?").bind(heroId).first()).status, "ready");
+  record("ready draft Hero decodes in authenticated Studio iframe; anonymous draft denied; published Hero decodes; fresh browser and old media URL recover missing R2 original without snapshot mutation");
+
+  const privateOriginalKey = `client-galleries/${clients[0].gallery}/${clients[0].images[0]}.png`;
+  await db.prepare("UPDATE site_media SET storage_key=? WHERE id=?").bind(privateOriginalKey, heroId).run();
+  const publicAlias = randomUUID();
+  await db.prepare("INSERT INTO albums(id,title,slug,status,created_at,updated_at) VALUES (?,'Synthetic alias',?,'published',datetime('now'),datetime('now'))")
+    .bind(publicAlias, publicAlias).run();
+  await db.prepare(`INSERT INTO images(id,album_id,original_key,mime_type,size_bytes,position,status,created_at,updated_at)
+    VALUES (?,?,?,'image/png',?,0,'ready',datetime('now'),datetime('now'))`).bind(publicAlias, publicAlias, privateOriginalKey, png.length).run();
+  for (const id of [heroId, publicAlias]) for (const method of ["GET", "HEAD"]) {
+    const denial = await anonymous.request.fetch(origin + `/media/${id}/display`, { method });
+    assert.equal(denial.status(), 404);
+    assert.ok(!(await denial.body()).includes(png));
+    assert.ok(!denial.headers()["content-type"]?.startsWith("image/"));
+  }
+  assert.deepEqual(Buffer.from(await (await originals.get(privateOriginalKey)).arrayBuffer()), png);
+  record("compiled public GET/HEAD deny inconsistent album and published Hero references to private originals, with zero original bytes");
+  await db.prepare("DELETE FROM images WHERE id=?").bind(publicAlias).run();
+  await db.prepare("DELETE FROM albums WHERE id=?").bind(publicAlias).run();
+  const resetHero = await admin.request.patch(origin + "/admin/api/studio", {
+    headers: { Origin: origin }, data: { siteConfig: initialHeroStudio.siteConfig, revision: publishedHero.revision },
+  });
+  assert.equal(resetHero.status(), 200);
+  const resetHeroState = await resetHero.json();
+  assert.equal((await admin.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: resetHeroState.revision },
+  })).status(), 200);
+  await studio.setViewportSize({ width: 1280, height: 900 });
+  await studio.goto(origin + "/admin/studio", { waitUntil: "domcontentloaded", timeout: 90_000 });
+  const epochBeforePublish = await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first();
+  const deniedPublish = await anonymous.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: 2147483647 },
+  });
+  assert.ok([401,403].includes(deniedPublish.status()));
+  assert.deepEqual(await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first(), epochBeforePublish,
+    "unauthorized mutation must not invalidate snapshots");
+  await studio.getByRole("button", { name: "Estilo", exact: true }).click();
+  await studio.getByRole("button", { name: /^Colagem autoral/ }).click();
+  await studio.getByRole("button", { name: "Publicar alterações", exact: true }).click();
+  await studio.getByText("Alterações publicadas. O site já está atualizado.", { exact: true }).waitFor();
+  const epochAfterPublish = await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first();
+  assert.equal(epochAfterPublish.epoch, epochBeforePublish.epoch + 2, "publication fences both start and finish");
+  assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM public_home_snapshot_mutations").first()).n, 0);
+  const stalePublication = await admin.request.post(origin + "/admin/api/studio/publish", {
+    headers: { Origin: origin }, data: { revision: 2147483647 },
+  });
+  assert.equal(stalePublication.status(), 409);
+  assert.equal((await db.prepare("SELECT epoch FROM public_home_snapshot WHERE id=1").first()).epoch, epochAfterPublish.epoch + 2);
+  assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM public_home_snapshot_mutations").first()).n, 0,
+    "failed publication must release only its own fence");
+  record("production entrypoint fences successful and failed Studio publications; unauthorized changes do not touch snapshot state");
+  await publicPage.reload({ waitUntil: "domcontentloaded", timeout: 90_000 });
+  await publicPage.locator('[data-theme-preset="colagem-autoral"]').first().waitFor();
+  await auditAccessibility(publicPage, "public home with Colagem Autoral");
+  for (const width of [320, 360, 375, 390, 430, 640, 768, 1024, 1440]) {
+    await publicPage.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(publicPage);
+  }
+  await publicPage.setViewportSize({ width: 390, height: 844 });
+  await screenshot(publicPage, "colagem-mobile.png");
+  record("Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/640/768/1024/1440px");
+  // Exercise the private administration through hydrated forms, with fictional data only.
+  await studio.goto(origin + "/admin/clientes");
+  await studio.getByRole("button", { name: "Cadastrar cliente", exact: true }).waitFor();
+  await studio.getByLabel("Nome", { exact: true }).fill("Cliente fictício browser");
+  await studio.getByLabel("E-mail", { exact: true }).fill("browser-" + randomUUID() + "@example.invalid");
+  const [createdClient] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === "/admin/api/clientes" && r.request().method() === "POST"),
+    studio.getByRole("button", { name: "Cadastrar cliente", exact: true }).click(),
+  ]);
+  assert.equal(createdClient.status(), 201);
+  const browserClient = (await createdClient.json()).client;
+  await studio.getByRole("heading", { name: "Cliente fictício browser", exact: true }).waitFor();
+  assert.equal(await studio.getByLabel("Credencial temporária").count(), 0, "Access registration must not emit a password");
+  await studio.goto(origin + "/admin/albuns-privados");
+  // Options arrive from the hydrated component's effect; avoid filling SSR markup before hydration.
+  await studio.locator('select option[value="' + browserClient.id + '"]').waitFor({ state: "attached" });
+  await studio.getByLabel("Título", { exact: true }).fill("Galeria fictícia browser");
+  await studio.getByRole("combobox", { name: /^Cliente/ }).selectOption(browserClient.id);
+  await studio.getByRole("button", { name: "Criar rascunho", exact: true }).click();
+  await studio.waitForURL(/\/admin\/albuns-privados\/[a-f0-9-]+$/);
+  const browserGalleryId = new URL(studio.url()).pathname.split("/").at(-1);
+  const browserGalleryApi = "/admin/api/albuns-privados/" + browserGalleryId;
+  const publishButton = studio.getByRole("button", { name: "Publicar para o cliente", exact: true });
+  await publishButton.waitFor();
+  assert.equal(await publishButton.isDisabled(), true, "empty gallery publication is blocked");
+  await studio.getByLabel("Adicionar fotos").setInputFiles({ name: "browser-synthetic.png", mimeType: "image/png", buffer: png });
+  await studio.getByText("Concluído", { exact: true }).waitFor();
+  await auditAccessibility(studio, "private admin gallery editor");
+  assert.equal(await studio.getByRole("progressbar", { name: "Envio de browser-synthetic.png", exact: true }).getAttribute("value"), "100");
+  const [coverResponse] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi + "/cover" && r.request().method() === "PUT"),
+    studio.getByRole("button", { name: "Usar na capa", exact: true }).click(),
+  ]);
+  assert.equal(coverResponse.status(), 200);
+  await studio.getByRole("combobox", { name: /^Tema/ }).selectOption("ivory");
+  await studio.getByLabel("Introdução", { exact: true }).fill("Somente dados fictícios para homologação.");
+  const [saveResponse] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi && r.request().method() === "PATCH"),
+    studio.getByRole("button", { name: "Salvar alterações", exact: true }).click(),
+  ]);
+  assert.equal(saveResponse.status(), 200);
+  const [publishResponse] = await Promise.all([
+    studio.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi + "/publish" && r.request().method() === "POST"),
+    publishButton.click(),
+  ]);
+  assert.equal(publishResponse.status(), 200);
+  for (const width of [320, 360, 375, 390, 430, 640, 768, 1024, 1440]) {
+    await studio.setViewportSize({ width, height: 900 }); await noHorizontalOverflow(studio);
+    assert.ok(await studio.locator(".pga-editor-form .pga-actions .button").evaluateAll(buttons => buttons.every(button => button.scrollWidth <= button.clientWidth + 1)), "private admin action text is clipped at " + width + "px");
+  }
+  await studio.setViewportSize({ width: 390, height: 844 });
+  await screenshot(studio, "private-admin-mobile.png");
+  const row = await db.prepare("SELECT status,theme,introduction FROM client_galleries WHERE id=?").bind(browserGalleryId).first();
+  assert.equal(row.status, "published"); assert.equal(row.theme, "ivory");
+  assert.equal(row.introduction, "Somente dados fictícios para homologação.");
+  record("private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; nine responsive widths including 640px");
+  // Close live pages before the deliberately injected runtime restarts.
+  await Promise.all(contexts.flatMap((context) => context.pages().map((page) => page.close())));
+  // Persist only synthetic local data, stop workerd, then make a consistent snapshot.
+  await mf.dispose(); mf = undefined;
+  await cp(storage, snapshot, { recursive: true });
+  await start();
+  const persistedDb = await mf.getD1Database("DB");
+  assert.equal((await persistedDb.prepare("SELECT COUNT(*) AS count FROM client_gallery_favorites WHERE client_id=?").bind(clients[0].id).first()).count, 1);
+  assert.equal((await a.request.get(origin + "/api/client/galleries/" + clients[0].gallery)).status(), 200);
+  assert.deepEqual(Buffer.from(await (await (await mf.getR2Bucket("ORIGINALS")).get(`client-galleries/${clients[0].gallery}/${clients[0].images[0]}.png`)).arrayBuffer()), png);
+  record("workerd restart preserves favorites, authenticated gallery and original bytes");
+  await persistedDb.prepare("UPDATE client_galleries SET status='archived' WHERE id=?").bind(clients[0].gallery).run();
+  assert.equal((await a.request.get(origin + "/api/client/galleries/" + clients[0].gallery)).status(), 404);
+  await mf.dispose(); mf = undefined;
+  await rm(storage, { recursive: true, force: true }); await cp(snapshot, storage, { recursive: true });
+  await start();
+  assert.equal((await a.request.get(origin + "/api/client/galleries/" + clients[0].gallery)).status(), 200);
+  const restoredPage = await a.newPage();
+  await restoredPage.goto(origin + "/albuns/" + clients[0].gallery);
+  await restoredPage.getByRole("heading", { name: "Álbum sintético A", exact: true }).waitFor();
+  record("isolated local consistent-storage rollback restores gallery availability after archiving");
+  await restoredPage.close();
+  const logout = await a.request.delete(origin + "/api/client/session", { headers: { Origin: origin } });
+  assert.equal(logout.status(), 200); assert.equal((await a.request.get(origin + "/api/client/me")).status(), 401);
+  assert.equal((await b.request.get(origin + "/api/client/me")).status(), 200);
+  record("logout revokes client A while client B remains authorized");
+  // Finish with a second disposable browser, using Chromium's native zoom
+  // preference and its actual CSS-to-DIP zoom readback. No viewport/CSS/pinch
+  // emulation is used. Reuse only the still-valid synthetic B/admin cookies.
+  const zoomCookies=[...await b.cookies(),...await admin.cookies()];
+  await browser.close(); browser=undefined;
+  zoomBrowser=await createZoomBrowser(playwright.chromium,join(temporary,'zoom-profile'),process.env.CHROMIUM_EXECUTABLE||undefined);
+  await zoomBrowser.addCookies(zoomCookies);
+  await zoomBrowser.route('**/*',route=>{
+    const url=new URL(route.request().url());
+    return url.origin===origin||url.protocol==='data:'?route.continue():route.abort('blockedbyclient');
+  });
+  const zoomPage=zoomBrowser.pages()[0];
+  zoomPage.on('pageerror',error=>report.pageErrors.push(error.message));
+  zoomPage.on('console',message=>{
+    if(['warning','warn'].includes(message.type()))report.consoleWarnings.push(message.text());
+    if(message.type()==='error')report.consoleErrors.push({message:message.text(),
+      path:message.location().url?new URL(message.location().url).pathname:null});
+  });
+  zoomPage.on('response',response=>{
+    if(response.status()>=500)report.serverErrors.push({path:new URL(response.url()).pathname,status:response.status()});
+  });
+  report.browserZoom={method:'Chromium HostZoomMap preference in disposable profile',physicalDevice:false,samples:[]};
+  const verifyZoom=async label=>{
+    const sample={label,...await readBrowserZoom(zoomPage)};
+    report.browserZoom.samples.push(sample);
+    assert.equal(sample.zoom,2,'actual browser zoom must be 200 percent');
+    assert.equal(sample.visualScale,1,'pinch scale must remain unchanged');
+    assert.equal(sample.outerWidth,1280);
+    assert.ok(Math.abs(sample.cssWidth-640)<=1);
+    await noHorizontalOverflow(zoomPage);
+    const capture=await captureZoomViewport(zoomPage);
+    sample.screenshotPixels={width:capture.readUInt32BE(16),height:capture.readUInt32BE(20)};
+    assert.equal(sample.screenshotPixels.width,sample.outerWidth,'zoom screenshot must include the whole native viewport');
+    await writeFile(join(reportDirectory,'zoom-200-'+label+'.png'),capture);
+    report.screenshotModes['zoom-200-'+label+'.png']='nativeViewport';
+  };
+  await zoomPage.goto(origin+'/albuns');
+  await zoomPage.getByRole('heading',{name:'Álbum sintético B'}).waitFor();
+  await verifyZoom('library');
+  await zoomPage.getByRole('link',{name:/Álbum sintético B/}).click();
+  await zoomPage.getByRole('heading',{name:'Álbum sintético B',exact:true}).waitFor();
+  await verifyZoom('gallery');
+  const zoomOpener=zoomPage.getByRole('button',{name:'Abrir Fotografia sintética B 1',exact:true});
+  await zoomOpener.click();
+  const zoomDialog=zoomPage.getByRole('dialog',{name:'Visualização da fotografia'});
+  await zoomDialog.waitFor();
+  await verifyZoom('lightbox');
+  await zoomPage.keyboard.press('ArrowRight');
+  await zoomDialog.getByText('Fotografia sintética B 2',{exact:true}).waitFor();
+  await zoomPage.keyboard.press('Escape');
+  await zoomDialog.waitFor({state:'hidden'});
+  assert.ok(await zoomOpener.evaluate(el=>el===document.activeElement),'zoomed lightbox restores focus');
+  await zoomPage.goto(origin+'/admin/albuns-privados/'+browserGalleryId);
+  await zoomPage.getByRole('button',{name:'Salvar alterações',exact:true}).waitFor();
+  await verifyZoom('admin');
+  assert.ok(await zoomPage.locator('.pga-editor-form .pga-actions .button').evaluateAll(buttons=>buttons.every(button=>button.scrollWidth<=button.clientWidth+1)),
+    'private admin action text is clipped at real browser zoom');
+  await zoomPage.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:90_000});
+  await zoomPage.locator('h1').first().waitFor();
+  await verifyZoom('public-home');
+  report.actualBrowserZoomTested=true;
+  record('actual 200 percent Chromium browser zoom: library, gallery, keyboard lightbox, admin and public home; no horizontal overflow');
+  assert.deepEqual(report.pageErrors, [], "unhandled browser exceptions");
+  assert.deepEqual(report.serverErrors, [], "unexpected HTTP5xx in rendered pages");
+  assert.deepEqual(report.consoleWarnings, [], "browser console warnings");
+  assert.deepEqual(report.consoleErrors, [], "browser console errors");
+  report.status = "PASS_LOCAL";
+} catch (error) {
+  report.status = "FAILED"; report.error = error.message; process.exitCode = 1;
+  console.error(error);
+} finally {
+  await zoomBrowser?.close(); await browser?.close(); await mf?.dispose();
+  await rm(temporary, { recursive: true, force: true });
+  report.completedUtc = new Date().toISOString(); report.temporaryStorageRemoved = true;
+  await writeFile(join(reportDirectory, "report.json"), JSON.stringify(report, null, 2) + "\n");
+  console.log("Browser report: " + join(reportDirectory, "report.json"));
+}

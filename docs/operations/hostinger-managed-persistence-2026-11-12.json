@@ -1,0 +1,325 @@
+{
+  "schema": 1,
+  "sourceSha": "462e459e6f43895f3bbe9731c9a37908c6c911c6",
+  "target": "aliceblue-locust-999458.hostingersite.com",
+  "action": "persistence",
+  "scope": "disposable-existing-qa-instance-only",
+  "status": "PRIVATE_PERSISTENCE_VERIFIED_AND_PROBE_RESTORED",
+  "productionMutations": 0,
+  "buildsStarted": 2,
+  "settingsWrites": 0,
+  "environmentWrites": 0,
+  "checks": {
+    "healthBefore": {
+      "status": 200,
+      "service": "punctum-hostinger-qa-probe",
+      "version": "r4-node-probe-20261028-v2",
+      "node": "v24.22.3",
+      "production": false,
+      "ssrValidated": false
+    },
+    "settingsBefore": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "environmentBefore": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "buildsBefore": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "uploadCredentials": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "uploadCreate": {
+      "status": 201
+    },
+    "uploadBytes": {
+      "status": 204
+    },
+    "initialProfileStart": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "initialProfileState": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "initialBoot": {
+      "status": 200,
+      "service": "punctum-hostinger-qa-probe",
+      "version": "r4-node-probe-20261028-v2",
+      "node": "v24.22.3",
+      "production": false,
+      "ssrValidated": false
+    },
+    "restart": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "afterRestart": {
+      "status": 200,
+      "service": "punctum-hostinger-qa-probe",
+      "version": "r4-node-probe-20261028-v2",
+      "node": "v24.22.3",
+      "production": false,
+      "ssrValidated": false
+    },
+    "rebuiltProfileStart": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "rebuiltProfileState": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    },
+    "afterRebuild": {
+      "status": 200,
+      "service": "punctum-hostinger-qa-probe",
+      "version": "r4-node-probe-20261028-v2",
+      "node": "v24.22.3",
+      "production": false,
+      "ssrValidated": false
+    },
+    "buildsBeforeRecovery": {
+      "status": 200,
+      "attemptStatuses": [
+        200
+      ]
+    }
+  },
+  "acknowledgedArchives": [
+    {
+      "name": "punctum-storage-qa-82a2f17799f64b97a6d47cc38f906533.zip",
+      "bytes": 6274,
+      "sha256": "9faf71a1de2ac0871608fff742ee0ba8eaf29e5b47c9644e639ef4053cbff6ca"
+    },
+    {
+      "name": "punctum-storage-qa-fcc808c6c93c4106b14a09fd32ae5600.zip",
+      "bytes": 6274,
+      "sha256": "86f5585abada732d39e1b2ccc93f204a6990278978ca947d66f7fb026211b323"
+    }
+  ],
+  "buildRequestAttempted": true,
+  "profileBuilds": [
+    {
+      "phase": "initialProfile",
+      "uuid": "01a1d1ae-a6f7-73a8-97ff-55111dd87eea"
+    },
+    {
+      "phase": "rebuiltProfile",
+      "uuid": "01a1d1b0-4899-7352-bc20-d80fb4339544"
+    }
+  ],
+  "storage": {
+    "initialBoot": {
+      "schema": 1,
+      "scope": "synthetic-only",
+      "bootId": "f7d76117-da7e-4e6a-a5d7-b116b6930bbd",
+      "boots": 2,
+      "fixtureSha256": "6994f5b704f7c216adf1568dba987b519a9e7abad3276c2fa856f8c410e88895",
+      "integrity": "ok",
+      "backupVerified": true,
+      "privateOutsideDeployment": true,
+      "directoryMode": "700",
+      "databaseMode": "600"
+    },
+    "afterRestart": {
+      "schema": 1,
+      "scope": "synthetic-only",
+      "bootId": "1517b928-9581-4395-bb90-d2509b076900",
+      "boots": 3,
+      "fixtureSha256": "6994f5b704f7c216adf1568dba987b519a9e7abad3276c2fa856f8c410e88895",
+      "integrity": "ok",
+      "backupVerified": true,
+      "privateOutsideDeployment": true,
+      "directoryMode": "700",
+      "databaseMode": "600"
+    },
+    "afterRebuild": {
+      "schema": 1,
+      "scope": "synthetic-only",
+      "bootId": "94655ae6-e3fd-464f-ba0b-0e9c7bad99d4",
+      "boots": 5,
+      "fixtureSha256": "6994f5b704f7c216adf1568dba987b519a9e7abad3276c2fa856f8c410e88895",
+      "integrity": "ok",
+      "backupVerified": true,
+      "privateOutsideDeployment": true,
+      "directoryMode": "700",
+      "databaseMode": "600"
+    }
+  },
+  "restartsRequested": 1,
+  "persistenceStatus": "PRIVATE_SQLITE_MEDIA_BACKUP_RESTART_REBUILD_VERIFIED",
+  "probeRecovery": {
+    "schema": 1,
+    "sourceSha": "462e459e6f43895f3bbe9731c9a37908c6c911c6",
+    "target": "aliceblue-locust-999458.hostingersite.com",
+    "action": "restore-probe",
+    "scope": "disposable-existing-qa-instance-only",
+    "status": "IDENTICAL_PROBE_RECOVERY_VERIFIED_IN_PLACE",
+    "productionMutations": 0,
+    "buildsStarted": 1,
+    "settingsWrites": 0,
+    "environmentWrites": 0,
+    "checks": {
+      "healthBefore": {
+        "status": 200,
+        "service": "punctum-hostinger-qa-probe",
+        "version": "r4-node-probe-20261028-v2",
+        "node": "v24.22.3",
+        "production": false,
+        "ssrValidated": false
+      },
+      "settingsBefore": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "environmentBefore": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "buildsBefore": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "uploadCredentials": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "uploadCreate": {
+        "status": 201
+      },
+      "uploadBytes": {
+        "status": 204
+      },
+      "archiveDetection": {
+        "status": 200,
+        "attemptStatuses": [
+          500,
+          500,
+          200
+        ]
+      },
+      "restoreBuildStart": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "restoreBuildState": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "healthRestored": {
+        "status": 200,
+        "service": "punctum-hostinger-qa-probe",
+        "version": "r4-node-probe-20261028-v2",
+        "node": "v24.22.3",
+        "production": false,
+        "ssrValidated": false
+      },
+      "settingsAfter": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "environmentAfter": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      },
+      "restoreBuildLogs": {
+        "status": 200,
+        "attemptStatuses": [
+          200
+        ]
+      }
+    },
+    "backup": {
+      "bytes": 2384,
+      "sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca",
+      "members": 4
+    },
+    "originalSettings": {
+      "app_type": "other",
+      "node_version": 24,
+      "package_manager": "npm",
+      "build_script": "build",
+      "entry_file": "server.mjs",
+      "root_directory": null,
+      "output_directory": null
+    },
+    "originalBuild": "01a1d1b0-4899-7352-bc20-d80fb4339544",
+    "acknowledgedArchives": [
+      {
+        "name": "punctum-recovery-v2-a616d44372894fa6a1293d78c5a33378.zip",
+        "bytes": 2384,
+        "sha256": "918755f5d4c1ebb1064cafceb4dfbfc20491a309d47147c6fe6e57a2731a75ca"
+      }
+    ],
+    "archiveName": "punctum-recovery-v2-a616d44372894fa6a1293d78c5a33378.zip",
+    "detectedSettings": {
+      "app_type": "other",
+      "node_version": 22,
+      "package_manager": null,
+      "build_script": "build",
+      "entry_file": "app.mjs",
+      "root_directory": null,
+      "output_directory": null
+    },
+    "buildRequestAttempted": true,
+    "restoreBuild": "01a1d1b1-959d-71ec-84d8-b6eeea606b1e",
+    "completedBuild": {
+      "uuid": "01a1d1b1-959d-71ec-84d8-b6eeea606b1e",
+      "state": "completed",
+      "options": {
+        "app_type": "other",
+        "node_version": 24,
+        "package_manager": "npm",
+        "build_script": "build",
+        "entry_file": "server.mjs",
+        "root_directory": null,
+        "output_directory": null,
+        "source_type": "archive",
+        "source_options": {
+          "archive_path": "punctum-recovery-v2-a616d44372894fa6a1293d78c5a33378.zip"
+        }
+      }
+    },
+    "buildLogSha256": "43eb585bf22acfedea273bf1dba9cb066123dd30a70ebec2037fe8ac81262c74"
+  }
+}

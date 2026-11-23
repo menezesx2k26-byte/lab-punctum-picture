@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-28T23:07:10.188Z",
+  "stage": "disabled-existing-cookie",
+  "status": 401,
+  "build": "1c9cee934be0b022ecb347ae85ab15fd13414b07",
+  "version": "eb6d11b2-e866-43a6-82b8-d35a8b9914fe",
+  "cache": "private, no-store",
+  "cookiePresent": true,
+  "sessionVersion": 4,
+  "cookieFingerprint": "353535605b245ec69e500bf5c2571c15d2acef09d3833cf6520584390b13e7ad",
+  "samePreDisableCookie": true,
+  "secretsStored": false
+}

@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "checkedAtUtc": "2026-10-28T21:00:35Z",
+  "mode": "read-only",
+  "source": "Hostinger toolkit via connected Composio; two active authorized accounts",
+  "api": {
+    "getCalls": 10,
+    "successful": 10,
+    "failed": 0,
+    "mutations": 0,
+    "paginationComplete": true
+  },
+  "conclusions": {
+    "existingNodeSupportProven": true,
+    "additionalExistingUnoccupiedNodeAppFound": false,
+    "newManagedNodeSlotInLegacyPremiumVerified": false,
+    "zeroIncrementalCostForAdditionalNodeVerified": false,
+    "independentResourceIsolationVerified": false,
+    "currentEffectiveCpuRamProcessQuotaVerified": false,
+    "httpsForNewQaAppVerified": false,
+    "publicSsrCpuOffloadCapacityVerified": false,
+    "hostingerReadyForIndependentQa": false,
+    "doNotTouchPersistFlow": true
+  },
+  "notes": [
+    "The documented existing nodejs website on a Premium_v3 order conflicts with current public Business/Cloud-only Node eligibility; preserve historical support as observed, but additional slots are unverified.",
+    "Two websites per order do not prove remaining Node.js entitlement; website setup list covers only past 24h, not all free slots.",
+    "No free/empty separate Node QA app discovered. Both relevant existing websites are occupied; zero VPS.",
+    "Current public home SSR CPU/503 bottleneck is the relevant potential offload, not the retired password bridge.",
+    "No new costs or writes incurred by inspection, but future no-cost deployment not established."
+  ],
+  "publishedSources": [
+    "https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/",
+    "https://www.hostinger.com/support/hostinger-node-js-limits-for-web-and-cloud-plans/",
+    "https://www.hostinger.com/support/6976044-parameters-and-limits-of-hosting-plans-in-hostinger/"
+  ],
+  "accounts": [
+    {
+      "label": "QA-account-1",
+      "hostingPlan": "Premium Web Hosting",
+      "planCode": "hostinger_premium_v3",
+      "orderStatus": "active",
+      "websitesTotal": 2,
+      "websiteRoles": [
+        {
+          "type": "other",
+          "occupiedBy": "PersistFlow PHP sandbox",
+          "enabled": true
+        },
+        {
+          "type": "builder",
+          "occupiedBy": "Website Builder",
+          "enabled": true
+        }
+      ],
+      "virtualMachines": 0,
+      "websiteSetupsLast24Hours": 0
+    },
+    {
+      "label": "QA-account-2",
+      "hostingPlan": "Premium Web Hosting",
+      "planCode": "hostinger_premium_v3",
+      "orderStatus": "active",
+      "websitesTotal": 2,
+      "websiteRoles": [
+        {
+          "type": "nodejs",
+          "occupiedBy": "PersistFlow managed Node",
+          "enabled": true
+        },
+        {
+          "type": "builder",
+          "occupiedBy": "Website Builder",
+          "enabled": true
+        }
+      ],
+      "virtualMachines": 0,
+      "websiteSetupsLast24Hours": 0
+    }
+  ]
+}

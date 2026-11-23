@@ -1,0 +1,49 @@
+name: R4 isolated G18 recovery (manual commit-marker gate)
+on:
+  push:
+    branches: ["agent/hst-001-hostinger-qa-20261028"]
+    paths:
+      - "scripts/private-recovery-worker.ts"
+      - "scripts/lib/private-recovery.ts"
+      - "scripts/lib/r4-scoped-seed.ts"
+      - "scripts/lib/r4-scoped-fixture.mjs"
+      - "scripts/lib/r4-recovery-qa.mjs"
+      - "scripts/r4-recovery-execute.mjs"
+      - "scripts/r4-recovery-qa.test.mjs"
+      - "scripts/r4-edge-qa.mjs"
+      - ".github/workflows/r4-scoped-g18.yml"
+permissions:
+  contents: read
+concurrency:
+  group: punctum-r4-scoped-g18
+  cancel-in-progress: false
+jobs:
+  scoped-recovery:
+    if: contains(github.event.head_commit.message, '[r4-scoped-g18]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: node --test scripts/r4-edge-qa.test.mjs scripts/r4-recovery-qa.test.mjs
+      - run: npm ci
+      - run: node --test scripts/r4-scoped-local.test.mjs
+      - run: npm run build
+      - name: Explicitly scoped synthetic G18 QA — no Images or production bindings
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN2 }}
+          R4_RECOVERY_SCOPED_EXECUTE: "true"
+          R4_EDGE_QA_EXECUTE: "false"
+          R4_EDGE_QA_RECOVERY: "false"
+          R4_EDGE_QA_RESUME: "true"
+        run: node scripts/r4-edge-qa.mjs
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-scoped-recovery-evidence
+          path: |
+            outputs/r4-scoped-recovery-report.json
+            outputs/r4-edge-qa-report.json
+          retention-days: 14

@@ -1,0 +1,60 @@
+{
+  "ci": {
+    "sha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+    "runId": 40772288364,
+    "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
+    "artifactId": 12853401485,
+    "workers": 218,
+    "files": 53,
+    "collage": 7,
+    "node": 45,
+    "chromiumChecks": 14,
+    "artifactReadback": true,
+    "checkoutDirtyAtRun": false
+  },
+  "browser": {
+    "status": "PASS_LOCAL",
+    "startedUtc": "2026-10-28T21:30:54.857Z",
+    "sourceSha": "96b71ea3992d155753f610cd4627d1b71cbaf371",
+    "sourceRevisionProvided": false,
+    "checkoutDirtyAtRun": false,
+    "buildSha256": "8ffba839bfd72e333d352f5d0c0166864209924414a2823b12e50213b3c7d38c",
+    "scope": "real Chromium against production bundle in local workerd with new synthetic D1/R2",
+    "cloudflareAccessOtpTested": false,
+    "remoteQaTouched": false,
+    "productionTouched": false,
+    "syntheticSessionOnly": true,
+    "physicalDevicesTested": false,
+    "reducedMotion": "reduce",
+    "checks": [
+      "fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals",
+      "anonymous gallery access denied; Access mode disables password login",
+      "real browser client A/B libraries and foreign gallery/original denial",
+      "favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified",
+      "private gallery has no horizontal overflow at 320/360/375/390/430/768/1024/1440px",
+      "private media is denied anonymously and cannot enter public media/image optimizer",
+      "same-component client navigation clears prior gallery while pending and after an intentional404",
+      "malformed success envelope produces a safe library alert without a render exception",
+      "public home and authenticated Studio render; anonymous Studio denied",
+      "Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/768/1024/1440px",
+      "private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; eight responsive widths",
+      "workerd restart preserves favorites, authenticated gallery and original bytes",
+      "isolated local consistent-storage rollback restores gallery availability after archiving",
+      "logout revokes client A while client B remains authorized"
+    ],
+    "pageErrors": [],
+    "consoleWarnings": [],
+    "consoleErrors": [],
+    "expectedDenials": [
+      {
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "path": "/api/client/galleries/8af7c903-a43f-46bf-9feb-16558be80539"
+      }
+    ],
+    "serverErrors": [],
+    "browser": "145.0.7632.6",
+    "localBrowserHomeNavigationMs": 2047.588517000001,
+    "completedUtc": "2026-10-28T21:32:14.270Z",
+    "temporaryStorageRemoved": true
+  }
+}

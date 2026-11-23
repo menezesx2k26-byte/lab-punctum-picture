@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "status": "APPENDED_AND_VERIFIED",
+  "observedAtUtc": "2026-10-28T22:20:01.638Z",
+  "scope": "Single synthetic Access OTP owner-client D1 mapping appended to historical QA database; no other data or infrastructure mutation",
+  "source": "Cloudflare authenticated Composio D1 SELECT/conditional INSERT and readback, plus authenticated Worker/Access settings",
+  "cloudflareAccountId": "257bca437616da74ece1ce4bbaf0bd89",
+  "environment": "historical private-albums QA / preview",
+  "effectiveWorker": {
+    "name": "punctum-picture-albums-qa",
+    "deploymentId": "224e43a5-7c5e-4521-9d1d-901dd29ad8a0",
+    "versionId": "446943ce-1ea5-4f7e-94ae-351c7b016424",
+    "versionPercentage": 100,
+    "deployedAtUtc": "2026-10-24T19:17:42.363094Z",
+    "versionReadbackAfterMapping": true,
+    "currentRepositoryHeadEquivalenceClaimed": false,
+    "binding": {
+      "name": "DB",
+      "type": "d1",
+      "databaseId": "b5087ae7-8c28-40eb-b541-8a58755131d3",
+      "matchedBeforeInsert": true
+    },
+    "privateGalleriesEnabled": true,
+    "clientAuthMode": "access",
+    "environment": "preview",
+    "accessPolicyOwnerMatched": true,
+    "ownerEmailIncludedInReceipt": false,
+    "accessPolicyId": "9fc898c0-21a0-40e3-9117-4f36604e9f06",
+    "accessApplicationId": "9ba6f47a-a0d2-4588-9d21-6b14d54dad6a"
+  },
+  "guards": {
+    "table": "client_accounts",
+    "preinsertCount": 5,
+    "matchedOriginalIds": 5,
+    "uniqueOwnerEmailAbsent": true,
+    "allOriginalRowsPreinsertSHA256Verified": true,
+    "exactQaBindingRecheckedImmediatelyBeforeWrite": true,
+    "tableSchemaVerified": true,
+    "foreignKeysCleanBefore": true,
+    "sqlContainsSingleAtomicInsertSelectGuard": true,
+    "noExistingOwnerRowDetected": true,
+    "noOverwriteOrUpsert": true
+  },
+  "append": {
+    "clientId": "901c78ff-2808-452b-9770-561f9ebcbd0b",
+    "syntheticName": "QA proprietario R4 OTP",
+    "ownerEmail": "REDACTED (matched actual Access allowlist; not stored in this report)",
+    "createdAtUtc": "2026-10-28T22:20:01.638Z",
+    "rowChanges": 1,
+    "passwordMaterialStoredInReport": false,
+    "syntheticUnusableHashAndSaltGeneratedPrivately": true,
+    "passwordIterations": 310000,
+    "mustChangePassword": false,
+    "sessionVersion": 1,
+    "disabledAt": null,
+    "authenticatedSessionEstablishedByThisWrite": false
+  },
+  "originalRows": {
+    "countBefore": 5,
+    "countPreserved": 5,
+    "allColumnsSnapshottedPrivately": true,
+    "canonicalSerialization": "json.dumps(row, sort_keys=True, separators=(',', ':'), ensure_ascii=False) UTF-8; SHA-256 each, then SHA-256 sorted ID->digest JSON",
+    "originalClientIds": [
+      "03a52068-8f59-4fe7-9866-c0f5306bb7a7",
+      "43b9f7be-0c59-4be6-95cb-5437af31a177",
+      "6a6f6170-440a-43d7-a788-e920cdf10a50",
+      "939efd5f-f7f9-4f36-abf4-387033efb2ad",
+      "d4692fa1-947b-477d-8257-1679b965a463"
+    ],
+    "sha256Before": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "sha256After": "43eff9f4abaedd7f3509efd412fe396eca8139422c3a4a951b06d623727da129",
+    "allFiveOriginalFullRowsIdentical": true,
+    "originalRowsUpdated": 0,
+    "originalRowsDeleted": 0,
+    "rawRecordsPersistedInLocalReport": false,
+    "individualSha256": {
+      "03a52068-8f59-4fe7-9866-c0f5306bb7a7": "e901d6da8afee6e804b09d3bfcdea327d4bb0fb011c6f0bf2ab12c18de06c95e",
+      "43b9f7be-0c59-4be6-95cb-5437af31a177": "1a0e77c666dd3e060dfaa22d10f2cc6932fc546851d8519ef3a3f2115a388d06",
+      "6a6f6170-440a-43d7-a788-e920cdf10a50": "d362e7dac218c848a90fe0f22f687f6b422513cc01bfd159e1d11640df245d8c",
+      "939efd5f-f7f9-4f36-abf4-387033efb2ad": "7a5e17e295ef214a17d4638534dafb0c8d7606b429ba336784943a99e18fed8f",
+      "d4692fa1-947b-477d-8257-1679b965a463": "9e0ef1d5ad36c1e906ca896de4fd75262b21d16cce63cae972728672225044cf"
+    }
+  },
+  "readback": {
+    "clientCountAfter": 6,
+    "newClientMatchedById": true,
+    "ownerEmailMatchCount": 1,
+    "active": true,
+    "mustChangePasswordFalse": true,
+    "rowFieldsMatchExpected": true,
+    "foreignKeyErrors": 0,
+    "oldDataIdentical": true
+  },
+  "audit": {
+    "schemaPresent": true,
+    "actorType": "synthetic_qa_automation_principal",
+    "humanActorImpersonated": false,
+    "eventId": "4cd15740-15af-46a8-9253-749915bd85a1",
+    "action": "qa_synthetic_owner_client_mapping",
+    "entityType": "client_account",
+    "entityId": "901c78ff-2808-452b-9770-561f9ebcbd0b",
+    "metadataAllowlist": [
+      "synthetic",
+      "qa",
+      "operation",
+      "clientId"
+    ],
+    "existingCountBefore": 12,
+    "totalCountAfter": 13,
+    "rowsAdded": 1,
+    "rowReadbackVerified": true,
+    "actorEmailOmitted": true
+  },
+  "mutations": {
+    "clientAccountsInserted": 1,
+    "auditEventsInserted": 1,
+    "existingClientRowsUpdated": 0,
+    "existingClientRowsDeleted": 0,
+    "migrations": 0,
+    "otherD1Databases": 0,
+    "r2": 0,
+    "accessPolicy": 0,
+    "workerDeployments": 0,
+    "bindings": 0,
+    "production": 0
+  },
+  "limitations": [
+    "This data append does NOT itself establish a valid Access-authenticated browser session, /api/client/me HTTP200, real OTP end-to-end success or G07 PASS.",
+    "The effective deployed QA Worker version is from 2026-10-24 and is not claimed equivalent to current repository HEAD.",
+    "Subsequent user browser login verification remains the parent worker's responsibility."
+  ]
+}

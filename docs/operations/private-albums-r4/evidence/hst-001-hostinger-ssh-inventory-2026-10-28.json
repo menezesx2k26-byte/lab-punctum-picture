@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "mission": "HST-001",
+  "collectionCompletedUtc": "2026-10-28T18:53:01.232880+00:00",
+  "status": "AUTHENTICATED_SSH_PARTIAL_INVENTORY",
+  "inventoryReadOnly": true,
+  "authorization": {
+    "method": "Dedicated ED25519 key authorized by owner in hPanel",
+    "panelKeyName": "CODEX",
+    "hostIdentity": "Matched existing known_hosts; StrictHostKeyChecking=yes",
+    "credentialValuesReadOrPublished": false
+  },
+  "scope": {
+    "hosting": "CloudLinux/CageFS shared SSH account",
+    "rootAccess": false,
+    "visibleDomains": [
+      "olivedrab-weasel-504267.hostingersite.com"
+    ],
+    "existingWorkload": "PersistFlow PHP sandbox",
+    "existingNodeControlPlaneVisibleInThisSshAccount": false
+  },
+  "runtimes": {
+    "pathNodeAvailable": false,
+    "pathNpmAvailable": false,
+    "node22": "v22.23.4",
+    "node24": "v24.22.1",
+    "node22Path": "/opt/alt/alt-nodejs22/root/usr/bin/node",
+    "node24Path": "/opt/alt/alt-nodejs24/root/usr/bin/node",
+    "testScope": "Version commands plus bounded Node loopback HTTP and two-process nonce probes; no persistent bridge or offloaded workload"
+  },
+  "managers": {
+    "pm2Available": false,
+    "passengerAvailable": false,
+    "cloudlinuxSelector": "/usr/sbin/cloudlinux-selector",
+    "readQueries": [
+      {
+        "operation": "--get-selector-status",
+        "exit": 1,
+        "result": "Something is wrong with integration script: `[Errno 2] No such file or directory: '/etc/cl.cpapi/domains.py'`"
+      },
+      {
+        "operation": "--get-supported-versions",
+        "exit": 1,
+        "result": "Something is wrong with integration script: `[Errno 2] No such file or directory: '/etc/cl.cpapi/domains.py'`"
+      },
+      {
+        "operation": "--get-current-version",
+        "exit": 1,
+        "result": "Something is wrong with integration script: `[Errno 2] No such file or directory: '/etc/cl.cpapi/domains.py'`"
+      }
+    ]
+  },
+  "resources": {
+    "plan": "UNVERIFIED",
+    "includedNodeAppSlots": "UNVERIFIED",
+    "effectiveCpuRamDiskQuota": "NOT_EXPOSED_TO_SSH",
+    "cgroupV1OwnLvePresent": true,
+    "ownCgroupLimitFilesAccessible": false,
+    "quotaToolsAvailable": false,
+    "softShellLimitsAreNotContractLimits": true,
+    "dfReportsHostFilesystemNotAccountQuota": true,
+    "visiblePhpRssKb": 53372
+  },
+  "existingSandbox": {
+    "versionManifest": "public_html/VERSION.json",
+    "sourceSha": "decb89a031fdbe4cca464c50676fed8ea1073e61",
+    "applicationFilesRead": "Source/version metadata only; no runtime secret, environment or database contents read",
+    "configOrFilesModified": false
+  },
+  "healthChecks": [
+    {
+      "component": "PersistFlow Node control plane",
+      "httpsStatus": 200,
+      "service": "persistflow",
+      "authority": "file",
+      "durableHealthClaim": true
+    },
+    {
+      "component": "PersistFlow PHP sandbox",
+      "httpsStatus": 200,
+      "status": "ok",
+      "database": "ok"
+    }
+  ],
+  "deployments": 0,
+  "serviceRestarts": 0,
+  "providerConfigWrites": 0,
+  "privatePhotosTransferred": 0,
+  "qaDatabaseWrites": 0,
+  "newPaidResources": 0,
+  "blockers": [
+    "No functional routed/persistent Node HTTPS app demonstrated in supplied shared SSH account",
+    "Own loopback TCP clients refused in both Node and Python; exact provider-level cause unproven",
+    "CloudLinux selector integration missing /etc/cl.cpapi/domains.py; vendor integration not modified",
+    "Hostinger plan, included dedicated Node slot and effective resource limits unverified",
+    "Current-HEAD CPU baseline and actual offload before-after remain absent; historical hot route is public home"
+  ],
+  "nextOwnerInfoRequested": "Owner does not know the plan; requested a bounded trial. No paid provisioning attempted.",
+  "temporaryProbe": {
+    "authorization": "Owner requested bounded trial despite unknown plan",
+    "publicListener": false,
+    "existingApplicationsModified": false,
+    "nodeHttp": {
+      "status": "FAIL",
+      "error": "ECONNREFUSED",
+      "target": "own temporary 127.0.0.1 listener",
+      "source": {
+        "mission": "HST-001",
+        "diagnosticOnly": true,
+        "publicListener": false,
+        "results": [
+          {
+            "phase": "first",
+            "exit": 1,
+            "timedOut": false,
+            "sanitizedError": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nError: connect ECONNREFUSED 127.0.0.1:33093\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2083:16) {\n  errno: -111,\n  code: 'ECONNREFUSED',\n  syscall: 'connect',\n  address: '127.0.0.1',\n  port: 33093\n}\n\nNode.js v24.22.1\n"
+          }
+        ],
+        "temporaryDirectoryRemoved": true,
+        "completedAtUtc": "2026-10-28T18:47:18.936897+00:00"
+      }
+    },
+    "pythonTcpControl": {
+      "listening": true,
+      "clientConnected": false,
+      "error": "ConnectionRefusedError",
+      "errno": 111
+    },
+    "replayAcrossNewProcesses": {
+      "status": "PASS",
+      "processes": [
+        {
+          "phase": "first",
+          "exit": 0,
+          "result": {
+            "phase": "first",
+            "accepted": true,
+            "replayRejected": false,
+            "node": "v24.22.1",
+            "elapsedMs": 1,
+            "cpuMs": 1.979,
+            "maxRssKb": 54784
+          }
+        },
+        {
+          "phase": "restart",
+          "exit": 0,
+          "result": {
+            "phase": "restart",
+            "accepted": false,
+            "replayRejected": true,
+            "node": "v24.22.1",
+            "elapsedMs": 1,
+            "cpuMs": 1.92,
+            "maxRssKb": 54784
+          }
+        }
+      ],
+      "replayStoreSourceSha256": "f65eb7d27337934180e82adba62b2435bef134f2c468e605e71a3c4ebbcc30d0"
+    },
+    "temporaryDirectoryRemoved": true,
+    "completedAtUtc": "2026-10-28T18:49:00.146061+00:00",
+    "interpretation": "Finite SSH diagnostics only. Does not prove managed restart/redeploy, persistent public HTTPS, a supported Node slot or an offloaded workload."
+  },
+  "temporaryProbeWrites": "Synthetic code/nonces in new private temporary directories, removed after each test; no provider/app configuration writes",
+  "postProbeHealthChecks": [
+    {
+      "component": "PersistFlow Node",
+      "observedAt": "2026-10-28T18:51:07.570Z",
+      "status": 200
+    },
+    {
+      "component": "PersistFlow PHP sandbox",
+      "observedAt": "2026-10-28T18:51:07.639Z",
+      "status": 200
+    }
+  ],
+  "finalCleanup": {
+    "observedAtUtc": "2026-10-28T18:53:01.232880+00:00",
+    "processes": [
+      {
+        "command": "lsphp",
+        "rssKb": 53136
+      }
+    ],
+    "temporaryProbeDirectoriesRemaining": 0,
+    "sandboxSourceSha": "decb89a031fdbe4cca464c50676fed8ea1073e61"
+  }
+}

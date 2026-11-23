@@ -1,0 +1,755 @@
+TAP version 13
+# Subtest: a cross-site identity return commits a same-origin document before using its Strict cookie
+ok 1 - a cross-site identity return commits a same-origin document before using its Strict cookie
+  ---
+  duration_ms: 902.129994
+  type: 'test'
+  ...
+# Subtest: PR verification checks out its exact head and preserves the browser visual evidence
+ok 2 - PR verification checks out its exact head and preserves the browser visual evidence
+  ---
+  duration_ms: 0.835869
+  type: 'test'
+  ...
+# Subtest: remote recovery changes are eligible for the explicit QA trigger and never run incidentally
+ok 3 - remote recovery changes are eligible for the explicit QA trigger and never run incidentally
+  ---
+  duration_ms: 5.043341
+  type: 'test'
+  ...
+# Subtest: Collage mobile CSS contract
+    # Subtest: restores the About link hidden by the legacy mobile stylesheet
+    ok 1 - restores the About link hidden by the legacy mobile stylesheet
+      ---
+      duration_ms: 1.332557
+      type: 'test'
+      ...
+    # Subtest: does not crop originals into an arbitrary 4:5 card
+    ok 2 - does not crop originals into an arbitrary 4:5 card
+      ---
+      duration_ms: 0.45469
+      type: 'test'
+      ...
+    # Subtest: defines high-specificity light and dark Studio section surfaces
+    ok 3 - defines high-specificity light and dark Studio section surfaces
+      ---
+      duration_ms: 0.164969
+      type: 'test'
+      ...
+    # Subtest: wraps mobile navigation while keeping every link at least 48px square
+    ok 4 - wraps mobile navigation while keeping every link at least 48px square
+      ---
+      duration_ms: 0.471139
+      type: 'test'
+      ...
+    # Subtest: stacks footer links at narrow 320px viewports instead of clipping them
+    ok 5 - stacks footer links at narrow 320px viewports instead of clipping them
+      ---
+      duration_ms: 0.25525
+      type: 'test'
+      ...
+    # Subtest: composes asymmetric contact-sheet cards while preserving uncropped originals
+    ok 6 - composes asymmetric contact-sheet cards while preserving uncropped originals
+      ---
+      duration_ms: 0.297369
+      type: 'test'
+      ...
+    # Subtest: adds print textures as noninteractive overlays instead of filtering originals
+    ok 7 - adds print textures as noninteractive overlays instead of filtering originals
+      ---
+      duration_ms: 0.244199
+      type: 'test'
+      ...
+    # Subtest: places editorial labels over photographs rather than covering album captions
+    ok 8 - places editorial labels over photographs rather than covering album captions
+      ---
+      duration_ms: 0.399149
+      type: 'test'
+      ...
+    # Subtest: keeps complete words in the selected-work title on narrow phones
+    ok 9 - keeps complete words in the selected-work title on narrow phones
+      ---
+      duration_ms: 0.35335
+      type: 'test'
+      ...
+    1..9
+ok 4 - Collage mobile CSS contract
+  ---
+  duration_ms: 5.765568
+  type: 'suite'
+  ...
+# Subtest: preserves every axe node and check message for incomplete and violating rules
+ok 5 - preserves every axe node and check message for incomplete and violating rules
+  ---
+  duration_ms: 2.008586
+  type: 'test'
+  ...
+# Subtest: disposable Chromium uses actual 200 percent browser zoom with no pinch or viewport override
+ok 6 - disposable Chromium uses actual 200 percent browser zoom with no pinch or viewport override
+  ---
+  duration_ms: 671.702442
+  type: 'test'
+  ...
+# Subtest: rendered gradient contrast uses a conservative pixel bound and refuses mixed or transparent groups
+ok 7 - rendered gradient contrast uses a conservative pixel bound and refuses mixed or transparent groups
+  ---
+  duration_ms: 1142.110366
+  type: 'test'
+  ...
+# Subtest: keeps full-page visual proof when the browser succeeds
+ok 8 - keeps full-page visual proof when the browser succeeds
+  ---
+  duration_ms: 0.981759
+  type: 'test'
+  ...
+# Subtest: uses a disclosed viewport fallback if full-page capture alone times out
+ok 9 - uses a disclosed viewport fallback if full-page capture alone times out
+  ---
+  duration_ms: 0.899659
+  type: 'test'
+  ...
+# Subtest: records a bounded CDP viewport fallback without claiming full-page visual evidence
+ok 10 - records a bounded CDP viewport fallback without claiming full-page visual evidence
+  ---
+  duration_ms: 10.690828
+  type: 'test'
+  ...
+# Subtest: never masks non-timeout screenshot failures or missing viewport evidence
+ok 11 - never masks non-timeout screenshot failures or missing viewport evidence
+  ---
+  duration_ms: 0.822418
+  type: 'test'
+  ...
+# Subtest: release gate allows preserving Maria's unpublished work without publishing it
+ok 12 - release gate allows preserving Maria's unpublished work without publishing it
+  ---
+  duration_ms: 1.276657
+  type: 'test'
+  ...
+# Subtest: colagem preset preserves editorial, hero/media, home order and all non-visual data
+ok 13 - colagem preset preserves editorial, hero/media, home order and all non-visual data
+  ---
+  duration_ms: 82.23372
+  type: 'test'
+  ...
+# Subtest: release guard prevents removal of sections and changes to album display count
+ok 14 - release guard prevents removal of sections and changes to album display count
+  ---
+  duration_ms: 56.059181
+  type: 'test'
+  ...
+# Subtest: current-head Access QA deploy preserves the observed historical bindings and legitimate variables without migration or new image entitlement
+ok 15 - current-head Access QA deploy preserves the observed historical bindings and legitimate variables without migration or new image entitlement
+  ---
+  duration_ms: 5.828559
+  type: 'test'
+  ...
+# Subtest: no CPU samples or incomplete telemetry cannot qualify Workers Free
+ok 16 - no CPU samples or incomplete telemetry cannot qualify Workers Free
+  ---
+  duration_ms: 0.997708
+  type: 'test'
+  ...
+# Subtest: historical CPU over 10 ms is reported, never promoted to final code readiness
+ok 17 - historical CPU over 10 ms is reported, never promoted to final code readiness
+  ---
+  duration_ms: 0.232829
+  type: 'test'
+  ...
+# Subtest: historical low CPU or partial account traffic still does not certify cold MISS
+ok 18 - historical low CPU or partial account traffic still does not certify cold MISS
+  ---
+  duration_ms: 0.31873
+  type: 'test'
+  ...
+# Subtest: read-only CPU probe requires free account, synthetic DB and never-used name
+ok 19 - read-only CPU probe requires free account, synthetic DB and never-used name
+  ---
+  duration_ms: 1.551677
+  type: 'test'
+  ...
+# Subtest: CPU QA refuses to start if the synthetic D1 would need public-config bootstrap
+ok 20 - CPU QA refuses to start if the synthetic D1 would need public-config bootstrap
+  ---
+  duration_ms: 0.16119
+  type: 'test'
+  ...
+# Subtest: ephemeral CPU worker excludes real routes, R2, Images, and background jobs
+ok 21 - ephemeral CPU worker excludes real routes, R2, Images, and background jobs
+  ---
+  duration_ms: 0.923438
+  type: 'test'
+  ...
+# Subtest: refuse production domains and arbitrary origins in isolated probe
+ok 22 - refuse production domains and arbitrary origins in isolated probe
+  ---
+  duration_ms: 0.35095
+  type: 'test'
+  ...
+# Subtest: only authenticated root GET may reach the full app under CPU probe
+ok 23 - only authenticated root GET may reach the full app under CPU probe
+  ---
+  duration_ms: 38.758365
+  type: 'test'
+  ...
+# Subtest: Workers Cache is restricted to PublicHome named entrypoint, not the privileged default
+ok 24 - Workers Cache is restricted to PublicHome named entrypoint, not the privileged default
+  ---
+  duration_ms: 0.369409
+  type: 'test'
+  ...
+# Subtest: cache QA does not promote a warm hit when HTML or CPU cold misses are unproven
+ok 25 - cache QA does not promote a warm hit when HTML or CPU cold misses are unproven
+  ---
+  duration_ms: 0.512859
+  type: 'test'
+  ...
+# Subtest: cold MISS CPU telemetry correlates exact per-request events and qualifies twelve samples
+ok 26 - cold MISS CPU telemetry correlates exact per-request events and qualifies twelve samples
+  ---
+  duration_ms: 1.563507
+  type: 'test'
+  ...
+# Subtest: Cloudflare Observability numeric epoch-millisecond timestamps correlate to cold requests
+ok 27 - Cloudflare Observability numeric epoch-millisecond timestamps correlate to cold requests
+  ---
+  duration_ms: 0.819858
+  type: 'test'
+  ...
+# Subtest: first authenticated request requires an exact cache MISS and per-invocation CPU under 10ms
+ok 28 - first authenticated request requires an exact cache MISS and per-invocation CPU under 10ms
+  ---
+  duration_ms: 0.604858
+  type: 'test'
+  ...
+# Subtest: cold CPU measurement fails closed on missing telemetry, a cache HIT, ambiguous events, or a second over 10ms
+ok 29 - cold CPU measurement fails closed on missing telemetry, a cache HIT, ambiguous events, or a second over 10ms
+  ---
+  duration_ms: 1.059938
+  type: 'test'
+  ...
+# Subtest: cold CPU telemetry does not qualify when a request crosses the analytics second boundary
+ok 30 - cold CPU telemetry does not qualify when a request crosses the analytics second boundary
+  ---
+  duration_ms: 0.576739
+  type: 'test'
+  ...
+# Subtest: scoped synthetic purge is authenticated and cannot mutate private routes
+ok 31 - scoped synthetic purge is authenticated and cannot mutate private routes
+  ---
+  duration_ms: 0.755509
+  type: 'test'
+  ...
+# Subtest: CPU evidence rejects a missing or invalid invocation instead of keeping only the valid maximum
+ok 32 - CPU evidence rejects a missing or invalid invocation instead of keeping only the valid maximum
+  ---
+  duration_ms: 3.718383
+  type: 'test'
+  ...
+# Subtest: CPU evidence rejects a lone default invocation and cannot qualify an inverted first-request window
+ok 33 - CPU evidence rejects a lone default invocation and cannot qualify an inverted first-request window
+  ---
+  duration_ms: 0.32907
+  type: 'test'
+  ...
+# Subtest: CPU evidence requires both distinct invocations from the same Ray, deployed version and successful outcome
+ok 34 - CPU evidence requires both distinct invocations from the same Ray, deployed version and successful outcome
+  ---
+  duration_ms: 3.364954
+  type: 'test'
+  ...
+# Subtest: Observability extraction preserves incomplete invocations and excludes custom logs and other versions
+ok 35 - Observability extraction preserves incomplete invocations and excludes custom logs and other versions
+  ---
+  duration_ms: 0.39697
+  type: 'test'
+  ...
+# Subtest: CPU sample waits until the next second plus 150ms even when current second is past that point
+ok 36 - CPU sample waits until the next second plus 150ms even when current second is past that point
+  ---
+  duration_ms: 0.25094
+  type: 'test'
+  ...
+# Subtest: performance provenance records the actual configured build refs, never a stale baseline literal
+ok 37 - performance provenance records the actual configured build refs, never a stale baseline literal
+  ---
+  duration_ms: 1.741417
+  type: 'test'
+  ...
+# Subtest: read-only performance continuation accepts only the exact preserved failed fixture and initialized public state
+ok 38 - read-only performance continuation accepts only the exact preserved failed fixture and initialized public state
+  ---
+  duration_ms: 4.338871
+  type: 'test'
+  ...
+# Subtest: refuses unknown usage and existing QA resources before creating or modifying anything
+ok 39 - refuses unknown usage and existing QA resources before creating or modifying anything
+  ---
+  duration_ms: 0.985928
+  type: 'test'
+  ...
+# Subtest: permits only newly allocated D1 IDs and strips production routes, jobs, access, secrets, external bridge and image billing
+ok 40 - permits only newly allocated D1 IDs and strips production routes, jobs, access, secrets, external bridge and image billing
+  ---
+  duration_ms: 0.809869
+  type: 'test'
+  ...
+# Subtest: performance-only QA does not require R2 access and never permits an existing or paid target
+ok 41 - performance-only QA does not require R2 access and never permits an existing or paid target
+  ---
+  duration_ms: 0.346908
+  type: 'test'
+  ...
+# Subtest: performance QA has no object bindings or private routes even if private flag requested
+ok 42 - performance QA has no object bindings or private routes even if private flag requested
+  ---
+  duration_ms: 0.186781
+  type: 'test'
+  ...
+# Subtest: network failures remain errors without falsely claiming that another version answered
+ok 43 - network failures remain errors without falsely claiming that another version answered
+  ---
+  duration_ms: 0.22737
+  type: 'test'
+  ...
+# Subtest: resume accepts only the exact dedicated resource IDs from interrupted run 40756797747
+ok 44 - resume accepts only the exact dedicated resource IDs from interrupted run 40756797747
+  ---
+  duration_ms: 0.491029
+  type: 'test'
+  ...
+# Subtest: subscription inventory cannot imply free Images from missing or partial data
+ok 45 - subscription inventory cannot imply free Images from missing or partial data
+  ---
+  duration_ms: 1.659218
+  type: 'test'
+  ...
+# Subtest: transformations require a fresh cumulative daily count, never infer zero from missing data
+ok 46 - transformations require a fresh cumulative daily count, never infer zero from missing data
+  ---
+  duration_ms: 9.454501
+  type: 'test'
+  ...
+# Subtest: Images QA decision stays fail-closed with unknown plan, source or headroom
+ok 47 - Images QA decision stays fail-closed with unknown plan, source or headroom
+  ---
+  duration_ms: 0.447969
+  type: 'test'
+  ...
+# Subtest: Cloudflare GraphQL success is data without REST success=true; GraphQL errors are blocking
+ok 48 - Cloudflare GraphQL success is data without REST success=true; GraphQL errors are blocking
+  ---
+  duration_ms: 0.26424
+  type: 'test'
+  ...
+# Subtest: a one-image synthetic Worker probe is allowed only on verified Free inventory and an unused worker name
+ok 49 - a one-image synthetic Worker probe is allowed only on verified Free inventory and an unused worker name
+  ---
+  duration_ms: 0.551528
+  type: 'test'
+  ...
+# Subtest: synthetic probe is hidden unless exact ephemeral token, path and method are correct
+ok 50 - synthetic probe is hidden unless exact ephemeral token, path and method are correct
+  ---
+  duration_ms: 32.970307
+  type: 'test'
+  ...
+# Subtest: synthetic probe fails closed if Images binding is absent
+ok 51 - synthetic probe fails closed if Images binding is absent
+  ---
+  duration_ms: 1.785305
+  type: 'test'
+  ...
+# Subtest: synthetic probe executes exactly one free metadata read and one 1x1 transform
+ok 52 - synthetic probe executes exactly one free metadata read and one 1x1 transform
+  ---
+  duration_ms: 3.804732
+  type: 'test'
+  ...
+# Subtest: never authorizes deletion, rollback or production even for a complete consistent inventory
+ok 53 - never authorizes deletion, rollback or production even for a complete consistent inventory
+  ---
+  duration_ms: 2.013586
+  type: 'test'
+  ...
+# Subtest: preserves failed public originals as recoverable quarantine and flags unreferenced keys for review only
+ok 54 - preserves failed public originals as recoverable quarantine and flags unreferenced keys for review only
+  ---
+  duration_ms: 8.327453
+  type: 'test'
+  ...
+# Subtest: a partial R2 or D1 listing cannot establish an orphan or authorize disposal
+ok 55 - a partial R2 or D1 listing cannot establish an orphan or authorize disposal
+  ---
+  duration_ms: 0.512589
+  type: 'test'
+  ...
+# Subtest: cross-owner forged intent is not evidence of ownership, even if valid public image is ready
+ok 56 - cross-owner forged intent is not evidence of ownership, even if valid public image is ready
+  ---
+  duration_ms: 0.488058
+  type: 'test'
+  ...
+# Subtest: private legacy paths remain recovery-only, never silently accepted as canonical ownership
+ok 57 - private legacy paths remain recovery-only, never silently accepted as canonical ownership
+  ---
+  duration_ms: 0.220669
+  type: 'test'
+  ...
+# Subtest: never compares owner keys by prefix or disregards size/hash mismatch
+ok 58 - never compares owner keys by prefix or disregards size/hash mismatch
+  ---
+  duration_ms: 0.246509
+  type: 'test'
+  ...
+# Subtest: duplicate exact key claims and absent R2 originals are reported without mutation
+ok 59 - duplicate exact key claims and absent R2 originals are reported without mutation
+  ---
+  duration_ms: 0.310809
+  type: 'test'
+  ...
+# Subtest: missing data and unknown metadata fail closed instead of forging completed manifest
+ok 60 - missing data and unknown metadata fail closed instead of forging completed manifest
+  ---
+  duration_ms: 0.15465
+  type: 'test'
+  ...
+# Subtest: missing SHA metadata cannot make an original integrity-verified or purge-eligible
+ok 61 - missing SHA metadata cannot make an original integrity-verified or purge-eligible
+  ---
+  duration_ms: 0.40749
+  type: 'test'
+  ...
+# Subtest: duplicate listing records flag every occurrence instead of leaving a spurious live row
+ok 62 - duplicate listing records flag every occurrence instead of leaving a spurious live row
+  ---
+  duration_ms: 0.566569
+  type: 'test'
+  ...
+# Subtest: a second D1 row with the same image identity cannot leave its first R2 key marked active
+ok 63 - a second D1 row with the same image identity cannot leave its first R2 key marked active
+  ---
+  duration_ms: 0.206599
+  type: 'test'
+  ...
+# Subtest: declared-complete but malformed object records fail closed before claiming inventory completeness
+ok 64 - declared-complete but malformed object records fail closed before claiming inventory completeness
+  ---
+  duration_ms: 0.172809
+  type: 'test'
+  ...
+# Subtest: a ready D1 record with no matching upload intent is not an attested active original
+ok 65 - a ready D1 record with no matching upload intent is not an attested active original
+  ---
+  duration_ms: 0.15508
+  type: 'test'
+  ...
+# Subtest: duplicate matching intent rows cannot make an R2 object active
+ok 66 - duplicate matching intent rows cannot make an R2 object active
+  ---
+  duration_ms: 0.170269
+  type: 'test'
+  ...
+# Subtest: operator CLI outputs only aggregate read-only data, never R2 keys or SHA metadata
+ok 67 - operator CLI outputs only aggregate read-only data, never R2 keys or SHA metadata
+  ---
+  duration_ms: 57.585538
+  type: 'test'
+  ...
+# Subtest: operator CLI rejects incomplete manifests and invalid JSON without echoing input paths
+ok 68 - operator CLI rejects incomplete manifests and invalid JSON without echoing input paths
+  ---
+  duration_ms: 95.704263
+  type: 'test'
+  ...
+# Subtest: product raster validator uses two independent stream branches and verifies transformed image
+ok 69 - product raster validator uses two independent stream branches and verifies transformed image
+  ---
+  duration_ms: 29.796492
+  type: 'test'
+  ...
+# Subtest: rejects unsupported info without trying to store an image
+ok 70 - rejects unsupported info without trying to store an image
+  ---
+  duration_ms: 2.122226
+  type: 'test'
+  ...
+# Subtest: rejects failed or non-PNG image transformation, not just successful decoding metadata
+ok 71 - rejects failed or non-PNG image transformation, not just successful decoding metadata
+  ---
+  duration_ms: 2.034246
+  type: 'test'
+  ...
+# Subtest: distinguishes transient Images errors from invalid raster content for safe retry
+ok 72 - distinguishes transient Images errors from invalid raster content for safe retry
+  ---
+  duration_ms: 3.939632
+  type: 'test'
+  ...
+# Subtest: inspector waits only for a prior deployment and never accepts or retries current-version 403
+ok 73 - inspector waits only for a prior deployment and never accepts or retries current-version 403
+  ---
+  duration_ms: 31.217589
+  type: 'test'
+  ...
+# Subtest: accepts only the live verified empty R2 envelope when optional pagination is omitted
+ok 74 - accepts only the live verified empty R2 envelope when optional pagination is omitted
+  ---
+  duration_ms: 0.37647
+  type: 'test'
+  ...
+# Subtest: one legacy R2 object may be observed with omitted pagination, but final count requires Worker R2.list
+ok 75 - one legacy R2 object may be observed with omitted pagination, but final count requires Worker R2.list
+  ---
+  duration_ms: 0.37784
+  type: 'test'
+  ...
+# Subtest: R4 recovery scope accepts only immutable interrupted allocation, two unique synthetic clients and dedicated origin
+ok 76 - R4 recovery scope accepts only immutable interrupted allocation, two unique synthetic clients and dedicated origin
+  ---
+  duration_ms: 1.992656
+  type: 'test'
+  ...
+# Subtest: R4 recovery config strips inherited production routes and binds only dedicated QA resources
+ok 77 - R4 recovery config strips inherited production routes and binds only dedicated QA resources
+  ---
+  duration_ms: 0.556459
+  type: 'test'
+  ...
+# Subtest: admin cookie uses credential-revision HMAC and client QA cookie is explicitly synthetic
+ok 78 - admin cookie uses credential-revision HMAC and client QA cookie is explicitly synthetic
+  ---
+  duration_ms: 1.225349
+  type: 'test'
+  ...
+# Subtest: R4 independent recovery accepts verified public SSR HTTP 503 but never masks G17 failure
+ok 79 - R4 independent recovery accepts verified public SSR HTTP 503 but never masks G17 failure
+  ---
+  duration_ms: 3.961771
+  type: 'test'
+  ...
+# Subtest: candidate restore is fail-safe on QA functional failure, preserves primary error, and never marks full PASS
+ok 80 - candidate restore is fail-safe on QA functional failure, preserves primary error, and never marks full PASS
+  ---
+  duration_ms: 0.524468
+  type: 'test'
+  ...
+# Subtest: candidate restore failure cannot erase original failure; success requires restore verification
+ok 81 - candidate restore failure cannot erase original failure; success requires restore verification
+  ---
+  duration_ms: 0.784798
+  type: 'test'
+  ...
+# Subtest: flag-disabled candidate configuration retains only exact QA worker, source DB, no private routes
+ok 82 - flag-disabled candidate configuration retains only exact QA worker, source DB, no private routes
+  ---
+  duration_ms: 1.737806
+  type: 'test'
+  ...
+# Subtest: fresh R4 recovery refuses any preexisting client relation, originals or backup object
+ok 83 - fresh R4 recovery refuses any preexisting client relation, originals or backup object
+  ---
+  duration_ms: 0.733769
+  type: 'test'
+  ...
+# Subtest: scoped G18 explicitly preserves one known failed case and permits only an empty destination
+ok 84 - scoped G18 explicitly preserves one known failed case and permits only an empty destination
+  ---
+  duration_ms: 1.195098
+  type: 'test'
+  ...
+# Subtest: scoped recovery rejects missing fresh quota evidence or unexpected resource ownership
+ok 85 - scoped recovery rejects missing fresh quota evidence or unexpected resource ownership
+  ---
+  duration_ms: 9.762931
+  type: 'test'
+  ...
+# Subtest: scoped seed worker is a standalone no-Images no-product-config isolated harness
+ok 86 - scoped seed worker is a standalone no-Images no-product-config isolated harness
+  ---
+  duration_ms: 0.33828
+  type: 'test'
+  ...
+# Subtest: synthetic manifest preallocates exactly 2 independent owners, 10 unique 79B PNG images, 10 intents and 2 favorites
+ok 87 - synthetic manifest preallocates exactly 2 independent owners, 10 unique 79B PNG images, 10 intents and 2 favorites
+  ---
+  duration_ms: 1.478968
+  type: 'test'
+  ...
+# Subtest: read-only QA inventory is scoped but never authorizes a G23 rollback
+ok 88 - read-only QA inventory is scoped but never authorizes a G23 rollback
+  ---
+  duration_ms: 4.182672
+  type: 'test'
+  ...
+# Subtest: a single current Worker version never qualifies as a verified rollback predecessor
+ok 89 - a single current Worker version never qualifies as a verified rollback predecessor
+  ---
+  duration_ms: 0.585019
+  type: 'test'
+  ...
+# Subtest: a traffic split inside one deployment is not an earlier deployed rollback version
+ok 90 - a traffic split inside one deployment is not an earlier deployed rollback version
+  ---
+  duration_ms: 0.311059
+  type: 'test'
+  ...
+# Subtest: rollback predecessor must be a distinct earlier deployment with verified chronology
+ok 91 - rollback predecessor must be a distinct earlier deployment with verified chronology
+  ---
+  duration_ms: 0.579819
+  type: 'test'
+  ...
+# Subtest: an older deployment sharing all its versions with a current traffic split is not a distinct restore target
+ok 92 - an older deployment sharing all its versions with a current traffic split is not a distinct restore target
+  ---
+  duration_ms: 0.538539
+  type: 'test'
+  ...
+# Subtest: missing or ambiguous resource readback fails closed, not PASS
+ok 93 - missing or ambiguous resource readback fails closed, not PASS
+  ---
+  duration_ms: 0.623727
+  type: 'test'
+  ...
+# Subtest: duplicate or ambiguous private-gallery flag bindings never qualify a rollback inventory
+ok 94 - duplicate or ambiguous private-gallery flag bindings never qualify a rollback inventory
+  ---
+  duration_ms: 0.324179
+  type: 'test'
+  ...
+# Subtest: failed subscription and D1 probes disclose only actionable scope diagnostics, not secrets
+ok 95 - failed subscription and D1 probes disclose only actionable scope diagnostics, not secrets
+  ---
+  duration_ms: 0.334899
+  type: 'test'
+  ...
+# Subtest: sanitized report contains no binding secrets or raw credentials
+ok 96 - sanitized report contains no binding secrets or raw credentials
+  ---
+  duration_ms: 0.412499
+  type: 'test'
+  ...
+# Subtest: token verification separates active credential from unresolved D1/Billing scopes without leaking token identity
+ok 97 - token verification separates active credential from unresolved D1/Billing scopes without leaking token identity
+  ---
+  duration_ms: 0.736938
+  type: 'test'
+  ...
+# Subtest: account-owned token fallback uses the account verification GET after user endpoint 401
+ok 98 - account-owned token fallback uses the account verification GET after user endpoint 401
+  ---
+  duration_ms: 0.301299
+  type: 'test'
+  ...
+# Subtest: real local G18 scoped fixture: HTTP seed, immutable legacy, D1/R2 backup, 26-row restore and anti-replay
+ok 99 - real local G18 scoped fixture: HTTP seed, immutable legacy, D1/R2 backup, 26-row restore and anti-replay
+  ---
+  duration_ms: 4714.559634
+  type: 'test'
+  ...
+# Subtest: QA health is live and uncached, exposes only bounded diagnostics and makes no SSR/release claim
+ok 100 - QA health is live and uncached, exposes only bounded diagnostics and makes no SSR/release claim
+  ---
+  duration_ms: 65.774672
+  type: 'test'
+  ...
+# Subtest: provider importing the entrypoint starts a real HTTP listener within its startup deadline
+ok 101 - provider importing the entrypoint starts a real HTTP listener within its startup deadline
+  ---
+  duration_ms: 174.677161
+  type: 'test'
+  ...
+# Subtest: creates and verifies PBKDF2-SHA256/310000 credentials
+ok 102 - creates and verifies PBKDF2-SHA256/310000 credentials
+  ---
+  duration_ms: 197.458636
+  type: 'test'
+  ...
+# Subtest: rejects absent or incorrect HMAC signature and stale request
+ok 103 - rejects absent or incorrect HMAC signature and stale request
+  ---
+  duration_ms: 12.916505
+  type: 'test'
+  ...
+# Subtest: rejects a tampered signed body and future timestamps
+ok 104 - rejects a tampered signed body and future timestamps
+  ---
+  duration_ms: 8.951862
+  type: 'test'
+  ...
+# Subtest: rejects unknown signed fields and credentials on hash requests
+ok 105 - rejects unknown signed fields and credentials on hash requests
+  ---
+  duration_ms: 21.517038
+  type: 'test'
+  ...
+# Subtest: rejects replay and malformed credential; never returns a session
+ok 106 - rejects replay and malformed credential; never returns a session
+  ---
+  duration_ms: 73.638377
+  type: 'test'
+  ...
+# Subtest: rejects oversized payloads and invalid routes without leaking implementation
+ok 107 - rejects oversized payloads and invalid routes without leaking implementation
+  ---
+  duration_ms: 15.72389
+  type: 'test'
+  ...
+# Subtest: requires an explicit replay directory outside the deployed application
+ok 108 - requires an explicit replay directory outside the deployed application
+  ---
+  duration_ms: 0.775069
+  type: 'test'
+  ...
+# Subtest: rejects replay across independent server instances and a restarted process
+ok 109 - rejects replay across independent server instances and a restarted process
+  ---
+  duration_ms: 157.200724
+  type: 'test'
+  ...
+# Subtest: reserves capacity before asynchronous body reads
+ok 110 - reserves capacity before asynchronous body reads
+  ---
+  duration_ms: 207.433305
+  type: 'test'
+  ...
+# Subtest: verifies pre-existing credentials against independent native PBKDF2
+ok 111 - verifies pre-existing credentials against independent native PBKDF2
+  ---
+  duration_ms: 93.935556
+  type: 'test'
+  ...
+# Subtest: rejects non-string hash and salt instead of coercing credentials
+ok 112 - rejects non-string hash and salt instead of coercing credentials
+  ---
+  duration_ms: 3.877401
+  type: 'test'
+  ...
+# Subtest: bounds authenticated request rate without exposing account information
+ok 113 - bounds authenticated request rate without exposing account information
+  ---
+  duration_ms: 13.627223
+  type: 'test'
+  ...
+# Subtest: keeps independent credentials isolated without returning cookies or account data
+ok 114 - keeps independent credentials isolated without returning cookies or account data
+  ---
+  duration_ms: 268.284508
+  type: 'test'
+  ...
+# Subtest: emits only bounded structured metadata even when request data contains secrets
+ok 115 - emits only bounded structured metadata even when request data contains secrets
+  ---
+  duration_ms: 57.250989
+  type: 'test'
+  ...
+1..115
+# tests 123
+# suites 1
+# pass 123
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13076.4628

@@ -1,0 +1,89 @@
+name: Punctum read-only Cloudflare preflight
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/punctum-managed-production-20261114, cursor/r4-aj-security-phase-b-ae72, codex/punctum-unlimited-release-20261120]
+    paths: [.github/workflows/punctum-dns-preflight.yml]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify the exact zone and routing resources with existing credentials
+        env:
+          DNS_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+          WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import collections, hashlib, json, os, pathlib, urllib.error, urllib.parse, urllib.request
+          account = '257bca437616da74ece1ce4bbaf0bd89'
+          domain = 'punctumpicture.com'
+          report = {'account': account, 'domain': domain, 'mutations': 0, 'checks': {}}
+          def get(label, path, token, query=None):
+              url = 'https://api.cloudflare.com/client/v4' + path
+              if query: url += '?' + urllib.parse.urlencode(query)
+              secret = os.environ[token]
+              if not secret:
+                  report['checks'][label] = 'missing credential'
+                  return {}
+              request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + secret})
+              try:
+                  with urllib.request.urlopen(request, timeout=18) as response:
+                      data = json.load(response)
+                      report['checks'][label] = response.status
+                      return data if data.get('success') else {}
+              except urllib.error.HTTPError as error:
+                  report['checks'][label] = error.code
+                  return {}
+          zone = get('zone', '/zones', 'DNS_TOKEN', {'name':domain, 'account.id':account})
+          matches = [item for item in zone.get('result', []) if item['name'] == domain and item.get('account',{}).get('id') == account]
+          if len(matches) == 1:
+              item = matches[0]
+              zone_id = item['id']
+              report['zone'] = {'id':zone_id,'status':item['status'],'nameservers':item['name_servers']}
+              records = []
+              for page in range(1, 11):
+                  response = get('recordsPage' + str(page), f'/zones/{zone_id}/dns_records', 'DNS_TOKEN', {'page':page,'per_page':100})
+                  records.extend(response.get('result', []))
+                  if page >= response.get('result_info',{}).get('total_pages',1): break
+              report['types'] = dict(collections.Counter(r['type'] for r in records))
+              baseline = [{k:r.get(k) for k in ('id','name','type','content','ttl','proxied','priority','data')}
+                          for r in sorted(records, key=lambda r:r['id'])]
+              report['recordsSha256'] = hashlib.sha256(json.dumps(baseline,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+              report['nonRoutingRecords'] = [{**{k:r.get(k) for k in ('id','name','type','ttl','priority')},
+                  'contentSha256':hashlib.sha256((r.get('content') or '').encode()).hexdigest()}
+                  for r in baseline if r['type'] in ('TXT','MX','CAA')]
+              relevant = {domain, 'www.' + domain, 'clerk.' + domain, 'accounts.' + domain, 'clkmail.' + domain,
+                          'clk._domainkey.' + domain, 'clk2._domainkey.' + domain}
+              report['routingRecords'] = [{k:r.get(k) for k in ('id','name','type','content','ttl','proxied')}
+                   for r in records if r['name'] in relevant and r['type'] in ('A','AAAA','CNAME','CAA')]
+              for setting in ('ssl','always_use_https','cache_level'):
+                  result = get(setting, f'/zones/{zone_id}/settings/{setting}', 'DNS_TOKEN')
+                  if not result and report['checks'][setting] in (401,403):
+                      result = get(setting + 'WithWorkersCredential', f'/zones/{zone_id}/settings/{setting}', 'WORKERS_TOKEN')
+                  if result: report[setting] = result.get('result',{}).get('value')
+          path = f'/accounts/{account}/workers/domains'
+          response = get('workerDomains', path, 'WORKERS_TOKEN')
+          report['workerDomains'] = [{k:r.get(k) for k in ('id','hostname','service','environment')}
+              for r in response.get('result',[]) if r.get('hostname') in (domain, 'www.' + domain)]
+          response = get('workerBindings', f'/accounts/{account}/workers/scripts/punctum-picture-migration/settings', 'WORKERS_TOKEN')
+          report['storageBindings'] = [{k:r.get(k) for k in ('type','name','id','bucket_name')}
+              for r in response.get('result',{}).get('bindings',[]) if r.get('type') in ('d1','r2_bucket')]
+          response = get('workerSchedules', f'/accounts/{account}/workers/scripts/punctum-picture-migration/schedules', 'WORKERS_TOKEN')
+          if response:
+              values = response.get('result',{}).get('schedules',[])
+              report['workerSchedules'] = [r.get('cron') if isinstance(r,dict) else r for r in values]
+          folder=pathlib.Path('dns-evidence')
+          folder.mkdir()
+          (folder/'report.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-cloudflare-preflight
+          path: dns-evidence/
+          retention-days: 7

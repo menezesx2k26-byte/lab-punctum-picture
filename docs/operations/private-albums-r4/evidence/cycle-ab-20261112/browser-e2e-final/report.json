@@ -1,0 +1,3788 @@
+{
+  "status": "PASS_LOCAL",
+  "startedUtc": "2026-11-12T04:02:48.243Z",
+  "sourceSha": "397d1077b713e2852b722b83c31fcb6ce9c5ae98",
+  "sourceRevisionProvided": false,
+  "checkoutDirtyAtRun": false,
+  "buildSha256": "29fa1672a41bc1c46ee1aaa87fbf781dc74f66629c88e5dca381aaf7d4026bc5",
+  "scope": "real Chromium against production bundle in local workerd with new synthetic D1/R2",
+  "cloudflareAccessOtpTested": false,
+  "remoteQaTouched": false,
+  "productionTouched": false,
+  "syntheticSessionOnly": true,
+  "physicalDevicesTested": false,
+  "screenReaderTested": false,
+  "actualBrowserZoomTested": false,
+  "reducedMotion": "reduce",
+  "checks": [
+    "fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals",
+    "anonymous gallery access denied; Access mode disables password login",
+    "axe-core WCAG 2.1 A/AA private client library: 17 rules passed, zero violations; 0 manual review candidates",
+    "real browser client A/B libraries and foreign gallery/original denial",
+    "axe-core WCAG 2.1 A/AA private gallery detail: 17 rules passed, zero violations; 1 manual review candidates",
+    "axe-core WCAG 2.1 A/AA private gallery lightbox: 12 rules passed, zero violations; 0 manual review candidates",
+    "favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified",
+    "private gallery has no horizontal overflow at 320/360/375/390/430/640/768/1024/1440px; 640px is a responsive-layout proxy only, not a 200% browser-zoom test",
+    "private media is denied anonymously and cannot enter public media/image optimizer",
+    "same-component client navigation clears prior gallery while pending and after an intentional404",
+    "malformed success envelope produces a safe library alert without a render exception",
+    "axe-core WCAG 2.1 A/AA public home: 26 rules passed, zero violations; 1 manual review candidates",
+    "axe-core WCAG 2.1 A/AA Studio: 25 rules passed, zero violations; 0 manual review candidates",
+    "public home and authenticated Studio render; anonymous Studio denied",
+    "production entrypoint fences successful and failed Studio publications; unauthorized changes do not touch snapshot state",
+    "axe-core WCAG 2.1 A/AA public home with Colagem Autoral: 26 rules passed, zero violations; 1 manual review candidates",
+    "Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/640/768/1024/1440px",
+    "axe-core WCAG 2.1 A/AA private admin gallery editor: 25 rules passed, zero violations; 0 manual review candidates",
+    "private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; nine responsive widths including 640px",
+    "workerd restart preserves favorites, authenticated gallery and original bytes",
+    "isolated local consistent-storage rollback restores gallery availability after archiving",
+    "logout revokes client A while client B remains authorized"
+  ],
+  "pageErrors": [],
+  "consoleWarnings": [],
+  "consoleErrors": [],
+  "expectedDenials": [
+    {
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "path": "/api/client/galleries/01f0f599-4501-4bf1-b7a3-445ba15341f1"
+    }
+  ],
+  "serverErrors": [],
+  "screenshotModes": {
+    "private-gallery-mobile.png": "fullPage",
+    "public-home.png": "fullPage",
+    "studio.png": "fullPage",
+    "colagem-mobile.png": "fullPage",
+    "private-admin-mobile.png": "fullPage"
+  },
+  "accessibilityAudits": [
+    {
+      "label": "private client library",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 17,
+      "incompleteCount": 0,
+      "incompleteNodeCount": 0,
+      "violationNodeCount": 0,
+      "incomplete": [],
+      "violations": []
+    },
+    {
+      "label": "private gallery detail",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 17,
+      "incompleteCount": 1,
+      "incompleteNodeCount": 10,
+      "violationNodeCount": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "nodes": [
+            {
+              "target": [
+                "figure:nth-child(1) > figcaption > div > button"
+              ],
+              "html": "<button aria-label=\"Favoritar: Fotografia sintética A 1\" aria-pressed=\"false\">♡</button>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(1) > figcaption > div > a[download=\"\"]"
+              ],
+              "html": "<a href=\"/api/client/galleries/ebb7edb2-ffdf-4d4d-b27f-ea43e5cf0d9e/images/fc3982d4-1aba-4a06-88f6-702a80ddb76f/download\" aria-label=\"Baixar Fotografia sintética A 1\" download=\"\">↓</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(2) > figcaption > div > button"
+              ],
+              "html": "<button aria-label=\"Favoritar: Fotografia sintética A 2\" aria-pressed=\"false\">♡</button>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(2) > figcaption > div > a[download=\"\"]"
+              ],
+              "html": "<a href=\"/api/client/galleries/ebb7edb2-ffdf-4d4d-b27f-ea43e5cf0d9e/images/63e6ed0b-64a1-4379-be4c-fb26fa5311a3/download\" aria-label=\"Baixar Fotografia sintética A 2\" download=\"\">↓</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(3) > figcaption > div > button"
+              ],
+              "html": "<button aria-label=\"Favoritar: Fotografia sintética A 3\" aria-pressed=\"false\">♡</button>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(3) > figcaption > div > a[download=\"\"]"
+              ],
+              "html": "<a href=\"/api/client/galleries/ebb7edb2-ffdf-4d4d-b27f-ea43e5cf0d9e/images/cb1975bb-891b-4b06-9e80-f4f6539eb6e2/download\" aria-label=\"Baixar Fotografia sintética A 3\" download=\"\">↓</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(4) > figcaption > div > button"
+              ],
+              "html": "<button aria-label=\"Favoritar: Fotografia sintética A 4\" aria-pressed=\"false\">♡</button>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(4) > figcaption > div > a[download=\"\"]"
+              ],
+              "html": "<a href=\"/api/client/galleries/ebb7edb2-ffdf-4d4d-b27f-ea43e5cf0d9e/images/1ad5dbb0-ac2f-4366-b6de-fda92fa25676/download\" aria-label=\"Baixar Fotografia sintética A 4\" download=\"\">↓</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(5) > figcaption > div > button"
+              ],
+              "html": "<button aria-label=\"Favoritar: Fotografia sintética A 5\" aria-pressed=\"false\">♡</button>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "figure:nth-child(5) > figcaption > div > a[download=\"\"]"
+              ],
+              "html": "<a href=\"/api/client/galleries/ebb7edb2-ffdf-4d4d-b27f-ea43e5cf0d9e/images/b336e621-07f6-4bcd-a07b-1f98f2415bb5/download\" aria-label=\"Baixar Fotografia sintética A 5\" download=\"\">↓</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element content contains only non-text characters",
+                  "data": {
+                    "messageKey": "nonBmp"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        }
+      ],
+      "violations": []
+    },
+    {
+      "label": "private gallery lightbox",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 12,
+      "incompleteCount": 0,
+      "incompleteNodeCount": 0,
+      "violationNodeCount": 0,
+      "incomplete": [],
+      "violations": []
+    },
+    {
+      "label": "public home",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 26,
+      "incompleteCount": 1,
+      "incompleteNodeCount": 50,
+      "violationNodeCount": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "nodes": [
+            {
+              "target": [
+                ".header-author"
+              ],
+              "html": "<span class=\"header-author\">Fotografias por Maria Helena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".site-nav > a[href$=\"portfolio\"]"
+              ],
+              "html": "<a href=\"/portfolio\">Portfólio</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.6pt (12.8px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".site-nav > a[href$=\"arquivo\"]"
+              ],
+              "html": "<a href=\"/arquivo\">Arquivo</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.6pt (12.8px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".site-nav > a[href$=\"/#sobre\"]"
+              ],
+              "html": "<a href=\"/#sobre\">Sobre</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.6pt (12.8px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".nav-cta"
+              ],
+              "html": "<a href=\"/contato\" class=\"nav-cta\">Conversar</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.6pt (12.8px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-title > p"
+              ],
+              "html": "<p>Maria Helena · fotografia documental</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "#hero-title > span"
+              ],
+              "html": "<span>Fotografias de</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "72.0pt (96px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "#hero-title > em"
+              ],
+              "html": "<em>Maria Helena.</em>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "72.0pt (96px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-caption > p"
+              ],
+              "html": "<p>Retratos, esporte, música e o que encontro pelo caminho.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "15.0pt (20px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-caption > .text-link[href$=\"arquivo\"]"
+              ],
+              "html": "<a href=\"/arquivo\" class=\"text-link\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-skip"
+              ],
+              "html": "<a href=\"#after-home-hero\" class=\"lens-skip\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-navigation > .text-link[href$=\"portfolio\"]"
+              ],
+              "html": "<a href=\"/portfolio\" class=\"text-link\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".visual-thesis > div:nth-child(2) > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Como comecei</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#thesis-title"
+              ],
+              "html": "<h2 id=\"thesis-title\">Comecei na fotografia na igreja, e desde então nunca mais parei.</h2>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "48.2pt (64.32px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".thesis-body-column > p"
+              ],
+              "html": "<p>Maria Helena · Punctum Picture</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                ".carousel-heading > div > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Do acervo</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#carousel-title"
+              ],
+              "html": "<h2 id=\"carousel-title\">Fotografias para ver de perto.</h2>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "48.2pt (64.32px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".carousel-heading > p"
+              ],
+              "html": "<p>Uma seleção de retratos, apresentações, encontros e dias comuns.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.3pt (13.76px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(1) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Autorretrato — Maria Helena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(2) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Documental — Fé e Tradição</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(3) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Música — Palco aceso</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(4) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Personagens do campo</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(5) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Cotidiano — Intervalos da cidade</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(6) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Outono rubro</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(7) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Vermelho em cena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(8) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Cinema de domingo</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-reel-hint"
+              ],
+              "html": "<p class=\"spatial-reel-hint\">Arraste para girar. Toque numa foto para abrir.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-reel-footer > .text-link[data-cursor=\"open\"][href$=\"arquivo\"]"
+              ],
+              "html": "<a href=\"/arquivo\" class=\"text-link\" data-cursor=\"open\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".section-heading > div:nth-child(1) > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Trabalhos em Destaque</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#destaques-title"
+              ],
+              "html": "<h2 id=\"destaques-title\">Alguns<br><em>ensaios.</em></h2>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "48.2pt (64.32px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#destaques-title > em"
+              ],
+              "html": "<em>ensaios.</em>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "48.2pt (64.32px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".section-heading > div:nth-child(2) > p"
+              ],
+              "html": "<p>Abra um ensaio para ver a sequência completa.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".live-stat"
+              ],
+              "html": "<span class=\"live-stat\">Ver as 13 histórias</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".view-switch-btn[type=\"button\"]:nth-child(2) > span"
+              ],
+              "html": "<span>Grade</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".view-switch-btn[type=\"button\"]:nth-child(2)"
+                      ],
+                      "html": "<button type=\"button\" class=\"view-switch-btn \" aria-pressed=\"false\"><span>Grade</span></button>"
+                    },
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".view-switch-btn[type=\"button\"]:nth-child(3) > span"
+              ],
+              "html": "<span>Composição</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".view-switch-btn[type=\"button\"]:nth-child(3)"
+                      ],
+                      "html": "<button type=\"button\" class=\"view-switch-btn \" aria-pressed=\"false\"><span>Composição</span></button>"
+                    },
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".manifesto-image > span"
+              ],
+              "html": "<span>Maria Helena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".manifesto-copy-block > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Sobre a Punctum</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#sobre-title"
+              ],
+              "html": "<blockquote id=\"sobre-title\">Comecei na fotografia na igreja, e desde então nunca mais parei.</blockquote>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "48.2pt (64.32px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".manifesto-copy-block > p:nth-child(3)"
+              ],
+              "html": "<p>Maria Helena fotografa retratos, esporte, música e cenas do cotidiano. Seu trabalho começou na igreja e se ampliou para outros temas.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.6pt (14.08px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".manifesto-location-line > span"
+              ],
+              "html": "<span>Joinville · Curitiba · São Bento do Sul · Campo Alegre · Rio Negrinho</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".light-link"
+              ],
+              "html": "<a href=\"/arquivo\" class=\"text-link light-link\" data-cursor=\"open\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".site-shell"
+                      ],
+                      "html": "<div class=\"site-shell immersive...\" style=\"--color-background:#...\" data-theme-preset=\"punctum-default\" data-theme-palette=\"nocturne-plum\" data-theme-mode=\"dark\" data-theme-motion=\"subtle\" data-theme-image=\"natural\" data-theme-backgroun...=\"organic-glow\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".footer-wordmark"
+              ],
+              "html": "<span class=\"footer-wordmark\">Punctum Picture</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "43.2pt (57.6px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "footer > div > p"
+              ],
+              "html": "<p>Fotografia de presença, gesto e movimento.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.6pt (12.8px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "nav[aria-label=\"Navegação do rodapé\"] > a[href$=\"portfolio\"]"
+              ],
+              "html": "<a href=\"/portfolio\">Histórias</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.4pt (12.48px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "nav[aria-label=\"Navegação do rodapé\"] > a[href$=\"arquivo\"]"
+              ],
+              "html": "<a href=\"/arquivo\">Arquivo completo</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.4pt (12.48px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "nav[aria-label=\"Navegação do rodapé\"] > a[href$=\"/#sobre\"]"
+              ],
+              "html": "<a href=\"/#sobre\">Sobre Maria Helena</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.4pt (12.48px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "a[href$=\"servicos\"]"
+              ],
+              "html": "<a href=\"/servicos\">O que fotografo</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.4pt (12.48px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "a[href$=\"fotografia\"]"
+              ],
+              "html": "<a href=\"/fotografia\">Onde fotografo</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.4pt (12.48px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "nav[aria-label=\"Navegação do rodapé\"] > a[href$=\"contato\"]"
+              ],
+              "html": "<a href=\"/contato\">Contato</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.4pt (12.48px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "footer > span"
+              ],
+              "html": "<span>© <!-- -->2026<!-- --> · <!-- -->Maria Helena · Brasil</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "7.8pt (10.4px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "footer"
+                      ],
+                      "html": "<footer class=\"site-footer\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            }
+          ]
+        }
+      ],
+      "violations": []
+    },
+    {
+      "label": "Studio",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 25,
+      "incompleteCount": 0,
+      "incompleteNodeCount": 0,
+      "violationNodeCount": 0,
+      "incomplete": [],
+      "violations": []
+    },
+    {
+      "label": "public home with Colagem Autoral",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 26,
+      "incompleteCount": 1,
+      "incompleteNodeCount": 57,
+      "violationNodeCount": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "nodes": [
+            {
+              "target": [
+                ".header-author"
+              ],
+              "html": "<span class=\"header-author\">Fotografias por Maria Helena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".site-nav > a[href$=\"portfolio\"]"
+              ],
+              "html": "<a href=\"/portfolio\">Portfólio</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15.04px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".site-nav > a[href$=\"arquivo\"]"
+              ],
+              "html": "<a href=\"/arquivo\">Arquivo</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15.04px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".site-nav > a[href$=\"/#sobre\"]"
+              ],
+              "html": "<a href=\"/#sobre\">Sobre</a>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15.04px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-title > p"
+              ],
+              "html": "<p>Maria Helena · fotografia documental</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "#hero-title > span"
+              ],
+              "html": "<span>Fotografias de</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "72.0pt (96px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "#hero-title > em"
+              ],
+              "html": "<em>Maria Helena.</em>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "72.0pt (96px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-caption > p"
+              ],
+              "html": "<p>Retratos, esporte, música e o que encontro pelo caminho.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "15.0pt (20px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-caption > .text-link[href$=\"arquivo\"]"
+              ],
+              "html": "<a href=\"/arquivo\" class=\"text-link\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-skip"
+              ],
+              "html": "<a href=\"#after-home-hero\" class=\"lens-skip\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".lens-navigation > .text-link[href$=\"portfolio\"]"
+              ],
+              "html": "<a href=\"/portfolio\" class=\"text-link\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because element contains an image node",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "imgNode",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        "img[src$=\"p002.jpg\"]"
+                      ],
+                      "html": "<img src=\"/photos/p002.jpg\" alt=\"Vela acesa iluminand...\" width=\"1080\" height=\"1440\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" srcset=\"/photos/p002.jpg 640...\" sizes=\"100vw\" data-nimg=\"1\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "div:nth-child(2) > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Como comecei</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".visual-thesis"
+                      ],
+                      "html": "<section class=\"visual-thesis visual-thesis-manifesto reveal\" aria-labelledby=\"thesis-title\" data-home-section-id=\"home-statement\" data-home-section-type=\"statement\" data-home-section-variant=\"manifesto\" data-section-surface=\"default\" data-section-density=\"balanced\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".thesis-body-column > p"
+              ],
+              "html": "<p>Maria Helena · Punctum Picture</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "20.4pt (27.2px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".visual-thesis"
+                      ],
+                      "html": "<section class=\"visual-thesis visual-thesis-manifesto reveal\" aria-labelledby=\"thesis-title\" data-home-section-id=\"home-statement\" data-home-section-type=\"statement\" data-home-section-variant=\"manifesto\" data-section-surface=\"default\" data-section-density=\"balanced\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".carousel-heading > div > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Do acervo</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#carousel-title"
+              ],
+              "html": "<h2 id=\"carousel-title\">Fotografias para ver de perto.</h2>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "48.2pt (64.32px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".carousel-heading > p"
+              ],
+              "html": "<p>Uma seleção de retratos, apresentações, encontros e dias comuns.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.3pt (13.76px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(1) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Autorretrato — Maria Helena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(2) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Documental — Fé e Tradição</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(3) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Música — Palco aceso</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(4) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Personagens do campo</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(5) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Cotidiano — Intervalos da cidade</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(6) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Outono rubro</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(7) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Vermelho em cena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-fallback-item[type=\"button\"]:nth-child(8) > .spatial-fallback-caption"
+              ],
+              "html": "<span class=\"spatial-fallback-caption\">Retrato — Cinema de domingo</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".spatial-reel-hint"
+              ],
+              "html": "<p class=\"spatial-reel-hint\">Arraste para girar. Toque numa foto para abrir.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".text-link[href$=\"arquivo\"][data-cursor=\"open\"]"
+              ],
+              "html": "<a href=\"/arquivo\" class=\"text-link\" data-cursor=\"open\">",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a background gradient",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgGradient",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".carousel-section"
+                      ],
+                      "html": "<section class=\"carousel-section car...\" aria-labelledby=\"carousel-title\" data-home-section-id=\"home-photo-reel\" data-home-section-ty...=\"photo-reel\" data-home-section-va...=\"horizontal\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\" ...>"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".section-heading > div:nth-child(1) > .eyebrow"
+              ],
+              "html": "<p class=\"eyebrow\">Trabalhos em Destaque</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                "#destaques-title"
+              ],
+              "html": "<h2 id=\"destaques-title\">Alguns<br><em>ensaios.</em></h2>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "115.2pt (153.6px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                "#destaques-title > em"
+              ],
+              "html": "<em>ensaios.</em>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "115.2pt (153.6px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".section-heading > div:nth-child(2) > p"
+              ],
+              "html": "<p>Abra um ensaio para ver a sequência completa.</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".live-stat"
+              ],
+              "html": "<span class=\"live-stat\">Ver as 13 histórias</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "11.3pt (15px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".view-switch-btn[type=\"button\"]:nth-child(1) > span"
+              ],
+              "html": "<span>Percorrer</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".view-switch-btn[type=\"button\"]:nth-child(2) > span"
+              ],
+              "html": "<span>Grade</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".is-active > span"
+              ],
+              "html": "<span>Composição</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-editorial-masthead > span"
+              ],
+              "html": "<span>PUNCTUM PICTURE / ENSAIOS</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.0pt (13.28px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                "strong"
+              ],
+              "html": "<strong>MARIA<br>HELENA.</strong>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "105.6pt (140.8px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                "small"
+              ],
+              "html": "<small>06<!-- --> ENSAIOS / SELEÇÃO</small>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.0pt (13.28px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".stories-section"
+                      ],
+                      "html": "<section class=\"section stories-sect...\" aria-labelledby=\"destaques-title\" data-home-section-id=\"home-featured-work\" data-home-section-ty...=\"featured-work\" data-home-section-va...=\"collage\" data-section-surface=\"default\" data-section-density=\"balanced\" data-section-alignme...=\"start\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-1 > .collage-plate-number[aria-hidden=\"true\"]"
+              ],
+              "html": "<span class=\"collage-plate-number\" aria-hidden=\"true\">01<!-- --> / <!-- -->06</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-1"
+                      ],
+                      "html": "<a href=\"/ensaios/ritos-de-luz\" class=\"collage-story-plate collage-plate-1\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-1 > .collage-caption > h3"
+              ],
+              "html": "<h3>Fé e Tradição</h3>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "34.8pt (46.4px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-1"
+                      ],
+                      "html": "<a href=\"/ensaios/ritos-de-luz\" class=\"collage-story-plate collage-plate-1\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-1 > .collage-caption > p"
+              ],
+              "html": "<p>Documental</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-1"
+                      ],
+                      "html": "<a href=\"/ensaios/ritos-de-luz\" class=\"collage-story-plate collage-plate-1\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-2 > .collage-plate-number[aria-hidden=\"true\"]"
+              ],
+              "html": "<span class=\"collage-plate-number\" aria-hidden=\"true\">02<!-- --> / <!-- -->06</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-2"
+                      ],
+                      "html": "<a href=\"/ensaios/intervalos-da-cidade\" class=\"collage-story-plate collage-plate-2\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-2 > .collage-caption > h3"
+              ],
+              "html": "<h3>Intervalos da cidade</h3>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "34.8pt (46.4px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-2"
+                      ],
+                      "html": "<a href=\"/ensaios/intervalos-da-cidade\" class=\"collage-story-plate collage-plate-2\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-2 > .collage-caption > p"
+              ],
+              "html": "<p>Cotidiano</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-2"
+                      ],
+                      "html": "<a href=\"/ensaios/intervalos-da-cidade\" class=\"collage-story-plate collage-plate-2\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-3 > .collage-plate-number[aria-hidden=\"true\"]"
+              ],
+              "html": "<span class=\"collage-plate-number\" aria-hidden=\"true\">03<!-- --> / <!-- -->06</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-3"
+                      ],
+                      "html": "<a href=\"/ensaios/palco-aceso\" class=\"collage-story-plate collage-plate-3\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-3 > .collage-caption > h3"
+              ],
+              "html": "<h3>Palco aceso</h3>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "34.8pt (46.4px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-3"
+                      ],
+                      "html": "<a href=\"/ensaios/palco-aceso\" class=\"collage-story-plate collage-plate-3\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-3 > .collage-caption > p"
+              ],
+              "html": "<p>Música</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-3"
+                      ],
+                      "html": "<a href=\"/ensaios/palco-aceso\" class=\"collage-story-plate collage-plate-3\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-4 > .collage-plate-number[aria-hidden=\"true\"]"
+              ],
+              "html": "<span class=\"collage-plate-number\" aria-hidden=\"true\">04<!-- --> / <!-- -->06</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-4"
+                      ],
+                      "html": "<a href=\"/ensaios/personagens-do-campo\" class=\"collage-story-plate collage-plate-4\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-4 > .collage-caption > h3"
+              ],
+              "html": "<h3>Personagens do campo</h3>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "34.8pt (46.4px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-4"
+                      ],
+                      "html": "<a href=\"/ensaios/personagens-do-campo\" class=\"collage-story-plate collage-plate-4\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-4 > .collage-caption > p"
+              ],
+              "html": "<p>Retrato</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-4"
+                      ],
+                      "html": "<a href=\"/ensaios/personagens-do-campo\" class=\"collage-story-plate collage-plate-4\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-5 > .collage-plate-number[aria-hidden=\"true\"]"
+              ],
+              "html": "<span class=\"collage-plate-number\" aria-hidden=\"true\">05<!-- --> / <!-- -->06</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-5"
+                      ],
+                      "html": "<a href=\"/ensaios/outono-rubro\" class=\"collage-story-plate collage-plate-5\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-5 > .collage-caption > h3"
+              ],
+              "html": "<h3>Outono rubro</h3>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "34.8pt (46.4px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-5"
+                      ],
+                      "html": "<a href=\"/ensaios/outono-rubro\" class=\"collage-story-plate collage-plate-5\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-5 > .collage-caption > p"
+              ],
+              "html": "<p>Retrato</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-5"
+                      ],
+                      "html": "<a href=\"/ensaios/outono-rubro\" class=\"collage-story-plate collage-plate-5\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-6 > .collage-plate-number[aria-hidden=\"true\"]"
+              ],
+              "html": "<span class=\"collage-plate-number\" aria-hidden=\"true\">06<!-- --> / <!-- -->06</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "9.0pt (12px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-6"
+                      ],
+                      "html": "<a href=\"/ensaios/vermelho-em-cena\" class=\"collage-story-plate collage-plate-6\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-6 > .collage-caption > h3"
+              ],
+              "html": "<h3>Vermelho em cena</h3>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "34.8pt (46.4px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "3:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-6"
+                      ],
+                      "html": "<a href=\"/ensaios/vermelho-em-cena\" class=\"collage-story-plate collage-plate-6\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-plate-6 > .collage-caption > p"
+              ],
+              "html": "<p>Retrato</p>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "12.0pt (16px)",
+                    "fontWeight": "normal",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".collage-plate-6"
+                      ],
+                      "html": "<a href=\"/ensaios/vermelho-em-cena\" class=\"collage-story-plate collage-plate-6\" data-cursor=\"open\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                ".collage-portrait-edition"
+              ],
+              "html": "<span class=\"collage-portrait-edition\" aria-hidden=\"true\">MARIA HELENA</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined due to a pseudo element",
+                  "data": {
+                    "fontSize": "10.2pt (13.6px)",
+                    "fontWeight": "bold",
+                    "messageKey": "pseudoContent",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [
+                    {
+                      "target": [
+                        ".manifesto-image"
+                      ],
+                      "html": "<div class=\"manifesto-image manifesto-editorial-image reveal\">"
+                    }
+                  ]
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined due to a pseudo element"
+            },
+            {
+              "target": [
+                "span[aria-hidden=\"true\"]:nth-child(4)"
+              ],
+              "html": "<span aria-hidden=\"true\">Maria Helena</span>",
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "10.5pt (14px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  }
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            }
+          ]
+        }
+      ],
+      "violations": []
+    },
+    {
+      "label": "private admin gallery editor",
+      "standard": "WCAG 2.1 A/AA",
+      "passes": 25,
+      "incompleteCount": 0,
+      "incompleteNodeCount": 0,
+      "violationNodeCount": 0,
+      "incomplete": [],
+      "violations": []
+    }
+  ],
+  "browser": "157.0.8103.38",
+  "localBrowserHomeNavigationMs": 43885.574871,
+  "completedUtc": "2026-11-12T04:05:08.252Z",
+  "temporaryStorageRemoved": true
+}

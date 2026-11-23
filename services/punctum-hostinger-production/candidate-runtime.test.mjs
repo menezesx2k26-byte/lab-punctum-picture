@@ -1,0 +1,93 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { DatabaseSync } from "node:sqlite";
+import { chmodSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { candidateConfig, canonicalCandidateUrl } from "./candidate-runtime.mjs";
+import { productionStageApplicationId } from "./sqlite.mjs";
+
+test("canonical www redirect preserves paths and cannot change the approved origin", () => {
+  const origin = new URL("https://punctumpicture.com");
+  assert.equal(canonicalCandidateUrl(new URL("https://www.punctumpicture.com/portfolio?q=one"), origin).href,
+    "https://punctumpicture.com/portfolio?q=one");
+  assert.equal(canonicalCandidateUrl(new URL("https://www.punctumpicture.com//other.example/path"), origin).origin, origin.origin);
+  assert.equal(canonicalCandidateUrl(origin, origin), null);
+  assert.equal(canonicalCandidateUrl(new URL("https://unrelated.example/"), origin), null);
+  assert.equal(canonicalCandidateUrl(new URL("https://www.punctumpicture.com"), new URL("https://aliceblue-locust-999458.hostingersite.com")), null);
+});
+
+test("candidateConfig validates isolated private candidate environment and rejects unsafe paths", async (t) => {
+  const root = mkdtempSync(join(tmpdir(), "punctum-cand-rt-"));
+  chmodSync(root, 0o700);
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const dbDir = join(root, "db");
+  const origDir = join(root, "originals");
+  const bakDir = join(root, "backups");
+  mkdirSync(dbDir, { mode: 0o700 });
+  mkdirSync(origDir, { mode: 0o700 });
+  mkdirSync(bakDir, { mode: 0o700 });
+  const dbFile = join(dbDir, "candidate.sqlite");
+  const db = new DatabaseSync(dbFile);
+  db.exec(`PRAGMA application_id = ${productionStageApplicationId};`);
+  db.close();
+  chmodSync(dbFile, 0o600);
+
+  const saved = { ...process.env };
+  t.after(() => {
+    for (const k of Object.keys(process.env)) {
+      if (k.startsWith("PUNCTUM_")) delete process.env[k];
+    }
+    Object.assign(process.env, saved);
+  });
+
+  process.env.PUNCTUM_PRODUCTION_CANDIDATE_MODE = "private-candidate";
+  process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "staging";
+  process.env.PUNCTUM_CANDIDATE_ORIGIN = "http://127.0.0.1:3025";
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://127.0.0.1:8443";
+  process.env.PUNCTUM_CANDIDATE_DB_FILE = dbFile;
+  process.env.PUNCTUM_CANDIDATE_ORIGINALS = origDir;
+  process.env.PUNCTUM_CANDIDATE_BACKUPS_ROOT = bakDir;
+  process.env.PUNCTUM_CANDIDATE_ADMIN_EMAIL = "admin@punctumpicture.com";
+  process.env.PUNCTUM_CANDIDATE_ADMIN_SESSION_SECRET = "a".repeat(48);
+  process.env.PUNCTUM_CANDIDATE_CLIENT_SESSION_SECRET = "b".repeat(48);
+
+  const cfg = candidateConfig();
+  assert.equal(cfg.environment, "staging");
+  assert.equal(cfg.origin.port, "3025");
+  assert.equal(cfg.publicOrigin.origin, "https://127.0.0.1:8443");
+  assert.equal(cfg.trustedProxy, "caddy");
+  assert.equal(cfg.privateGalleriesEnabled, false, "public release defaults to R4 disabled");
+  process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED = "true";
+  assert.equal(candidateConfig().privateGalleriesEnabled, true);
+  process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED = "false";
+  assert.equal(candidateConfig().privateGalleriesEnabled, false);
+  delete process.env.PUNCTUM_CANDIDATE_PRIVATE_GALLERIES_ENABLED;
+
+  process.env.PUNCTUM_CANDIDATE_PROVIDER = "hostinger-managed";
+  process.env.PORT = "34567";
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://aliceblue-locust-999458.hostingersite.com";
+  assert.equal(candidateConfig().managed, true);
+  assert.equal(candidateConfig().origin.port, "34567");
+  delete process.env.PORT;
+  assert.equal(candidateConfig().origin.port, "3000");
+  process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "production";
+  assert.equal(candidateConfig().noindex, true);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://punctumpicture.com";
+  assert.equal(candidateConfig().noindex, false);
+  assert.equal(candidateConfig().privateGalleriesEnabled, false);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://magic-lime-guanaco-79.hostingersite.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
+  process.env.PUNCTUM_CANDIDATE_ENVIRONMENT = "staging";
+  assert.equal(candidateConfig().publicOrigin.origin, "https://magic-lime-guanaco-79.hostingersite.com");
+  assert.equal(candidateConfig().noindex, true);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://magic-lime-guanaco-80.hostingersite.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
+  process.env.PUNCTUM_CANDIDATE_PUBLIC_URL = "https://unrelated.example.com";
+  assert.throws(() => candidateConfig(), /CANDIDATE_MANAGED_HOST_INVALID/);
+  delete process.env.PUNCTUM_CANDIDATE_PROVIDER;
+
+  process.env.PUNCTUM_CANDIDATE_ORIGIN = "https://0.0.0.0:3025";
+  assert.throws(() => candidateConfig(), /CANDIDATE_LISTEN_ORIGIN_INVALID/);
+});

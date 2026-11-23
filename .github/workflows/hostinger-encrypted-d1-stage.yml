@@ -1,0 +1,126 @@
+name: Punctum Hostinger — D1 encrypted staging
+
+on:
+  push:
+    branches: [agent/hostinger-encrypted-d1-stage-20261113, agent/hostinger-production-import-preflight-20261113]
+    paths: [requests/hostinger-encrypted-d1-stage.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-hostinger-d1-stage
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Prove authenticated encryption on disposable SQL only
+        run: node --test scripts/hostinger-encrypt-d1-stage.test.mjs
+      - name: Validate explicit operation
+        id: intent
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('requests/hostinger-encrypted-d1-stage.json','utf8'));
+          if(p.scope!=='PUNCTUM_D1_ENCRYPTED_STAGING_ONLY' || p.dnsTouched!==false) throw Error('INVALID_SCOPE');
+          if(!['selftest','inventory-only','encrypt-d1'].includes(p.action)) throw Error('INVALID_ACTION');
+          if(p.action==='encrypt-d1' && (p.databaseId!=='22697f13-7484-41e3-9441-f7b902c6577a' ||
+             !/^[a-fA-F0-9]{64}$/.test(p.recipientCertFingerprintSha256||'') ||
+             p.productionDataImported!==false)) throw Error('INVALID_ENCRYPTION_REQUEST');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,'encrypt='+String(p.action==='encrypt-d1')+'\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,'inventory='+String(p.action==='inventory-only')+'\n');
+          if(p.action==='encrypt-d1') {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT,'fingerprint='+p.recipientCertFingerprintSha256.toLowerCase()+'\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT,'databaseId='+p.databaseId+'\n');
+          }
+          console.log(JSON.stringify({action:p.action,sourceDataReadOnly:true,dnsTouched:false}));
+          NODE
+      - name: Read current Cloudflare D1 schema and counts only
+        if: steps.intent.outputs.inventory == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+        run: node scripts/hostinger-d1-readonly-inventory.mjs
+      - uses: actions/upload-artifact@v6
+        if: steps.intent.outputs.inventory == 'true' && success()
+        with:
+          name: punctum-d1-readonly-inventory
+          path: outputs/hostinger-d1-readonly/inventory.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verify real staging certificate before Cloudflare access
+        if: steps.intent.outputs.encrypt == 'true'
+        shell: bash
+        env:
+          CERT_EXPECTED: ${{ steps.intent.outputs.fingerprint }}
+        run: |
+          set -euo pipefail
+          cert=config/hostinger/recipient-20261113.crt
+          test -s "$cert"
+          openssl x509 -in "$cert" -checkend 3600 -noout
+          actual=$(openssl x509 -in "$cert" -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          test "$actual" = "$CERT_EXPECTED"
+      - name: Export remote D1 read-only, then encrypt before artifact
+        if: steps.intent.outputs.encrypt == 'true'
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          PUNCTUM_D1_STAGE_CERT_SHA256: ${{ steps.intent.outputs.fingerprint }}
+          PUNCTUM_D1_STAGE_DATABASE_ID: ${{ steps.intent.outputs.databaseId }}
+        run: |
+          set -euo pipefail
+          umask 077
+          plain=/tmp/punctum-hostinger-stage-current.sql
+          trap 'rm -f "$plain" /tmp/punctum-stage-wrangler.jsonc' EXIT
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const account=process.env.CLOUDFLARE_ACCOUNT_ID;
+          const token=process.env.CLOUDFLARE_D1_API_TOKEN;
+          const expected=process.env.PUNCTUM_D1_STAGE_DATABASE_ID;
+          if(!account || !token || !expected) throw Error('CLOUDFLARE_CREDENTIALS_UNAVAILABLE');
+          const response=await fetch('https://api.cloudflare.com/client/v4/accounts/'+account+'/d1/database',
+            {headers:{Authorization:'Bearer '+token,Accept:'application/json'},signal:AbortSignal.timeout(15000)});
+          if(!response.ok) throw Error('D1_INVENTORY_UNAVAILABLE');
+          const body=await response.json();
+          const match=(body.result||[]).find(x=>x.name==='punctum-picture');
+          if(!match || (match.uuid||match.id)!==expected) throw Error('D1_IDENTITY_MISMATCH');
+          fs.writeFileSync('/tmp/punctum-stage-wrangler.jsonc',JSON.stringify({
+            name:'punctum-encrypted-d1-stage',
+            compatibility_date:'2026-11-01',
+            d1_databases:[{binding:'DB',database_name:'punctum-picture',database_id:expected}]
+          }),{mode:0o600,flag:'wx'});
+          console.log('D1_SOURCE_IDENTITY_VERIFIED');
+          NODE
+          npm install --global --no-audit --no-fund wrangler@4.125.0 >/dev/null
+          export CLOUDFLARE_API_TOKEN="$CLOUDFLARE_D1_API_TOKEN"
+          wrangler d1 export DB --remote --output "$plain" --config /tmp/punctum-stage-wrangler.jsonc >/dev/null
+          test -s "$plain"
+          mkdir -m 700 -p outputs/hostinger-encrypted-d1-stage
+          export PUNCTUM_D1_STAGE_INPUT_SQL="$plain"
+          export PUNCTUM_D1_STAGE_RECIPIENT_CERT=config/hostinger/recipient-20261113.crt
+          export PUNCTUM_D1_STAGE_OUTPUT_DIR=outputs/hostinger-encrypted-d1-stage
+          node scripts/hostinger-encrypt-d1-stage.mjs
+          rm -f "$plain"
+          test ! -e "$plain"
+      - uses: actions/upload-artifact@v6
+        if: steps.intent.outputs.encrypt == 'true' && success()
+        with:
+          name: punctum-d1-encrypted-for-hostinger
+          path: |
+            outputs/hostinger-encrypted-d1-stage/punctum-d1-stage.cms
+            outputs/hostinger-encrypted-d1-stage/punctum-d1-stage-manifest.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7

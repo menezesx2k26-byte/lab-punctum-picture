@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicArchiveImage } from "../../shared/public-content";
 
+const ARCHIVE_PAGE_SIZE = 24;
+
 type ArchiveViewImage = PublicArchiveImage & {
   number: number;
   src: string;
@@ -19,6 +21,7 @@ export function ArchiveGrid({ images }: { images: PublicArchiveImage[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const [filter, setFilter] = useState("Tudo");
+  const [visibleCount, setVisibleCount] = useState(ARCHIVE_PAGE_SIZE);
   const [selected, setSelected] = useState<string | null>(null);
   const liveImages = useMemo<ArchiveViewImage[]>(
     () =>
@@ -56,6 +59,7 @@ export function ArchiveGrid({ images }: { images: PublicArchiveImage[] }) {
           ),
     [filter, liveImages],
   );
+  const rendered = visible.slice(0, visibleCount);
   const selectedIndex = visible.findIndex((image) => image.id === selected);
   const selectedImage = selectedIndex >= 0 ? visible[selectedIndex] : null;
 
@@ -96,6 +100,7 @@ export function ArchiveGrid({ images }: { images: PublicArchiveImage[] }) {
               onClick={() => {
                 setFilter(category);
                 setSelected(null);
+                setVisibleCount(ARCHIVE_PAGE_SIZE);
               }}
               aria-pressed={filter === category}
             >
@@ -106,7 +111,7 @@ export function ArchiveGrid({ images }: { images: PublicArchiveImage[] }) {
       </div>
 
       <div className="archive-grid">
-        {visible.map((image, index) => (
+        {rendered.map((image, index) => (
           <button
             className={`archive-card archive-card-${index % 7}`}
             key={image.id}
@@ -120,6 +125,7 @@ export function ArchiveGrid({ images }: { images: PublicArchiveImage[] }) {
                 alt=""
                 fill
                 unoptimized
+                loading="lazy"
                 sizes="(max-width: 620px) 50vw, (max-width: 1000px) 33vw, 25vw"
               />
             </span>
@@ -130,6 +136,15 @@ export function ArchiveGrid({ images }: { images: PublicArchiveImage[] }) {
           </button>
         ))}
       </div>
+
+      {visibleCount < visible.length ? (
+        <div className="archive-more" aria-live="polite">
+          <span>Exibindo {rendered.length} de {visible.length} fotografias</span>
+          <button type="button" onClick={() => setVisibleCount((count) => Math.min(count + ARCHIVE_PAGE_SIZE, visible.length))}>
+            Mostrar mais fotografias
+          </button>
+        </div>
+      ) : null}
 
       {selectedImage ? (
         <dialog

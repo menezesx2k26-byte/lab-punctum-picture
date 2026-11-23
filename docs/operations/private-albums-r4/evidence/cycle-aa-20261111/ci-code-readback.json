@@ -1,0 +1,39 @@
+{
+  "codeSha": "45d998411952e4b8d613c89684748165004acbfe",
+  "codeTree": "ceb297e0ec176877c6043915fcb0a583d46a5d7c",
+  "ciRunId": 43102450821,
+  "ciConclusion": "completed/success",
+  "jobId": 130797118391,
+  "jobStepsSucceeded": 33,
+  "artifactId": 13892057814,
+  "artifactBytes": 10836088,
+  "artifactZipSha256": "b2da8d428c6984677674ecc660bdaa3aaf114a7ec80e9efd348c9cb67b1f67d8",
+  "reportSha256": "a2e20f0295a333710dd09de007309e4421c7cda97666cf776f27801c35694cde",
+  "browserStatus": "PASS_LOCAL",
+  "sourceSha": "45d998411952e4b8d613c89684748165004acbfe",
+  "checkoutDirtyAtRun": false,
+  "browser": "145.0.7632.6",
+  "checks": 22,
+  "axeAudits": 7,
+  "axeRulesPassed": 145,
+  "axeViolations": 0,
+  "axeIncompleteNodes": 117,
+  "screenshotModes": {
+    "private-gallery-mobile.png": "fullPage",
+    "public-home.png": "fullPage",
+    "studio.png": "fullPage",
+    "colagem-mobile.png": "fullPage",
+    "private-admin-mobile.png": "fullPage"
+  },
+  "errors": {
+    "pageErrors": [],
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "serverErrors": []
+  },
+  "driveCheckpoint": "https://docs.google.com/document/d/1nXaCZFo4QuJbip5aCdx_0GXOMyikX5ksFsfBFdu8ruo/edit",
+  "driveArtifact": "https://drive.google.com/file/d/1_OpwYVEh47SZHlKnVsaGrWRUZe60Nr7c/view",
+  "scope": "Production bundle in local workerd on GitHub Actions, synthetic D1/R2; no remote Cloudflare QA/real OTP/physical device/CPU qualification",
+  "formalG19Approval": false,
+  "productionDecision": "NO_GO_PRODUCTION"
+}

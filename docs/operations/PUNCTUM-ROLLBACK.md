@@ -112,3 +112,36 @@ Execute imediatamente após a restauração:
 3. [ ] **SEO**: Canonical aponta para `https://punctumpicture.com/` e structured data presente;
 4. [ ] **Admin & Studio**: Acesso funcional em `/admin` e `/admin/studio`;
 5. [ ] **Console do Navegador**: 0 erros críticos de execução ou de rede.
+
+---
+
+## 7. Reconciliação de 2026-11-20 — não substitui a baseline de setembro
+
+A seção 1 permanece como registro histórico de 2026-09-10. Ela não é o alvo de rollback do tráfego que está no ar hoje. Nenhuma promoção, DNS ou restore remoto foi executado nesta reconciliação.
+
+Estado lido em 2026-11-20, sem alteração:
+
+| Item | Valor observado |
+| --- | --- |
+| Autoridade DNS | `nia.ns.cloudflare.com`, `pedro.ns.cloudflare.com` |
+| Tráfego público | Worker `punctum-picture-migration`, domínios customizados no apex e em `www` |
+| Deployment no ar | `276eb966-4561-4c95-b35c-3b461ff0c18d` |
+| Version em 100% | `e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7` |
+| `GIT_SHA` plain | `4a9842dac2726699a5272d137ea7eedfe20d469c` |
+| D1 | `punctum-picture` `22697f13-7484-41e3-9441-f7b902c6577a`, migrações `0001`–`0008` |
+| Backup lógico mais novo | `backups/d1/daily/2026-11-20/2026-11-20T03-00-30-053Z.json`, status `completed` |
+| Zona Hostinger | não autoritativa; ALIAS/CNAME para `*.cdn.hstgr.net` |
+| VPS `2135319` | Infraestrutura compartilhada da Conthabil. A revisão da chave pública temporária do agente está pendente de autorização do responsável pela VPS. |
+| Hospedagem Punctum | Pedido Hostinger `1008628483`, usuário `u571409090`, site Node.js `punctumpicture.com`. |
+
+Rollback imediato de um deploy futuro do Worker: promover de volta a version `e9b62f5d-acc5-4ad3-8319-24a0c7e98ee7` a 100%, sem editar DNS. A version de setembro `cc6a8fb3-3952-4181-a933-295d89b2a158` só volta ao ar se a decisão for explicitamente a baseline visual de 2026-09-10.
+
+Restore de dados: o JSON de 2026-11-20 foi lido e comparado, em memória isolada, com o D1 vivo. Os conjuntos de id coincidem nas tabelas incluídas pelo código implantado. `backup_runs` fica 88 no arquivo e 89 no vivo porque a linha do próprio job entra depois do snapshot. `site_media` (12 linhas, objetos `site-media/hero`) não entra nesse backup. Não restaurar esse JSON por cima do D1 de produção. Um ensaio destrutivo continua exigindo autorização e um banco vazio.
+
+Corte de DNS, após autorização explícita e ensaio de rollback em staging isolado. A mudança usa os registros proxied do apex e de `www` na zona Cloudflare `561d9796dd104b8563c9ab77fa4fae1d`. O destino precisa pertencer ao Punctum e servir HTTPS válido. A VPS `2135319` está fora do escopo. Para voltar, restaure o roteamento anterior para o Worker e execute os smokes públicos e privados previstos no registro do release. Preserve o banco e os objetos do candidato até reconciliar qualquer escrita posterior ao corte.
+
+## 8. Ensaio sintético com escritas posteriores ao checkpoint
+
+Em 21/11/2026, o runner auxiliar na VPS `2135319` testou `createManagedBackup` com SQLite e originais sintéticos. O primeiro TAR foi preservado. Um segundo backup restaurou a linha e a imagem adicionadas após o checkpoint. A restauração passou a exigir que os originais privados prontos correspondam ao tamanho gravado no SQLite e ao SHA-256, quando preenchido. O teste cobriu a coluna ausente antes de `0011` e hashes nulos em registros legados.
+
+G18 e G23 continuam bloqueados para liberação. O ensaio da Unlimited precisa comprovar backup retido e restore na origem isolada, além da reconciliação de escritas novas após o retorno de tráfego. O DoD continua condicionado à identificação do Node gerenciado, ao domínio e às autorizações de cada fase. Os detalhes e hashes do ensaio auxiliar estão no ciclo BA de `private-albums-r4/execution-state.json`.

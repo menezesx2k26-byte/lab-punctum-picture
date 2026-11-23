@@ -1,4 +1,5 @@
 import "./admin.css";
+import "./components/private-gallery-admin.css";
 import type { Metadata } from "next";
 import { AdminShell } from "./components/AdminShell";
 

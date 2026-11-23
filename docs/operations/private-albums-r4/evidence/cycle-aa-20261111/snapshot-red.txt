@@ -1,0 +1,17 @@
+ FAIL  tests/unit/public-home-snapshot.spec.ts > blocks snapshot staging throughout overlapping publications and rejects renders started inside them
+TypeError: beginPublicHomeSnapshotMutation is not a function
+ ❯ tests/unit/public-home-snapshot.spec.ts:121:25
+    119| it("blocks snapshot staging throughout overlapping publications and re…
+    120|   await bootstrapPrivateDb();
+    121|   const finishA = await beginPublicHomeSnapshotMutation(env.DB);
+       |                         ^
+    122|   const duringA = await env.DB.prepare("SELECT epoch FROM public_home_…
+    123|   expect(await stagePublicHomeSnapshot(env.DB, duringA!.epoch, BUILD, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  18:08:13
+   Duration  2.52s (transform 165ms, setup 0ms, import 278ms, tests 121ms, environment 1ms)

@@ -1,0 +1,88 @@
+{
+  "name": "punctum-picture R4 live QA harness",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  "postCreateCommand": "npm ci && sudo apt-get update && sudo apt-get install -y openssl && npx playwright install --with-deps chromium && npx wrangler --version",
+  "remoteUser": "node",
+  "secrets": {
+    "CLERK_SECRET_KEY": {
+      "description": "Clerk live secret key (sk_live_...). Required by the Clerk browser proof and managed Clerk-link acceptance gates. NAME ONLY; never commit the value."
+    },
+    "CLERK_PUBLISHABLE_KEY": {
+      "description": "Clerk live publishable key (pk_live_...). Required by the Clerk browser proof and managed Clerk-link gates."
+    },
+    "CLERK_ISSUER": {
+      "description": "Clerk issuer URL (https://clerk.punctumpicture.com). Runtime Clerk auth config."
+    },
+    "CLERK_JWT_KEY": {
+      "description": "Clerk JWKS / JWT verification key material. Runtime Clerk auth config."
+    },
+    "CLERK_AUTHORIZED_PARTIES": {
+      "description": "Comma-separated authorized parties (azp) for Clerk session verification."
+    },
+    "SITE_ORIGIN": {
+      "description": "Public site origin used by runtime Clerk auth config (https://punctumpicture.com)."
+    },
+    "PUNCTUM_QA_ORIGIN": {
+      "description": "Managed QA origin. Must equal the built-in managed hostname (https://aliceblue-locust-999458.hostingersite.com) or the functional gate hard-asserts and fails closed."
+    },
+    "PUNCTUM_QA_ADMIN_EMAIL": {
+      "description": "Admin email for the managed synthetic functional gate login."
+    },
+    "PUNCTUM_QA_TEST_PASSWORD": {
+      "description": "Admin password for the managed synthetic functional gate login."
+    },
+    "SOURCE_ADMIN_EMAIL": {
+      "description": "Source admin email for the managed acceptance HTTP gate and the managed production Python harness."
+    },
+    "SOURCE_ADMIN_PASSWORD": {
+      "description": "Source admin password for the managed acceptance HTTP gate and the managed production Python harness."
+    },
+    "HOSTINGER_API": {
+      "description": "Hostinger managed hosting API token used by scripts/hostinger_managed_production.py (via scripts/hostinger_managed_qa.py, which raises if it is unset). Required by the G17 managed production prepare gate."
+    },
+    "PUNCTUM_MANAGED_OUTPUT": {
+      "description": "Filesystem path the G17 managed production harness reads exported artifacts from (private-environment.json, export-receipt.json, managed-seed.bin). Read by scripts/hostinger_managed_production.py."
+    },
+    "PUNCTUM_CLERK_ADMIN_EMAIL": {
+      "description": "Clerk-linked admin email selected by the Clerk production proof identity check."
+    },
+    "PUNCTUM_CLERK_ADMIN_USER_ID": {
+      "description": "Clerk admin user id (user_...) selected by the Clerk production proof."
+    },
+    "PUNCTUM_CLERK_SESSION_ID": {
+      "description": "Clerk admin session id (sess_...) selected by the Clerk production proof."
+    },
+    "PUNCTUM_CLERK_BROWSER_SESSION_JWT": {
+      "description": "Short-lived Clerk session JWT consumed by the browser login/logout/revocation proof."
+    },
+    "CLOUDFLARE_API_TOKEN": {
+      "description": "Cloudflare API token scoped for R2 recovery object reads. Required by the managed recovery download gate."
+    },
+    "PUNCTUM_MANAGED_RECOVERY_KEY": {
+      "description": "Hex AES-256-GCM key for the managed recovery export. Required by the recovery download gate."
+    },
+    "PUNCTUM_MANAGED_RECOVERY_PREFIX": {
+      "description": "R2 object prefix of the managed recovery export. Required by the recovery download gate."
+    },
+    "PUNCTUM_MANAGED_PROBE": {
+      "description": "Managed acceptance probe marker matching /^p[a-f0-9]{6}$/. Required by the managed acceptance HTTP gate."
+    },
+    "GITHUB_SHA": {
+      "description": "Source commit SHA stamped into every managed gate report. Set to the branch HEAD you are proving."
+    },
+    "GITHUB_RUN_ID": {
+      "description": "Run id stamped into the managed functional synthetic album title."
+    },
+    "GITHUB_RUN_ATTEMPT": {
+      "description": "Run attempt stamped into the managed functional synthetic album title."
+    }
+  }
+}

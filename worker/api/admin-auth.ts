@@ -1,13 +1,21 @@
 import { z } from "zod";
 import {
+  adminAuthMode,
   adminSessionCookie,
   clearAdminSessionCookie,
   createAdminSession,
+  createClerkAdminSession,
+  auditPrincipal,
   requireAdmin,
-  setAdminPassword,
+  prepareAdminPassword,
   verifyAdminPassword,
 } from "../utils/auth";
-import { writeAudit } from "../utils/audit";
+import {
+  collectClerkRevocationKeys,
+  resolveLinkedClerkAdmin,
+  revokeClerkSessionKeys,
+} from "../auth/clerk-auth";
+import { prepareAudit, writeAudit } from "../utils/audit";
 import { envNumber, requireDb } from "../utils/env";
 import { AppError } from "../utils/errors";
 import { assertRateLimit } from "../utils/rate-limit";
@@ -15,6 +23,7 @@ import { json } from "../utils/response";
 import { parseJson } from "../utils/validation";
 
 const LOGIN_PATH = "/admin/api/session";
+const CLERK_LOGIN_PATH = "/admin/api/clerk-session";
 const passwordChangeSchema = z
   .object({
     currentPassword: z.string().min(1).max(256),
@@ -27,11 +36,85 @@ export async function handleAdminAuth(
   url: URL,
   env: Env,
 ): Promise<Response | null> {
-  if (url.pathname !== LOGIN_PATH) return null;
+  if (url.pathname !== LOGIN_PATH && url.pathname !== CLERK_LOGIN_PATH) return null;
+
+  if (url.pathname === CLERK_LOGIN_PATH) {
+    if (adminAuthMode(env) === "legacy") {
+      throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+    }
+    if (request.method !== "POST") {
+      throw new AppError(405, "METHOD_NOT_ALLOWED", "Método não permitido.");
+    }
+    const origin = request.headers.get("origin");
+    const expectedOrigin = new URL(request.url).origin;
+    if (!origin || origin !== expectedOrigin) {
+      throw new AppError(403, "INVALID_ORIGIN", "A origem desta operação não é permitida.");
+    }
+    const db = requireDb(env);
+    await assertRateLimit(
+      request,
+      db,
+      "admin-clerk-login",
+      envNumber(env, "ADMIN_LOGIN_RATE_LIMIT_MAX", 10),
+      envNumber(env, "ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 900),
+    );
+    const linked = await resolveLinkedClerkAdmin(request, env, { requireConfig: true });
+    if (!linked) {
+      throw new AppError(403, "ADMIN_UNAUTHORIZED", "Acesso administrativo não autorizado.");
+    }
+    const token = await createClerkAdminSession(linked, env);
+    await writeAudit(
+      db,
+      `clerk:${linked.adminPrincipalId}`,
+      "admin.clerk_login",
+      "admin",
+      linked.clerkUserId,
+    );
+    return json(
+      { ok: true, authSource: "clerk" },
+      {
+        admin: true,
+        headers: { "Set-Cookie": adminSessionCookie(token) },
+      },
+    );
+  }
 
   if (request.method === "DELETE") {
+    const db = requireDb(env);
+    let authSource: "shared-password" | "clerk" | undefined;
+    try {
+      const identity = await requireAdmin(request, env);
+      authSource = identity.authSource;
+      if (identity.authSource === "clerk" && identity.clerkUserId) {
+        await db.prepare(
+          `UPDATE clerk_admin_identity_links
+           SET session_version = session_version + 1, updated_at = ?
+           WHERE clerk_user_id = ?`,
+        )
+          .bind(new Date().toISOString(), identity.clerkUserId)
+          .run();
+        const revocationKeys = await collectClerkRevocationKeys(
+          request,
+          identity.clerkRevocationKeys ?? [],
+        );
+        await revokeClerkSessionKeys(db, revocationKeys);
+        await writeAudit(
+          db,
+          auditPrincipal(identity),
+          "admin.clerk_logout",
+          "admin",
+          identity.clerkUserId,
+        );
+      }
+    } catch (error) {
+      // Absent/expired sessions may log out idempotently, but a failed D1
+      // revocation must never be reported to the browser as successful.
+      if (!(error instanceof AppError && (error.status === 401 || error.status === 403))) {
+        throw error;
+      }
+    }
     return json(
-      { ok: true },
+      { ok: true, ...(authSource ? { authSource } : {}) },
       {
         admin: true,
         headers: { "Set-Cookie": clearAdminSessionCookie() },
@@ -41,6 +124,9 @@ export async function handleAdminAuth(
 
   if (request.method !== "POST" && request.method !== "PATCH") {
     throw new AppError(405, "METHOD_NOT_ALLOWED", "Método não permitido.");
+  }
+  if (adminAuthMode(env) === "clerk") {
+    throw new AppError(405, "METHOD_NOT_ALLOWED", "Use a autenticação Clerk.");
   }
 
   const origin = request.headers.get("origin");
@@ -60,8 +146,10 @@ export async function handleAdminAuth(
     if (!(await verifyAdminPassword(input.currentPassword, env, db))) {
       throw new AppError(401, "ADMIN_LOGIN_FAILED", "A senha atual está incorreta.");
     }
-    await setAdminPassword(input.newPassword, db, identity.email);
-    await writeAudit(db, identity.email, "admin.password_changed", "admin", null);
+    await db.batch([
+      await prepareAdminPassword(input.newPassword, db, auditPrincipal(identity)),
+      prepareAudit(db, auditPrincipal(identity), "admin.password_changed", "admin", null),
+    ]);
     return json(
       { ok: true },
       {

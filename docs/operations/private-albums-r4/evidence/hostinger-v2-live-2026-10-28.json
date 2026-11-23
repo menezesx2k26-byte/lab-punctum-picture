@@ -1,0 +1,68 @@
+{
+  "codeSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+  "package": {
+    "version": "r4-node-probe-20261028-v2",
+    "zipSha256": "c388255e81ff4407800bc90a544442cc250abfc033266441b560bca29170db7e",
+    "zipBytes": 2369,
+    "files": [
+      "README.md",
+      "package.json",
+      "app.mjs",
+      "server.mjs"
+    ],
+    "testedModes": [
+      "direct server execution",
+      "provider dynamic import with realHTTP socket under3s"
+    ],
+    "localTests": 2,
+    "liveDeploymentVerified": false
+  },
+  "live": {
+    "observedAt": "2026-10-28T21:48:10.429974+00:00",
+    "origin": "https://aliceblue-locust-999458.hostingersite.com",
+    "expectedVersion": "r4-node-probe-20261028-v2",
+    "requests": [
+      {
+        "atUtc": "2026-10-28T21:48:10.430018+00:00",
+        "status": 200,
+        "cacheControl": "no-store",
+        "nosniff": "nosniff",
+        "contentType": "application/json; charset=utf-8",
+        "body": {
+          "service": "punctum-hostinger-qa-probe",
+          "version": "r4-node-probe-20261028-v2",
+          "node": "v24.22.1",
+          "uptimeSeconds": 49,
+          "rssBytes": 64159744,
+          "ssrValidated": false,
+          "production": false
+        },
+        "nonceEcho": true,
+        "verified": true,
+        "latencyMs": 117.95
+      },
+      {
+        "atUtc": "2026-10-28T21:48:10.548757+00:00",
+        "status": 200,
+        "cacheControl": "no-store",
+        "nosniff": "nosniff",
+        "contentType": "application/json; charset=utf-8",
+        "body": {
+          "service": "punctum-hostinger-qa-probe",
+          "version": "r4-node-probe-20261028-v2",
+          "node": "v24.22.1",
+          "uptimeSeconds": 49,
+          "rssBytes": 64159744,
+          "ssrValidated": false,
+          "production": false
+        },
+        "nonceEcho": true,
+        "verified": true,
+        "latencyMs": 26.13
+      }
+    ],
+    "scope": "Two HTTPS health requests only; no load/restart/SSR/D1/R2 or billing proof",
+    "productionTouched": false,
+    "verified": true
+  }
+}

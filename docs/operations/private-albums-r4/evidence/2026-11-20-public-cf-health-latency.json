@@ -1,0 +1,133 @@
+{
+  "measuredAt": "2026-11-20T03:42:16.887968+00:00",
+  "target": "https://punctumpicture.com/api/health",
+  "method": "curl -4 with PunctumR4Evidence/1.0 UA",
+  "note": "Cloudflare public Worker origin ONLY. urllib default UA gets HTTP 403. Not Hostinger Node. Does NOT promote G17 PASS.",
+  "python_urllib_default_ua": "HTTP 403 Forbidden (observed separately)",
+  "n": 13,
+  "ok": 13,
+  "p50_ms": 161.03,
+  "p95_ms": 244.59,
+  "mean_ms": 132.55,
+  "min_ms": 51.21,
+  "max_ms": 275.18,
+  "samples": [
+    {
+      "i": 0,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.053,
+      "wall_ms": 59.26,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    },
+    {
+      "i": 1,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.161175,
+      "wall_ms": 168.51,
+      "remote_ip": "172.67.164.87",
+      "ok": true
+    },
+    {
+      "i": 2,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.175267,
+      "wall_ms": 181.98,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    },
+    {
+      "i": 3,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.045761,
+      "wall_ms": 52.35,
+      "remote_ip": "172.67.164.87",
+      "ok": true
+    },
+    {
+      "i": 4,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.154147,
+      "wall_ms": 161.03,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    },
+    {
+      "i": 5,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.053198,
+      "wall_ms": 59.65,
+      "remote_ip": "172.67.164.87",
+      "ok": true
+    },
+    {
+      "i": 6,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.052137,
+      "wall_ms": 58.83,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    },
+    {
+      "i": 7,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.04428,
+      "wall_ms": 51.21,
+      "remote_ip": "172.67.164.87",
+      "ok": true
+    },
+    {
+      "i": 8,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.155867,
+      "wall_ms": 164.25,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    },
+    {
+      "i": 9,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.05822,
+      "wall_ms": 66.77,
+      "remote_ip": "172.67.164.87",
+      "ok": true
+    },
+    {
+      "i": 10,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.264287,
+      "wall_ms": 275.18,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    },
+    {
+      "i": 11,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.172627,
+      "wall_ms": 179.57,
+      "remote_ip": "172.67.164.87",
+      "ok": true
+    },
+    {
+      "i": 12,
+      "http": 200,
+      "bytes": 72,
+      "curl_time_s": 0.237842,
+      "wall_ms": 244.59,
+      "remote_ip": "104.21.57.143",
+      "ok": true
+    }
+  ]
+}

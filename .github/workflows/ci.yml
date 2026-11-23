@@ -5,20 +5,100 @@ on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       - run: npx vitest run --config vitest.collage.config.ts
       - run: node --test scripts/collage-css.test.mjs
       - run: node --test scripts/publish-colagem-production.test.mjs
+      - run: node --test services/punctum-password-bridge/server.test.mjs
+      - run: node --test services/punctum-hostinger-qa/server.test.mjs
+      - run: node --test scripts/r4-edge-qa.test.mjs
+      - run: node --test scripts/r4-images-preflight.test.mjs scripts/r4-images-probe-worker.test.mjs
+      - run: node --test scripts/r4-product-raster-validation.test.mjs
+      - run: node --test scripts/r4-cpu-readonly.test.mjs
+      - run: node --test scripts/r4-cpu-historical-readonly.test.mjs scripts/r4-rollback-readonly.test.mjs
+      - run: node --test scripts/r4-originals-inventory-readonly.test.mjs
+      - run: node --test scripts/r4-access-runtime.test.mjs
+      - run: node --test scripts/r4-recovery-qa.test.mjs
+      - run: node --test scripts/r4-scoped-local.test.mjs
+      - run: node --test services/punctum-hostinger-production/managed-d1-export.test.mjs
+      - run: node --test scripts/hostinger-managed-export.test.mjs scripts/e2e/clerk-dev-r4-templates-proof.test.mjs
+      - run: node --test scripts/r4-g18-local-sqlite-restore-demo.test.mjs
+      - run: node --test scripts/ci-evidence.test.mjs
+      - run: node --test scripts/live-parity-audit.test.mjs
+      - run: node --test scripts/punctum-clerk-instance-readonly.test.mjs
+      - run: python3 -m unittest discover -s scripts -p 'punctum_*_preflight_test.py'
       - run: npm run build
+      - run: node --test scripts/ssr-route-imports.test.mjs
+      - run: node --test scripts/e2e/accessibility-evidence.test.mjs scripts/e2e/screenshot-evidence.test.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: node --test scripts/access-cookie-navigation.test.mjs scripts/e2e/browser-zoom-launch.test.mjs scripts/e2e/browser-zoom-evidence.test.mjs scripts/e2e/contrast-pixel-evidence.test.mjs
+      - name: Record tracked changes before browser QA
+        run: git status --short --untracked-files=no
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: r4-browser-evidence
+          path: outputs/browser-e2e/
+          retention-days: 14
+
+  hostinger-node-qa:
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'agent/hostinger-') || startsWith(github.head_ref, 'cursor/r4-') || startsWith(github.head_ref, 'codex/punctum-unlimited-release-'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:hostinger:qa
+      - run: node --test services/punctum-hostinger-production/*.test.mjs
+      - run: npm run build:hostinger:candidate
+      - name: Compare managed candidate builds
+        shell: bash
+        run: |
+          first="$(mktemp -d "$RUNNER_TEMP/punctum-candidate.XXXXXX")/candidate"
+          mv -- dist/hostinger-candidate "$first"
+          npm run build:hostinger:candidate
+          node scripts/hostinger-candidate-build-equivalence.mjs "$first" dist/hostinger-candidate
+      - run: npm run build:hostinger:scheduled
+      - run: node scripts/hostinger-r4-25mib-local-proof.mjs --public-release-check
+      - run: node scripts/hostinger-r4-25mib-local-proof.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Record tracked changes before browser QA
+        run: git status --short --untracked-files=no
+      - run: node --test services/punctum-hostinger-node/*.test.mjs
+        env:
+          PUNCTUM_QA_BROWSER: "1"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-hostinger-node-browser
+          path: outputs/hostinger-qa-browser/
+          if-no-files-found: warn
+          retention-days: 14

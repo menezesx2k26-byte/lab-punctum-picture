@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-24",
+  "repository": "menezesx2k26-byte/lab-punctum-picture",
+  "branch": "agent/private-client-albums-20261022",
+  "baseline": "5b5e1934c62bcb7f0876afb406990522fcbfd3a9",
+  "codeCommit": "eb11de10106b1e06c04f66c7ec3e1b8c4b985608",
+  "overall": "BLOCKED_REAL_OTP_REQUIRED",
+  "ci": {
+    "runId": 40124208865,
+    "conclusion": "success",
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40124208865"
+  },
+  "preview": {
+    "runId": 40124217595,
+    "conclusion": "success",
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40124217595",
+    "artifactId": 12572308734,
+    "artifactArchiveDigest": "sha256:e443a55a74f9595a0e3b4818cb94e8c7027f1ec61589057af918a2d538302964",
+    "status": "partial-access-otp-required",
+    "worker": "punctum-picture-albums-qa",
+    "authMode": "access",
+    "accessProviderTested": false,
+    "productionTouched": false,
+    "loginEntry": "access-redirect",
+    "sessionForQa": "synthetic HMAC cookie in isolated QA only",
+    "restoredRows": 93,
+    "restoredObjects": 40,
+    "checks": [
+      "isolated D1 databases and private R2 buckets",
+      "login entry (real Access redirect when configured), page gate, private headers and rotated admin session",
+      "Access-only account, password endpoints disabled, and synthetic QA session for downstream tests",
+      "ten uploads, isolated retry, publication, favorites, downloads and public-media denial",
+      "D1 and R2 restoration: authenticated gallery, favorite and every original verified byte-for-byte",
+      "archive, reset and disabled account revocation after restoration"
+    ]
+  },
+  "localAfterDependencyUpdates": {
+    "nodeVersion": "24.19.0",
+    "workerTestFilesPassed": 40,
+    "workerTestsPassed": 164,
+    "workerTestsFailed": 0,
+    "nodeBridgeTestsPassed": 10,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "drizzleKitCheck": "PASS",
+    "diffCheck": "PASS",
+    "npmAudit": { "critical": 0, "high": 0, "moderate": 0, "low": 0, "total": 0 }
+  },
+  "productionReadback": {
+    "worker": "punctum-picture-migration",
+    "deploymentId": "366e1e15-ee14-46fd-aa39-4b86c5c1fd8c",
+    "versionId": "84b4e28d-9c26-4024-81bc-ccf5a98a7dca",
+    "trafficPercentage": 100,
+    "unchangedFromInitialAudit": true,
+    "publicApiStatus": 200,
+    "publicApiBodySha256": "509a13aa848a1b0120a61ee09eb733433122d8429b1c296281ee5156cc82867c",
+    "publicApiBodyUnchanged": true
+  },
+  "limitations": [
+    "Real OTP delivery, real JWT and application login are not verified",
+    "Synthetic QA sessions test application authorization only",
+    "No physical Android/iPhone approval or production activation",
+    "No Hostinger bridge deployment; identified Node application belongs to PersistFlow",
+    "Zero known npm advisories is a point-in-time audit, not proof of absence of vulnerabilities"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "ci": {
+    "sha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+    "runId": 40774699509,
+    "status": "COMPLETED_SUCCESS_EXACT_PR_HEAD",
+    "artifactId": 12853928040,
+    "workers": 218,
+    "files": 53,
+    "collage": 7,
+    "node": 46,
+    "chromiumChecks": 14,
+    "artifactReadback": true,
+    "checkoutDirtyAtRun": false,
+    "url": "https://github.com/menezesx2k26-byte/lab-punctum-picture/actions/runs/40774699509"
+  },
+  "browser": {
+    "status": "PASS_LOCAL",
+    "startedUtc": "2026-10-28T21:48:30.381Z",
+    "sourceSha": "6e994691e469f9830b9a7d44b83f1fb7f09a5d17",
+    "sourceRevisionProvided": false,
+    "checkoutDirtyAtRun": false,
+    "buildSha256": "a378672172a4d2264d8c84b31529e81eb4b6bb492d4ed2c798c1a6dea2634d8a",
+    "scope": "real Chromium against production bundle in local workerd with new synthetic D1/R2",
+    "cloudflareAccessOtpTested": false,
+    "remoteQaTouched": false,
+    "productionTouched": false,
+    "syntheticSessionOnly": true,
+    "physicalDevicesTested": false,
+    "reducedMotion": "reduce",
+    "checks": [
+      "fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals",
+      "anonymous gallery access denied; Access mode disables password login",
+      "real browser client A/B libraries and foreign gallery/original denial",
+      "favorite persisted, keyboard lightbox navigation/Escape/focus and original download bytes verified",
+      "private gallery has no horizontal overflow at 320/360/375/390/430/768/1024/1440px",
+      "private media is denied anonymously and cannot enter public media/image optimizer",
+      "same-component client navigation clears prior gallery while pending and after an intentional404",
+      "malformed success envelope produces a safe library alert without a render exception",
+      "public home and authenticated Studio render; anonymous Studio denied",
+      "Studio publishes Colagem Autoral locally; public preset renders without overflow at 320/360/375/390/430/768/1024/1440px",
+      "private admin browser creates Access client/gallery, uploads with progress, chooses cover and publishes; eight responsive widths",
+      "workerd restart preserves favorites, authenticated gallery and original bytes",
+      "isolated local consistent-storage rollback restores gallery availability after archiving",
+      "logout revokes client A while client B remains authorized"
+    ],
+    "pageErrors": [],
+    "consoleWarnings": [],
+    "consoleErrors": [],
+    "expectedDenials": [
+      {
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "path": "/api/client/galleries/d79c5033-8a64-484e-834d-e87a8452288d"
+      }
+    ],
+    "serverErrors": [],
+    "browser": "145.0.7632.6",
+    "localBrowserHomeNavigationMs": 2123.9414290000004,
+    "completedUtc": "2026-10-28T21:49:49.947Z",
+    "temporaryStorageRemoved": true
+  }
+}

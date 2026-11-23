@@ -1,0 +1,101 @@
+name: Punctum Unlimited authorized domain ownership
+on:
+  workflow_dispatch:
+  push:
+    branches: [cursor/r4-aj-security-phase-b-ae72]
+    paths: [.github/workflows/punctum-domain-ownership.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - name: Publish the authorized ownership TXT and verify it
+        env:
+          HOSTINGER_API: ${{ secrets.HOSTINGER_UNLIMITED_API }}
+          DNS_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, re, time, urllib.parse, urllib.request
+          domain = 'punctumpicture.com'
+          temporary = 'magic-lime-guanaco-79.hostingersite.com'
+          account = '257bca437616da74ece1ce4bbaf0bd89'
+          zone = '561d9796dd104b8563c9ab77fa4fae1d'
+          report = {'domain': domain, 'authorizedScope': 'one-apex-TXT-ttl-900', 'trafficRoutingChanged': False}
+          def call(base, path, token, body=None):
+              headers={'Authorization':'Bearer '+os.environ[token], 'Content-Type':'application/json',
+                       'User-Agent':'Punctum QA inventory/1.0'}
+              request=urllib.request.Request(base+path,headers=headers,
+                  data=json.dumps(body).encode() if body is not None else None)
+              with urllib.request.urlopen(request,timeout=20) as response: return json.load(response)
+          host='https://developers.hostinger.com/api/hosting/v1'
+          cf='https://api.cloudflare.com/client/v4'
+          site=call(host,'/websites?'+urllib.parse.urlencode({'domain':temporary}), 'HOSTINGER_API')
+          matches=[r for r in site.get('data',[]) if r.get('domain')==temporary and
+                   r.get('is_enabled') is True and r.get('website_type')=='nodejs']
+          assert len(matches)==1, 'The authorized Unlimited staging website is unavailable'
+          target=matches[0]
+          assert target.get('order_id') and target.get('username')!='u571409090', 'The target must be on the alternative account'
+          orders=call(host,'/orders', 'HOSTINGER_API')
+          order_matches=[r for r in orders.get('data',[]) if r.get('id')==target['order_id']]
+          assert len(order_matches)==1 and order_matches[0].get('status')=='active', 'Target hosting order is not active'
+          report['target']={k:target.get(k) for k in ('domain','username','order_id','website_type')}
+          report['plan']=order_matches[0].get('plan')
+          ownership=call(host,'/domains/verify-ownership','HOSTINGER_API',{'domain':domain})
+          ownership=ownership.get('data',ownership)
+          report['initiallyAccessible']=ownership.get('is_accessible')
+          if not ownership.get('is_accessible'):
+              txt=ownership.get('txt_to_verify')
+              print(json.dumps({'verifiedTarget':report['target'], 'challengeKeys':list(ownership),
+                  'challengeType':type(txt).__name__, 'challengeLength':len(txt) if isinstance(txt,str) else None}))
+              if txt == '':
+                  # Hostinger refused access and offered no publishable challenge. Record
+                  # BLOCKED_EXTERNAL evidence (ownership remains false; no DNS writes) and
+                  # exit 0 — SystemExit(str) would fail the job with code 1 and drop the intent
+                  # of preserving this provider outcome as evidence rather than a script defect.
+                  report.update(status='HOSTINGER_DOMAIN_ACCESS_DENIED_WITHOUT_CHALLENGE',
+                      hostingerOwnershipVerified=False, challengeLength=0, dnsWrites=0,
+                      nextAction='Resolve the existing domain association with the owning account or Hostinger support.')
+                  output=pathlib.Path('ownership-evidence')
+                  output.mkdir(exist_ok=True)
+                  (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+                  print(json.dumps(report,indent=2))
+                  raise SystemExit(0)
+              assert isinstance(txt,str) and re.fullmatch('[A-Za-z0-9_=.:-]{1,255}',txt), 'Unexpected ownership TXT format'
+              report['challengeSha256']=hashlib.sha256(txt.encode()).hexdigest()
+              zone_info=call(cf,'/zones/'+zone,'DNS_TOKEN')
+              assert zone_info.get('success') and zone_info['result']['name']==domain and zone_info['result']['account']['id']==account
+              listed=call(cf,'/zones/'+zone+'/dns_records?'+urllib.parse.urlencode({'type':'TXT','name':domain,'per_page':100}),'DNS_TOKEN')
+              assert listed.get('success') and listed.get('result_info',{}).get('total_pages',1)<=1
+              exact=[r for r in listed['result'] if r.get('name')==domain and r.get('content')==txt]
+              if not exact:
+                  created=call(cf,'/zones/'+zone+'/dns_records','DNS_TOKEN',{'type':'TXT','name':domain,'content':txt,'ttl':900})
+                  assert created.get('success')
+                  exact=[created['result']]
+                  report['created']=True
+              else: report['created']=False
+              report['recordId']=exact[0]['id']
+              assert exact[0]['type']=='TXT' and exact[0]['name']==domain and exact[0]['content']==txt
+              for attempt in range(10):
+                  verified=call(host,'/domains/verify-ownership','HOSTINGER_API',{'domain':domain})
+                  verified=verified.get('data',verified)
+                  if verified.get('is_accessible'):
+                      report['hostingerOwnershipVerified']=True
+                      break
+                  time.sleep(20)
+              else: report['hostingerOwnershipVerified']=False
+          else: report['hostingerOwnershipVerified']=True
+          output=pathlib.Path('ownership-evidence')
+          output.mkdir()
+          (output/'report.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          assert report['hostingerOwnershipVerified'], 'Ownership not verified within bounded propagation window'
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-domain-ownership
+          path: ownership-evidence/
+          retention-days: 7

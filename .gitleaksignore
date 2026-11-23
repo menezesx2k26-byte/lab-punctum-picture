@@ -1,0 +1,2 @@
+# Reviewed fake Clerk SDK credential in the isolated offline regression fixture.
+0aff1b14586f8ef822662dea361c556f101a874b:scripts/hostinger-clerk-production-proof.test.mjs:stripe-access-token:10

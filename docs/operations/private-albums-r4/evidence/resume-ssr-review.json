@@ -1,0 +1,130 @@
+{
+  "kind": "punctum-r4-read-only-public-ssr-cpu-review",
+  "date": "2026-10-28",
+  "repository": "menezesx2k26-byte/lab-punctum-picture",
+  "reviewedHead": "16c86d1110f34e1fb871bc9e5906ead5a6344f7a",
+  "reviewScope": "Source, existing local profiling evidence, SSR import tests and dist artifacts; no source edits, rebuild, deployment or new CPU measurement",
+  "decision": "NO_GO_PRODUCTION",
+  "primaryFinding": {
+    "id": "SSR-CPU-01",
+    "confidence": "HIGH_FOR_REDUNDANT_WORK; UNMEASURED_FOR_SAVINGS",
+    "summary": "refreshLegacyPublishedConfig eagerly structuredClones the entire validated SiteConfig even when no legacy field matches and it returns the original object.",
+    "exactSymbols": [
+      "shared/config/legacy-refresh.ts:52-53 refreshLegacyPublishedConfig",
+      "shared/config/legacy-refresh.ts:66-68 let changed=false; const next=structuredClone(config); const nextHome=next.editorial.home",
+      "shared/config/legacy-refresh.ts:70-79 replaceExact",
+      "shared/config/legacy-refresh.ts:189 return changed ? siteConfigSchema.parse(next) : config",
+      "shared/site-config-storage.ts:112-167 parseStoredConfig",
+      "shared/site-config-storage.ts:135-136 safeParseSiteConfig then refreshLegacyPublishedConfig",
+      "shared/site-config-storage.ts:339-372 readPublicSiteConfigState/readPublicSiteConfig",
+      "app/lib/server-content.ts:28-33 loadPublicExperience cached only within a render",
+      "app/page.tsx:9-15 Home calls loadPublicExperience",
+      "tests/unit/legacy-refresh.spec.ts:98-102 test proves same reference for current config"
+    ],
+    "whyRedundant": "For a valid current configuration with sourcePresetId punctum-default but no old legacy strings, no callbacks modify next, changed stays false and the cloned object is discarded. This repeats on fresh dynamic public SSR requests; React cache is not a durable cross-request snapshot.",
+    "minimalBehaviorPreservingFixProposal": "Keep safeParseSiteConfig, migration, fallback, legacy replacement checks and all published semantics. Use a lazily allocated cloned draft: let next: SiteConfig | undefined; function edit(apply: (draft: SiteConfig) => void) { next ??= structuredClone(config); apply(next); }. Replace callbacks that currently write nextHome/next with writes to edit(draft) only after a matching condition. Return next ? siteConfigSchema.parse(next) : config. Ensure the special legacy typography and heroMedia rewrite also allocate lazily. Avoid a global cache or changes to Studio draft/revision logic.",
+    "suggestedRegressionTest": {
+      "file": "tests/unit/legacy-refresh.spec.ts",
+      "cases": [
+        "Spy on globalThis.structuredClone AFTER constructing current fixture; refreshLegacyPublishedConfig(PUNCTUM_DEFAULT_SITE_CONFIG) returns same reference and makes zero clone calls.",
+        "For legacyPublishedConfig(), existing legacy substitutions, font, heroMedia reset, zod-validity and immutable input continue passing; exactly one clone during refresh.",
+        "For custom Studio-authored copy/hero, preserve custom content and current reference behavior; existing tests remain green.",
+        "Invalid published JSON, migrated v1/v2/v3 and absent version continue existing safe-fallback behavior in site-config-storage tests."
+      ],
+      "status": "PROPOSED_NOT_IMPLEMENTED_OR_EXECUTED"
+    },
+    "estimatedCpuSaving": null,
+    "risk": "LOW_IF_ALL_LEGACY_MUTATIONS_USE_COPY_ON_WRITE; must preserve identity/reference tests, all legacy branches and safe fallback"
+  },
+  "secondaryFinding": {
+    "id": "SSR-D1-02",
+    "summary": "Normal published config read performs serial readPointers (ensureVersionedSiteConfig) then readVersion, two D1 requests before JSON parse. Each request's current settings is also separately fetched.",
+    "exactSymbols": [
+      "shared/site-config-storage.ts:170-178 readPointers",
+      "shared/site-config-storage.ts:180-193 readVersion",
+      "shared/site-config-storage.ts:195-200 ensureVersionedSiteConfig early return",
+      "shared/site-config-storage.ts:339-345 readPublicSiteConfigState sequential calls",
+      "shared/public-content.ts:229-248 readPublicSiteSettings",
+      "app/lib/server-content.ts:28-32 loadPublicExperience"
+    ],
+    "optionalLaterCorrection": "If cloning improvement is insufficient, on the ordinary path issue one SELECT of published version through site_config_pointers with LEFT JOIN, preserving the distinction between missing pointer (bootstrap via ensureVersionedSiteConfig) and dangling/non-published version (safe fallback). No cross-request config cache; do not skip Studio publication or safe fallbacks.",
+    "testProposal": "Compare result and query count under valid pointer, missing pointer/bootstrap, dangling published version, non-published version, legacy migrations and updated published version between requests. Preserve writes only in the original bootstrap flow.",
+    "priority": "SECOND_AFTER_LOW_RISK_CLONE_FIX",
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "costEvidence": {
+    "realEdgePrior": {
+      "sourceHead": "d02e774",
+      "candidateCpuMs": {"p50": 30, "p95": 62, "p99": 114, "n": 63},
+      "appliesToCurrentHead": false,
+      "G17": "FAIL"
+    },
+    "existingLocalProfile": {
+      "file": "outputs/public-home-profile.json",
+      "script": "scripts/profile-public-home.mjs",
+      "scope": "LOCAL workerd/V8 sampled execution; not billed CPU, excludes idle samples and may include compilation",
+      "repetitions": 2,
+      "warmSamples": 10,
+      "warmSampledExecutionMs": {"p50": 53.381, "p95": 81.501, "p99": 81.501},
+      "coldSampledExecutionMs": {"p50": 164.216, "p95": 193.924, "p99": 193.924},
+      "observedTopFramesInclude": [
+        "parseStoredConfig",
+        "safeParseSiteConfig",
+        "readPublicSiteConfigState",
+        "inst._zod.parse",
+        "SSR flushBuffered / React stream",
+        "cloudflare-internal:d1-api"
+      ],
+      "profileMainBundleSha256": "5d8b2a741b5e966e19616d96becaa599179441ef4e97760ed5e329ae8f1edbff",
+      "observedDistMainBundleSha256": "bfb02d5d5d32b277e098fa7750b8cfb732e10d3015ab8d19ad7a2bf5e4704cc1",
+      "profileSsrBundleSha256": "3b8549b32a4ad762779600f26319c750c5e0dada30748bd8f9dc9229a4fdc74c",
+      "observedDistSsrBundleSha256": "3b8549b32a4ad762779600f26319c750c5e0dada30748bd8f9dc9229a4fdc74c",
+      "importantLimit": "Main bundle hash differs: local profile is NOT verifiably the current dist or HEAD; no numerical CPU claim for 16c86d1."
+    },
+    "previousTenRepetitionComparison": {
+      "file": "docs/operations/private-albums-r4/evidence/r4-public-home-local-profile-2026-10-28.json",
+      "baselineSourceHead": "b417405c0406daf286b192a8151cf45c4a50f89c",
+      "afterSourceHead": "966b3d70af47f4aa72cffa6be938dca3ae9a5681",
+      "notCurrentHead": true
+    }
+  },
+  "alreadyFixedWorkNotToRepeat": {
+    "plugin": "build/ssr-on-demand.ts:13-35 ssrOnDemandClientReferences, version-gated vinext 0.0.50/plugin-rsc 0.5.28, skips eager admin/client-reference preload",
+    "wiredAt": "vite.config.ts:60-68",
+    "runtimeVerification": "scripts/ssr-route-imports.test.mjs:9-59 ensures no Studio/admin/upload modules evaluate on public home; Studio loads on own route",
+    "note": "Do not reintroduce eager imports, use stale Studio caching, weaken authentication, or offload password verification to a public SSR adapter."
+  },
+  "measurementRouteForParent": {
+    "local": [
+      "Keep untouched HEAD16c86d1 dist as an immutable baseline directory and record server/index.js + server/ssr/index.js hashes.",
+      "Parent implements only lazy clone, adds unit regression test, builds candidate; run tests/unit/legacy-refresh.spec.ts, site-config migration tests and scripts/ssr-route-imports.test.mjs.",
+      "Use existing scripts/profile-public-home.mjs with baseline=/absolute/immutable-baseline-dist after=/absolute/candidate-dist, PUNCTUM_PROFILE_REPETITIONS=10 or higher, alternating fresh synthetic D1 workerd isolates.",
+      "Compare warm p50/p95/p99 sampledExecutionMs and cold separately, success HTTP200, HTML output/metadata/JSON-LD and no admin import. Verify deterministic body/DOM parity before claiming behavior preserved."
+    ],
+    "edge": [
+      "After parent exact-SHA CI and isolated authorization, use existing scripts/r4-edge-execute.mjs for candidate versus baseline version-specific CPU telemetry, 64+ requests per variant with verified version IDs and error counts.",
+      "Report Cloudflare p50/p95/p99 separately from local inspector samples; gate G17 remains FAIL until current exact-SHA measured with billable plan constraints and accepted budget.",
+      "No cache shared across requests, no stale Studio, no production deployment during exploratory measurement."
+    ],
+    "executedByThisWorker": false
+  },
+  "nodeHostingAdapter": {
+    "conclusion": "NO_EXISTING_PUBLIC_VINEXT_SSR_ADAPTER",
+    "canExecutePublicSsrUnchanged": false,
+    "evidence": [
+      "services/punctum-hostinger-qa/app.mjs:3-17 creates only / or /health JSON HTTP probe; ssrValidated:false; service README:3 explicitly says it does not execute Punctum SSR or use D1/R2",
+      "services/punctum-hostinger-qa/server.mjs:1-6 only starts createQaServer().listen",
+      "services/punctum-password-bridge/server.mjs:10-15,29-31,65-84 handles internal password derivation endpoint and /healthz, not site rendering",
+      "app/lib/server-content.ts:1,21-25 imports cloudflare:workers and requires native env.DB D1Database",
+      "worker/index.ts:6,169-190 uses vinext/server/app-router-entry handler.fetch(request,env,ctx) and Cloudflare worker routing",
+      "dist/server/wrangler.json declares Cloudflare DB/D1, R2 ORIGINALS/BACKUPS, IMAGES and ASSETS bindings",
+      "vite.config.ts:49-69 uses @cloudflare/vite-plugin with vinext"
+    ],
+    "safeInterpretation": "Hostinger HTTP200 v2 proves only Node HTTPS and listen capability. Moving public vinext SSR to this Node probe without implementing verified native/cloudflare binding adapter, asset routing and security boundaries is not currently supported. No offload or D1/R2 rewrite is authorized, thus do not suggest it as a zero-change CPU remedy.",
+    "secretsInspectedOrStored": false
+  },
+  "formalIndependentSecurityG19Claimed": false,
+  "codeChanges": false,
+  "deployments": false,
+  "configurationChanges": false
+}
