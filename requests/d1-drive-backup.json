@@ -1,6 +1,6 @@
 {
-  "nonce": 2,
+  "nonce": 3,
   "requested_by": "chat",
-  "purpose": "post-studio-drive-backup",
+  "purpose": "vps-migration-fresh-d1-readonly-backup-2026-11-13",
   "domain_changes": false
 }
