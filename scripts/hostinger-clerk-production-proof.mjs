@@ -53,7 +53,7 @@ export async function loadAuthHandlers() {
   const bundled = await build({
     stdin: {
       contents: `export { handleAdminAuth } from "./worker/api/admin-auth.ts";
-        export { requireAdmin, setAdminPassword } from "./worker/utils/auth.ts";
+        export { requireAdmin, prepareAdminPassword } from "./worker/utils/auth.ts";
         export { handleClientSessionApi } from "./worker/api/client-session.ts";
         export { requireClient } from "./worker/client/auth.ts";
         export { verifyClerkSessionFromRequest } from "./worker/auth/clerk-auth.ts";`,
@@ -190,7 +190,7 @@ export async function proveHandlers(auth, db, input, jwt, pem, checks) {
 
   const legacy = { ...env, ADMIN_AUTH_MODE: "legacy", CLIENT_AUTH_MODE: "password", CLERK_AUTH_ENABLED: "false" };
   const password = randomBytes(24).toString("hex");
-  await auth.setAdminPassword(password, db, "proof@example.invalid");
+  await (await auth.prepareAdminPassword(password, db, "proof@example.invalid")).run();
   const legacyRequest = request("/admin/api/session", "POST", {}, { email: input.email, password });
   const legacyResponse = await auth.handleAdminAuth(legacyRequest, new URL(legacyRequest.url), legacy);
   assert(legacyResponse?.status === 200);
