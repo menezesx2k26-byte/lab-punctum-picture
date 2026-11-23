@@ -1,0 +1,77 @@
+name: Punctum Unlimited Deploy, Cron 230 Verification & Live Prod E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_deploy:
+        description: "Deploy clean build to Hostinger Unlimited preserving storage"
+        type: boolean
+        default: true
+      run_cron_230:
+        description: "Trigger daily cron on 230-object dataset and restore 0 6 * * *"
+        type: boolean
+        default: true
+      run_live_e2e:
+        description: "Run live production Playwright Clerk E2E + G05 25 MiB check"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctum-unlimited-ops
+  cancel-in-progress: false
+
+jobs:
+  unlimited-ops:
+    if: github.repository == 'menezesx2k26-byte/lab-punctum-picture' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Deploy clean build & verify 230-object daily cron + live HTTP routes
+        if: inputs.run_deploy || inputs.run_cron_230
+        env:
+          HOSTINGER_UNLIMITED_API: ${{ secrets.HOSTINGER_UNLIMITED_API }}
+        run: |
+          args=()
+          if [ "${{ inputs.run_deploy }}" = "true" ]; then
+            args+=(--deploy --check-live)
+          fi
+          if [ "${{ inputs.run_cron_230 }}" = "true" ]; then
+            args+=(--verify-cron-230)
+          fi
+          args+=(--inspect)
+          python3 scripts/hostinger_unlimited_ops.py "${args[@]}"
+
+      - name: Install Playwright Chromium for live production E2E
+        if: inputs.run_live_e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run live production E2E + G05 25 MiB verification
+        if: inputs.run_live_e2e
+        env:
+          PUNCTUM_CLERK_PRODUCTION_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
+        run: node scripts/e2e/punctum-unlimited-live-prod-qa.mjs
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: punctum-unlimited-ops-evidence
+          path: |
+            outputs/unlimited-ops/
+            outputs/unlimited-live-prod-qa/
+          if-no-files-found: warn
+          retention-days: 14
