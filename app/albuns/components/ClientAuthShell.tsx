@@ -11,7 +11,7 @@ export function ClientAuthShell({
   children,
   config = PUNCTUM_DEFAULT_SITE_CONFIG,
 }: {
-  children: ReactNode;
+  children?: ReactNode;
   config?: unknown;
 }) {
   return (
