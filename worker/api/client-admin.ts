@@ -250,8 +250,8 @@ async function handleGalleryAdminApi(
     const now = new Date().toISOString();
     await db.batch([
       db.prepare(
-        `INSERT INTO client_galleries (id,client_id,title,introduction,theme,allow_downloads,status,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,'draft',?,?)`,
+        `INSERT INTO client_galleries (id,client_id,title,introduction,theme,layout_preset,allow_downloads,status,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,'draft',?,?)`,
       )
       .bind(
         galleryId,
@@ -259,6 +259,7 @@ async function handleGalleryAdminApi(
         input.title,
         input.introduction ?? "",
         input.theme,
+        input.layoutPreset,
         input.allowDownloads ? 1 : 0,
         now,
         now,
@@ -395,6 +396,7 @@ async function handleGalleryAdminApi(
       title: "title",
       introduction: "introduction",
       theme: "theme",
+      layoutPreset: "layout_preset",
       allowDownloads: "allow_downloads",
     } as const;
     const assignments: string[] = [];
