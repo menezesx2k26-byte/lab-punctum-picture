@@ -1,7 +1,7 @@
 {
-  "status": "success",
-  "checkedAt": "2026-10-27T00:36:43Z",
-  "sourceCommit": "4a9842dac2726699a5272d137ea7eedfe20d469c",
+  "status": "failure",
+  "checkedAt": "2026-11-23T06:33:30Z",
+  "sourceCommit": "e6878f7d0a1710290b484cbdf7ffb0441f05f7d9",
   "worker": "punctum-picture-migration",
   "workerUrl": "https://punctum-picture-migration.menezesx2k26.workers.dev",
   "productionUrl": "https://punctumpicture.com",
@@ -22,7 +22,7 @@
     "generatedConfig": "success",
     "deploy": "success",
     "publishedExperience": "success",
-    "smoke": "success"
+    "smoke": "failure"
   },
   "wwwSmokeStatus": "healthy",
   "wwwSmokeRequired": false,
