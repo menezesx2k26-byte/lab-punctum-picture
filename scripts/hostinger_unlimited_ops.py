@@ -8,10 +8,10 @@ import json
 import os
 import pathlib
 import re
+import secrets
 import subprocess
 import sys
 import time
-import urllib.parse
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 if str(SCRIPT_DIR.parent) not in sys.path:
@@ -23,7 +23,10 @@ from scripts.hostinger_unlimited_d1_r2_sync import (  # noqa: E402
     SITE,
     USERNAME,
     HostingerUnlimitedClient,
+    _fetch_clerk_admin_email_and_pem,
     _iter_strings,
+    build_unlimited_sync_env,
+    strip_import_secrets,
 )
 
 CRON_BASE = f"/accounts/{USERNAME}/cron-jobs"
@@ -40,19 +43,51 @@ def cron_command(mode: str) -> str:
     )
 
 
-def build_redeploy_env(existing_rows: list[dict], source_sha: str) -> dict[str, str]:
-    env_map: dict[str, str] = {}
-    for row in existing_rows:
-        if not isinstance(row, dict):
-            continue
-        key = row.get("key")
-        value = row.get("value")
-        if isinstance(key, str) and isinstance(value, str):
-            env_map[key] = value
-    env_map.pop("PUNCTUM_MANAGED_IMPORT_KEY", None)
-    env_map.pop("PUNCTUM_MANAGED_IMPORT_SHA256", None)
-    env_map["PUNCTUM_QA_SOURCE_SHA"] = source_sha
-    return env_map
+def build_clean_redeploy_env(
+    *,
+    publishable_key: str,
+    secret_key: str,
+    jwt_key_pem_single_line: str,
+    admin_email: str,
+    clerk_admin_user_id: str,
+    source_sha: str,
+) -> dict[str, str]:
+    full = build_unlimited_sync_env(
+        publishable_key=publishable_key,
+        secret_key=secret_key,
+        jwt_key_pem_single_line=jwt_key_pem_single_line,
+        admin_email=admin_email,
+        clerk_admin_user_id=clerk_admin_user_id,
+        source_sha=source_sha,
+        admin_password_hash=secrets.token_hex(32),
+        admin_session_secret=secrets.token_hex(48),
+        client_session_secret=secrets.token_hex(48),
+    )
+    return strip_import_secrets(full)
+
+
+def _redact_sensitive(line: str) -> str:
+    redacted = re.sub(r"sk_live_[A-Za-z0-9_-]+", "[REDACTED_SK]", line)
+    redacted = re.sub(r"pk_live_[A-Za-z0-9_-]+", "[REDACTED_PK]", redacted)
+    redacted = re.sub(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "[REDACTED_EMAIL]", redacted)
+    redacted = re.sub(r"\b[a-f0-9]{64,}\b", "[REDACTED_HEX]", redacted)
+    return redacted
+
+
+def sanitize_build_logs(logs_payload) -> dict:
+    raw_lines: list[str] = []
+    for text in _iter_strings(logs_payload):
+        raw_lines.extend(text.splitlines())
+    codes = sorted(
+        set(
+            re.findall(
+                r"\b(?:UNLIMITED_[A-Z0-9_]+|CANDIDATE_[A-Z0-9_]+|MANAGED_[A-Z0-9_]+|ERR_[A-Z0-9_]+|EACCES|ENOENT|ENOMEM|ELIFECYCLE)\b",
+                "\n".join(raw_lines),
+            )
+        )
+    )
+    tail = [_redact_sensitive(line)[:300] for line in raw_lines[-25:]]
+    return {"codes": codes, "lineCount": len(raw_lines), "tailLines": tail}
 
 
 def parse_bootstrap_receipt(logs_payload) -> dict:
@@ -101,6 +136,22 @@ def compute_temp_daily_schedule(
     now = now_utc or datetime.datetime.now(datetime.timezone.utc)
     target = now + datetime.timedelta(seconds=lead_seconds)
     return f"{target.minute} {target.hour} * * *", target
+
+
+def trigger_build_with_diagnostics(client: HostingerUnlimitedClient, archive_name: str, message: str):
+    try:
+        return client.trigger_and_wait_build(archive_name, message)
+    except RuntimeError as err:
+        match = re.search(r"build ([0-9a-f-]+) ended in state", str(err))
+        if match:
+            build_uuid = match.group(1)
+            try:
+                fail_logs = client.api("GET", f"{SITE}/builds/{build_uuid}/logs")
+                summary = sanitize_build_logs(fail_logs)
+                print(json.dumps({"failedBuildUuid": build_uuid, "diagnostics": summary}, indent=2), file=sys.stderr)
+            except Exception:
+                pass
+        raise
 
 
 def verify_cron_230_and_restore(
@@ -244,13 +295,19 @@ def collect_rollback_and_runtime_telemetry(client: HostingerUnlimitedClient) -> 
     if isinstance(builds, list):
         for row in builds[:5]:
             if isinstance(row, dict):
-                top_builds.append(
-                    {
-                        "uuid": row.get("uuid"),
-                        "state": row.get("state"),
-                        "created_at": row.get("created_at"),
-                    }
-                )
+                entry = {
+                    "uuid": row.get("uuid"),
+                    "state": row.get("state"),
+                    "created_at": row.get("created_at"),
+                }
+                if row.get("state") in ("failed", "error") and row.get("uuid"):
+                    try:
+                        entry["diagnostics"] = sanitize_build_logs(
+                            client.api("GET", f"{SITE}/builds/{row['uuid']}/logs")
+                        )
+                    except Exception:
+                        pass
+                top_builds.append(entry)
     deployments = None
     try:
         dep_raw = client.api("GET", f"{SITE}/deployments")
@@ -280,7 +337,7 @@ def collect_rollback_and_runtime_telemetry(client: HostingerUnlimitedClient) -> 
     status_codes = sorted(
         set(
             re.findall(
-                r"\b(?:CANDIDATE_[A-Z0-9_]+|MANAGED_[A-Z0-9_]+|PUNCTUM_[A-Z0-9_]+|ERR_[A-Z0-9_]+|EACCES|ENOENT|ENOMEM|SIGKILL)\b",
+                r"\b(?:CANDIDATE_[A-Z0-9_]+|MANAGED_[A-Z0-9_]+|PUNCTUM_[A-Z0-9_]+|UNLIMITED_[A-Z0-9_]+|ERR_[A-Z0-9_]+|EACCES|ENOENT|ENOMEM|SIGKILL)\b",
                 "\n".join(raw_lines),
             )
         )
@@ -312,12 +369,24 @@ def main():
     }
 
     if args.deploy:
-        existing_env = client.api("GET", f"{SITE}/builds/settings/env")
-        redeploy_env = build_redeploy_env(existing_env if isinstance(existing_env, list) else [], source_sha)
+        publishable_key = os.environ.get("CLERK_PUBLISHABLE_KEY", "").strip()
+        secret_key = os.environ.get("CLERK_SECRET_KEY", "").strip()
+        clerk_admin_user_id = os.environ.get("PUNCTUM_CLERK_ADMIN_USER_ID", "").strip()
+        if not publishable_key or not secret_key or not clerk_admin_user_id:
+            raise ValueError("CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, and PUNCTUM_CLERK_ADMIN_USER_ID are required for --deploy")
+        admin_email, pem = _fetch_clerk_admin_email_and_pem(secret_key, clerk_admin_user_id)
+        redeploy_env = build_clean_redeploy_env(
+            publishable_key=publishable_key,
+            secret_key=secret_key,
+            jwt_key_pem_single_line=pem.replace("\n", "\\n"),
+            admin_email=admin_email,
+            clerk_admin_user_id=clerk_admin_user_id,
+            source_sha=source_sha,
+        )
         client.replace_env(redeploy_env)
         archive_bytes = subprocess.check_output(["git", "archive", "--format=zip", "HEAD"], cwd=root)
         archive_name = client.upload_archive(archive_bytes, "punctum-unlimited-clean-")
-        build_uuid, logs = client.trigger_and_wait_build(archive_name, f"Clean deploy {source_sha[:7]}")
+        build_uuid, logs = trigger_build_with_diagnostics(client, archive_name, f"Clean deploy {source_sha[:7]}")
         bootstrap = parse_bootstrap_receipt(logs)
         report["deploy"] = {
             "buildUuid": build_uuid,

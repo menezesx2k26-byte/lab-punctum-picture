@@ -44,6 +44,9 @@ jobs:
         if: inputs.run_deploy || inputs.run_cron_230
         env:
           HOSTINGER_UNLIMITED_API: ${{ secrets.HOSTINGER_UNLIMITED_API }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.PUNCTUM_CLERK_PRODUCTION_SECRET_KEY }}
+          PUNCTUM_CLERK_ADMIN_USER_ID: ${{ secrets.PUNCTUM_CLERK_ADMIN_USER_ID }}
         run: |
           args=()
           if [ "${{ inputs.run_deploy }}" = "true" ]; then
