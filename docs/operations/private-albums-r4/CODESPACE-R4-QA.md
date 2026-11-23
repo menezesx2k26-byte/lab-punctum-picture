@@ -26,7 +26,8 @@ evidence file; only secret **names** appear.
 
 Add these under **Settings -> Codespaces -> Secrets** (or the repository's
 Codespaces secret settings) and grant them to this repository. The
-`.devcontainer/devcontainer.json` `secrets` block declares the same names so
+`.devcontainer/devcontainer.json` `secrets` block declares every name listed
+below (including `HOSTINGER_API` and `PUNCTUM_MANAGED_OUTPUT` for G17), so
 Codespaces prompts for any that are missing. **Never commit the values.**
 
 Grouped by the gate that consumes them:
@@ -82,6 +83,15 @@ npm run qa:r4:local
 The orchestrator prints a RUN/SKIP plan, tees each gate's output into
 `outputs/qa-r4-codespace/<gate>.json`, writes `outputs/qa-r4-codespace/summary.json`,
 and exits non-zero only if a gate that RAN failed.
+
+**Exit 0 is not proof on its own.** An all-SKIP run (no required secrets set)
+also exits 0 by design: "nothing proven, nothing faked". A meaningful run
+requires `ran > 0`. Read `summary.totals` (printed as
+`ran=.. passed=.. failed=.. skipped=..` and written to `summary.json`), not the
+exit code alone: treat a run as closing gates only when `ran > 0` and
+`failed == 0`. When `ran == 0` the orchestrator prints an explicit `NOTE` that
+exit 0 proves nothing. Any consuming workflow must gate on
+`summary.totals.ran`/`passed`, never on the exit code by itself.
 
 ### Exact command per gate
 

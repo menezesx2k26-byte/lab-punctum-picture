@@ -328,6 +328,14 @@ export async function main(argv = process.argv.slice(2), env = process.env, deps
   // FAIL-CLOSED: exit non-zero only if a gate that actually RAN failed. An
   // all-SKIP run is exit 0 (nothing was proven, nothing was faked).
   const exitCode = ranFailures > 0 ? 1 : 0;
+
+  // Make the "exit 0 is not proof" contract explicit to a human reader: a run
+  // where nothing RAN exits 0 but proves nothing. Exit code is unchanged.
+  if (summary.totals.ran === 0) {
+    console.log(
+      "  NOTE: ran=0 means no gate executed; exit 0 here proves nothing (every gate SKIPped). Set the required secrets so ran>0.",
+    );
+  }
   return { summary, exitCode };
 }
 

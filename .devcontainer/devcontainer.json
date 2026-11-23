@@ -45,6 +45,12 @@
     "SOURCE_ADMIN_PASSWORD": {
       "description": "Source admin password for the managed acceptance HTTP gate and the managed production Python harness."
     },
+    "HOSTINGER_API": {
+      "description": "Hostinger managed hosting API token used by scripts/hostinger_managed_production.py (via scripts/hostinger_managed_qa.py, which raises if it is unset). Required by the G17 managed production prepare gate."
+    },
+    "PUNCTUM_MANAGED_OUTPUT": {
+      "description": "Filesystem path the G17 managed production harness reads exported artifacts from (private-environment.json, export-receipt.json, managed-seed.bin). Read by scripts/hostinger_managed_production.py."
+    },
     "PUNCTUM_CLERK_ADMIN_EMAIL": {
       "description": "Clerk-linked admin email selected by the Clerk production proof identity check."
     },
