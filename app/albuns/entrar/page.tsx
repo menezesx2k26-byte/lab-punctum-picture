@@ -1,10 +1,12 @@
 import { env } from "cloudflare:workers";
+import { loadPublicSiteConfig } from "../../lib/server-content";
+import { ClientAuthShell } from "../components/ClientAuthShell";
 import { ClientLogin } from "../components/ClientLogin";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Entrar nos seus álbuns" };
 
-export default function LoginPage() {
+export default async function LoginPage() {
   const clientAuthMode = Reflect.get(env, "CLIENT_AUTH_MODE");
   const clerkOnly = clientAuthMode === "clerk";
   const clerkFlag = Reflect.get(env, "CLERK_AUTH_ENABLED") === "true";
@@ -19,11 +21,14 @@ export default function LoginPage() {
     Boolean(publishableKey) &&
     (clerkOnly || (clerkFlag && clientAuthMode !== "access"));
 
+  const config = await loadPublicSiteConfig();
   return (
-    <ClientLogin
-      clerkEnabled={clerkEnabled}
-      clerkOnly={clerkOnly}
-      publishableKey={clerkEnabled ? publishableKey : undefined}
-    />
+    <ClientAuthShell config={config}>
+      <ClientLogin
+        clerkEnabled={clerkEnabled}
+        clerkOnly={clerkOnly}
+        publishableKey={clerkEnabled ? publishableKey : undefined}
+      />
+    </ClientAuthShell>
   );
 }
