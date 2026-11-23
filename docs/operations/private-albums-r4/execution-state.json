@@ -34,6 +34,63 @@
     "conclusion": "success",
     "hostingerNodeQa": "skipped"
   },
+  "currentCycleSandboxReverify20261123": {
+    "date": "2026-11-23",
+    "scope": "Isolated offline sandbox (Amazon Linux 2023, Node 22.23.4): re-verify every offline-runnable suite with REAL results, fix real code defects by TDD, and add a turnkey GitHub Codespaces live-QA harness. NO Cloudflare/Clerk/Hostinger access, NO live secrets, NO wrangler, openssl absent, no Playwright browsers, /root/.config read-only. No merge, deploy, DNS, Clerk Production, R4 activation, remote mutation or destructive restore.",
+    "branch": "codex/punctum-unlimited-release-20261120",
+    "baselineHead": "c87c86adc87d6e7552ded719ace01a7e67dc93c6",
+    "commits": [
+      "d5c544e fix(qa): repair stale setAdminPassword import in clerk production proof",
+      "d6ddec1 feat(qa): add turnkey Codespaces R4 live-gate harness"
+    ],
+    "codeDefectFixed": {
+      "file": "scripts/hostinger-clerk-production-proof.mjs",
+      "rootCause": "esbuild bundle imported setAdminPassword from worker/utils/auth.ts, but that export was renamed to prepareAdminPassword (returns a prepared D1 statement). Bundle failed to build, breaking two anonymous-admin-denial proof tests.",
+      "fix": "Import prepareAdminPassword and run the returned statement in the legacy fallback path; no production auth code changed; JWT/issuer/azp/session/revocation contracts untouched.",
+      "red": "node --test scripts/hostinger-clerk-production-proof.test.mjs -> 3/6 FAIL (No matching export setAdminPassword)",
+      "green": "node --test scripts/hostinger-clerk-production-proof.test.mjs -> 6/6 PASS"
+    },
+    "localEvidenceRealRun": {
+      "npmCi": "742 packages, 0 vulnerabilities, exit 0",
+      "typecheck": "PASS exit 0",
+      "lint": "PASS exit 0 (0 errors, 22 pre-existing warnings)",
+      "vitest": "PASS 66/66 files, 369/369 tests, exit 0 (the historical client-security-matrix 20s timeout did NOT reproduce)",
+      "build": "PASS exit 0 (vinext dist/)",
+      "buildHostingerCandidate": "PASS exit 0 (dist/hostinger-candidate/)",
+      "python": "PASS 45 tests across 6 files (hostinger_managed_* + punctum_*_preflight)",
+      "g05LocalPublicReleaseCheck": "PASS PUBLIC_RELEASE_R4_OFF_LOCAL_SYNTHETIC_PASS, 8 checks",
+      "g05Local25MiBPrivateProof": "PASS_LOCAL_SYNTHETIC_NODE bytes=26214400; exact 25 MiB accept, +1 byte reject, invalid-checksum reject, A/B GET/HEAD/favorite/thumb/gallery/download cross-client denial, owner-download SHA-256 integrity, favorites persist, LGPD export isolation, parallel 25 MiB + SQLite integrity",
+      "qaR4Local": "ran=2 passed=2 failed=0 skipped=6; orchestrator fail-closed, 6 live gates SKIP, G15/G19/G20/G22 EXTERNAL",
+      "orchestratorUnitTests": "node --test scripts/qa/r4-codespace-gates.test.mjs -> 11/11 PASS",
+      "environmentalOnlyFailures": "7 node-script tests cannot run here, all environmental not code defects: hostinger-encrypt-d1-stage (x2, openssl absent), hostinger-clerk-browser-proof cert step (openssl absent), r4-scoped-local (wrangler needs writable /root/.config/.wrangler, read-only FS), access-cookie-navigation + e2e/browser-zoom-evidence + e2e/contrast-pixel-evidence (no Playwright browsers installed)"
+    },
+    "harnessAdded": {
+      "devcontainer": ".devcontainer/devcontainer.json (Node 22 image + Python3/gh features; postCreate installs npm deps, openssl, playwright chromium, wrangler; secrets block declares required NAMES only)",
+      "entrypoint": "npm run qa:r4 (scripts/qa/r4-codespace-gates.mjs) and npm run qa:r4:local; writes outputs/qa-r4-codespace/<gate>.json + summary.json",
+      "docs": "docs/operations/private-albums-r4/CODESPACE-R4-QA.md",
+      "gatesRunnableInCodespaceByOwner": ["G05-remote", "G06-G14 + negatives", "G06-G10 Clerk browser login/logout/revocation", "G17 managed production prepare", "G18/G23 recovery download + isolated restore"],
+      "gatesStillExternalHumanOrPhysical": ["G15 assistive tech", "G19 independent security", "G20 LGPD controller", "G22 release authorization"]
+    },
+    "gateStateChange": "NONE. Canonical G01-G24 and all prior cycle records preserved unchanged. g05FullContractProven(remote), g17WorkersFreeCpuProven, g23RemoteRollbackProven remain false; g05 local 25 MiB behavior re-proven in synthetic Node only (NOT remote HTTP). No gate promoted.",
+    "canonicalGateCountsHistoricalOnly": {
+      "pass": 17,
+      "fail": 2,
+      "blockedExternal": 5
+    },
+    "g05SpecBytes": 26214400,
+    "g05CurrentPreflightBytes": 20000000,
+    "g05FullContractProven": false,
+    "g17WorkersFreeCpuProven": false,
+    "g23RemoteRollbackProven": false,
+    "g15PhysicalAssistiveApproved": false,
+    "g19IndependentSecurityApproved": false,
+    "g20StudioControllerApproved": false,
+    "g22ReleaseApproved": false,
+    "newHeadCi": "PENDING_EXACT_SHA_AFTER_PUSH",
+    "remoteMutations": 0,
+    "incrementalCostAuthorized": "R$ 0,00",
+    "productionDecision": "NO_GO_PRODUCTION"
+  },
   "currentCycle20261110Z": {
     "baselineRemoteSha": "07a2d15b816b340d62d21792c410139fa2562608",
     "baselineRemoteTree": "5aa3ac91407cd5b6620701e37516cfae0d8b3739",
