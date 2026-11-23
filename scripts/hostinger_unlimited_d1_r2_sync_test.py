@@ -85,6 +85,22 @@ class UnlimitedD1R2SyncHelpersTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             parse_import_and_bootstrap_receipts({"logs": "no receipts"}, digest)
 
+    def test_client_request_sets_explicit_user_agent(self):
+        from scripts.hostinger_unlimited_d1_r2_sync import HostingerUnlimitedClient
+
+        captured = {}
+
+        class FakeOpener:
+            def open(self, req, timeout=30):
+                captured["ua"] = req.get_header("User-agent")
+                raise OSError("stop")
+
+        client = HostingerUnlimitedClient("tok_test")
+        client.opener = FakeOpener()
+        with self.assertRaises(OSError):
+            client.request("https://api.clerk.com/v1/jwks")
+        self.assertEqual(captured["ua"], "Punctum-Unlimited-Sync/1.0")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -163,7 +163,8 @@ class HostingerUnlimitedClient:
         self.opener = urllib.request.build_opener(NoRedirect())
 
     def request(self, url: str, method: str = "GET", headers: dict[str, str] | None = None, body: bytes | None = None):
-        req = urllib.request.Request(url, method=method, headers=headers or {}, data=body)
+        merged = {"User-Agent": "Punctum-Unlimited-Sync/1.0", **(headers or {})}
+        req = urllib.request.Request(url, method=method, headers=merged, data=body)
         try:
             with self.opener.open(req, timeout=30) as resp:
                 return resp.status, resp.headers, resp.read(2_000_000)
@@ -175,7 +176,7 @@ class HostingerUnlimitedClient:
             "Authorization": f"Bearer {self.token}",
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "User-Agent": "Punctum Unlimited Sync/1.0",
+            "User-Agent": "Punctum-Unlimited-Sync/1.0",
         }
         body = json.dumps(payload).encode() if payload is not None else None
         status, _, raw = self.request(API + path, method=method, headers=headers, body=body)
@@ -271,7 +272,11 @@ class HostingerUnlimitedClient:
 
 
 def _fetch_clerk_admin_email_and_pem(secret_key: str, clerk_user_id: str) -> tuple[str, str]:
-    headers = {"Authorization": f"Bearer {secret_key}", "Accept": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {secret_key}",
+        "Accept": "application/json",
+        "User-Agent": "Punctum-Unlimited-Sync/1.0",
+    }
     opener = urllib.request.build_opener(NoRedirect())
 
     with opener.open(urllib.request.Request(f"https://api.clerk.com/v1/users/{clerk_user_id}", headers=headers), timeout=20) as r:
