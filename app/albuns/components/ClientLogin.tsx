@@ -1,6 +1,9 @@
 "use client";
+
 import { useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { getPublicVisualAsset } from "../../lib/public-visuals";
 import { privateApi, errorMessage } from "./api";
 import { loginErrorMessage } from "./routes";
 import { ClerkClientLogin } from "./ClerkClientLogin";
@@ -21,6 +24,7 @@ export function ClientLogin({
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -55,141 +59,142 @@ export function ClientLogin({
       setBusy(false);
     }
   }
+
+  const logo = getPublicVisualAsset("logo");
+  const photograph = getPublicVisualAsset("cinematicHero");
+
   return (
-    <main className="pa-entry">
-      <Link href="/" className="pa-wordmark">
-        PUNCTUM <span>PICTURE</span>
-      </Link>
-      <div className="pa-entry-grid">
-        <section className="pa-entry-copy">
-          <p className="pa-eyebrow">Um arquivo só seu</p>
+    <main className="pa-auth-main">
+      <section className="pa-auth-panel">
+        <header className="pa-auth-brand">
+          <Link
+            href="/"
+            className="pa-auth-logo"
+            aria-label="Punctum Picture: página inicial"
+          >
+            <Image
+              src={logo.src}
+              alt=""
+              width={logo.width}
+              height={logo.height}
+              priority
+              sizes="66px"
+            />
+          </Link>
+          <span>Fotografias por Maria Helena</span>
+        </header>
+
+        <div className="pa-auth-body">
+          <p className="pa-eyebrow">
+            {changePassword ? "Acesso protegido" : "Área do cliente"}
+          </p>
           <h1>
             {changePassword ? (
-              <>
-                Suas memórias.
-                <br />
-                <em>Sua chave.</em>
-              </>
+              <>Suas memórias, <em>em segurança.</em></>
             ) : (
-              <>
-                O que fica,
-                <br />
-                <em>é seu.</em>
-              </>
+              <>Suas fotografias, <em>só suas.</em></>
             )}
           </h1>
-          <p>
+          <p className="pa-auth-description">
             {changePassword
-              ? "Escolha uma senha pessoal para abrir os seus álbuns. Ela deve ter pelo menos 12 caracteres."
-              : "Fotografias para revisitar com calma. Entre para encontrar os seus álbuns, guardar favoritas e reviver cada detalhe."}
+              ? "Escolha uma nova senha com pelo menos 12 caracteres."
+              : "Entre para acessar seus álbuns privados."}
           </p>
-          {!changePassword && (
-            <ol className="pa-steps" aria-label="Como acessar seus álbuns">
-              <li>
-                <span>01</span>
-                Entre com o mesmo e-mail combinado com o estúdio
-              </li>
-              <li>
-                <span>02</span>
-                Escolha um dos seus álbuns publicados
-              </li>
-              <li>
-                <span>03</span>
-                Favorite imagens e baixe os originais liberados
-              </li>
-            </ol>
-          )}
-          <span className="pa-entry-signature">
-            Punctum Picture · Maria Helena
-          </span>
-        </section>
-        <section className="pa-login-card" aria-labelledby="login-title">
-          <p className="pa-eyebrow">Área do cliente</p>
-          <h2 id="login-title">
-            {changePassword ? "Escolha sua senha" : "Bem-vindo de volta"}
-          </h2>
-          {!changePassword && clerkEnabled && publishableKey && (
-            <ClerkClientLogin publishableKey={publishableKey} />
-          )}
-          {(changePassword || !clerkOnly) && (
-            <form onSubmit={submit}>
-            {!changePassword && (
-              <label>
-                E-mail
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  maxLength={180}
-                  required
-                />
-              </label>
+
+          <section className="pa-auth-form" aria-labelledby="login-title">
+            <h2 id="login-title">
+              {changePassword ? "Escolha sua senha" : "Bem-vindo de volta"}
+            </h2>
+            {!changePassword && clerkEnabled && publishableKey && (
+              <ClerkClientLogin publishableKey={publishableKey} />
             )}
-            <label>
-              {changePassword ? "Nova senha" : "Senha"}
-              <input
-                type="password"
-                name="password"
-                autoComplete={
-                  changePassword ? "new-password" : "current-password"
-                }
-                minLength={changePassword ? 12 : 1}
-                maxLength={1024}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </label>
-            {changePassword && (
-              <label>
-                Confirme a nova senha
-                <input
-                  type="password"
-                  name="confirmation"
-                  autoComplete="new-password"
-                  minLength={12}
-                  maxLength={1024}
-                  value={confirmation}
-                  onChange={(e) => setConfirmation(e.target.value)}
-                  required
-                />
-              </label>
+            {(changePassword || !clerkOnly) && (
+              <form onSubmit={submit}>
+                {!changePassword && (
+                  <label>
+                    E-mail
+                    <input
+                      type="email"
+                      name="email"
+                      autoComplete="username"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      maxLength={180}
+                      required
+                    />
+                  </label>
+                )}
+                <label>
+                  {changePassword ? "Nova senha" : "Senha"}
+                  <input
+                    type="password"
+                    name="password"
+                    autoComplete={
+                      changePassword ? "new-password" : "current-password"
+                    }
+                    minLength={changePassword ? 12 : 1}
+                    maxLength={1024}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </label>
+                {changePassword && (
+                  <label>
+                    Confirme a nova senha
+                    <input
+                      type="password"
+                      name="confirmation"
+                      autoComplete="new-password"
+                      minLength={12}
+                      maxLength={1024}
+                      value={confirmation}
+                      onChange={(e) => setConfirmation(e.target.value)}
+                      required
+                    />
+                  </label>
+                )}
+                {error && (
+                  <p role="alert" className="pa-error">
+                    {error}
+                  </p>
+                )}
+                <button className="pa-primary" disabled={busy} type="submit">
+                  {busy
+                    ? "Aguarde…"
+                    : changePassword
+                      ? "Salvar senha e entrar"
+                      : "Abrir meus álbuns"}
+                  <span aria-hidden="true">↗</span>
+                </button>
+              </form>
             )}
-            {error && (
-              <p role="alert" className="pa-error">
-                {error}
-              </p>
-            )}
-            <button className="pa-primary" disabled={busy} type="submit">
-              {busy
-                ? "Aguarde…"
-                : changePassword
-                  ? "Salvar senha e entrar"
-                  : "Abrir meus álbuns"}{" "}
-              <span aria-hidden="true">↗</span>
-            </button>
-          </form>
-          )}
-          <p className="pa-caption">
-            {changePassword
-              ? "Sua senha é pessoal. Evite reutilizar senhas de outros serviços."
-              : clerkOnly
-                ? "Entre com sua conta Clerk vinculada pelo estúdio para abrir os seus álbuns."
-                : "Primeiro acesso ou esqueceu a senha? Peça uma nova senha temporária ao estúdio."}
-          </p>
-        </section>
-      </div>
-      <footer className="pa-entry-footer">
-        <span>Fotografia que permanece.</span>
-        <div className="pa-entry-links">
-          <Link href="/acesso" prefetch={false} className="pa-studio-link">
-            É da equipe do estúdio? Entrar no estúdio →
-          </Link>
-          <Link href="/">Voltar ao Punctum ↗</Link>
+            <p className="pa-caption">
+              {changePassword
+                ? "Sua senha é pessoal. Evite reutilizar senhas de outros serviços."
+                : clerkOnly
+                  ? "Use a conta autorizada pelo estúdio para abrir seus álbuns."
+                  : "Primeiro acesso ou esqueceu a senha? Peça uma nova senha temporária ao estúdio."}
+            </p>
+          </section>
         </div>
-      </footer>
+
+        <footer className="pa-auth-footer">
+          <span>Punctum Picture</span>
+          <Link href="/acesso" prefetch={false}>Entrar no estúdio ↗</Link>
+          <Link href="/">Voltar ao site ↗</Link>
+        </footer>
+      </section>
+
+      <aside className="pa-auth-photo" aria-hidden="true">
+        <Image
+          src={photograph.src}
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 800px) 100vw, 52vw"
+        />
+      </aside>
     </main>
   );
 }
