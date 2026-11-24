@@ -112,6 +112,16 @@
   color: #521d2b;
   font-weight: 600;
 }
+.pga .button.pga-delete-button {
+  border-color: #b53333;
+  color: #8e2020;
+  background: #fff3f1;
+  gap: 8px;
+}
+.pga .button.pga-delete-button:hover:not(:disabled) {
+  background: #8e2020;
+  color: #fff;
+}
 .pga .pga-error {
   border: 1px solid #b53333;
   color: #8e2020;

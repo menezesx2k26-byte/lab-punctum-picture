@@ -146,6 +146,13 @@ function applyMissingAdditiveMigrations(db, migrations) {
     if (m0016) pending.push(m0016);
   }
 
+  const hasDeletedAt = db.prepare("PRAGMA table_info(client_galleries)").all().some((col) => col.name === "deleted_at");
+  if (!hasDeletedAt) {
+    const m0017 = migrations.find((m) => m.name.startsWith("0017_"));
+    if (!m0017) throw Error("UNLIMITED_BOOTSTRAP_MISSING_GALLERY_DELETE_MIGRATION");
+    pending.push(m0017);
+  }
+
   if (pending.length === 0) return;
   db.exec("BEGIN IMMEDIATE;");
   try {

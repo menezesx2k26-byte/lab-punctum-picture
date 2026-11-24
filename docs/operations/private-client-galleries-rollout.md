@@ -53,3 +53,9 @@ Executar Deploy (deploy.yml) na branch de revisão com environment=preview. Exig
 O Workers Free segue limitado a 10 ms de CPU por requisição: testes locais **não** comprovam que SSR, mídia e todas as rotas cabem no limite. O piloto usa recursos isolados sem limite pago de CPU. Com app Access configurada, exige o redirecionamento real ao team/AUD exatos e reporta `partial-access-otp-required` enquanto o OTP verdadeiro não tiver sido validado. Somente depois da identidade real, ciclo completo no edge e aprovação da operação considerar o gate fechado. Ver o [relatório atual](./private-client-galleries-auth-homologation-2026-10-24.md).
 
 O histórico do modo com senhas registrou excesso de CPU em 350 ms e rejeição de limite customizado `code 100328` no Workers Free. Workers Paid está fora do escopo e sua contratação é proibida nesta missão. O bridge permanece secundário, desativado e condicionado a app isolada; o domínio Node identificado serve PersistFlow e não pode recebê-lo.
+
+### Exclusão lógica de um álbum (Issue #62)
+
+O Studio permite **Excluir álbum** após confirmação explícita. A API administrativa DELETE /admin/api/albuns-privados/:id usa a mesma autenticação administrativa, validação de Origin e rate limit das demais mutações. A migration 0017 marca deleted_at e força o estado archived; a mesma transação grava a auditoria.
+
+A listagem, editor, republicação, mídia e novos uploads passam a negar o álbum. Um upload ativo ainda não expirado impede a exclusão (409), para não interromper uma gravação em curso. A conta do cliente, outros álbuns, fotos prontas e metadados permanecem protegidos e disponíveis para recuperação/exportação autorizadas. Repetir a exclusão retorna 404; não há restauração pelo Studio. Nenhum purge automático de originais foi introduzido. A migração aditiva deve preceder a ativação do código no D1 e no SQLite gerenciado da Hostinger. Não restaurar backups antigos sobre produção para reverter código.

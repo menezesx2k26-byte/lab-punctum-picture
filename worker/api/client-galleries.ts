@@ -73,7 +73,7 @@ export async function handleClientGalleriesApi(
           `INSERT INTO client_gallery_favorites (client_id,gallery_id,image_id,created_at)
         SELECT c.id,g.id,i.id,? FROM client_accounts c JOIN client_galleries g ON g.client_id=c.id
         JOIN client_gallery_images i ON i.gallery_id=g.id WHERE c.id=? AND c.disabled_at IS NULL
-        AND c.session_version=? AND c.must_change_password=0 AND g.id=? AND g.status='published' AND i.id=? AND i.status='ready' AND i.deleted_at IS NULL
+        AND c.session_version=? AND c.must_change_password=0 AND g.id=? AND g.status='published' AND g.deleted_at IS NULL AND i.id=? AND i.status='ready' AND i.deleted_at IS NULL
         ON CONFLICT(client_id,gallery_id,image_id) DO UPDATE SET image_id=excluded.image_id
         RETURNING image_id AS imageId`,
         )

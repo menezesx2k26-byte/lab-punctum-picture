@@ -21,6 +21,7 @@ export const MANAGED_EXPORT_MIGRATIONS = Object.freeze([
   "0014_clerk_pilot_identity_links.sql",
   "0015_clerk_admin_identity_links.sql",
   "0016_private_gallery_layout_presets.sql",
+  "0017_private_gallery_logical_delete.sql",
 ]);
 
 function tableColumnInventory(db, tableName, columns) {
@@ -53,10 +54,15 @@ export function applyManagedExportMigrations(db, migrationsDir = "migrations") {
   const tables = databaseInventory(db);
   for (const [name, value] of Object.entries(sourceTables)) {
     if (name === "d1_migrations") continue;
-    if (name === "client_galleries" && applied.includes("0016_private_gallery_layout_presets.sql")) {
+    if (name === "client_galleries" && (applied.includes("0016_private_gallery_layout_presets.sql") || applied.includes("0017_private_gallery_logical_delete.sql"))) {
       assert.deepEqual(tableColumnInventory(db, name, sourceColumns[name]), value, "Migration 0016 changed pre-existing client_galleries columns");
-      const nonDefault = db.prepare("SELECT COUNT(*) AS n FROM client_galleries WHERE layout_preset != 'classico'").get().n;
-      assert.equal(nonDefault, 0, "Migration 0016 must assign default classico to legacy albums");
+      if (applied.includes("0016_private_gallery_layout_presets.sql")) {
+        const nonDefault = db.prepare("SELECT COUNT(*) AS n FROM client_galleries WHERE layout_preset != 'classico'").get().n;
+        assert.equal(nonDefault, 0, "Migration 0016 must assign default classico to legacy albums");
+      }
+      if (applied.includes("0017_private_gallery_logical_delete.sql")) {
+        assert.equal(db.prepare("SELECT COUNT(*) AS n FROM client_galleries WHERE deleted_at IS NOT NULL").get().n, 0, "Migration 0017 must preserve all existing albums");
+      }
     } else {
       assert.deepEqual(tables[name], value, "Migration changed source data");
     }

@@ -327,6 +327,29 @@ async function handleGalleryAdminApi(
   const gallery = id ? await getGallery(db, id) : null;
   if (!gallery) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
   const action = match[2];
+  if (!action && request.method === "DELETE") {
+    const now = new Date().toISOString();
+    // Both statements execute in one transaction; audit only a live album
+    // without an active upload. The tombstone cannot be republished.
+    const eligible = "id=? AND deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM client_gallery_upload_intents i WHERE i.gallery_id=client_galleries.id AND i.status IN ('pending','uploaded') AND i.expires_at>?)";
+    const result = await db.batch([
+      db.prepare(
+        `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+         SELECT ?,?,'client_gallery.deleted','client_gallery',id,NULL,?
+         FROM client_galleries WHERE ${eligible}`,
+      ).bind(crypto.randomUUID(), auditPrincipal(actor), now, id, now),
+      db.prepare(
+        `UPDATE client_galleries SET status='archived',deleted_at=?,updated_at=?
+         WHERE ${eligible} RETURNING id`,
+      ).bind(now, now, id, now),
+    ]);
+    if (!result[1]?.results?.length) {
+      if (!(await getGallery(db, id)))
+        throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
+      throw new AppError(409, "CONFLICT", "Aguarde os envios de fotos ativos terminarem antes de excluir o álbum.");
+    }
+    return privateJson({ ok: true });
+  }
   if (action === "cover" && request.method === "PUT") {
     const input = await parseJson(
       request,
@@ -337,7 +360,7 @@ async function handleGalleryAdminApi(
     const now = new Date().toISOString();
     await db.batch([
       db.prepare(
-        "UPDATE client_galleries SET cover_image_id=?,updated_at=? WHERE id=?",
+        "UPDATE client_galleries SET cover_image_id=?,updated_at=? WHERE id=? AND deleted_at IS NULL",
       )
       .bind(input.imageId, now, id),
       prepareAudit(db, auditPrincipal(actor), "client_gallery.cover_changed", "client_gallery", id),
@@ -366,7 +389,7 @@ async function handleGalleryAdminApi(
       ...input.imageIds.map((imageId, position) =>
         db
           .prepare(
-            "UPDATE client_gallery_images SET position=?,updated_at=? WHERE id=? AND gallery_id=?",
+            "UPDATE client_gallery_images SET position=?,updated_at=? WHERE id=? AND gallery_id=? AND EXISTS (SELECT 1 FROM client_galleries g WHERE g.id=client_gallery_images.gallery_id AND g.deleted_at IS NULL)",
           )
           .bind(position, now, imageId, id),
       ),
@@ -379,7 +402,7 @@ async function handleGalleryAdminApi(
     const publishResults = await db.batch([
       db.prepare(
         `UPDATE client_galleries SET status='published',published_at=COALESCE(published_at,?),updated_at=?
-      WHERE id=? AND length(trim(title))>0
+      WHERE id=? AND deleted_at IS NULL AND length(trim(title))>0
       AND EXISTS(SELECT 1 FROM client_accounts c WHERE c.id=client_galleries.client_id AND c.disabled_at IS NULL)
       AND EXISTS(SELECT 1 FROM client_gallery_images i WHERE i.id=client_galleries.cover_image_id AND i.gallery_id=client_galleries.id AND i.status='ready' AND i.deleted_at IS NULL)
       RETURNING id`,
@@ -405,7 +428,7 @@ async function handleGalleryAdminApi(
   ) {
     await db.batch([
       db
-        .prepare("UPDATE client_galleries SET status=?,updated_at=? WHERE id=?")
+        .prepare("UPDATE client_galleries SET status=?,updated_at=? WHERE id=? AND deleted_at IS NULL")
         .bind(
           action === "archive" ? "archived" : "draft",
           new Date().toISOString(),
@@ -461,7 +484,7 @@ async function handleGalleryAdminApi(
     const now = new Date().toISOString();
     await db.batch([
       db
-        .prepare("UPDATE client_galleries SET client_id=?,updated_at=? WHERE id=?")
+        .prepare("UPDATE client_galleries SET client_id=?,updated_at=? WHERE id=? AND deleted_at IS NULL")
         .bind(input.clientId, now, id),
       prepareAudit(
         db,
@@ -472,8 +495,10 @@ async function handleGalleryAdminApi(
         { previousClientId: gallery.clientId, nextClientId: input.clientId },
       ),
     ]);
+    const updatedGallery = await getGallery(db, id);
+    if (!updatedGallery) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
     return privateJson({
-      gallery: serializeGallery((await getGallery(db, id))!),
+      gallery: serializeGallery(updatedGallery),
     });
   }
   if (!action && request.method === "PATCH") {
@@ -499,7 +524,7 @@ async function handleGalleryAdminApi(
     await db.batch([
       db
         .prepare(
-          "UPDATE client_galleries SET " + assignments.join(",") + " WHERE id=?",
+          "UPDATE client_galleries SET " + assignments.join(",") + " WHERE id=? AND deleted_at IS NULL",
         )
         .bind(...values),
       prepareAudit(
@@ -510,8 +535,10 @@ async function handleGalleryAdminApi(
         id,
       ),
     ]);
+    const updatedGallery = await getGallery(db, id);
+    if (!updatedGallery) throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
     return privateJson({
-      gallery: serializeGallery((await getGallery(db, id))!),
+      gallery: serializeGallery(updatedGallery),
     });
   }
   throw new AppError(405, "METHOD_NOT_ALLOWED", "Operação não permitida.");

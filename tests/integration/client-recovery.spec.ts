@@ -271,6 +271,17 @@ describe("scoped private recovery with real local D1/R2", () => {
         .bind(client).first()).toBeNull();
     }
   });
+  it("preserves a deleted gallery tombstone across capture and restore", async () => {
+    const owner = await seedClient();
+    const gallery = await seedGallery(owner);
+    const stamp = "2026-11-24T00:00:00.000Z";
+    await env.DB.prepare("UPDATE client_galleries SET status='archived',deleted_at=? WHERE id=?").bind(stamp, gallery).run();
+    const snapshot = await captureClientRecovery(env.DB, env.ORIGINALS, [owner]);
+    expect(snapshot.tables.client_galleries[0].deleted_at).toBe(stamp);
+    await restoreClientRecovery(snapshot, bindings.RESTORE_DB, bindings.RESTORE_ORIGINALS);
+    expect(await bindings.RESTORE_DB.prepare("SELECT status,deleted_at FROM client_galleries WHERE id=?").bind(gallery).first()).toEqual({ status: "archived", deleted_at: stamp });
+  });
+
   it("preserves layout_preset across capture/restore and defaults pre-0016 legacy snapshots to classico", async () => {
     const clientA = await seedClient();
     const galleryA = await seedGallery(clientA);

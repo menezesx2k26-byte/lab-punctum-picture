@@ -144,6 +144,7 @@ async function assertRestoreRowConstraints(snapshot: ClientRecovery, db: D1Datab
         valid = enumValue(row.theme, ["noir", "ivory", "warm"]) &&
           (!("layout_preset" in row) || enumValue(row.layout_preset, CLIENT_GALLERY_LAYOUTS)) &&
           enumValue(row.status, ["draft", "published", "archived"]) &&
+          (row.deleted_at == null || (typeof row.deleted_at === "string" && row.deleted_at.length > 0 && row.status === "archived")) &&
           (row.allow_downloads === 0 || row.allow_downloads === 1);
       } else if (table === "client_gallery_images") {
         valid = typeof row.mime_type === "string" && imageMimes.has(row.mime_type) &&

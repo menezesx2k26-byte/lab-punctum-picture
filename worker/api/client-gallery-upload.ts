@@ -26,7 +26,6 @@ import { requireDb, requireOriginals } from "../utils/env";
 import { providerImageInputLimit } from "../media/provider-input-limit";
 import { AppError } from "../utils/errors";
 import { parseJson } from "../client/validation";
-import { prepareAudit } from "../utils/audit";
 import { assertRateLimit } from "../utils/rate-limit";
 
 type IntentRow = {
@@ -303,11 +302,11 @@ export async function handleClientGalleryUploadApi(
       uploadTokenVersion: 3,
     };
     const token = await signature(intent, env);
-    await db.batch([
+    const reservation = await db.batch([
       db
         .prepare(
           `INSERT INTO client_gallery_images (id,gallery_id,storage_key,original_filename,mime_type,size_bytes,alt_text,position,status,created_at,updated_at)
-        VALUES (?,?,?,?,?,?,?,(SELECT COALESCE(MAX(position),-1)+1 FROM client_gallery_images WHERE gallery_id=?),'pending',?,?)`,
+        SELECT ?,?,?,?,?,?,?,(SELECT COALESCE(MAX(position),-1)+1 FROM client_gallery_images WHERE gallery_id=?),'pending',?,? WHERE EXISTS(SELECT 1 FROM client_galleries WHERE id=? AND deleted_at IS NULL)`,
         )
         .bind(
           imageId,
@@ -320,12 +319,13 @@ export async function handleClientGalleryUploadApi(
           galleryId,
           now,
           now,
+          galleryId,
         ),
       db
         .prepare(
           `INSERT INTO client_gallery_upload_intents
            (id,gallery_id,image_id,expected_mime,expected_size,storage_key,status,expires_at,created_at,sha256,upload_token_version)
-        VALUES (?,?,?,?,?,?,'pending',?,?,?,3)`,
+        SELECT ?,?,?,?,?,?,'pending',?,?,?,3 WHERE EXISTS(SELECT 1 FROM client_galleries WHERE id=? AND deleted_at IS NULL)`,
         )
         .bind(
           id,
@@ -337,9 +337,16 @@ export async function handleClientGalleryUploadApi(
           intent.expiresAt,
           now,
           input.sha256,
+          galleryId,
         ),
-      prepareAudit(db, auditPrincipal(actor), "client_gallery.upload_intent_created", "client_gallery", galleryId, { imageId }),
+      db.prepare(
+        `INSERT INTO audit_log (id,actor_email,action,entity_type,entity_id,data_json,created_at)
+         SELECT ?,?,'client_gallery.upload_intent_created','client_gallery',?,?,?
+         WHERE EXISTS(SELECT 1 FROM client_gallery_upload_intents WHERE id=?)`,
+      ).bind(crypto.randomUUID(), auditPrincipal(actor), galleryId, JSON.stringify({ imageId }), now, id),
     ]);
+    if (reservation[0]?.meta.changes !== 1 || reservation[1]?.meta.changes !== 1)
+      throw new AppError(404, "NOT_FOUND", "Recurso não encontrado.");
     return privateJson(
       {
         intentId: id,

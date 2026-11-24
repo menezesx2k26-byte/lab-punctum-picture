@@ -614,3 +614,73 @@ describe("client sessions API", () => {
     expect(response.headers.get("X-Robots-Tag")).toContain("noindex");
   });
 });
+
+describe("private gallery logical deletion", () => {
+  beforeAll(bootstrapPrivateDb);
+  it.each(["draft", "published", "archived"])("deletes %s albums without deleting the owner or photos", async (status) => {
+    const owner = await seedClient();
+    const gallery = await seedGallery(owner, status);
+    const other = await seedGallery(owner);
+    const photo = await seedReadyImage(gallery);
+    const path = "/admin/api/albuns-privados/" + gallery;
+    const cookie = "punctum_client_session=" + await createClientSession({ id: owner, sessionVersion: 1 }, env);
+    const key = "client-galleries/" + gallery + "/" + photo + ".png";
+    await env.ORIGINALS.put(key, new Uint8Array([1]), { httpMetadata: { contentType: "image/png" } });
+    const response = await exports.default.fetch(privateRequest(path, "DELETE"));
+    expect(response.status).toBe(200);
+    const row = await env.DB.prepare("SELECT status,deleted_at FROM client_galleries WHERE id=?").bind(gallery).first<{ status: string; deleted_at: string }>();
+    expect(row?.status).toBe("archived");
+    expect(row?.deleted_at).toBeTruthy();
+    expect(await env.ORIGINALS.head(key)).not.toBeNull();
+    await expect(env.DB.prepare("UPDATE client_galleries SET status='published' WHERE id=?").bind(gallery).run()).rejects.toThrow();
+    for (const preset of ["thumb", "gallery", "download"]) {
+      expect((await exports.default.fetch(privateRequest(path + "/images/" + photo + "/" + preset))).status).toBe(404);
+      expect((await exports.default.fetch(privateRequest("/api/client/galleries/" + gallery + "/images/" + photo + "/" + preset, "GET", undefined, cookie))).status).toBe(404);
+    }
+    expect((await exports.default.fetch(privateRequest("/api/client/galleries/" + gallery + "/favorites/" + photo, "PUT", undefined, cookie))).status).toBe(404);
+    expect((await exports.default.fetch(privateRequest(path, "PATCH", { title: "Not editable" }))).status).toBe(404);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS count FROM audit_log WHERE entity_id=? AND action='client_gallery.deleted'").bind(gallery).first()).toEqual({ count: 1 });
+    expect((await exports.default.fetch(privateRequest(path))).status).toBe(404);
+    expect((await exports.default.fetch(privateRequest(path + "/publish", "POST"))).status).toBe(404);
+    expect((await exports.default.fetch(privateRequest("/api/client/galleries/" + gallery, "GET", undefined, cookie))).status).toBe(404);
+    const list = await (await exports.default.fetch(privateRequest("/admin/api/albuns-privados"))).json() as { galleries: Array<{id: string}> };
+    expect(list.galleries.map(g => g.id)).not.toContain(gallery);
+    expect(list.galleries.map(g => g.id)).toContain(other);
+    expect(await getActiveClient(env.DB, owner)).not.toBeNull();
+    expect(await getReadyGalleryImage(env.DB, gallery, photo)).not.toBeNull();
+    expect((await exports.default.fetch(privateRequest(path, "DELETE"))).status).toBe(404);
+  });
+  it("rejects unauthenticated deletion and an authenticated client outside admin", async () => {
+    const owner = await seedClient();
+    const gallery = await seedGallery(owner);
+    const path = "/admin/api/albuns-privados/" + gallery;
+    const url = "https://punctumpicture.com" + path;
+    const cookie = "punctum_client_session=" + await createClientSession({ id: owner, sessionVersion: 1 }, env);
+    for (const headers of [new Headers({ Origin: "https://punctumpicture.com" }), new Headers({ Origin: "https://punctumpicture.com", Cookie: cookie })]) {
+      expect((await exports.default.fetch(new Request(url, { method: "DELETE", headers }))).status).toBe(403);
+    }
+    expect((await exports.default.fetch(privateRequest(path))).status).toBe(200);
+  });
+  it("rejects deletion during an active upload and blocks a new upload after deletion", async () => {
+    const owner = await seedClient();
+    const gallery = await seedGallery(owner, "draft");
+    const path = "/admin/api/albuns-privados/" + gallery;
+    const body = { filename: "test.png", mimeType: "image/png", sizeBytes: 1, sha256: "a".repeat(64) };
+    const upload = await exports.default.fetch(privateRequest(path + "/uploads/intents", "POST", body));
+    expect(upload.status).toBe(201);
+    expect((await exports.default.fetch(privateRequest(path, "DELETE"))).status).toBe(409);
+    expect((await exports.default.fetch(privateRequest(path))).status).toBe(200);
+    await env.DB.prepare("UPDATE client_gallery_upload_intents SET expires_at=? WHERE gallery_id=?").bind("2000-01-01T00:00:00.000Z", gallery).run();
+    expect((await exports.default.fetch(privateRequest(path, "DELETE"))).status).toBe(200);
+    expect((await exports.default.fetch(privateRequest(path + "/uploads/intents", "POST", body))).status).toBe(404);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS count FROM audit_log WHERE entity_id=? AND action='client_gallery.deleted'").bind(gallery).first()).toEqual({ count: 1 });
+  });
+  it("rejects cross-origin deletion", async () => {
+    const gallery = await seedGallery(await seedClient());
+    const path = "/admin/api/albuns-privados/" + gallery;
+    const request = privateRequest(path, "DELETE");
+    request.headers.set("Origin", "https://invalid.example");
+    expect((await exports.default.fetch(request)).status).toBe(403);
+    expect((await exports.default.fetch(privateRequest(path))).status).toBe(200);
+  });
+});

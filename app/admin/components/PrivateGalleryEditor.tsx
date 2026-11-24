@@ -2,7 +2,7 @@
 "use client";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Eye, UploadCloud } from "lucide-react";
+import { Eye, Trash2, UploadCloud } from "lucide-react";
 import type {
   ClientGallery,
   ClientTheme,
@@ -516,6 +516,21 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
     }
   }
 
+  async function deleteGallery() {
+    if (!gallery || busy || uploading) return;
+    if (!window.confirm("Excluir o álbum \"" + gallery.title + "\"? Ele desaparecerá do painel e o acesso do cliente será revogado. As fotos serão preservadas conforme a política de retenção.")) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await privateApi(base, "DELETE");
+      window.location.replace("/admin/albuns-privados");
+    } catch (e) {
+      setError(errorMessage(e));
+      setBusy(false);
+    }
+  }
+
   async function save(event: FormEvent) {
     event.preventDefault();
     await action("", "PATCH", form);
@@ -1006,6 +1021,14 @@ export function PrivateGalleryEditor({ galleryId }: { galleryId: string }) {
                     Arquivar
                   </button>
                 )}
+                <button
+                  type="button"
+                  className="button secondary pga-delete-button"
+                  disabled={blocked}
+                  onClick={() => void deleteGallery()}
+                >
+                  <Trash2 size={16} aria-hidden="true" /> Excluir álbum
+                </button>
               </div>
             </form>
             <ul className="pga-checklist" aria-label="Checklist para publicação">

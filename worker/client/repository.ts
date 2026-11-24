@@ -80,7 +80,7 @@ export async function getOwnedGallery(
   return db
     .prepare(
       `SELECT ${GALLERY_COLUMNS} FROM client_galleries g JOIN client_accounts c ON c.id=g.client_id
-    WHERE g.id=? AND g.client_id=? AND g.status='published' AND c.disabled_at IS NULL`,
+    WHERE g.id=? AND g.client_id=? AND g.status='published' AND g.deleted_at IS NULL AND c.disabled_at IS NULL`,
     )
     .bind(galleryId, clientId)
     .first<GalleryRow>();
@@ -90,7 +90,7 @@ export async function getGallery(
   id: string,
 ): Promise<GalleryRow | null> {
   return db
-    .prepare(`SELECT ${GALLERY_COLUMNS} FROM client_galleries g WHERE g.id=?`)
+    .prepare(`SELECT ${GALLERY_COLUMNS} FROM client_galleries g WHERE g.id=? AND g.deleted_at IS NULL`)
     .bind(id)
     .first<GalleryRow>();
 }
@@ -133,7 +133,7 @@ export async function listPublishedGalleriesForClient(
                 (SELECT COUNT(*) FROM client_gallery_images i WHERE i.gallery_id=g.id AND i.deleted_at IS NULL AND i.status='ready') AS readyImageCount,
                 (SELECT COUNT(*) FROM client_gallery_favorites f WHERE f.gallery_id=g.id AND f.client_id=g.client_id) AS favoriteCount
          FROM client_galleries g JOIN client_accounts c ON c.id=g.client_id
-    WHERE g.client_id=? AND g.status='published' AND c.disabled_at IS NULL ORDER BY g.published_at DESC,g.id`,
+    WHERE g.client_id=? AND g.status='published' AND g.deleted_at IS NULL AND c.disabled_at IS NULL ORDER BY g.published_at DESC,g.id`,
       )
       .bind(clientId)
       .all<GalleryRow>()
@@ -146,7 +146,7 @@ export async function listAllGalleries(db: D1Database): Promise<GalleryRow[]> {
         `SELECT ${GALLERY_COLUMNS},
                 (SELECT COUNT(*) FROM client_gallery_images i WHERE i.gallery_id=g.id AND i.deleted_at IS NULL AND i.status='ready') AS readyImageCount,
                 (SELECT COUNT(*) FROM client_gallery_favorites f WHERE f.gallery_id=g.id) AS favoriteCount
-         FROM client_galleries g ORDER BY g.updated_at DESC,g.id`,
+         FROM client_galleries g WHERE g.deleted_at IS NULL ORDER BY g.updated_at DESC,g.id`,
       )
       .all<GalleryRow>()
   ).results;
