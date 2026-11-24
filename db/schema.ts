@@ -290,6 +290,7 @@ export const clientGalleries = sqliteTable("client_galleries", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
   publishedAt: text("published_at"),
+  deletedAt: text("deleted_at"),
 }, (t) => [index("idx_client_galleries_owner_status").on(t.clientId, t.status)]);
 export const clientGalleryImages = sqliteTable("client_gallery_images", {
   id: text("id").primaryKey(),

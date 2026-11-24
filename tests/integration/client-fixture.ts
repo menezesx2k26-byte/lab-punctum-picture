@@ -8,7 +8,7 @@ export async function bootstrapPrivateDb() {
   const columns = (
     await env.DB.prepare("PRAGMA table_info(client_galleries)").all<{ name: string }>()
   ).results;
-  if (columns.some((c) => c.name === "layout_preset")) return;
+  if (columns.some((c) => c.name === "deleted_at")) return;
   for (const key of Object.keys(migrations).sort()) {
     for (const statement of migrations[key]
       .split(";")

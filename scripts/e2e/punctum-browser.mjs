@@ -461,6 +461,12 @@ try {
   }
   await studio.setViewportSize({ width: 390, height: 844 });
   await screenshot(studio, "private-admin-mobile.png");
+  const deleteButton = studio.getByRole("button", { name: "Excluir álbum", exact: true });
+  studio.once("dialog", async (dialog) => { assert.match(dialog.message(), /Excluir o álbum/); await dialog.dismiss(); });
+  await deleteButton.click();
+  assert.equal(new URL(studio.url()).pathname, "/admin/albuns-privados/" + browserGalleryId);
+  assert.equal((await studio.request.get(origin + browserGalleryApi)).status(), 200);
+  record("private admin mobile deletion confirmation can be cancelled without mutation");
   const row = await db.prepare("SELECT status,theme,introduction FROM client_galleries WHERE id=?").bind(browserGalleryId).first();
   assert.equal(row.status, "published"); assert.equal(row.theme, "ivory");
   assert.equal(row.introduction, "Somente dados fictícios para homologação.");
@@ -548,6 +554,19 @@ try {
   await verifyZoom('admin');
   assert.ok(await zoomPage.locator('.pga-editor-form .pga-actions .button').evaluateAll(buttons=>buttons.every(button=>button.scrollWidth<=button.clientWidth+1)),
     'private admin action text is clipped at real browser zoom');
+  zoomPage.once("dialog", async dialog => { assert.match(dialog.message(), /Excluir o álbum/); await dialog.accept(); });
+  const [deletedResponse] = await Promise.all([
+    zoomPage.waitForResponse(r => new URL(r.url()).pathname === browserGalleryApi && r.request().method() === "DELETE"),
+    zoomPage.getByRole("button", { name: "Excluir álbum", exact: true }).click(),
+  ]);
+  assert.equal(deletedResponse.status(), 200);
+  await zoomPage.waitForURL(origin + "/admin/albuns-privados");
+  await zoomPage.getByRole("heading", { name: "Álbuns privados", exact: true }).waitFor();
+  assert.equal((await zoomPage.request.get(origin + browserGalleryApi)).status(), 404);
+  await zoomPage.reload();
+  await zoomPage.getByText("Carregando álbuns…", { exact: true }).waitFor({ state: "hidden" });
+  assert.equal(await zoomPage.getByRole("link", { name: /Galeria fictícia browser/ }).count(), 0);
+  record("private admin confirms deletion; API returns 200 and deleted gallery remains unavailable after reload");
   await zoomPage.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:90_000});
   await zoomPage.locator('h1').first().waitFor();
   await verifyZoom('public-home');

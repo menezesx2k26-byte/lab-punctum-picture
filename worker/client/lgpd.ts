@@ -37,6 +37,7 @@ export type RawTitularGalleryRow = {
   theme: "ivory" | "noir" | "warm";
   allowDownloads: boolean | number;
   publishedAt: string | null;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   [key: string]: unknown;
@@ -88,6 +89,7 @@ export type SanitizedTitularExport = {
     theme: "ivory" | "noir" | "warm";
     allowDownloads: boolean;
     publishedAt: string | null;
+    deletedAt?: string;
     createdAt: string;
     updatedAt: string;
     images: Array<{
@@ -226,6 +228,7 @@ export function buildSanitizedTitularExport(input: {
       theme: gallery.theme,
       allowDownloads: Boolean(gallery.allowDownloads),
       publishedAt: gallery.publishedAt ?? null,
+      ...(gallery.deletedAt ? { deletedAt: gallery.deletedAt } : {}),
       createdAt: gallery.createdAt,
       updatedAt: gallery.updatedAt,
       images: readyImagesByGallery.get(gallery.id) ?? [],
@@ -249,7 +252,7 @@ export async function loadSanitizedTitularExport(
     ).bind(clientId),
     db.prepare(
       `SELECT id,client_id AS clientId,title,introduction,status,theme,
-        allow_downloads AS allowDownloads,published_at AS publishedAt,
+        allow_downloads AS allowDownloads,published_at AS publishedAt,deleted_at AS deletedAt,
         created_at AS createdAt,updated_at AS updatedAt
        FROM client_galleries WHERE client_id = ?
        ORDER BY created_at DESC,id`,
