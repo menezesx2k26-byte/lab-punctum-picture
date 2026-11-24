@@ -14,6 +14,7 @@ import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { summarizeAxeAudit } from "./accessibility-evidence.mjs";
 import { takeEvidenceScreenshot } from "./screenshot-evidence.mjs";
+import { runClientAuthVisualQa } from "./client-auth-visual-qa.mjs";
 import { createZoomBrowser, readBrowserZoom, captureZoomViewport } from "./browser-zoom-evidence.mjs";
 import { measureConservativeContrast } from "./contrast-pixel-evidence.mjs";
 
@@ -88,7 +89,7 @@ const listenPort = await new Promise((resolvePort, reject) => {
 });
 const origin = "http://127.0.0.1:" + listenPort;
 const serverRoot = join(buildDirectory, "server");
-const options = convertV4MiniflareOptions({
+const v4Options = {
   name: "punctum-isolated-browser-e2e",
   modules: [
     { type: "ESModule", path: join(serverRoot, "index.js") },
@@ -110,7 +111,8 @@ const options = convertV4MiniflareOptions({
     PUBLIC_WHATSAPP_E164: "5511999999999", PUBLIC_INSTAGRAM_URL: "https://instagram.com/punctumpicture",
     ADMIN_RATE_LIMIT_WINDOW_SECONDS: "60", ADMIN_RATE_LIMIT_MAX: "200",
   },
-});
+};
+const options = convertV4MiniflareOptions(v4Options);
 options.resourcePersistencePath = storage;
 options.telemetry = { enabled: false };
 let mf, browser, zoomBrowser;
@@ -172,6 +174,7 @@ try {
   record("fresh local D1/R2: two fictional clients, two albums and ten generated PNG originals");
   browser = await playwright.chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
   report.browser = browser.version();
+  await runClientAuthVisualQa({ browser, v4Options, record, screenshot, auditAccessibility });
   const anonymous = await newContext();
   const unauthorized = await anonymous.request.get(origin + "/albuns", { maxRedirects: 0 });
   assert.equal(unauthorized.status(), 303, await unauthorized.text()); privateHeaders(unauthorized);
